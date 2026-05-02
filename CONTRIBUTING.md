@@ -28,22 +28,24 @@ When opening an issue, please provide:
 
 ## Development workflow (once code lands)
 
-> This section is a placeholder. It will be completed once `packages/core` is scaffolded.
-
-The intended workflow is:
+The workflow is:
 
 1. Fork the repository.
 2. Create a feature branch: `git checkout -b feat/short-description`.
 3. Write tests first (the project follows TDD discipline).
 4. Make your changes — keep them focused and small.
-5. Run the test suite locally: `composer test`.
-6. Run the static analysis: `composer phpstan`.
-7. Run the code style fixer: `composer cs-fix`.
-8. Commit with a Conventional Commits-style message:
+5. **Before pushing, reproduce the CI locally**: `make ci`. This runs the same 4 jobs GitHub Actions runs:
+   - `composer validate --strict` (root + sub-packages)
+   - `vendor/bin/php-cs-fixer fix --dry-run`
+   - `vendor/bin/phpstan analyse --memory-limit=2G`
+   - `vendor/bin/phpunit`
+   If `make ci` is green, the GitHub Actions CI will be too — there should be no surprise on push.
+6. Auto-fix code style if needed: `make cs-fix`.
+7. Commit with a Conventional Commits-style message:
    - `feat(core): add DataQuery::withFilter`
    - `fix(adapter-messenger): handle empty failed transport`
    - `docs(roadmap): clarify Phase 4 acceptance criteria`
-9. Open a pull request describing the *why*, not just the *what*.
+8. Open a pull request describing the *why*, not just the *what*.
 
 ## Commit conventions
 

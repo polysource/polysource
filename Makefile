@@ -59,8 +59,18 @@ cs-check: ## Check code style without modifying files
 cs-fix: ## Apply PSR-12 + Symfony code style fixes
 	$(PHP_RUN) vendor/bin/php-cs-fixer fix
 
+.PHONY: validate
+validate: ## Validate root + sub-package composer.json files (strict)
+	$(PHP_RUN) composer validate --strict --no-check-publish
+	@for pkg in packages/*/composer.json; do \
+		if [ -f "$$pkg" ]; then \
+			echo "Validating $$pkg..."; \
+			$(PHP_RUN) composer validate --strict --no-check-publish --working-dir="$$(dirname $$pkg)" || exit 1; \
+		fi \
+	done
+
 .PHONY: ci
-ci: cs-check phpstan test ## Run all CI quality checks (cs-check + phpstan + test)
+ci: validate cs-check phpstan test ## Reproduce the 4 GitHub Actions CI jobs locally (run before every push)
 
 ##@ Demo
 
