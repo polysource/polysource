@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 require __DIR__ . '/Resources.php';
+require __DIR__ . '/PreviewState.php';
 require __DIR__ . '/PreviewKernel.php';
 
 use Polysource\Examples\Preview\PreviewKernel;

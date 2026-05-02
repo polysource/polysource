@@ -90,6 +90,33 @@ final class MessengerAdapterSmokeTest extends KernelTestCase
     }
 
     #[Test]
+    public function indexRendersInlineAndBulkActionFormsWithCsrfTokens(): void
+    {
+        self::bootKernel();
+        $kernel = self::$kernel;
+        \assert($kernel instanceof HttpKernelInterface);
+
+        $response = $kernel->handle(Request::create('/admin/failed-messages', 'GET'));
+        $body = (string) $response->getContent();
+
+        // Inline buttons (one form per action × per record)
+        self::assertStringContainsString('data-polysource-action="inline-retry"', $body);
+        self::assertStringContainsString('data-polysource-action="inline-dismiss"', $body);
+        self::assertStringContainsString('action="/admin/failed-messages/msg-1/retry"', $body);
+        self::assertStringContainsString('action="/admin/failed-messages/msg-1/dismiss"', $body);
+
+        // Bulk toolbar
+        self::assertStringContainsString('data-polysource-bulk-toolbar', $body);
+        self::assertStringContainsString('data-polysource-action="bulk-retry-all"', $body);
+        self::assertStringContainsString('data-polysource-action="bulk-purge"', $body);
+        self::assertStringContainsString('action="/admin/failed-messages/batch/retry-all"', $body);
+        self::assertStringContainsString('action="/admin/failed-messages/batch/purge"', $body);
+
+        // CSRF token field present
+        self::assertStringContainsString('name="_token"', $body);
+    }
+
+    #[Test]
     public function failedMessageDetailRouteResolvesById(): void
     {
         self::bootKernel();

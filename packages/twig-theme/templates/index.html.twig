@@ -3,11 +3,33 @@
 {% block title %}{{ resource.label }}{% endblock %}
 
 {% block content %}
-    <header class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">{{ resource.label }}</h1>
-        <small class="text-body-secondary" data-polysource-resource="{{ resource.name }}">
-            {{ resource.name }}
-        </small>
+    {% set route_prefix = 'polysource_' ~ resource.name|replace({'-': '_'}) %}
+
+    <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-0">{{ resource.label }}</h1>
+            <small class="text-body-secondary" data-polysource-resource="{{ resource.name }}">
+                {{ resource.name }}
+            </small>
+        </div>
+
+        {% if bulk_actions is defined and bulk_actions|length > 0 %}
+            <div class="d-flex gap-2 flex-wrap" data-polysource-bulk-toolbar>
+                {% for action in bulk_actions %}
+                    <form method="POST"
+                          action="{{ path(route_prefix ~ '_bulk_action', {resourceName: resource.name, action: action.name}) }}"
+                          onsubmit="return confirm('Run “{{ action.label }}” on every record? This cannot be undone.');"
+                          class="d-inline-block">
+                        <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-{{ action.name == 'purge' ? 'danger' : 'primary' }}"
+                                data-polysource-action="bulk-{{ action.name }}">
+                            {{ action.label }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% endif %}
     </header>
 
     <div class="card shadow-sm">
@@ -33,11 +55,27 @@
                                 </td>
                             {% endfor %}
                             <td class="text-end">
-                                <a href="{{ path('polysource_' ~ resource.name|replace({'-': '_'}) ~ '_detail', {resourceName: resource.name, id: record.identifier}) }}"
-                                   class="btn btn-sm btn-outline-secondary"
-                                   data-polysource-action="detail">
-                                    Detail
-                                </a>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ path(route_prefix ~ '_detail', {resourceName: resource.name, id: record.identifier}) }}"
+                                       class="btn btn-outline-secondary"
+                                       data-polysource-action="detail">
+                                        Detail
+                                    </a>
+                                    {% for action in inline_actions %}
+                                        <form method="POST"
+                                              action="{{ path(route_prefix ~ '_action', {resourceName: resource.name, id: record.identifier, action: action.name}) }}"
+                                              {% if action.name == 'dismiss' %}onsubmit="return confirm('Dismiss this message? This cannot be undone.');"{% endif %}
+                                              class="d-inline-block">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
+                                            <button type="submit"
+                                                    class="btn btn-outline-{{ action.name == 'dismiss' ? 'danger' : 'secondary' }}"
+                                                    data-polysource-action="inline-{{ action.name }}"
+                                                    data-polysource-record="{{ record.identifier }}">
+                                                {{ action.label }}
+                                            </button>
+                                        </form>
+                                    {% endfor %}
+                                </div>
                             </td>
                         </tr>
                     {% else %}

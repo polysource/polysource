@@ -24,6 +24,17 @@ image and maps port 8080 to the host. Stop with `Ctrl+C`.
   exercising `id`, `text`, `boolean` and `datetime` field templates.
 - **Detail** (`/admin/flags/checkout-v2`): the same record displayed as a
   definition list, including `code` (JSON) and additional text fields.
+- **Failed messages** (`/admin/failed-messages`): 3 seeded failed
+  envelopes with **Retry / Dismiss** buttons per row and a **Retry all
+  / Purge all** toolbar.
+
+### Caveat — stateless preview
+
+Each `php -S` request rebuilds the in-memory transport from scratch, so
+clicking **Retry** returns a 302 + success flash but the same 3
+records appear on reload. This is intentional — full stateful demos
+ship in `examples/messenger-demo/` (Phase 8). The CSRF round-trip,
+redirect, and flash plumbing are exercised on every click.
 
 ## Files
 

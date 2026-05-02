@@ -6,8 +6,10 @@ namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\View\PolysourceView;
+use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Field\FieldDto;
+use Polysource\Core\Resource\ResourceInterface;
 
 /**
  * Front controller for `GET /{prefix}/{resourceName}/{id}` (single record detail).
@@ -35,6 +37,7 @@ final class DetailController
                 'resource' => $context->resource,
                 'record' => $record,
                 'fields' => self::collectFields($context, 'detail'),
+                'inline_actions' => self::collectInlineActions($context->resource),
             ],
         );
     }
@@ -53,5 +56,24 @@ final class DetailController
         }
 
         return $fields;
+    }
+
+    /**
+     * @return list<array{name: string, label: string, icon: ?string}>
+     */
+    private static function collectInlineActions(ResourceInterface $resource): array
+    {
+        $views = [];
+        foreach ($resource->configureActions() as $action) {
+            if ($action instanceof InlineActionInterface) {
+                $views[] = [
+                    'name' => $action->getName(),
+                    'label' => $action->getLabel(),
+                    'icon' => $action->getIcon(),
+                ];
+            }
+        }
+
+        return $views;
     }
 }

@@ -3,9 +3,11 @@
 {% block title %}{{ resource.label }} — {{ record.identifier }}{% endblock %}
 
 {% block content %}
-    <header class="d-flex justify-content-between align-items-center mb-4">
+    {% set route_prefix = 'polysource_' ~ resource.name|replace({'-': '_'}) %}
+
+    <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <a href="{{ path('polysource_' ~ resource.name|replace({'-': '_'}) ~ '_index', {resourceName: resource.name}) }}"
+            <a href="{{ path(route_prefix ~ '_index', {resourceName: resource.name}) }}"
                class="text-decoration-none text-body-secondary small">
                 ← {{ resource.label }}
             </a>
@@ -13,6 +15,24 @@
                 {{ record.identifier }}
             </h1>
         </div>
+
+        {% if inline_actions is defined and inline_actions|length > 0 %}
+            <div class="d-flex gap-2 flex-wrap">
+                {% for action in inline_actions %}
+                    <form method="POST"
+                          action="{{ path(route_prefix ~ '_action', {resourceName: resource.name, id: record.identifier, action: action.name}) }}"
+                          {% if action.name == 'dismiss' %}onsubmit="return confirm('Dismiss this message? This cannot be undone.');"{% endif %}
+                          class="d-inline-block">
+                        <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-{{ action.name == 'dismiss' ? 'danger' : 'primary' }}"
+                                data-polysource-action="inline-{{ action.name }}">
+                            {{ action.label }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% endif %}
     </header>
 
     <div class="card shadow-sm">

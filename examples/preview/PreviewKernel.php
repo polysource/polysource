@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Polysource\Examples\Preview;
 
+use Polysource\Adapter\Messenger\PolysourceMessengerBundle;
+use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryListableReceiver;
+use Polysource\Adapter\Messenger\Tests\Fixture\SpyMessageBus;
 use Polysource\Bundle\PolysourceBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -11,10 +14,15 @@ use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 /**
  * Minimal Symfony kernel for the preview app.
+ *
+ * Boots the symfony-bundle and the messenger adapter with two seeded
+ * resources: a Feature flags fixture and the failed-messages dashboard
+ * (with retry / dismiss / retry-all / purge buttons).
  */
 final class PreviewKernel extends Kernel
 {
@@ -29,6 +37,7 @@ final class PreviewKernel extends Kernel
             new FrameworkBundle(),
             new TwigBundle(),
             new PolysourceBundle(),
+            new PolysourceMessengerBundle(),
         ];
     }
 
@@ -64,15 +73,46 @@ final class PreviewKernel extends Kernel
         ]);
 
         $container->loadFromExtension('polysource', []);
+        $container->loadFromExtension('polysource_messenger', []);
 
         $container->register(FlagsResource::class, FlagsResource::class)
             ->setPublic(true)
             ->addTag('polysource.resource')
         ;
+
+        // Failed-messages fixture: preload an in-memory listable receiver
+        // with a couple of failed envelopes so the dashboard renders
+        // immediately.
+        $container->register('messenger.transport.failed', InMemoryListableReceiver::class)
+            ->setPublic(true)
+            ->setFactory([self::class, 'createFailedTransport'])
+        ;
+
+        // SpyMessageBus stands in for the real messenger bus — every
+        // retry click pushes the envelope onto an in-memory list.
+        $container->register(SpyMessageBus::class, SpyMessageBus::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias(MessageBusInterface::class, SpyMessageBus::class)
+            ->setPublic(true)
+        ;
+
+        // CSRF tokens persist across requests via the session (default
+        // Symfony storage). The PHP built-in server keeps the session
+        // file under sys_get_temp_dir thanks to mock_file storage.
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
         $routes->import('.', 'polysource');
+    }
+
+    /**
+     * Delegates to {@see PreviewState} which holds the singleton on a
+     * static class property — survives across `php -S` requests.
+     */
+    public static function createFailedTransport(): InMemoryListableReceiver
+    {
+        return PreviewState::failedTransport();
     }
 }
