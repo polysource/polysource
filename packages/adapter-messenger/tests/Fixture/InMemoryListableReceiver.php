@@ -81,9 +81,14 @@ final class InMemoryListableReceiver implements ListableReceiverInterface
 
     public function ack(Envelope $envelope): void
     {
+        $stamp = $envelope->last(TransportMessageIdStamp::class);
+        if ($stamp instanceof TransportMessageIdStamp) {
+            unset($this->envelopes[self::stringifyId($stamp->getId())]);
+        }
     }
 
     public function reject(Envelope $envelope): void
     {
+        $this->ack($envelope);
     }
 }

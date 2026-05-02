@@ -7,8 +7,10 @@ namespace Polysource\Adapter\Messenger\Tests\Functional\App;
 use DateTimeImmutable;
 use LogicException;
 use Polysource\Adapter\Messenger\PolysourceMessengerBundle;
+use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryCsrfTokenStorage;
 use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryListableReceiver;
 use Polysource\Adapter\Messenger\Tests\Fixture\PlainMessage;
+use Polysource\Adapter\Messenger\Tests\Fixture\SpyMessageBus;
 use Polysource\Bundle\PolysourceBundle;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
@@ -18,6 +20,7 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\ErrorDetailsStamp;
 use Symfony\Component\Messenger\Stamp\RedeliveryStamp;
 use Symfony\Component\Messenger\Stamp\TransportMessageIdStamp;
@@ -89,6 +92,25 @@ final class TestKernel extends Kernel
         $container->register('messenger.transport.failed', InMemoryListableReceiver::class)
             ->setPublic(true)
             ->setFactory([self::class, 'createFailedTransport'])
+        ;
+
+        // Bus + alias on MessageBusInterface so action services that
+        // type-hint the interface receive the spy bus.
+        $container->register(SpyMessageBus::class, SpyMessageBus::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias(MessageBusInterface::class, SpyMessageBus::class)
+            ->setPublic(true)
+        ;
+
+        // Replace the session-backed CSRF token storage with an in-memory
+        // one so tests can mint and verify tokens without spinning up a
+        // session-bound request lifecycle.
+        $container->register(InMemoryCsrfTokenStorage::class, InMemoryCsrfTokenStorage::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias('security.csrf.token_storage', InMemoryCsrfTokenStorage::class)
+            ->setPublic(true)
         ;
     }
 

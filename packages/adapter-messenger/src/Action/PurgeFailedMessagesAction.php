@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Polysource\Adapter\Messenger\Action;
+
+use Polysource\Core\Action\ActionResult;
+use Polysource\Core\Action\BulkActionInterface;
+use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
+use Throwable;
+
+/**
+ * Acks every envelope on the failed transport — wipes the dashboard
+ * without retrying anything.
+ *
+ * Like {@see RetryAllFailedMessagesAction}, ignores the `$records`
+ * parameter and operates on the full transport. UI surface should
+ * confirm with the user before submitting.
+ */
+final readonly class PurgeFailedMessagesAction implements BulkActionInterface
+{
+    public function __construct(
+        private ListableReceiverInterface $failedReceiver,
+        private int $maxPurge = 1000,
+    ) {
+    }
+
+    public function getName(): string
+    {
+        return 'purge';
+    }
+
+    public function getLabel(): string
+    {
+        return 'Purge all';
+    }
+
+    public function getIcon(): string
+    {
+        return 'trash';
+    }
+
+    public function getPermission(): string
+    {
+        return 'POLYSOURCE_FAILED_MESSAGE_PURGE';
+    }
+
+    public function isDisplayed(array $context = []): bool
+    {
+        return true;
+    }
+
+    public function executeBatch(iterable $records): ActionResult
+    {
+        unset($records);
+
+        $purged = 0;
+        $failed = 0;
+        foreach ($this->failedReceiver->all($this->maxPurge) as $envelope) {
+            try {
+                $this->failedReceiver->ack($envelope);
+                ++$purged;
+            } catch (Throwable) {
+                ++$failed;
+            }
+        }
+
+        if ($failed > 0) {
+            return ActionResult::failure(\sprintf('%d purged, %d failed (capped at %d).', $purged, $failed, $this->maxPurge));
+        }
+
+        return ActionResult::success(\sprintf('%d message%s purged.', $purged, 1 === $purged ? '' : 's'));
+    }
+}

@@ -7,12 +7,16 @@ namespace Polysource\Adapter\Messenger\Tests\Functional;
 use PHPUnit\Framework\Attributes\Test;
 use Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource;
 use Polysource\Adapter\Messenger\Resource\FailedMessageResource;
+use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryListableReceiver;
+use Polysource\Adapter\Messenger\Tests\Fixture\SpyMessageBus;
 use Polysource\Adapter\Messenger\Tests\Functional\App\TestKernel;
+use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 /**
  * End-to-end test for the Messenger adapter.
@@ -97,5 +101,48 @@ final class MessengerAdapterSmokeTest extends KernelTestCase
         self::assertSame(200, $response->getStatusCode());
         $body = (string) $response->getContent();
         self::assertStringContainsString('data-polysource-record="msg-1"', $body);
+    }
+
+    #[Test]
+    public function retryActionDispatchesViaBusAndAcksOriginal(): void
+    {
+        self::bootKernel();
+        $kernel = self::$kernel;
+        \assert($kernel instanceof HttpKernelInterface);
+        $container = self::getContainer();
+
+        $tokenManager = $container->get(CsrfTokenManagerInterface::class);
+        \assert($tokenManager instanceof CsrfTokenManagerInterface);
+        $token = $tokenManager->getToken(ActionController::CSRF_TOKEN_ID)->getValue();
+
+        $response = $kernel->handle(Request::create(
+            '/admin/failed-messages/msg-1/retry',
+            'POST',
+            ['_token' => $token],
+        ));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertStringContainsString('/admin/failed-messages', (string) $response->headers->get('Location'));
+
+        $bus = $container->get(SpyMessageBus::class);
+        \assert($bus instanceof SpyMessageBus);
+        self::assertCount(1, $bus->dispatched);
+
+        $receiver = $container->get('messenger.transport.failed');
+        \assert($receiver instanceof InMemoryListableReceiver);
+        self::assertNull($receiver->find('msg-1'));
+        self::assertNotNull($receiver->find('msg-2'));
+    }
+
+    #[Test]
+    public function retryActionRejectsRequestsWithoutCsrfToken(): void
+    {
+        self::bootKernel();
+        $kernel = self::$kernel;
+        \assert($kernel instanceof HttpKernelInterface);
+
+        $response = $kernel->handle(Request::create('/admin/failed-messages/msg-1/retry', 'POST'));
+
+        self::assertSame(403, $response->getStatusCode());
     }
 }

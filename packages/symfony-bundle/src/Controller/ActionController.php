@@ -7,13 +7,16 @@ namespace Polysource\Bundle\Controller;
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Polysource\Core\Action\ActionInterface;
+use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
 use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Exception\UnsupportedOperationException;
 use Polysource\Core\Resource\ResourceInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Csrf\CsrfToken;
@@ -65,7 +68,8 @@ final readonly class ActionController
             throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
 
-        $action->execute($record);
+        $result = $action->execute($record);
+        self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
     }
@@ -108,9 +112,27 @@ final readonly class ActionController
             }
         }
 
-        $action->executeBatch($records);
+        $result = $action->executeBatch($records);
+        self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
+    }
+
+    private static function pushFlash(Request $request, ActionResult $result): void
+    {
+        if (null === $result->message) {
+            return;
+        }
+
+        $session = $request->hasSession() ? $request->getSession() : null;
+        if (!$session instanceof Session) {
+            return;
+        }
+
+        $session->getFlashBag()->add(
+            $result->success ? 'success' : 'error',
+            $result->message,
+        );
     }
 
     private function assertCsrf(AdminContext $context): void

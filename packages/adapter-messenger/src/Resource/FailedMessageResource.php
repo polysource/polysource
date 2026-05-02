@@ -6,6 +6,7 @@ namespace Polysource\Adapter\Messenger\Resource;
 
 use Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource;
 use Polysource\Bundle\Attribute\AsResource;
+use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Resource\AbstractResource;
 
 /**
@@ -19,9 +20,13 @@ use Polysource\Core\Resource\AbstractResource;
 #[AsResource]
 final class FailedMessageResource extends AbstractResource
 {
+    /**
+     * @param iterable<ActionInterface> $actions
+     */
     public function __construct(
         MessengerFailedDataSource $dataSource,
         private readonly string $slug = 'failed-messages',
+        private readonly iterable $actions = [],
     ) {
         parent::__construct($dataSource);
     }
@@ -56,5 +61,10 @@ final class FailedMessageResource extends AbstractResource
         // resource minimal — Phase 9 (user docs) covers the field-type
         // story properly.
         return [];
+    }
+
+    public function configureActions(): iterable
+    {
+        return $this->actions;
     }
 }

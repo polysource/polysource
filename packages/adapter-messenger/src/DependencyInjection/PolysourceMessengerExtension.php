@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Messenger\DependencyInjection;
 
+use Polysource\Adapter\Messenger\Action\DismissFailedMessageAction;
+use Polysource\Adapter\Messenger\Action\PurgeFailedMessagesAction;
+use Polysource\Adapter\Messenger\Action\RetryAllFailedMessagesAction;
+use Polysource\Adapter\Messenger\Action\RetryFailedMessageAction;
 use Polysource\Adapter\Messenger\DataSource\EnvelopeMapper;
 use Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource;
 use Polysource\Adapter\Messenger\Resource\FailedMessageResource;
@@ -12,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Wires the Messenger failed-transport-backed data source and resource.
@@ -54,9 +59,37 @@ final class PolysourceMessengerExtension extends Extension
             ->replaceArgument(0, '%polysource_messenger.payload_max_bytes%')
         ;
 
+        // Wire actions (Phase 5).
+        $busRef = new Reference(MessageBusInterface::class);
+        $receiverRef = new Reference('messenger.transport.' . $failedTransport);
+
+        $container->getDefinition(RetryFailedMessageAction::class)
+            ->replaceArgument(0, $busRef)
+            ->replaceArgument(1, $receiverRef)
+        ;
+
+        $container->getDefinition(DismissFailedMessageAction::class)
+            ->replaceArgument(0, $receiverRef)
+        ;
+
+        $container->getDefinition(RetryAllFailedMessagesAction::class)
+            ->replaceArgument(0, $busRef)
+            ->replaceArgument(1, $receiverRef)
+        ;
+
+        $container->getDefinition(PurgeFailedMessagesAction::class)
+            ->replaceArgument(0, $receiverRef)
+        ;
+
         $container->getDefinition(FailedMessageResource::class)
             ->replaceArgument(0, new Reference(MessengerFailedDataSource::class))
             ->replaceArgument(1, '%polysource_messenger.resource_slug%')
+            ->replaceArgument(2, [
+                new Reference(RetryFailedMessageAction::class),
+                new Reference(DismissFailedMessageAction::class),
+                new Reference(RetryAllFailedMessagesAction::class),
+                new Reference(PurgeFailedMessagesAction::class),
+            ])
         ;
     }
 
