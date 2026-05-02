@@ -20,7 +20,7 @@ final class UnsupportedOperationException extends DataSourceException
     {
         $msg = \sprintf('Operation "%s" is not supported by this data source.', $method);
         if ('' !== $reason) {
-            $msg .= ' '.$reason;
+            $msg .= ' ' . $reason;
         }
 
         return new self($msg);

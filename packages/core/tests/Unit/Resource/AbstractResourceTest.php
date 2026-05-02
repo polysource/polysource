@@ -34,9 +34,9 @@ final class AbstractResourceTest extends TestCase
 
         self::assertSame('id', $r->getIdentifierProperty());
         self::assertSame($ds, $r->getDataSource());
-        self::assertSame([], \iterator_to_array($this->toIterable($r->configureFields('index')), false));
-        self::assertSame([], \iterator_to_array($this->toIterable($r->configureActions()), false));
-        self::assertSame([], \iterator_to_array($this->toIterable($r->configureFilters()), false));
+        self::assertSame([], self::collectIterable($r->configureFields('index')));
+        self::assertSame([], self::collectIterable($r->configureActions()));
+        self::assertSame([], self::collectIterable($r->configureFilters()));
         self::assertNull($r->getPermission());
     }
 
@@ -55,16 +55,23 @@ final class AbstractResourceTest extends TestCase
 
             public function count(DataQuery $query): ?int
             {
-                return 0;
+                return null;
             }
         };
     }
 
     /**
      * @param iterable<mixed> $iterable
+     *
+     * @return list<mixed>
      */
-    private function toIterable(iterable $iterable): iterable
+    private static function collectIterable(iterable $iterable): array
     {
-        return $iterable;
+        $out = [];
+        foreach ($iterable as $value) {
+            $out[] = $value;
+        }
+
+        return $out;
     }
 }

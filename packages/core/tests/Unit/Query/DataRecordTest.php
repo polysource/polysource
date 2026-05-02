@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Core\Query\DataRecord;
+use stdClass;
 
 #[CoversClass(DataRecord::class)]
 final class DataRecordTest extends TestCase
@@ -48,7 +49,7 @@ final class DataRecordTest extends TestCase
     #[Test]
     public function rawSourceIsOptional(): void
     {
-        $obj = new \stdClass();
+        $obj = new stdClass();
         $r = new DataRecord(1, [], $obj);
         self::assertSame($obj, $r->rawSource);
 

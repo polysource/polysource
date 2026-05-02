@@ -24,5 +24,7 @@ final class Polysource
     public const TAG_ACTION = 'polysource.action';
     public const TAG_PERMISSION = 'polysource.permission';
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 }

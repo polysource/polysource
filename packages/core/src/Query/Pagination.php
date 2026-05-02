@@ -23,14 +23,10 @@ final readonly class Pagination
         public ?string $cursor = null,
     ) {
         if ($offset < 0) {
-            throw new InvalidArgumentException(
-                \sprintf('Pagination offset must be >= 0, got %d.', $offset),
-            );
+            throw new InvalidArgumentException(\sprintf('Pagination offset must be >= 0, got %d.', $offset));
         }
         if ($limit < 1) {
-            throw new InvalidArgumentException(
-                \sprintf('Pagination limit must be >= 1, got %d.', $limit),
-            );
+            throw new InvalidArgumentException(\sprintf('Pagination limit must be >= 1, got %d.', $limit));
         }
     }
 

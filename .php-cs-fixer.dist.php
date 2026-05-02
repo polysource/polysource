@@ -6,19 +6,16 @@ declare(strict_types=1);
  * Polysource PHP-CS-Fixer configuration.
  *
  * Rules: PSR-12 + Symfony + PHP 8.2 migration set.
- * Targets all source files under packages/ and examples/, excluding
- * vendor/, var/, and Symfony test app artefacts.
- *
- * Run:
- *   vendor/bin/php-cs-fixer fix              # apply
- *   vendor/bin/php-cs-fixer fix --dry-run    # check only (used in CI)
+ * Targets all source files under packages/ (and examples/ once it exists).
  */
 
+$paths = [__DIR__ . '/packages'];
+if (\is_dir(__DIR__ . '/examples')) {
+    $paths[] = __DIR__ . '/examples';
+}
+
 $finder = (new PhpCsFixer\Finder())
-    ->in([
-        __DIR__ . '/packages',
-        __DIR__ . '/examples',
-    ])
+    ->in($paths)
     ->exclude([
         'vendor',
         'tests/Functional/App/var',
@@ -39,10 +36,8 @@ return (new PhpCsFixer\Config())
         '@Symfony' => true,
         '@Symfony:risky' => true,
 
-        // Strict declarations
         'declare_strict_types' => true,
 
-        // Imports
         'global_namespace_import' => [
             'import_classes' => true,
             'import_constants' => false,
@@ -54,20 +49,17 @@ return (new PhpCsFixer\Config())
             'imports_order' => ['class', 'function', 'const'],
         ],
 
-        // Native function calls (faster on 8.x)
         'native_function_invocation' => [
             'include' => ['@compiler_optimized'],
             'scope' => 'namespaced',
             'strict' => true,
         ],
 
-        // Phpdoc
         'phpdoc_align' => false,
         'phpdoc_separation' => false,
         'phpdoc_summary' => false,
         'phpdoc_to_comment' => false,
 
-        // Misc
         'concat_space' => ['spacing' => 'one'],
         'yoda_style' => false,
     ])

@@ -70,7 +70,7 @@ trait FieldTrait
     /** @param list<string> $pages */
     public function onPages(array $pages): static
     {
-        $this->pages = \array_values($pages);
+        $this->pages = array_values($pages);
 
         return $this;
     }
@@ -92,7 +92,7 @@ trait FieldTrait
 
     public function hideOnIndex(): static
     {
-        $this->pages = \array_values(\array_filter($this->pages, static fn (string $p): bool => 'index' !== $p));
+        $this->pages = array_values(array_filter($this->pages, static fn (string $p): bool => 'index' !== $p));
 
         return $this;
     }
