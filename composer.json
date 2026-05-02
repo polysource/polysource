@@ -19,7 +19,7 @@
     },
     "require": {
         "php": "^8.4",
-        "polysource/core": "@dev"
+        "polysource/core": "0.1.x-dev"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5",
