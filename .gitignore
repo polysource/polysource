@@ -1,0 +1,56 @@
+# Composer
+/vendor/
+/packages/*/vendor/
+composer.lock
+
+# PHPUnit / tests
+.phpunit.result.cache
+.phpunit.cache/
+/coverage/
+phpunit.xml
+phpunit.xml.bak
+
+# PHPStan
+/phpstan-baseline.neon.bak
+
+# PHP-CS-Fixer
+.php-cs-fixer.cache
+
+# Symfony test app artefacts
+/packages/*/tests/Functional/App/var/
+/packages/*/tests/Functional/App/cache/
+/packages/*/tests/Functional/App/log/
+
+# Demo app artefacts
+/examples/*/var/
+/examples/*/vendor/
+/examples/*/.env.local
+/examples/*/.env.local.php
+/examples/*/.env.*.local
+
+# IDE / editors
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# local agent — local-only context (cf. ADR-009)
+/.local/CLAUDE.local.md
+/.local/settings.local.json
+
+# Docker
+/docker-compose.override.yml
+
+# DDEV
+/.ddev/.gitignore
+/.ddev/db_snapshots/
+/.ddev/import-db/
+/.ddev/import.yaml
+/.ddev/.global_commands/
