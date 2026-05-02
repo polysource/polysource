@@ -1,0 +1,38 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    http_method_override: false
+    handle_all_throwables: true
+    php_errors:
+        log: true
+
+    session:
+        storage_factory_id: session.storage.factory.native
+        cookie_secure: auto
+        cookie_samesite: lax
+
+    router:
+        utf8: true
+
+    messenger:
+        failure_transport: failed
+
+        transports:
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 1
+                    delay: 100
+
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN_FAILED)%'
+
+        routing:
+            'Polysource\Demo\Messenger\Message\PaymentChargeMessage': async
+            'Polysource\Demo\Messenger\Message\SendWelcomeEmailMessage': async
+            'Polysource\Demo\Messenger\Message\GenerateInvoiceMessage': async
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

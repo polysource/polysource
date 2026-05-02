@@ -1,0 +1,3 @@
+polysource_messenger:
+    failed_transport_name: failed
+    resource_slug: failed-messages

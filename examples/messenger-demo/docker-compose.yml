@@ -1,0 +1,31 @@
+# Polysource Messenger demo — single PHP container served via php -S.
+#
+# `make demo` (from the repo root) wires this up: composer install →
+# seed the failed transport → start the dev server on :8080.
+
+name: polysource-messenger-demo
+
+services:
+  php:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: polysource-messenger-demo:php8.4
+    volumes:
+      # Mount the entire monorepo so the path repositories
+      # (`packages/*`) resolve to the live working tree.
+      - ../..:/repo:cached
+      - composer-cache:/home/demo/.composer
+    working_dir: /repo/examples/messenger-demo
+    environment:
+      COMPOSER_MEMORY_LIMIT: -1
+      APP_ENV: dev
+      APP_DEBUG: '1'
+    ports:
+      - '8080:8080'
+
+volumes:
+  composer-cache:
+    driver: local

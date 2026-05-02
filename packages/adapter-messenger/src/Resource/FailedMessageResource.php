@@ -14,11 +14,16 @@ use Polysource\Core\Resource\AbstractResource;
  *
  * Cf. ADR-005 — `#[AsResource]` auto-tags this class with
  * `polysource.resource`. The slug is overridable via the
- * `polysource_messenger.resource_slug` configuration node so users with
- * an existing route prefix can avoid collisions.
+ * `polysource_messenger.resource_slug` configuration node so users
+ * with an existing route prefix can avoid collisions.
+ *
+ * Not `final` so host applications can subclass to override
+ * `configureFields()` until `polysource/core` ships built-in concrete
+ * field types (cf. ADR-011). Subclasses MUST keep the constructor
+ * signature compatible with the DI extension's argument wiring.
  */
 #[AsResource]
-final class FailedMessageResource extends AbstractResource
+class FailedMessageResource extends AbstractResource
 {
     /**
      * @param iterable<ActionInterface> $actions

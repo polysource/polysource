@@ -1,0 +1,13 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        # SQLite — no separate database container required.
+        driver: pdo_sqlite
+
+doctrine_migrations:
+    migrations_paths:
+        # No host migrations — Symfony Messenger creates its own
+        # `messenger_messages` table on first send when the doctrine
+        # transport is asked for its schema.
+        'Polysource\Demo\Messenger\Migrations': '%kernel.project_dir%/src/Migrations'
+    enable_profiler: false

@@ -18,6 +18,7 @@
 | [ADR-008](./0008-development-environment.md) | Docker + Makefile + DDEV optionnel | Accepté |
 | [ADR-009](./0009-ai-assistant-context.md) | Système de contexte projet persistant (the project context file) | Accepté |
 | [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
+| [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (vivant) |
 
 ## Convention
 

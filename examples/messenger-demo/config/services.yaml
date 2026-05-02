@@ -1,0 +1,29 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Polysource\Demo\Messenger\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Migrations/'
+            # Reached via the service-id swap below; auto-registering it
+            # here would double-tag polysource.resource and collide on
+            # the `failed-messages` slug.
+            - '../src/Resource/'
+
+    # Bind the failed transport explicitly — autowiring on
+    # TransportInterface is ambiguous (both `async` and `failed`
+    # implement it).
+    Polysource\Demo\Messenger\Command\SeedFailedMessagesCommand:
+        arguments:
+            $failedTransport: '@messenger.transport.failed'
+
+    # Replace the bundle's empty FailedMessageResource with the
+    # demo's subclass that yields concrete field DTOs. The bundle's
+    # extension (PolysourceMessengerExtension) wires the constructor
+    # arguments — we just swap the class.
+    Polysource\Adapter\Messenger\Resource\FailedMessageResource:
+        class: Polysource\Demo\Messenger\Resource\DemoFailedMessageResource

@@ -1,0 +1,51 @@
+{
+    "name": "polysource/messenger-demo",
+    "description": "Polysource Admin — runnable demo: Symfony Messenger failed-messages dashboard.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "doctrine/dbal": "^3.7",
+        "doctrine/doctrine-bundle": "^2.12",
+        "doctrine/doctrine-migrations-bundle": "^3.3",
+        "polysource/adapter-messenger": "0.1.x-dev",
+        "polysource/core": "0.1.x-dev",
+        "polysource/symfony-bundle": "0.1.x-dev",
+        "polysource/twig-theme": "0.1.x-dev",
+        "symfony/console": "^7.4",
+        "symfony/doctrine-messenger": "^7.4",
+        "symfony/dotenv": "^7.4",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/messenger": "^7.4",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/runtime": "^7.4",
+        "symfony/security-bundle": "^7.4",
+        "symfony/twig-bundle": "^7.4",
+        "symfony/yaml": "^7.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Demo\\Messenger\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        { "type": "path", "url": "../../packages/core" },
+        { "type": "path", "url": "../../packages/symfony-bundle" },
+        { "type": "path", "url": "../../packages/twig-theme" },
+        { "type": "path", "url": "../../packages/adapter-messenger" }
+    ],
+    "extra": {
+        "runtime": {
+            "use_putenv": true
+        }
+    }
+}

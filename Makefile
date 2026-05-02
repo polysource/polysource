@@ -88,23 +88,20 @@ preview: ## Serve the Polysource Twig theme preview at http://localhost:8080
 ##@ Demo
 
 .PHONY: demo
-demo: ## Start the Messenger failed messages demo (Phase 8)
-	@if [ ! -d examples/messenger-demo ]; then \
-		echo "Demo not yet built (Phase 8)."; exit 1; \
-	fi
-	cd examples/messenger-demo && $(DOCKER_COMPOSE) up -d
-	@echo "✓ Demo running at http://localhost:8080/admin/failed-messages"
-	@echo "  Login: admin / admin"
+demo: ## Start the Messenger failed-messages demo on http://localhost:8080
+	@$(MAKE) -C examples/messenger-demo up
 
 .PHONY: demo-down
-demo-down: ## Stop the demo
-	@if [ -d examples/messenger-demo ]; then \
-		cd examples/messenger-demo && $(DOCKER_COMPOSE) down; \
-	fi
+demo-down: ## Stop the demo container
+	@$(MAKE) -C examples/messenger-demo down
 
 .PHONY: demo-logs
-demo-logs: ## Tail demo logs
-	cd examples/messenger-demo && $(DOCKER_COMPOSE) logs -f
+demo-logs: ## Tail demo container logs
+	@$(MAKE) -C examples/messenger-demo logs
+
+.PHONY: demo-clean
+demo-clean: ## Wipe demo vendor + database (rebuild on next `make demo`)
+	@$(MAKE) -C examples/messenger-demo clean
 
 ##@ Maintenance
 
