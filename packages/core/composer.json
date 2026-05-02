@@ -1,0 +1,42 @@
+{
+    "name": "polysource/core",
+    "description": "Polysource Admin — core contracts and value objects. Pure PHP, zero Symfony dependency.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "polysource",
+        "admin",
+        "datasource",
+        "value-objects",
+        "contracts"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Core\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Polysource\\Core\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
