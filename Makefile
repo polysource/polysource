@@ -52,8 +52,8 @@ phpstan: ## Run PHPStan static analysis (level max)
 	$(PHP_RUN) vendor/bin/phpstan analyse --memory-limit=2G
 
 .PHONY: cs-check
-cs-check: ## Check code style without modifying files
-	$(PHP_RUN) vendor/bin/php-cs-fixer fix --dry-run --diff
+cs-check: ## Check code style without modifying files (matches CI exactly)
+	$(PHP_RUN) vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction --using-cache=no
 
 .PHONY: cs-fix
 cs-fix: ## Apply PSR-12 + Symfony code style fixes

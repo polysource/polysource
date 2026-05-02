@@ -21,7 +21,7 @@ use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
  * The receiver MUST implement {@see ListableReceiverInterface}. Doctrine,
  * Redis, AMQP and InMemory transports all do; SQS and Beanstalk do not.
  * Non-listable receivers fail fast at construction time with a
- * {@see \LogicException}.
+ * {@see LogicException}.
  */
 final readonly class MessengerFailedDataSource implements DataSourceInterface
 {
