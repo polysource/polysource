@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Routing;
 
+use LogicException;
 use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
@@ -45,10 +46,19 @@ final class PolysourceRouteLoader extends Loader
         $collection = new RouteCollection();
         $prefix = '/' . trim($this->urlPrefix, '/');
 
+        // Track route keys to detect post-normalisation collisions
+        // (e.g. `my-resource` and `my_resource` both → `my_resource`).
+        $seenKeys = [];
+
         foreach ($this->resources->all() as $entity) {
             $slug = $entity->getName();
             $routeKey = self::routeKey($slug);
             $base = $prefix . '/' . $slug;
+
+            if (isset($seenKeys[$routeKey])) {
+                throw new LogicException(\sprintf('Polysource route key collision: resources "%s" and "%s" both normalise to "%s". Rename one of them.', $seenKeys[$routeKey], $slug, $routeKey));
+            }
+            $seenKeys[$routeKey] = $slug;
 
             $defaults = ['resourceName' => $slug];
 
@@ -72,8 +82,26 @@ final class PolysourceRouteLoader extends Loader
                         '_controller' => DetailController::class . '::__invoke',
                         self::ATTR_ACTION => 'detail',
                     ],
-                    requirements: ['id' => '[^/]+'],
+                    requirements: ['id' => '(?!batch$)[^/]+'],
                     methods: ['GET'],
+                ),
+            );
+
+            // Bulk route registered BEFORE the parameterised action route so
+            // that `/{slug}/batch/{action}` always wins over the latent
+            // ambiguity with `/{slug}/{id=batch}/{action}`. The action
+            // route's `id` requirement also rejects the literal "batch" as
+            // a defensive belt-and-braces guard.
+            $collection->add(
+                'polysource_' . $routeKey . '_bulk_action',
+                new Route(
+                    path: $base . '/batch/{action}',
+                    defaults: $defaults + [
+                        '_controller' => ActionController::class . '::bulk',
+                        self::ATTR_ACTION => 'bulk',
+                    ],
+                    requirements: ['action' => '[a-z][a-z0-9_-]*'],
+                    methods: ['POST'],
                 ),
             );
 
@@ -84,20 +112,7 @@ final class PolysourceRouteLoader extends Loader
                     defaults: $defaults + [
                         '_controller' => ActionController::class . '::__invoke',
                     ],
-                    requirements: ['id' => '[^/]+', 'action' => '[a-z][a-z0-9_-]*'],
-                    methods: ['POST'],
-                ),
-            );
-
-            $collection->add(
-                'polysource_' . $routeKey . '_bulk_action',
-                new Route(
-                    path: $base . '/batch/{action}',
-                    defaults: $defaults + [
-                        '_controller' => ActionController::class . '::bulk',
-                        self::ATTR_ACTION => 'bulk',
-                    ],
-                    requirements: ['action' => '[a-z][a-z0-9_-]*'],
+                    requirements: ['id' => '(?!batch$)[^/]+', 'action' => '[a-z][a-z0-9_-]*'],
                     methods: ['POST'],
                 ),
             );

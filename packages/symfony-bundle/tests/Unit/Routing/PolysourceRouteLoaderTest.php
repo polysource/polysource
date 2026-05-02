@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Tests\Unit\Routing;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -89,5 +90,43 @@ final class PolysourceRouteLoaderTest extends TestCase
         $route = $loader->load('.', 'polysource')->get('polysource_flags_index');
         self::assertNotNull($route);
         self::assertSame('/backoffice/flags', $route->getPath());
+    }
+
+    #[Test]
+    public function actionRouteRejectsBatchAsId(): void
+    {
+        $loader = new PolysourceRouteLoader(new ResourceRegistry([new FakeResource('flags')]));
+        $collection = $loader->load('.', 'polysource');
+
+        $route = $collection->get('polysource_flags_action');
+        self::assertNotNull($route);
+        self::assertSame('(?!batch$)[^/]+', $route->getRequirement('id'));
+    }
+
+    #[Test]
+    public function bulkRouteIsRegisteredBeforeParameterisedActionRoute(): void
+    {
+        $loader = new PolysourceRouteLoader(new ResourceRegistry([new FakeResource('flags')]));
+        $collection = $loader->load('.', 'polysource');
+
+        $names = array_keys($collection->all());
+        $bulkPos = array_search('polysource_flags_bulk_action', $names, true);
+        $actionPos = array_search('polysource_flags_action', $names, true);
+        self::assertIsInt($bulkPos);
+        self::assertIsInt($actionPos);
+        self::assertLessThan($actionPos, $bulkPos, 'Bulk route must precede action route in the collection.');
+    }
+
+    #[Test]
+    public function detectsRouteKeyCollisionsAfterNormalisation(): void
+    {
+        $loader = new PolysourceRouteLoader(new ResourceRegistry([
+            new FakeResource('my-resource'),
+            new FakeResource('my_resource'),
+        ]));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('route key collision');
+        $loader->load('.', 'polysource');
     }
 }

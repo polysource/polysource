@@ -54,12 +54,16 @@ Routes physiques pour list/detail, query string pour les actions complexes.
 
 ### Schéma des routes
 
+Une resource enregistrée sous le slug `failed-messages` (kebab-case) génère 4 routes physiques nommées avec un suffixe par resource (slug normalisé en snake_case via `PolysourceRouteLoader::routeKey()`) :
+
 | Verbe | URL | Route name | Controller |
 |---|---|---|---|
-| GET | `/admin/{resourceName}` | `polysource_index` | `IndexController::__invoke` |
-| GET | `/admin/{resourceName}/{id}` | `polysource_detail` | `DetailController::__invoke` |
-| POST | `/admin/{resourceName}/{id}/{action}` | `polysource_action` | `ActionController::__invoke` |
-| POST | `/admin/{resourceName}/batch/{action}` | `polysource_bulk_action` | `ActionController::bulk` |
+| GET | `/admin/failed-messages` | `polysource_failed_messages_index` | `IndexController::__invoke` |
+| GET | `/admin/failed-messages/{id}` | `polysource_failed_messages_detail` | `DetailController::__invoke` |
+| POST | `/admin/failed-messages/{id}/{action}` | `polysource_failed_messages_action` | `ActionController::__invoke` |
+| POST | `/admin/failed-messages/batch/{action}` | `polysource_failed_messages_bulk_action` | `ActionController::bulk` |
+
+Le suffixe par-resource est nécessaire parce que chaque resource expose 4 routes physiques distinctes (variante B retenue dans la section "Options envisagées"). La normalisation du slug remplace tout caractère non-alphanumérique par `_` et passe en lowercase ; les collisions post-normalisation lèvent une `LogicException` au boot.
 
 ### Conventions
 
@@ -70,14 +74,24 @@ Routes physiques pour list/detail, query string pour les actions complexes.
 
 ### Url generation
 
+Préférer `PolysourceUrlGenerator` qui encapsule le calcul du nom de route :
+
 ```php
-$urlGenerator->generate('polysource_detail', [
-    'resourceName' => 'failed-messages',
-    'id' => $envelope->getId(),
-]);
+$urlGenerator->detail('failed-messages', $envelope->getId());
+$urlGenerator->action('failed-messages', $envelope->getId(), 'retry');
+$urlGenerator->bulkAction('failed-messages', 'retry-all');
 ```
 
-Helper Twig pour la simplicité utilisateur :
+Sinon, accès direct au `UrlGeneratorInterface` Symfony en construisant le nom de route manuellement :
+
+```php
+$urlGenerator->generate(
+    'polysource_' . PolysourceRouteLoader::routeKey('failed-messages') . '_detail',
+    ['resourceName' => 'failed-messages', 'id' => $envelope->getId()],
+);
+```
+
+Helper Twig pour la simplicité utilisateur (Phase 3) :
 
 ```twig
 {{ polysource_url(record, 'detail') }}

@@ -16,6 +16,9 @@ final class DetailController
 {
     public function __invoke(AdminContext $context): PolysourceView
     {
+        // TODO(Phase-6): enforce $context->resource->getPermission() via
+        // PermissionInterface before reaching the data source.
+
         if (null === $context->recordId) {
             throw new ResourceNotFoundException(\sprintf('Detail route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
         }

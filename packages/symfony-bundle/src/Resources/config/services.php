@@ -14,6 +14,7 @@ use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Twig\Environment;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -51,6 +52,7 @@ return static function (ContainerConfigurator $container): void {
             service(ResourceRegistry::class),
             service(AdminContextProvider::class),
             service(Security::class)->nullOnInvalid(),
+            '%polysource.max_page_size%',
         ])
         ->tag('controller.argument_value_resolver', ['priority' => 110])
     ;
@@ -84,7 +86,11 @@ return static function (ContainerConfigurator $container): void {
 
     $services
         ->set(ActionController::class)
-        ->args([service(PolysourceUrlGenerator::class)])
+        ->args([
+            service(PolysourceUrlGenerator::class),
+            service(CsrfTokenManagerInterface::class),
+            '%polysource.max_bulk_ids%',
+        ])
         ->public()
         ->tag('controller.service_arguments')
     ;

@@ -17,6 +17,9 @@ final class IndexController
 {
     public function __invoke(AdminContext $context): PolysourceView
     {
+        // TODO(Phase-6): enforce $context->resource->getPermission() via
+        // PermissionInterface before reaching the data source.
+
         $page = $context->resource->getDataSource()->search($context->query);
 
         return new PolysourceView(

@@ -39,6 +39,14 @@ final class PolysourceExtension extends Extension
             '/' . trim($urlPrefix, '/'),
         );
 
+        $maxPageSize = $config['max_page_size'] ?? 200;
+        \assert(\is_int($maxPageSize));
+        $container->setParameter('polysource.max_page_size', $maxPageSize);
+
+        $maxBulkIds = $config['max_bulk_ids'] ?? 500;
+        \assert(\is_int($maxBulkIds));
+        $container->setParameter('polysource.max_bulk_ids', $maxBulkIds);
+
         $container->registerForAutoconfiguration(DataSourceInterface::class)
             ->addTag('polysource.data_source')
         ;
@@ -46,11 +54,8 @@ final class PolysourceExtension extends Extension
         $container->registerAttributeForAutoconfiguration(
             AsResource::class,
             static function (ChildDefinition $definition, AsResource $attribute): void {
-                $tagAttributes = [];
-                if (null !== $attribute->name) {
-                    $tagAttributes['name'] = $attribute->name;
-                }
-                $definition->addTag('polysource.resource', $tagAttributes);
+                unset($attribute);
+                $definition->addTag('polysource.resource');
             },
         );
     }

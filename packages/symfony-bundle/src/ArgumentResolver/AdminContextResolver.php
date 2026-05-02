@@ -30,6 +30,7 @@ final readonly class AdminContextResolver implements ValueResolverInterface
         private ResourceRegistry $resources,
         private AdminContextProvider $provider,
         private ?Security $security = null,
+        private int $maxPageSize = 200,
     ) {
     }
 
@@ -64,6 +65,10 @@ final readonly class AdminContextResolver implements ValueResolverInterface
             query: $query,
         );
 
+        // Note: kernel.reset clears the provider between master requests
+        // but not between a master and its sub-requests. Twig embed panels
+        // that render inside another Polysource page will overwrite the
+        // outer context here. Acceptable for v0.1 (no embed panels yet).
         $this->provider->setContext($context);
 
         yield $context;
@@ -129,14 +134,18 @@ final readonly class AdminContextResolver implements ValueResolverInterface
             $query = $query->withSort($property, $dir);
         }
 
-        $pageSize = $request->query->getInt('pageSize', 20);
-        $page = $request->query->getInt('page', 1);
-        $offset = max(0, ($page - 1) * max(1, $pageSize));
+        // Cap pageSize to prevent unbounded paginations from cascading to
+        // adapters (Meilisearch, S3, HTTP). The ceiling is configurable
+        // via `polysource.max_page_size`.
+        $rawPageSize = $request->query->getInt('pageSize', 20);
+        $pageSize = max(1, min($rawPageSize, $this->maxPageSize));
+        $page = max(1, $request->query->getInt('page', 1));
+        $offset = ($page - 1) * $pageSize;
         $cursor = $request->query->get('cursor');
 
         $query = $query->withPagination(new Pagination(
             offset: $offset,
-            limit: max(1, $pageSize),
+            limit: $pageSize,
             cursor: \is_string($cursor) && '' !== $cursor ? $cursor : null,
         ));
 

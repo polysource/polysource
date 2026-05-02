@@ -128,6 +128,30 @@ final class AdminContextResolverTest extends TestCase
     }
 
     #[Test]
+    public function clampsPageSizeToConfiguredMaximum(): void
+    {
+        $resolver = new AdminContextResolver(
+            new ResourceRegistry([new FakeResource('flags')]),
+            new AdminContextProvider(),
+            null,
+            maxPageSize: 50,
+        );
+        $request = $this->buildRequest('flags', 'polysource_flags_index', [
+            '_polysource_action' => 'index',
+        ], queryParams: [
+            'pageSize' => '999999',
+        ]);
+
+        $context = iterator_to_array($this->toIterable(
+            $resolver->resolve($request, $this->adminContextArgument()),
+        ))[0];
+        \assert($context instanceof AdminContext);
+
+        self::assertNotNull($context->query->pagination);
+        self::assertSame(50, $context->query->pagination->limit);
+    }
+
+    #[Test]
     public function persistsContextInProvider(): void
     {
         $provider = new AdminContextProvider();
