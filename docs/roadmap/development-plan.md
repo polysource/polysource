@@ -987,12 +987,14 @@ Toutes les décisions structurantes sont dans `docs/adr/` :
 
 À la fin de Phase 7 :
 
-- [ ] `core` < 12 classes/interfaces publiques ?
+- [ ] `core` respecte les critères de surface d'API (cf. [ADR-010](../adr/0010-core-api-surface-criterion.md)) : ≤ 40 types publics + critères qualitatifs (ISP, single responsibility, pas de redondance, utilité prouvée).
 - [ ] `symfony-bundle` installable sur projet Symfony 7.4 vierge ?
 - [ ] Adapter Messenger : install < 10 min pour dev tiers ?
 - [ ] CI matrix v0.1 (PHP 8.4 × Symfony 7.4) verte ?
 
 Si l'un de ces critères n'est pas atteint, **ne pas continuer en Phase 8**.
+
+> **Note** : le critère original (« `core` < 12 classes/interfaces publiques ») a été révisé suite à l'analyse Phase 1, qui a montré que ce seuil arbitraire mélangeait des catégories incomparables (interfaces, VO, exceptions). Détail dans [ADR-010](../adr/0010-core-api-surface-criterion.md).
 
 ## 15. Roadmap au-delà de v0.1
 

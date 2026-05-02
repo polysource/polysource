@@ -17,6 +17,7 @@
 | [ADR-007](./0007-php-symfony-versions.md) | Versions PHP/Symfony : 8.4/7.4 v0.1 → 8.0+/5.4+ v0.5 | Accepté |
 | [ADR-008](./0008-development-environment.md) | Docker + Makefile + DDEV optionnel | Accepté |
 | [ADR-009](./0009-ai-assistant-context.md) | Système de contexte projet persistant (the project context file) | Accepté |
+| [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
 
 ## Convention
 
