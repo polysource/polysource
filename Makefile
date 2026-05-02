@@ -59,6 +59,11 @@ cs-check: ## Check code style without modifying files (matches CI exactly)
 cs-fix: ## Apply PSR-12 + Symfony code style fixes
 	$(PHP_RUN) vendor/bin/php-cs-fixer fix
 
+.PHONY: coverage
+coverage: ## Run PHPUnit with Clover coverage and gate `core` at >= 90%
+	$(PHP_RUN) sh -c 'mkdir -p var && vendor/bin/phpunit --testsuite=unit --coverage-clover=var/coverage-core.xml --coverage-filter=packages/core/src'
+	$(PHP_RUN) php scripts/coverage-gate.php var/coverage-core.xml 90
+
 .PHONY: validate
 validate: ## Validate root + sub-package composer.json files (strict)
 	$(PHP_RUN) composer validate --strict --no-check-publish
@@ -70,7 +75,7 @@ validate: ## Validate root + sub-package composer.json files (strict)
 	done
 
 .PHONY: ci
-ci: validate cs-check phpstan test ## Reproduce the 4 GitHub Actions CI jobs locally (run before every push)
+ci: validate cs-check phpstan test coverage ## Reproduce the 5 GitHub Actions CI jobs locally (run before every push)
 
 ##@ Preview
 

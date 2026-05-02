@@ -46,6 +46,30 @@ final class FieldTraitTest extends TestCase
         self::assertNotContains('index', $hide->pages);
         self::assertContains('detail', $hide->pages);
     }
+
+    #[Test]
+    public function setLabelOverridesTheConstructorLabel(): void
+    {
+        $field = TestField::new('email')->setLabel('Mailing address');
+        self::assertSame('Mailing address', $field->getAsDto()->label);
+
+        $field->setLabel(null);
+        self::assertNull($field->getAsDto()->label);
+    }
+
+    #[Test]
+    public function onlyOnDetailRestrictsToDetailPage(): void
+    {
+        $dto = TestField::new('payload')->onlyOnDetail()->getAsDto();
+        self::assertSame(['detail'], $dto->pages);
+    }
+
+    #[Test]
+    public function onlyOnFormsRestrictsToWriteablePages(): void
+    {
+        $dto = TestField::new('password')->onlyOnForms()->getAsDto();
+        self::assertSame(['edit', 'new'], $dto->pages);
+    }
 }
 
 final class TestField implements FieldInterface

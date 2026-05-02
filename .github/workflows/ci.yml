@@ -102,8 +102,36 @@ jobs:
 
       - name: Run PHPUnit
         run: vendor/bin/phpunit --testdox
-        if: hashFiles('packages/**/tests/**/*.php') != ''
 
-      - name: No tests yet (Phase 0)
-        run: echo "No PHPUnit tests yet — packages/* will be created in Phase 1."
-        if: hashFiles('packages/**/tests/**/*.php') == ''
+  coverage:
+    name: Core coverage gate (>= 90%)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Generate Clover report (core only)
+        run: |
+          mkdir -p var
+          vendor/bin/phpunit --testsuite=unit \
+            --coverage-clover=var/coverage-core.xml \
+            --coverage-filter=packages/core/src
+
+      - name: Enforce 90% coverage threshold on packages/core
+        run: php scripts/coverage-gate.php var/coverage-core.xml 90
+
+      - name: Upload Clover report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-core
+          path: var/coverage-core.xml
+          retention-days: 7
