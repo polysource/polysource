@@ -4,9 +4,21 @@
  #   total === null  → cursor paginator (only Previous / Next)
  #
  # Variables: page (DataPage), context (AdminContext)
+ #
+ # Whitelist of query-string keys preserved across pagination clicks.
+ # Anything not on this list is dropped — prevents arbitrary
+ # query-string parameters from being amplified across pagination
+ # links by a crafted URL.
  #}
 {% set query = context.query %}
 {% set pagination = query.pagination %}
+{% set safeKeys = ['q', 'pageSize', 'cursor', 'filter', 'sort'] %}
+{% set safeQuery = {} %}
+{% for key in safeKeys %}
+    {% if app.request.query.has(key) %}
+        {% set safeQuery = safeQuery|merge({(key): app.request.query.all[key]}) %}
+    {% endif %}
+{% endfor %}
 
 {% if page.total is not null and pagination is not null %}
     {% set pageSize = pagination.limit %}
@@ -21,12 +33,12 @@
 
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {{ currentPage <= 1 ? 'disabled' : '' }}">
-                <a class="page-link" href="{{ currentPage > 1 ? path(app.request.attributes.get('_route'), app.request.query.all|merge({page: currentPage - 1})) : '#' }}" aria-label="Previous">
+                <a class="page-link" href="{{ currentPage > 1 ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage - 1})) : '#' }}" aria-label="Previous">
                     ‹
                 </a>
             </li>
             <li class="page-item {{ currentPage >= lastPage ? 'disabled' : '' }}">
-                <a class="page-link" href="{{ currentPage < lastPage ? path(app.request.attributes.get('_route'), app.request.query.all|merge({page: currentPage + 1})) : '#' }}" aria-label="Next">
+                <a class="page-link" href="{{ currentPage < lastPage ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage + 1})) : '#' }}" aria-label="Next">
                     ›
                 </a>
             </li>
@@ -37,12 +49,12 @@
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {{ page.prevCursor ? '' : 'disabled' }}">
                 <a class="page-link"
-                   href="{{ page.prevCursor ? path(app.request.attributes.get('_route'), app.request.query.all|merge({cursor: page.prevCursor})) : '#' }}"
+                   href="{{ page.prevCursor ? path(app.request.attributes.get('_route'), safeQuery|merge({cursor: page.prevCursor})) : '#' }}"
                    aria-label="Previous">‹ Previous</a>
             </li>
             <li class="page-item {{ page.nextCursor ? '' : 'disabled' }}">
                 <a class="page-link"
-                   href="{{ page.nextCursor ? path(app.request.attributes.get('_route'), app.request.query.all|merge({cursor: page.nextCursor})) : '#' }}"
+                   href="{{ page.nextCursor ? path(app.request.attributes.get('_route'), safeQuery|merge({cursor: page.nextCursor})) : '#' }}"
                    aria-label="Next">Next ›</a>
             </li>
         </ul>

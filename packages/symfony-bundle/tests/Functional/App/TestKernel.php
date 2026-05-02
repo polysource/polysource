@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\Bundle\Tests\Functional\App;
 
 use Polysource\Bundle\PolysourceBundle;
+use Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission;
+use Polysource\Core\Permission\PermissionInterface;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\TwigBundle\TwigBundle;
@@ -68,6 +70,16 @@ class TestKernel extends Kernel
         ]);
 
         $container->loadFromExtension('polysource', []);
+
+        // No Symfony Security firewall in this minimal kernel — alias
+        // PermissionInterface to a permissive fixture so controllers
+        // don't trip the "fail closed" check in
+        // SymfonyAuthorizationCheckerPermission. The DeniedTestKernel
+        // overrides this with AlwaysDenyPermission for negative tests.
+        $container->register(AlwaysGrantPermission::class, AlwaysGrantPermission::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias(PermissionInterface::class, AlwaysGrantPermission::class)->setPublic(true);
 
         $container->register(TestResource::class, TestResource::class)
             ->setPublic(true)

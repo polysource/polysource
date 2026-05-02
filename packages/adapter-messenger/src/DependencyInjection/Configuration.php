@@ -32,6 +32,16 @@ final class Configuration implements ConfigurationInterface
                     ->min(1)
                     ->info('Maximum serialized payload size before truncation.')
                 ->end()
+                ->integerNode('max_retry_all')
+                    ->defaultValue(1000)
+                    ->min(1)
+                    ->info('Maximum envelopes processed by a single retry-all click. Cap exists so a runaway transport cannot saturate the worker pool.')
+                ->end()
+                ->integerNode('max_purge')
+                    ->defaultValue(1000)
+                    ->min(1)
+                    ->info('Maximum envelopes acked by a single purge-all click.')
+                ->end()
             ->end()
         ;
 

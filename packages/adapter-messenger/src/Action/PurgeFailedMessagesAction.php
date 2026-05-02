@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Messenger\Action;
 
+use Polysource\Adapter\Messenger\DataSource\EnvelopeMapper;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
 use Throwable;
 
@@ -19,10 +23,14 @@ use Throwable;
  */
 final readonly class PurgeFailedMessagesAction implements BulkActionInterface
 {
+    private LoggerInterface $logger;
+
     public function __construct(
         private ListableReceiverInterface $failedReceiver,
         private int $maxPurge = 1000,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function getName(): string
@@ -60,7 +68,12 @@ final readonly class PurgeFailedMessagesAction implements BulkActionInterface
             try {
                 $this->failedReceiver->ack($envelope);
                 ++$purged;
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+                $this->logger->error('Polysource: failed to ack envelope during purge', [
+                    'envelope_id' => self::tryExtractId($envelope),
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]);
                 ++$failed;
             }
         }
@@ -70,5 +83,14 @@ final readonly class PurgeFailedMessagesAction implements BulkActionInterface
         }
 
         return ActionResult::success(\sprintf('%d message%s purged.', $purged, 1 === $purged ? '' : 's'));
+    }
+
+    private static function tryExtractId(Envelope $envelope): string|int|null
+    {
+        try {
+            return EnvelopeMapper::extractIdentifier($envelope);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

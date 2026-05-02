@@ -7,6 +7,8 @@ namespace Polysource\Adapter\Messenger\Action;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Query\DataRecord;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
@@ -24,10 +26,14 @@ use Throwable;
  */
 final readonly class RetryFailedMessageAction implements InlineActionInterface
 {
+    private LoggerInterface $logger;
+
     public function __construct(
         private MessageBusInterface $bus,
         private ListableReceiverInterface $failedReceiver,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function getName(): string
@@ -73,7 +79,13 @@ final readonly class RetryFailedMessageAction implements InlineActionInterface
 
             return ActionResult::success(\sprintf('Message %s queued for retry.', $record->identifier));
         } catch (Throwable $e) {
-            return ActionResult::failure(\sprintf('Retry of message %s failed: %s', $record->identifier, $e->getMessage()));
+            $this->logger->error('Polysource: failed to retry envelope', [
+                'envelope_id' => $record->identifier,
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
+            ]);
+
+            return ActionResult::failure(\sprintf('Retry of message %s failed.', $record->identifier));
         }
     }
 }

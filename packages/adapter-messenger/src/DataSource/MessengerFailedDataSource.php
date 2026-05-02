@@ -9,8 +9,11 @@ use Polysource\Core\DataSource\DataSourceInterface;
 use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
 use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
+use Throwable;
 
 /**
  * Read-only Polysource data source backed by a Messenger failed transport.
@@ -26,24 +29,54 @@ use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
 final readonly class MessengerFailedDataSource implements DataSourceInterface
 {
     private ListableReceiverInterface $receiver;
+    private LoggerInterface $logger;
 
     public function __construct(
         ReceiverInterface $receiver,
         private EnvelopeMapper $mapper,
+        ?LoggerInterface $logger = null,
     ) {
         if (!$receiver instanceof ListableReceiverInterface) {
             throw new LogicException(\sprintf('Polysource Messenger adapter requires a ListableReceiverInterface; got %s. Configure a listable failed transport (Doctrine, Redis, AMQP, InMemory).', $receiver::class));
         }
         $this->receiver = $receiver;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function search(DataQuery $query): DataPage
     {
-        $limit = $query->pagination?->limit;
+        // ListableReceiverInterface::all() takes only a limit. We
+        // emulate offset by fetching `offset + limit` envelopes and
+        // skipping the first `$offset`. O(offset+limit), not great for
+        // deep pagination but Symfony's Doctrine / Redis / AMQP
+        // transports don't expose a cheaper primitive.
+        $pagination = $query->pagination;
+        $offset = null === $pagination ? 0 : $pagination->offset;
+        $limit = null === $pagination ? null : $pagination->limit;
+
+        $fetchCount = null === $limit ? null : $offset + $limit;
 
         $records = [];
-        foreach ($this->receiver->all($limit) as $envelope) {
-            $records[] = $this->mapper->map($envelope);
+        $skipped = 0;
+        foreach ($this->receiver->all($fetchCount) as $envelope) {
+            if ($skipped < $offset) {
+                ++$skipped;
+
+                continue;
+            }
+            try {
+                $records[] = $this->mapper->map($envelope);
+            } catch (Throwable $e) {
+                // One unmappable envelope must not crash the whole
+                // index — skip it, log, keep going.
+                $this->logger->warning('Polysource Messenger: skipping unmappable envelope.', [
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]);
+            }
+            if (null !== $limit && \count($records) >= $limit) {
+                break;
+            }
         }
 
         return new DataPage(items: $records, total: null);
@@ -56,7 +89,17 @@ final readonly class MessengerFailedDataSource implements DataSourceInterface
             return null;
         }
 
-        return $this->mapper->map($envelope);
+        try {
+            return $this->mapper->map($envelope);
+        } catch (Throwable $e) {
+            $this->logger->warning('Polysource Messenger: failed to map envelope on find().', [
+                'identifier' => $identifier,
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     public function count(DataQuery $query): ?int

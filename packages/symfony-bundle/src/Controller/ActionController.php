@@ -6,15 +6,15 @@ namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
-use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
 use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Exception\UnsupportedOperationException;
-use Polysource\Core\Permission\PermissionInterface;
 use Polysource\Core\Resource\ResourceInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +23,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Throwable;
 
 /**
  * Executes inline (single-record) and bulk (many-records) actions.
@@ -35,24 +36,31 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  * is `polysource_action`. Bulk requests with more than `max_bulk_ids`
  * identifiers are rejected with `400 Bad Request`.
  *
- * Returns a redirect to the resource index page on success/failure. Flash
- * messages and templated error pages arrive in Phase 3 (Twig theme).
+ * On success or graceful failure (`ActionResult::failure()`), a flash
+ * message is pushed and the response redirects back to the resource
+ * index. If an action throws unexpectedly, the exception is logged,
+ * the flash bag carries a sanitised "Unexpected error" message, and
+ * the request still redirects (rather than producing a naked 500).
  */
 final readonly class ActionController
 {
     public const CSRF_TOKEN_ID = 'polysource_action';
 
+    private LoggerInterface $logger;
+
     public function __construct(
         private PolysourceUrlGenerator $urlGenerator,
         private CsrfTokenManagerInterface $csrfTokenManager,
-        private PermissionInterface $permission,
+        private ControllerSupport $support,
         private int $maxBulkIds = 500,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function __invoke(AdminContext $context): Response
     {
-        $this->assertResourceAccess($context->resource);
+        $this->support->assertResourceAccess($context->resource);
         $this->assertCsrf($context);
 
         if (null === $context->recordId) {
@@ -64,14 +72,14 @@ final readonly class ActionController
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not an inline action.', $context->action, $context->resource->getName()));
         }
 
-        $this->assertActionAccess($action);
+        $this->support->assertActionAccess($action);
 
         $record = $context->resource->getDataSource()->find($context->recordId);
         if (null === $record) {
             throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
 
-        $result = $action->execute($record);
+        $result = $this->safelyRun(static fn (): ActionResult => $action->execute($record), $action);
         self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
@@ -79,7 +87,7 @@ final readonly class ActionController
 
     public function bulk(AdminContext $context): Response
     {
-        $this->assertResourceAccess($context->resource);
+        $this->support->assertResourceAccess($context->resource);
         $this->assertCsrf($context);
 
         $rawIds = $context->request->request->all('ids');
@@ -97,7 +105,7 @@ final readonly class ActionController
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not a bulk action.', $actionName, $context->resource->getName()));
         }
 
-        $this->assertActionAccess($action);
+        $this->support->assertActionAccess($action);
 
         $stringIds = [];
         foreach ($rawIds as $id) {
@@ -115,10 +123,33 @@ final readonly class ActionController
             }
         }
 
-        $result = $action->executeBatch($records);
+        $result = $this->safelyRun(static fn (): ActionResult => $action->executeBatch($records), $action);
         self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
+    }
+
+    /**
+     * Run an action callable, converting an unexpected `Throwable` to a
+     * graceful `ActionResult::failure()`. The exception is logged so
+     * operators can investigate without the user-facing flash leaking
+     * stack-trace text.
+     *
+     * @param callable():ActionResult $callable
+     */
+    private function safelyRun(callable $callable, ActionInterface $action): ActionResult
+    {
+        try {
+            return $callable();
+        } catch (Throwable $e) {
+            $this->logger->error('Polysource: action threw unexpectedly.', [
+                'action_name' => $action->getName(),
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
+            ]);
+
+            return ActionResult::failure(\sprintf('Action "%s" failed unexpectedly. Operators have been notified.', $action->getName()));
+        }
     }
 
     private static function pushFlash(Request $request, ActionResult $result): void
@@ -143,22 +174,6 @@ final readonly class ActionController
         $token = $context->request->request->get('_token');
         if (!\is_string($token) || !$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $token))) {
             throw new AccessDeniedHttpException('Invalid or missing CSRF token.');
-        }
-    }
-
-    private function assertResourceAccess(ResourceInterface $resource): void
-    {
-        $attribute = $resource->getPermission() ?? PermissionAttributes::RESOURCE_VIEW;
-        if (!$this->permission->isGranted($attribute, $resource)) {
-            throw new AccessDeniedHttpException(\sprintf('Access denied on resource "%s" (attribute %s).', $resource->getName(), $attribute));
-        }
-    }
-
-    private function assertActionAccess(ActionInterface $action): void
-    {
-        $attribute = $action->getPermission() ?? PermissionAttributes::ACTION_INVOKE;
-        if (!$this->permission->isGranted($attribute)) {
-            throw new AccessDeniedHttpException(\sprintf('Access denied on action "%s" (attribute %s).', $action->getName(), $attribute));
         }
     }
 

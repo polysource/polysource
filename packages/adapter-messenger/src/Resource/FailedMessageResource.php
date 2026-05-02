@@ -55,11 +55,13 @@ final class FailedMessageResource extends AbstractResource
 
     public function configureFields(string $page): iterable
     {
-        // Concrete field types live in the host application's preview /
-        // demo for now; v0.1 of `polysource/core` ships only the abstract
-        // FieldInterface + FieldTrait. Phase 4 deliberately keeps this
-        // resource minimal — Phase 9 (user docs) covers the field-type
-        // story properly.
+        // v0.1 of polysource/core ships only the abstract FieldInterface
+        // + FieldTrait; concrete field types live in the host
+        // application until the core ships built-in TextField /
+        // BooleanField / DateTimeField / CodeField / IdField. Once
+        // those land, this method should yield the appropriate fields
+        // for the message_class / failed_at / exception_class /
+        // payload columns.
         return [];
     }
 

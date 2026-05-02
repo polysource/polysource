@@ -17,12 +17,15 @@ final class Polysource
     public const PAGE_EDIT = 'edit';
     public const PAGE_NEW = 'new';
 
-    /** Symfony DI tag names (used by polysource/symfony-bundle). */
+    /** Symfony DI tag names consumed by polysource/symfony-bundle. */
     public const TAG_DATA_SOURCE = 'polysource.data_source';
     public const TAG_RESOURCE = 'polysource.resource';
-    public const TAG_FIELD_CONFIGURATOR = 'polysource.field_configurator';
-    public const TAG_ACTION = 'polysource.action';
-    public const TAG_PERMISSION = 'polysource.permission';
+
+    // The earlier draft also defined TAG_FIELD_CONFIGURATOR, TAG_ACTION
+    // and TAG_PERMISSION, but no Polysource code currently registers
+    // services under those tags. They were removed in Phase 7.x to
+    // avoid the YAGNI smell — re-introduce them when (and if) the
+    // bundle starts auto-discovering tagged services for those types.
 
     private function __construct()
     {

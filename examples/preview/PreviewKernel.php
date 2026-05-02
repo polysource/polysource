@@ -97,6 +97,16 @@ final class PreviewKernel extends Kernel
             ->setPublic(true)
         ;
 
+        // No Symfony Security firewall in the preview app — alias the
+        // permission interface to AlwaysGrantPermission. Production
+        // apps wire this through Symfony's AuthorizationCheckerInterface.
+        $container->register(\Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class, \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias(\Polysource\Core\Permission\PermissionInterface::class, \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class)
+            ->setPublic(true)
+        ;
+
         // CSRF tokens persist across requests via the session (default
         // Symfony storage). The PHP built-in server keeps the session
         // file under sys_get_temp_dir thanks to mock_file storage.

@@ -25,32 +25,34 @@ return static function (ContainerConfigurator $container): void {
 
     $services
         ->set(MessengerFailedDataSource::class)
-        ->args([null, null]) // transport + mapper — replaced by extension
+        ->args([null, null, null]) // transport + mapper + logger — replaced by extension
         ->tag('polysource.data_source')
     ;
 
-    // Actions — bus + receiver references replaced by the extension.
+    // Actions — bus + receiver + (optional) logger references replaced
+    // by the extension. The logger argument is nullOnInvalid so a host
+    // app without monolog still wires cleanly.
     $services
         ->set(RetryFailedMessageAction::class)
-        ->args([null, null])
+        ->args([null, null, null])
         ->tag('polysource.messenger.action')
     ;
 
     $services
         ->set(DismissFailedMessageAction::class)
-        ->args([null])
-        ->tag('polysource.messenger.action')
-    ;
-
-    $services
-        ->set(RetryAllFailedMessagesAction::class)
         ->args([null, null])
         ->tag('polysource.messenger.action')
     ;
 
     $services
+        ->set(RetryAllFailedMessagesAction::class)
+        ->args([null, null, 1000, null])
+        ->tag('polysource.messenger.action')
+    ;
+
+    $services
         ->set(PurgeFailedMessagesAction::class)
-        ->args([null])
+        ->args([null, 1000, null])
         ->tag('polysource.messenger.action')
     ;
 

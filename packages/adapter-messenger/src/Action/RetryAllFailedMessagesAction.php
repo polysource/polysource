@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Messenger\Action;
 
+use Polysource\Adapter\Messenger\DataSource\EnvelopeMapper;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 use Symfony\Component\Messenger\Stamp\SentToFailureTransportStamp;
@@ -24,11 +28,15 @@ use Throwable;
  */
 final readonly class RetryAllFailedMessagesAction implements BulkActionInterface
 {
+    private LoggerInterface $logger;
+
     public function __construct(
         private MessageBusInterface $bus,
         private ListableReceiverInterface $failedReceiver,
         private int $maxRetries = 1000,
+        ?LoggerInterface $logger = null,
     ) {
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function getName(): string
@@ -72,7 +80,12 @@ final readonly class RetryAllFailedMessagesAction implements BulkActionInterface
                 $this->bus->dispatch($reborn);
                 $this->failedReceiver->ack($envelope);
                 ++$retried;
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+                $this->logger->error('Polysource: failed to retry envelope during bulk retry', [
+                    'envelope_id' => self::tryExtractId($envelope),
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]);
                 ++$failed;
             }
         }
@@ -82,5 +95,14 @@ final readonly class RetryAllFailedMessagesAction implements BulkActionInterface
         }
 
         return ActionResult::success(\sprintf('%d message%s queued for retry.', $retried, 1 === $retried ? '' : 's'));
+    }
+
+    private static function tryExtractId(Envelope $envelope): string|int|null
+    {
+        try {
+            return EnvelopeMapper::extractIdentifier($envelope);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

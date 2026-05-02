@@ -58,6 +58,28 @@ final class MessengerFailedDataSourceTest extends TestCase
     }
 
     #[Test]
+    public function searchSkipsRecordsAccordingToPaginationOffset(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+            self::env('2', new PlainMessage('b', 2)),
+            self::env('3', new PlainMessage('c', 3)),
+            self::env('4', new PlainMessage('d', 4)),
+            self::env('5', new PlainMessage('e', 5)),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        // page 2 with pageSize 2 → offset 2, limit 2 → ids 3 and 4
+        $query = (new DataQuery('failed-messages'))->withPagination(new Pagination(offset: 2, limit: 2));
+        $page = $dataSource->search($query);
+
+        $items = $page->asArray();
+        self::assertCount(2, $items);
+        self::assertSame('3', $items[0]->identifier);
+        self::assertSame('4', $items[1]->identifier);
+    }
+
+    #[Test]
     public function findReturnsRecordForKnownId(): void
     {
         $receiver = new InMemoryListableReceiver([

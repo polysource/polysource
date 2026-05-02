@@ -26,7 +26,7 @@ final class PolysourceTest extends TestCase
         $expected = [
             'VERSION',
             'PAGE_INDEX', 'PAGE_DETAIL', 'PAGE_EDIT', 'PAGE_NEW',
-            'TAG_DATA_SOURCE', 'TAG_RESOURCE', 'TAG_FIELD_CONFIGURATOR', 'TAG_ACTION', 'TAG_PERMISSION',
+            'TAG_DATA_SOURCE', 'TAG_RESOURCE',
         ];
 
         foreach ($expected as $name) {
@@ -35,7 +35,7 @@ final class PolysourceTest extends TestCase
             self::assertNotEmpty($constants[$name]);
         }
 
-        foreach (['TAG_DATA_SOURCE', 'TAG_RESOURCE', 'TAG_FIELD_CONFIGURATOR', 'TAG_ACTION', 'TAG_PERMISSION'] as $tagName) {
+        foreach (['TAG_DATA_SOURCE', 'TAG_RESOURCE'] as $tagName) {
             $value = $constants[$tagName];
             self::assertIsString($value);
             self::assertStringStartsWith('polysource.', $value);

@@ -112,6 +112,17 @@ final class TestKernel extends Kernel
         $container->setAlias('security.csrf.token_storage', InMemoryCsrfTokenStorage::class)
             ->setPublic(true)
         ;
+
+        // No Symfony Security firewall in this kernel — alias the
+        // permission interface to a permissive fixture so controllers
+        // don't trip the "fail closed" guard in
+        // SymfonyAuthorizationCheckerPermission.
+        $container->register(\Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class, \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class)
+            ->setPublic(true)
+        ;
+        $container->setAlias(\Polysource\Core\Permission\PermissionInterface::class, \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission::class)
+            ->setPublic(true)
+        ;
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void

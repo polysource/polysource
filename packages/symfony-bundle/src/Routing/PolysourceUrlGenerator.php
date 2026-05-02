@@ -10,7 +10,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * Helper that resolves Polysource route names from resource slugs.
  *
  * Cf. ADR-003 §Url generation — users typically call this through a Twig
- * helper rather than directly. Twig helpers are wired in Phase 3.
+ * helper rather than directly. Future Twig globals / helpers will be
+ * wired through `polysource/twig-theme`.
  */
 final readonly class PolysourceUrlGenerator
 {

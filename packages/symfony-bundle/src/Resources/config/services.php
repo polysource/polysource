@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Polysource\Bundle\ArgumentResolver\AdminContextResolver;
 use Polysource\Bundle\Context\AdminContextProvider;
 use Polysource\Bundle\Controller\ActionController;
+use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
 use Polysource\Bundle\EventListener\PolysourceViewListener;
@@ -13,6 +14,7 @@ use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission;
 use Polysource\Core\Permission\PermissionInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -83,15 +85,20 @@ return static function (ContainerConfigurator $container): void {
     $services->alias(PermissionInterface::class, SymfonyAuthorizationCheckerPermission::class)->public();
 
     $services
-        ->set(IndexController::class)
+        ->set(ControllerSupport::class)
         ->args([service(PermissionInterface::class)])
+    ;
+
+    $services
+        ->set(IndexController::class)
+        ->args([service(ControllerSupport::class)])
         ->public()
         ->tag('controller.service_arguments')
     ;
 
     $services
         ->set(DetailController::class)
-        ->args([service(PermissionInterface::class)])
+        ->args([service(ControllerSupport::class)])
         ->public()
         ->tag('controller.service_arguments')
     ;
@@ -101,8 +108,9 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             service(PolysourceUrlGenerator::class),
             service(CsrfTokenManagerInterface::class),
-            service(PermissionInterface::class),
+            service(ControllerSupport::class),
             '%polysource.max_bulk_ids%',
+            service(LoggerInterface::class)->nullOnInvalid(),
         ])
         ->public()
         ->tag('controller.service_arguments')
@@ -110,7 +118,10 @@ return static function (ContainerConfigurator $container): void {
 
     $services
         ->set(PolysourceViewListener::class)
-        ->args([service(Environment::class)->nullOnInvalid()])
+        ->args([
+            service(Environment::class)->nullOnInvalid(),
+            service(LoggerInterface::class)->nullOnInvalid(),
+        ])
         ->tag('kernel.event_subscriber')
     ;
 };

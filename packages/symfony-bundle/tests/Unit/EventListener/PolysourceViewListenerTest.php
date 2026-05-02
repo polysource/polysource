@@ -33,12 +33,12 @@ final class PolysourceViewListenerTest extends TestCase
     }
 
     #[Test]
-    public function fallsBackToJsonWhenTwigIsAbsent(): void
+    public function fallsBackToSafeJsonWhenTwigIsAbsent(): void
     {
         $listener = new PolysourceViewListener();
         $resource = new FakeResource('flags', label: 'Feature flags');
         $page = new DataPage(
-            items: [new DataRecord('1', ['name' => 'flag-a'])],
+            items: [new DataRecord('1', ['name' => 'flag-a', 'secret' => 'pii'])],
             total: 1,
         );
 
@@ -56,31 +56,35 @@ final class PolysourceViewListenerTest extends TestCase
 
         $payload = self::decode($response);
         self::assertSame('@Polysource/index.html.twig', $payload['template'] ?? null);
+        self::assertSame('json', $payload['fallback'] ?? null);
+
         $resource = $payload['resource'] ?? null;
         self::assertIsArray($resource);
         self::assertSame('flags', $resource['name'] ?? null);
         self::assertSame('Feature flags', $resource['label'] ?? null);
+
         $page = $payload['page'] ?? null;
         self::assertIsArray($page);
         self::assertSame(1, $page['total'] ?? null);
-        $items = $page['items'] ?? null;
-        self::assertIsArray($items);
-        self::assertCount(1, $items);
-        $first = $items[0] ?? null;
-        self::assertIsArray($first);
-        self::assertSame('1', $first['id'] ?? null);
-        $properties = $first['properties'] ?? null;
-        self::assertIsArray($properties);
-        self::assertSame('flag-a', $properties['name'] ?? null);
+        self::assertSame(1, $page['item_count'] ?? null);
+        self::assertSame(['1'], $page['item_ids'] ?? null);
+
+        // Crucial: the JSON fallback MUST NOT leak record properties or
+        // any sensitive payload field. Sanity-check the body raw.
+        $body = $response->getContent();
+        self::assertIsString($body);
+        self::assertStringNotContainsString('flag-a', $body);
+        self::assertStringNotContainsString('secret', $body);
+        self::assertStringNotContainsString('pii', $body);
     }
 
     #[Test]
-    public function serialisesSingleRecord(): void
+    public function detailFallbackOnlyExposesRecordIdNotProperties(): void
     {
         $listener = new PolysourceViewListener();
         $view = new PolysourceView('@Polysource/detail.html.twig', [
             'resource' => new FakeResource('flags'),
-            'record' => new DataRecord('42', ['name' => 'flag-b']),
+            'record' => new DataRecord('42', ['name' => 'flag-b', 'token' => 'sensitive']),
         ]);
         $event = $this->buildEvent($view);
 
@@ -92,9 +96,12 @@ final class PolysourceViewListenerTest extends TestCase
         $record = $payload['record'] ?? null;
         self::assertIsArray($record);
         self::assertSame('42', $record['id'] ?? null);
-        $properties = $record['properties'] ?? null;
-        self::assertIsArray($properties);
-        self::assertSame('flag-b', $properties['name'] ?? null);
+        self::assertArrayNotHasKey('properties', $record);
+
+        $body = $response->getContent();
+        self::assertIsString($body);
+        self::assertStringNotContainsString('flag-b', $body);
+        self::assertStringNotContainsString('sensitive', $body);
     }
 
     #[Test]

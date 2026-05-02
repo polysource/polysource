@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Tests\Unit\Security;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,11 +16,13 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 final class SymfonyAuthorizationCheckerPermissionTest extends TestCase
 {
     #[Test]
-    public function grantsEverythingWhenNoFirewallIsRegistered(): void
+    public function failsClosedWhenNoFirewallIsRegistered(): void
     {
         $permission = new SymfonyAuthorizationCheckerPermission(null);
 
-        self::assertTrue($permission->isGranted('ANY_ATTRIBUTE'));
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Symfony Security firewall');
+        $permission->isGranted('ANY_ATTRIBUTE');
     }
 
     #[Test]

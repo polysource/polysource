@@ -18,7 +18,7 @@
                 {% for action in bulk_actions %}
                     <form method="POST"
                           action="{{ path(route_prefix ~ '_bulk_action', {resourceName: resource.name, action: action.name}) }}"
-                          onsubmit="return confirm('Run “{{ action.label }}” on every record? This cannot be undone.');"
+                          onsubmit="return confirm('Run “{{ action.label|e('js') }}” on every record? This cannot be undone.');"
                           class="d-inline-block">
                         <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
                         <button type="submit"

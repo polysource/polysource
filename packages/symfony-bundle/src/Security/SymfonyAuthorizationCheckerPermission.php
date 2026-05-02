@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Security;
 
+use LogicException;
 use Polysource\Core\Permission\PermissionInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
@@ -14,13 +15,15 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
  * The bundle wires this as the default permission checker. Polysource
  * never enforces *which* roles your app uses — it just asks Symfony if
  * the current user holds a string attribute (typically a role like
- * `ROLE_ADMIN` or a custom voter attribute like `POLYSOURCE_FAILED_MESSAGE`).
+ * `ROLE_ADMIN` or a custom voter attribute like
+ * `POLYSOURCE_FAILED_MESSAGE`).
  *
- * If the host kernel does not register a Security firewall (e.g. in a
- * minimal test app), the constructor accepts `null` and the checker
- * degrades to a permissive grant-everything implementation. Production
- * apps MUST register a firewall — Polysource is intentionally not a
- * full auth solution.
+ * **Fail-closed contract**: if the host kernel does not register a
+ * Security firewall, this implementation throws a `LogicException`
+ * instead of silently granting access. Polysource refuses to ship a
+ * permissive default for /admin endpoints. Test kernels that need to
+ * bypass auth must alias `PermissionInterface` to a fixture
+ * implementation (see `tests/Fixture/AlwaysGrantPermission.php`).
  */
 final readonly class SymfonyAuthorizationCheckerPermission implements PermissionInterface
 {
@@ -32,10 +35,7 @@ final readonly class SymfonyAuthorizationCheckerPermission implements Permission
     public function isGranted(string $attribute, mixed $subject = null): bool
     {
         if (null === $this->authorizationChecker) {
-            // No firewall configured — defer auth to the host. Logged in
-            // a debug toolbar or stderr would be ideal but Phase 6 keeps
-            // it minimal.
-            return true;
+            throw new LogicException('PolysourceBundle could not find a Symfony Security firewall. Configure security.firewalls covering your `polysource.url_prefix` (default `/admin`), or alias `Polysource\\Core\\Permission\\PermissionInterface` to a custom implementation in your services.yaml. Polysource intentionally refuses to fall back to a permissive default.');
         }
 
         return $this->authorizationChecker->isGranted($attribute, $subject);

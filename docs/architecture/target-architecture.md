@@ -210,13 +210,14 @@ final readonly class ActionResult
 ### 6.2.6 Permission
 
 ```php
-namespace Polysource\Core\Security;
+namespace Polysource\Core\Permission;
 
 interface PermissionInterface
 {
     public function isGranted(string $attribute, mixed $subject = null): bool;
 }
-// Implémentation par défaut : SymfonyAuthorizationCheckerPermission qui délègue à AuthorizationChecker.
+// Implémentation par défaut : Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission qui délègue à AuthorizationChecker.
+// Fail-closed : sans firewall configuré, throw LogicException (cf. Phase 6 + audit Phase 7).
 ```
 
 ### 6.2.7 Renderer / Formatter

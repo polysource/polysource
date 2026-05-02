@@ -7,7 +7,10 @@ namespace Polysource\Bundle\DependencyInjection;
 use Composer\InstalledVersions;
 use OutOfBoundsException;
 use Polysource\Bundle\Attribute\AsResource;
+use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\DataSource\DataSourceInterface;
+use Polysource\Core\Filter\FilterInterface;
+use Polysource\Core\Resource\ResourceInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -68,6 +71,21 @@ final class PolysourceExtension extends Extension implements PrependExtensionInt
 
         $container->registerForAutoconfiguration(DataSourceInterface::class)
             ->addTag('polysource.data_source')
+        ;
+
+        // Auto-tag the remaining Polysource interfaces so adapter
+        // authors don't repeat the boilerplate. ResourceInterface stays
+        // attribute-driven (cf. ADR-005 — explicit `#[AsResource]` is
+        // the recommended discovery path) but actions / filters that
+        // implement the contract get tagged automatically.
+        $container->registerForAutoconfiguration(ActionInterface::class)
+            ->addTag('polysource.action')
+        ;
+        $container->registerForAutoconfiguration(FilterInterface::class)
+            ->addTag('polysource.filter')
+        ;
+        $container->registerForAutoconfiguration(ResourceInterface::class)
+            ->addTag('polysource.resource')
         ;
 
         $container->registerAttributeForAutoconfiguration(
