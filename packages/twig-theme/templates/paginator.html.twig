@@ -1,0 +1,50 @@
+{#
+ # Paginator partial — branches on `page.total` (cf. ADR-002):
+ #   total !== null  → classic offset paginator
+ #   total === null  → cursor paginator (only Previous / Next)
+ #
+ # Variables: page (DataPage), context (AdminContext)
+ #}
+{% set query = context.query %}
+{% set pagination = query.pagination %}
+
+{% if page.total is not null and pagination is not null %}
+    {% set pageSize = pagination.limit %}
+    {% set currentPage = (pagination.offset / pageSize)|round(0, 'floor') + 1 %}
+    {% set lastPage = page.total > 0 ? ((page.total - 1) / pageSize)|round(0, 'floor') + 1 : 1 %}
+
+    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Pagination">
+        <small class="text-body-secondary" data-polysource-page-info>
+            {{ page.total }} record{{ page.total > 1 ? 's' : '' }}
+            — page {{ currentPage }} / {{ lastPage }}
+        </small>
+
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {{ currentPage <= 1 ? 'disabled' : '' }}">
+                <a class="page-link" href="{{ currentPage > 1 ? path(app.request.attributes.get('_route'), app.request.query.all|merge({page: currentPage - 1})) : '#' }}" aria-label="Previous">
+                    ‹
+                </a>
+            </li>
+            <li class="page-item {{ currentPage >= lastPage ? 'disabled' : '' }}">
+                <a class="page-link" href="{{ currentPage < lastPage ? path(app.request.attributes.get('_route'), app.request.query.all|merge({page: currentPage + 1})) : '#' }}" aria-label="Next">
+                    ›
+                </a>
+            </li>
+        </ul>
+    </nav>
+{% elseif page.nextCursor or page.prevCursor %}
+    <nav class="d-flex justify-content-end mt-3" aria-label="Cursor pagination">
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {{ page.prevCursor ? '' : 'disabled' }}">
+                <a class="page-link"
+                   href="{{ page.prevCursor ? path(app.request.attributes.get('_route'), app.request.query.all|merge({cursor: page.prevCursor})) : '#' }}"
+                   aria-label="Previous">‹ Previous</a>
+            </li>
+            <li class="page-item {{ page.nextCursor ? '' : 'disabled' }}">
+                <a class="page-link"
+                   href="{{ page.nextCursor ? path(app.request.attributes.get('_route'), app.request.query.all|merge({cursor: page.nextCursor})) : '#' }}"
+                   aria-label="Next">Next ›</a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}

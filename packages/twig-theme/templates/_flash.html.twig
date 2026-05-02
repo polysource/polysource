@@ -1,0 +1,16 @@
+{% if app.session is defined and app.session.flashbag is defined %}
+    {% for type, messages in app.session.flashbag.all %}
+        {% for message in messages %}
+            {% set bsClass = {
+                'success': 'success',
+                'error': 'danger',
+                'warning': 'warning',
+                'notice': 'info',
+            }[type]|default('secondary') %}
+            <div class="alert alert-{{ bsClass }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}

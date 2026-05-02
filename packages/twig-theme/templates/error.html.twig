@@ -1,0 +1,14 @@
+{% extends '@Polysource/layout.html.twig' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h4 mb-3 text-danger">{{ status_code|default(500) }} — {{ status_text|default('Server error') }}</h1>
+            {% if message is defined and message %}
+                <p class="mb-0">{{ message }}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

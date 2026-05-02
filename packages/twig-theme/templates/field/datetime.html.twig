@@ -1,0 +1,8 @@
+{# Variables: value, field, record #}
+{% if value is null or value == '' %}
+    <span class="text-body-secondary polysource-field polysource-field-datetime">—</span>
+{% else %}
+    <time datetime="{{ value|date('c') }}" class="polysource-field polysource-field-datetime">
+        {{ value|date('Y-m-d H:i:s') }}
+    </time>
+{% endif %}

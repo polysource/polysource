@@ -63,7 +63,7 @@ final class BundleSmokeTest extends KernelTestCase
     }
 
     #[Test]
-    public function indexRouteRespondsWithSerialisedPage(): void
+    public function indexRouteRendersHtmlListing(): void
     {
         self::bootKernel();
         $kernel = self::$kernel;
@@ -72,15 +72,16 @@ final class BundleSmokeTest extends KernelTestCase
         $response = $kernel->handle(Request::create('/admin/flags', 'GET'));
 
         self::assertSame(200, $response->getStatusCode());
-        $payload = self::decodePayload($response->getContent());
-        self::assertSame('flags', self::nestedString($payload, 'resource.name'));
-        self::assertSame('Feature flags', self::nestedString($payload, 'resource.label'));
-        self::assertSame(2, self::nestedInt($payload, 'page.total'));
-        self::assertCount(2, self::nestedArray($payload, 'page.items'));
+        $body = (string) $response->getContent();
+        self::assertStringContainsString('<html', $body);
+        self::assertStringContainsString('Feature flags', $body);
+        self::assertStringContainsString('data-polysource-resource="flags"', $body);
+        self::assertStringContainsString('/admin/flags/1', $body);
+        self::assertStringContainsString('/admin/flags/2', $body);
     }
 
     #[Test]
-    public function detailRouteResolvesIndividualRecord(): void
+    public function detailRouteRendersIndividualRecordHtml(): void
     {
         self::bootKernel();
         $kernel = self::$kernel;
@@ -89,9 +90,10 @@ final class BundleSmokeTest extends KernelTestCase
         $response = $kernel->handle(Request::create('/admin/flags/1', 'GET'));
 
         self::assertSame(200, $response->getStatusCode());
-        $payload = self::decodePayload($response->getContent());
-        self::assertSame('1', self::nestedString($payload, 'record.id'));
-        self::assertSame('flag-a', self::nestedString($payload, 'record.properties.name'));
+        $body = (string) $response->getContent();
+        self::assertStringContainsString('<html', $body);
+        self::assertStringContainsString('Feature flags', $body);
+        self::assertStringContainsString('data-polysource-record="1"', $body);
     }
 
     #[Test]
@@ -109,68 +111,5 @@ final class BundleSmokeTest extends KernelTestCase
         self::assertNotNull($context);
         self::assertSame('flags', $context->resource->getName());
         self::assertSame('index', $context->action);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function decodePayload(string|false $content): array
-    {
-        self::assertIsString($content);
-        $payload = json_decode($content, true);
-        self::assertIsArray($payload);
-
-        /** @var array<string, mixed> $payload */
-        return $payload;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private static function nestedString(array $payload, string $path): string
-    {
-        $value = self::nestedValue($payload, $path);
-        self::assertIsString($value);
-
-        return $value;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private static function nestedInt(array $payload, string $path): int
-    {
-        $value = self::nestedValue($payload, $path);
-        self::assertIsInt($value);
-
-        return $value;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     *
-     * @return array<int|string, mixed>
-     */
-    private static function nestedArray(array $payload, string $path): array
-    {
-        $value = self::nestedValue($payload, $path);
-        self::assertIsArray($value);
-
-        return $value;
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private static function nestedValue(array $payload, string $path): mixed
-    {
-        $cursor = $payload;
-        foreach (explode('.', $path) as $segment) {
-            self::assertIsArray($cursor, \sprintf('Path "%s" is not navigable.', $path));
-            self::assertArrayHasKey($segment, $cursor, \sprintf('Path "%s" is missing key "%s".', $path, $segment));
-            $cursor = $cursor[$segment];
-        }
-
-        return $cursor;
     }
 }

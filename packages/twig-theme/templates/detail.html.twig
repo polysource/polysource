@@ -1,0 +1,33 @@
+{% extends '@Polysource/layout.html.twig' %}
+
+{% block title %}{{ resource.label }} — {{ record.identifier }}{% endblock %}
+
+{% block content %}
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ path('polysource_' ~ resource.name|replace({'-': '_'}) ~ '_index', {resourceName: resource.name}) }}"
+               class="text-decoration-none text-body-secondary small">
+                ← {{ resource.label }}
+            </a>
+            <h1 class="h3 mb-0 mt-1" data-polysource-record="{{ record.identifier }}">
+                {{ record.identifier }}
+            </h1>
+        </div>
+    </header>
+
+    <div class="card shadow-sm">
+        <dl class="row mb-0 p-4">
+            {% for field in fields %}
+                <dt class="col-sm-3 text-body-secondary">{{ field.label|default(field.property) }}</dt>
+                <dd class="col-sm-9">
+                    {% include field.template|default('@Polysource/field/generic.html.twig')
+                        with {value: record.get(field.property), field: field, record: record}
+                        only
+                    %}
+                </dd>
+            {% else %}
+                <p class="text-body-secondary mb-0">No fields configured for this view.</p>
+            {% endfor %}
+        </dl>
+    </div>
+{% endblock %}

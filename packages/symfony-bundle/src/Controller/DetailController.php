@@ -7,7 +7,7 @@ namespace Polysource\Bundle\Controller;
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\View\PolysourceView;
 use Polysource\Core\Exception\ResourceNotFoundException;
-use Polysource\Core\Field\FieldInterface;
+use Polysource\Core\Field\FieldDto;
 
 /**
  * Front controller for `GET /{prefix}/{resourceName}/{id}` (single record detail).
@@ -40,13 +40,16 @@ final class DetailController
     }
 
     /**
-     * @return list<FieldInterface>
+     * @return list<FieldDto>
      */
     private static function collectFields(AdminContext $context, string $page): array
     {
         $fields = [];
         foreach ($context->resource->configureFields($page) as $field) {
-            $fields[] = $field;
+            $dto = $field->getAsDto();
+            if ($dto->isOnPage($page)) {
+                $fields[] = $dto;
+            }
         }
 
         return $fields;

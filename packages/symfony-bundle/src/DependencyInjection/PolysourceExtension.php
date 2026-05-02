@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\DependencyInjection;
 
+use Composer\InstalledVersions;
+use OutOfBoundsException;
 use Polysource\Bundle\Attribute\AsResource;
 use Polysource\Core\DataSource\DataSourceInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
@@ -17,8 +20,24 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  *
  * Cf. the project context file §"Symfony DI tags" for the canonical tag names.
  */
-final class PolysourceExtension extends Extension
+final class PolysourceExtension extends Extension implements PrependExtensionInterface
 {
+    public function prepend(ContainerBuilder $container): void
+    {
+        if (!$container->hasExtension('twig')) {
+            return;
+        }
+
+        $themePath = self::locateTwigThemeTemplates();
+        if (null === $themePath) {
+            return;
+        }
+
+        $container->prependExtensionConfig('twig', [
+            'paths' => [$themePath => 'Polysource'],
+        ]);
+    }
+
     /**
      * @param array<array<mixed>> $configs
      */
@@ -63,5 +82,32 @@ final class PolysourceExtension extends Extension
     public function getAlias(): string
     {
         return 'polysource';
+    }
+
+    /**
+     * Locate the polysource/twig-theme installed templates directory.
+     *
+     * Returns null when the package is missing (the bundle still works —
+     * the view listener falls back to JSON).
+     */
+    private static function locateTwigThemeTemplates(): ?string
+    {
+        if (!class_exists(InstalledVersions::class)) {
+            return null;
+        }
+
+        try {
+            $packagePath = InstalledVersions::getInstallPath('polysource/twig-theme');
+        } catch (OutOfBoundsException) {
+            return null;
+        }
+
+        if (null === $packagePath) {
+            return null;
+        }
+
+        $templates = $packagePath . '/templates';
+
+        return is_dir($templates) ? $templates : null;
     }
 }

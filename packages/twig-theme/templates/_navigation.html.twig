@@ -1,0 +1,10 @@
+<nav class="navbar bg-dark navbar-dark border-bottom shadow-sm" data-polysource-nav>
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">Polysource</span>
+        {% if resource is defined and resource %}
+            <span class="navbar-text small text-body-secondary">
+                /admin/{{ resource.name }}
+            </span>
+        {% endif %}
+    </div>
+</nav>

@@ -1,0 +1,56 @@
+{% extends '@Polysource/layout.html.twig' %}
+
+{% block title %}{{ resource.label }}{% endblock %}
+
+{% block content %}
+    <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ resource.label }}</h1>
+        <small class="text-body-secondary" data-polysource-resource="{{ resource.name }}">
+            {{ resource.name }}
+        </small>
+    </header>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        {% for field in fields %}
+                            <th scope="col">{{ field.label|default(field.property) }}</th>
+                        {% endfor %}
+                        <th scope="col" class="text-end">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in page.items %}
+                        <tr>
+                            {% for field in fields %}
+                                <td>
+                                    {% include field.template|default('@Polysource/field/generic.html.twig')
+                                        with {value: record.get(field.property), field: field, record: record}
+                                        only
+                                    %}
+                                </td>
+                            {% endfor %}
+                            <td class="text-end">
+                                <a href="{{ path('polysource_' ~ resource.name|replace({'-': '_'}) ~ '_detail', {resourceName: resource.name, id: record.identifier}) }}"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   data-polysource-action="detail">
+                                    Detail
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ fields|length + 1 }}" class="text-center text-body-secondary py-4">
+                                No records.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% include '@Polysource/paginator.html.twig' with {page: page, context: context} only %}
+{% endblock %}

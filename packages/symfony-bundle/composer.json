@@ -17,6 +17,7 @@
     "require": {
         "php": "^8.4",
         "polysource/core": "0.1.x-dev",
+        "polysource/twig-theme": "0.1.x-dev",
         "symfony/config": "^7.4",
         "symfony/dependency-injection": "^7.4",
         "symfony/framework-bundle": "^7.4",

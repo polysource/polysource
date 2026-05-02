@@ -1,0 +1,31 @@
+/*
+ * Polysource — minimal styling on top of Bootstrap 5.
+ *
+ * Bootstrap 5 is loaded from a CDN by `layout.html.twig`. This file only
+ * adds the bits Bootstrap doesn't cover (data-polysource-* hooks for
+ * potential JS, code-block colours).
+ */
+
+.polysource-field-code,
+.polysource-field-id {
+    font-family: var(--bs-font-monospace, monospace);
+    font-size: 0.875em;
+}
+
+.polysource-field-code {
+    background-color: var(--bs-tertiary-bg, #f8f9fa);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.polysource-field-datetime {
+    font-variant-numeric: tabular-nums;
+}
+
+[data-polysource-resource] {
+    font-family: var(--bs-font-monospace, monospace);
+}

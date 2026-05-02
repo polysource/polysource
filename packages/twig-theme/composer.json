@@ -1,0 +1,26 @@
+{
+    "name": "polysource/twig-theme",
+    "description": "Polysource Admin — default Twig theme. Pure templates and CSS, no PHP.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "polysource",
+        "twig",
+        "admin",
+        "theme"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": "^8.4",
+        "twig/twig": "^3.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
