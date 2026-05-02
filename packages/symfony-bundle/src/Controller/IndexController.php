@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Polysource\Bundle\Controller;
+
+use Polysource\Bundle\Context\AdminContext;
+use Polysource\Bundle\View\PolysourceView;
+use Polysource\Core\Field\FieldInterface;
+
+/**
+ * Front controller for `GET /{prefix}/{resourceName}` (the resource index page).
+ *
+ * Returns a {@see PolysourceView} consumed by the response listener.
+ */
+final class IndexController
+{
+    public function __invoke(AdminContext $context): PolysourceView
+    {
+        $page = $context->resource->getDataSource()->search($context->query);
+
+        return new PolysourceView(
+            template: '@Polysource/index.html.twig',
+            variables: [
+                'context' => $context,
+                'resource' => $context->resource,
+                'page' => $page,
+                'fields' => self::collectFields($context, 'index'),
+            ],
+        );
+    }
+
+    /**
+     * @return list<FieldInterface>
+     */
+    private static function collectFields(AdminContext $context, string $page): array
+    {
+        $fields = [];
+        foreach ($context->resource->configureFields($page) as $field) {
+            $fields[] = $field;
+        }
+
+        return $fields;
+    }
+}
