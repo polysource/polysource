@@ -1,0 +1,47 @@
+{
+    "name": "polysource/adapter-messenger",
+    "description": "Polysource Admin — Symfony Messenger failed transport data source.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "polysource",
+        "symfony-messenger",
+        "failed-messages",
+        "admin"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": "^8.4",
+        "polysource/core": "0.1.x-dev",
+        "polysource/symfony-bundle": "0.1.x-dev",
+        "symfony/config": "^7.4",
+        "symfony/dependency-injection": "^7.4",
+        "symfony/http-kernel": "^7.4",
+        "symfony/messenger": "^7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Adapter\\Messenger\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Polysource\\Adapter\\Messenger\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}

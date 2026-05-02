@@ -19,6 +19,7 @@
     },
     "require": {
         "php": "^8.4",
+        "polysource/adapter-messenger": "0.1.x-dev",
         "polysource/core": "0.1.x-dev",
         "polysource/symfony-bundle": "0.1.x-dev",
         "polysource/twig-theme": "0.1.x-dev"
@@ -59,7 +60,8 @@
     "autoload-dev": {
         "psr-4": {
             "Polysource\\Core\\Tests\\": "packages/core/tests/",
-            "Polysource\\Bundle\\Tests\\": "packages/symfony-bundle/tests/"
+            "Polysource\\Bundle\\Tests\\": "packages/symfony-bundle/tests/",
+            "Polysource\\Adapter\\Messenger\\Tests\\": "packages/adapter-messenger/tests/"
         }
     }
 }

@@ -21,15 +21,18 @@
         <testsuite name="unit">
             <directory>packages/core/tests/Unit</directory>
             <directory>packages/symfony-bundle/tests/Unit</directory>
+            <directory>packages/adapter-messenger/tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
             <directory>packages/symfony-bundle/tests/Functional</directory>
+            <directory>packages/adapter-messenger/tests/Functional</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>packages/core/src</directory>
             <directory>packages/symfony-bundle/src</directory>
+            <directory>packages/adapter-messenger/src</directory>
         </include>
     </source>
 </phpunit>
