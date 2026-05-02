@@ -22,8 +22,22 @@ services:
             $failedTransport: '@messenger.transport.failed'
 
     # Replace the bundle's empty FailedMessageResource with the
-    # demo's subclass that yields concrete field DTOs. The bundle's
-    # extension (PolysourceMessengerExtension) wires the constructor
-    # arguments — we just swap the class.
+    # demo's subclass that yields concrete field DTOs.
+    #
+    # Arguments are re-declared explicitly because re-defining a
+    # service id in a YAML config does NOT inherit the explicit
+    # `replaceArgument` calls made by
+    # `PolysourceMessengerExtension::load()` — Symfony merges the YAML
+    # on top of the prior definition and forces autowiring to recompute
+    # for the new class, which silently drops the slug + actions args
+    # the extension had injected.
     Polysource\Adapter\Messenger\Resource\FailedMessageResource:
         class: Polysource\Demo\Messenger\Resource\DemoFailedMessageResource
+        arguments:
+            $dataSource: '@Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource'
+            $slug: '%polysource_messenger.resource_slug%'
+            $actions:
+                - '@Polysource\Adapter\Messenger\Action\RetryFailedMessageAction'
+                - '@Polysource\Adapter\Messenger\Action\DismissFailedMessageAction'
+                - '@Polysource\Adapter\Messenger\Action\RetryAllFailedMessagesAction'
+                - '@Polysource\Adapter\Messenger\Action\PurgeFailedMessagesAction'
