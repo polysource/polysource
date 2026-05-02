@@ -15,8 +15,11 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 /**
  * Minimal Symfony kernel for Polysource bundle functional tests.
+ *
+ * Not `final` so the {@see DeniedTestKernel} variant can override
+ * permission wiring for negative-path tests.
  */
-final class TestKernel extends Kernel
+class TestKernel extends Kernel
 {
     use MicroKernelTrait;
 

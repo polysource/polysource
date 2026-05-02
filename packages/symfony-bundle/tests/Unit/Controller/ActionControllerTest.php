@@ -123,6 +123,7 @@ final class ActionControllerTest extends TestCase
         return new ActionController(
             $this->urlGenerator(),
             $this->csrfManager(),
+            new \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission(),
             $maxBulkIds,
         );
     }
@@ -138,6 +139,7 @@ final class ActionControllerTest extends TestCase
         $controller = new ActionController(
             $this->urlGenerator(),
             $manager,
+            new \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission(),
             $maxBulkIds,
         );
         $token = $manager->getToken(ActionController::CSRF_TOKEN_ID)->getValue();

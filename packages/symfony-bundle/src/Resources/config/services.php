@@ -11,9 +11,12 @@ use Polysource\Bundle\EventListener\PolysourceViewListener;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
+use Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission;
+use Polysource\Core\Permission\PermissionInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Twig\Environment;
 
@@ -73,13 +76,22 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $services
+        ->set(SymfonyAuthorizationCheckerPermission::class)
+        ->args([service(AuthorizationCheckerInterface::class)->nullOnInvalid()])
+        ->public()
+    ;
+    $services->alias(PermissionInterface::class, SymfonyAuthorizationCheckerPermission::class)->public();
+
+    $services
         ->set(IndexController::class)
+        ->args([service(PermissionInterface::class)])
         ->public()
         ->tag('controller.service_arguments')
     ;
 
     $services
         ->set(DetailController::class)
+        ->args([service(PermissionInterface::class)])
         ->public()
         ->tag('controller.service_arguments')
     ;
@@ -89,6 +101,7 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             service(PolysourceUrlGenerator::class),
             service(CsrfTokenManagerInterface::class),
+            service(PermissionInterface::class),
             '%polysource.max_bulk_ids%',
         ])
         ->public()

@@ -6,12 +6,14 @@ namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
+use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
 use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Exception\UnsupportedOperationException;
+use Polysource\Core\Permission\PermissionInterface;
 use Polysource\Core\Resource\ResourceInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,15 +45,14 @@ final readonly class ActionController
     public function __construct(
         private PolysourceUrlGenerator $urlGenerator,
         private CsrfTokenManagerInterface $csrfTokenManager,
+        private PermissionInterface $permission,
         private int $maxBulkIds = 500,
     ) {
     }
 
     public function __invoke(AdminContext $context): Response
     {
-        // TODO(Phase-6): enforce $context->resource->getPermission() and
-        // the action's getPermission() via PermissionInterface.
-
+        $this->assertResourceAccess($context->resource);
         $this->assertCsrf($context);
 
         if (null === $context->recordId) {
@@ -62,6 +63,8 @@ final readonly class ActionController
         if (!$action instanceof InlineActionInterface) {
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not an inline action.', $context->action, $context->resource->getName()));
         }
+
+        $this->assertActionAccess($action);
 
         $record = $context->resource->getDataSource()->find($context->recordId);
         if (null === $record) {
@@ -76,9 +79,7 @@ final readonly class ActionController
 
     public function bulk(AdminContext $context): Response
     {
-        // TODO(Phase-6): enforce $context->resource->getPermission() and
-        // the action's getPermission() via PermissionInterface.
-
+        $this->assertResourceAccess($context->resource);
         $this->assertCsrf($context);
 
         $rawIds = $context->request->request->all('ids');
@@ -95,6 +96,8 @@ final readonly class ActionController
         if (!$action instanceof BulkActionInterface) {
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not a bulk action.', $actionName, $context->resource->getName()));
         }
+
+        $this->assertActionAccess($action);
 
         $stringIds = [];
         foreach ($rawIds as $id) {
@@ -140,6 +143,22 @@ final readonly class ActionController
         $token = $context->request->request->get('_token');
         if (!\is_string($token) || !$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $token))) {
             throw new AccessDeniedHttpException('Invalid or missing CSRF token.');
+        }
+    }
+
+    private function assertResourceAccess(ResourceInterface $resource): void
+    {
+        $attribute = $resource->getPermission() ?? PermissionAttributes::RESOURCE_VIEW;
+        if (!$this->permission->isGranted($attribute, $resource)) {
+            throw new AccessDeniedHttpException(\sprintf('Access denied on resource "%s" (attribute %s).', $resource->getName(), $attribute));
+        }
+    }
+
+    private function assertActionAccess(ActionInterface $action): void
+    {
+        $attribute = $action->getPermission() ?? PermissionAttributes::ACTION_INVOKE;
+        if (!$this->permission->isGranted($attribute)) {
+            throw new AccessDeniedHttpException(\sprintf('Access denied on action "%s" (attribute %s).', $action->getName(), $attribute));
         }
     }
 

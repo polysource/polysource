@@ -5,21 +5,28 @@ declare(strict_types=1);
 namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
+use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Bundle\View\PolysourceView;
 use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Field\FieldDto;
+use Polysource\Core\Permission\PermissionInterface;
 use Polysource\Core\Resource\ResourceInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Front controller for `GET /{prefix}/{resourceName}/{id}` (single record detail).
  */
-final class DetailController
+final readonly class DetailController
 {
+    public function __construct(
+        private PermissionInterface $permission,
+    ) {
+    }
+
     public function __invoke(AdminContext $context): PolysourceView
     {
-        // TODO(Phase-6): enforce $context->resource->getPermission() via
-        // PermissionInterface before reaching the data source.
+        $this->assertResourceAccess($context->resource);
 
         if (null === $context->recordId) {
             throw new ResourceNotFoundException(\sprintf('Detail route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
@@ -37,9 +44,17 @@ final class DetailController
                 'resource' => $context->resource,
                 'record' => $record,
                 'fields' => self::collectFields($context, 'detail'),
-                'inline_actions' => self::collectInlineActions($context->resource),
+                'inline_actions' => $this->collectInlineActions($context->resource),
             ],
         );
+    }
+
+    private function assertResourceAccess(ResourceInterface $resource): void
+    {
+        $attribute = $resource->getPermission() ?? PermissionAttributes::RESOURCE_VIEW;
+        if (!$this->permission->isGranted($attribute, $resource)) {
+            throw new AccessDeniedHttpException(\sprintf('Access denied on resource "%s" (attribute %s).', $resource->getName(), $attribute));
+        }
     }
 
     /**
@@ -61,17 +76,22 @@ final class DetailController
     /**
      * @return list<array{name: string, label: string, icon: ?string}>
      */
-    private static function collectInlineActions(ResourceInterface $resource): array
+    private function collectInlineActions(ResourceInterface $resource): array
     {
         $views = [];
         foreach ($resource->configureActions() as $action) {
-            if ($action instanceof InlineActionInterface) {
-                $views[] = [
-                    'name' => $action->getName(),
-                    'label' => $action->getLabel(),
-                    'icon' => $action->getIcon(),
-                ];
+            if (!$action instanceof InlineActionInterface) {
+                continue;
             }
+            $attribute = $action->getPermission() ?? PermissionAttributes::ACTION_INVOKE;
+            if (!$this->permission->isGranted($attribute)) {
+                continue;
+            }
+            $views[] = [
+                'name' => $action->getName(),
+                'label' => $action->getLabel(),
+                'icon' => $action->getIcon(),
+            ];
         }
 
         return $views;
