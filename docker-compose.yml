@@ -1,0 +1,29 @@
+# Polysource — Docker Compose for local dev
+#
+# Single PHP service for running tests, static analysis, and code style.
+# No DB / Redis / Meili here — those services belong to the demo app
+# (cf. examples/messenger-demo/docker-compose.yml in Phase 8).
+#
+# Cf. ADR-008.
+
+name: polysource
+
+services:
+  php:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: polysource-dev:php8.4
+    volumes:
+      - .:/app:cached
+      - composer-cache:/home/polysource/.composer
+    working_dir: /app
+    environment:
+      COMPOSER_MEMORY_LIMIT: -1
+      PHP_IDE_CONFIG: serverName=polysource
+
+volumes:
+  composer-cache:
+    driver: local

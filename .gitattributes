@@ -1,0 +1,46 @@
+# Auto-detect text files and use LF line endings
+* text=auto eol=lf
+
+# Source code
+*.php   text eol=lf diff=php
+*.twig  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+
+# Binary files
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.svg   text eol=lf
+*.woff  binary
+*.woff2 binary
+
+# Files NOT included in Composer dist (export-ignore)
+# These are present in the git repo but stripped from `composer require` downloads
+/.github                export-ignore
+/.gitignore             export-ignore
+/.gitattributes         export-ignore
+/.idea                  export-ignore
+/.vscode                export-ignore
+/.ddev                  export-ignore
+/.local                export-ignore
+/the project context file              export-ignore
+/Makefile               export-ignore
+/Dockerfile             export-ignore
+/docker-compose.yml     export-ignore
+/docker-compose.override.yml export-ignore
+/phpstan.neon.dist      export-ignore
+/phpstan-baseline.neon  export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/.php-cs-fixer.cache    export-ignore
+/CONTRIBUTING.md        export-ignore
+/CODE_OF_CONDUCT.md     export-ignore
+/docs                   export-ignore
+/examples               export-ignore
+/tests                  export-ignore

@@ -1,0 +1,23 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: max
+
+    paths:
+        - packages
+
+    excludePaths:
+        analyse:
+            - packages/*/tests/Functional/App/var/*
+            - packages/*/tests/Functional/App/cache/*
+            - packages/*/vendor/*
+
+    treatPhpDocTypesAsCertain: false
+
+    # PHPUnit-specific noise: ignore on test classes
+    ignoreErrors: []
+
+    # Inline strict-rules level (cf. phpstan/phpstan-strict-rules)
+    # Provided by phpstan/extension-installer auto-loading
+    bootstrapFiles: []

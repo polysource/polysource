@@ -1,0 +1,32 @@
+# Polysource — DDEV configuration (alternative to docker-compose.yml)
+#
+# Optional dev environment for contributors familiar with DDEV.
+# Equivalent to the Docker Compose setup at the repo root.
+#
+# Usage:
+#   ddev start
+#   ddev composer install
+#   ddev exec phpunit
+#   ddev exec vendor/bin/phpstan analyse
+#
+# Cf. ADR-008.
+
+name: polysource
+type: php
+docroot: ""
+php_version: "8.4"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+nodejs_version: "20"
+
+# We don't need a DB for the lib itself.
+# Demo app provides its own DB if needed.
+omit_containers: [db, ddev-ssh-agent]
+
+# Don't let DDEV manage Symfony settings — Polysource is a library, not a Symfony app.
+disable_settings_management: true
+
+# Hooks
+hooks:
+  post-start:
+    - composer: install --no-interaction

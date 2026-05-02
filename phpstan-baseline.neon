@@ -1,0 +1,13 @@
+# PHPStan baseline
+#
+# This file is intentionally empty at v0.1 launch.
+# Add suppressed errors here only when migrating legacy code or when
+# a known false positive cannot be fixed immediately.
+#
+# To regenerate after fixing all errors:
+#   vendor/bin/phpstan analyse --generate-baseline
+#
+# Reference: https://phpstan.org/user-guide/baseline
+
+parameters:
+    ignoreErrors: []

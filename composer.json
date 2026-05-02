@@ -1,0 +1,50 @@
+{
+    "name": "polysource/polysource",
+    "description": "Symfony admin engine for resources beyond Doctrine: Messenger failed messages, feature flags, files, queues, external APIs, search indexes, webhooks and configuration resources.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "admin",
+        "admin-panel",
+        "messenger",
+        "datasource",
+        "multi-source",
+        "polysource"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": "^8.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/extension-installer": "^1.4",
+        "friendsofphp/php-cs-fixer": "^3.65"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/*"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
