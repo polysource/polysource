@@ -1,6 +1,8 @@
 {# Variables: value, field, record #}
 {% if value is null %}
     <span class="text-body-secondary polysource-field polysource-field-code">—</span>
+{% elseif value is iterable %}
+    <pre class="polysource-field polysource-field-code mb-0"><code>{{ value|json_encode(constant('JSON_PRETTY_PRINT')) }}</code></pre>
 {% else %}
-    <pre class="polysource-field polysource-field-code mb-0"><code>{{ value is iterable or value is object ? value|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')) : value }}</code></pre>
+    <pre class="polysource-field polysource-field-code mb-0"><code>{{ value }}</code></pre>
 {% endif %}

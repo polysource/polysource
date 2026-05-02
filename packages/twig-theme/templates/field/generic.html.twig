@@ -1,7 +1,7 @@
 {# Variables: value, field, record — fallback when no specific field template is set #}
 {% if value is null %}
     <span class="text-body-secondary polysource-field polysource-field-generic">—</span>
-{% elseif value is iterable or value is object %}
+{% elseif value is iterable %}
     <code class="polysource-field polysource-field-generic">{{ value|json_encode }}</code>
 {% else %}
     <span class="polysource-field polysource-field-generic">{{ value }}</span>

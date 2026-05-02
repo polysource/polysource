@@ -72,6 +72,14 @@ validate: ## Validate root + sub-package composer.json files (strict)
 .PHONY: ci
 ci: validate cs-check phpstan test ## Reproduce the 4 GitHub Actions CI jobs locally (run before every push)
 
+##@ Preview
+
+.PHONY: preview
+preview: ## Serve the Polysource Twig theme preview at http://localhost:8080
+	@echo "→ http://localhost:8080/admin/flags"
+	docker run --rm -it -p 8080:8080 -v $$(pwd):/app -w /app polysource-dev:php8.4 \
+		php -S 0.0.0.0:8080 -t examples/preview examples/preview/index.php
+
 ##@ Demo
 
 .PHONY: demo
