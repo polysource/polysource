@@ -35,6 +35,7 @@
         "polysource/easyadmin-filter-bridge": "0.1.x-dev",
         "symfony/browser-kit": "^7.4",
         "symfony/dom-crawler": "^7.4",
+        "symfony/form": "^7.4",
         "symfony/framework-bundle": "^7.4",
         "symfony/phpunit-bridge": "^7.4",
         "symfony/security-bundle": "^7.4",
@@ -63,7 +64,8 @@
         "psr-4": {
             "Polysource\\Core\\Tests\\": "packages/core/tests/",
             "Polysource\\Bundle\\Tests\\": "packages/symfony-bundle/tests/",
-            "Polysource\\Adapter\\Messenger\\Tests\\": "packages/adapter-messenger/tests/"
+            "Polysource\\Adapter\\Messenger\\Tests\\": "packages/adapter-messenger/tests/",
+            "Polysource\\EasyAdminFilterBridge\\Tests\\": "packages/easyadmin-filter-bridge/tests/"
         }
     }
 }
