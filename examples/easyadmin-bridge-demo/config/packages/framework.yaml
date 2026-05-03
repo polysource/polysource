@@ -16,6 +16,11 @@ framework:
     form: true
     annotations: false
 
+    asset_mapper:
+        paths:
+            - assets/
+            - vendor/polysource/easyadmin-filter-bridge/assets/
+
 when@test:
     framework:
         test: true

@@ -8,8 +8,9 @@
         "doctrine/dbal": "^3.10|^4.4",
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/orm": "^2.20|^3.6",
-        "easycorp/easyadmin-bundle": "^4.24",
+        "easycorp/easyadmin-bundle": "^5.0",
         "polysource/easyadmin-filter-bridge": "0.1.x-dev",
+        "symfony/asset-mapper": "^7.4",
         "symfony/console": "^7.4",
         "symfony/dotenv": "^7.4",
         "symfony/form": "^7.4",
@@ -17,7 +18,9 @@
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "^7.4",
         "symfony/security-bundle": "^7.4",
+        "symfony/stimulus-bundle": "^2.27",
         "symfony/twig-bundle": "^7.4",
+        "symfony/ux-twig-component": "^2.32",
         "symfony/yaml": "^7.4"
     },
     "config": {

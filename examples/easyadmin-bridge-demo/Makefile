@@ -20,8 +20,9 @@ build: ## Build the PHP container image
 	$(DOCKER_COMPOSE) build
 
 .PHONY: install
-install: build ## Install Composer dependencies + create the SQLite database + schema
+install: build ## Install Composer dependencies + bundle assets + create the SQLite database + schema
 	$(PHP_RUN) sh -c 'mkdir -p var && composer install --no-interaction --no-progress'
+	$(PHP_RUN) sh -c 'php bin/console assets:install --symlink public'
 	$(PHP_RUN) sh -c 'rm -f var/data.db && php bin/console doctrine:schema:create --no-interaction'
 
 .PHONY: seed
@@ -34,7 +35,7 @@ up: install seed ## Boot the demo (install + seed + serve on :8081)
 	@echo '▶ Polysource EasyAdmin filter bridge demo is starting on http://localhost:8081/admin/'
 	@echo '  Login: admin / admin'
 	@echo ''
-	$(DOCKER_COMPOSE) run --rm --service-ports php php -S 0.0.0.0:8081 -t public public/index.php
+	$(DOCKER_COMPOSE) run --rm --service-ports php php -S 0.0.0.0:8081 -t public public/dev-router.php
 
 .PHONY: down
 down: ## Stop the demo container
@@ -49,5 +50,5 @@ shell: ## Open a shell inside the container
 	$(PHP_RUN) sh
 
 .PHONY: clean
-clean: down ## Stop + remove vendor + database
-	rm -rf vendor/ var/
+clean: down ## Stop + remove vendor + database + symlinked bundle assets
+	rm -rf vendor/ var/ public/bundles/

@@ -24,6 +24,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Polysource\Demo\EasyAdminBridge\Entity\Product;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
 /**
  * The killer demo of polysource/easyadmin-filter-bridge.
@@ -75,15 +76,23 @@ final class ProductCrudController extends AbstractCrudController
             ->add(
                 NumericFilter::new('price')
                     ->setFormTypeOption('step', 0.01)
+                    // Quick-range buckets calibrated on the seeded
+                    // product price distribution (min 8€, max 478€,
+                    // avg 220€) — each bucket holds ~25% of the rows
+                    // so the demo exercises every comparison branch.
                     ->setFormTypeOption('quick_ranges', [
                         ['label' => '< 50€', 'min' => null, 'max' => 50],
                         ['label' => '50–200€', 'min' => 50, 'max' => 200],
-                        ['label' => '> 200€', 'min' => 200, 'max' => null],
+                        ['label' => '200–400€', 'min' => 200, 'max' => 400],
+                        ['label' => '> 400€', 'min' => 400, 'max' => null],
                     ]),
             )
             // ComparisonFilter on `stock` — only expose >=, <=, =.
+            // `value_type` is required by upstream ComparisonFilterType
+            // when used directly (vs NumericFilter which presets it).
             ->add(
                 ComparisonFilter::new('stock')
+                    ->setFormTypeOption('value_type', NumberType::class)
                     ->setFormTypeOption('comparisons', ['=', '>=', '<=']),
             )
             // BooleanFilter on `isActive` — include "Null" choice for

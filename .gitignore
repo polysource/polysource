@@ -29,6 +29,12 @@ phpunit.xml.bak
 /examples/*/.env.local.php
 /examples/*/.env.*.local
 
+# npm artefacts (Vitest, Playwright)
+node_modules/
+package-lock.json
+/examples/*/public/assets/
+/examples/*/assets/vendor/
+
 # IDE / editors
 /.idea/
 /.vscode/

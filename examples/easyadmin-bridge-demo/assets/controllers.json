@@ -1,0 +1,11 @@
+{
+    "controllers": {
+        "@polysource/easyadmin-filter-bridge": {
+            "polysource--filter": {
+                "enabled": true,
+                "fetch": "eager"
+            }
+        }
+    },
+    "entrypoints": []
+}

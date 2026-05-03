@@ -1,5 +1,7 @@
 /vendor/
 /var/
+/public/bundles/
+node_modules/
 composer.lock
 .env.local
 .env.*.local

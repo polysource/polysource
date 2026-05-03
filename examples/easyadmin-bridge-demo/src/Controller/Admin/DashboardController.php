@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Demo\EasyAdminBridge\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
@@ -28,6 +29,16 @@ final class DashboardController extends AbstractDashboardController
     {
         return Dashboard::new()
             ->setTitle('Polysource — EasyAdmin filter bridge demo');
+    }
+
+    public function configureAssets(): Assets
+    {
+        // Register the demo's `app.js` AssetMapper entry point so EasyAdmin
+        // injects the `<script>` tag in its layout. The entry boots
+        // Stimulus, which in turn auto-imports every UX-declared
+        // controller — including `polysource--filter` shipped by the
+        // bridge.
+        return Assets::new()->addAssetMapperEntry('app');
     }
 
     /**
