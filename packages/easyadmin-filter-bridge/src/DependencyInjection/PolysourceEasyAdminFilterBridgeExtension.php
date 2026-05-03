@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\DependencyInjection;
 
+use Polysource\EasyAdminFilterBridge\Configurator\ArrayFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\ComparisonFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedComparisonFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -68,6 +74,24 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension
         ;
 
         $container
+            ->register(EnhancedComparisonFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(EnhancedArrayFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(EnhancedEntityFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
             ->register(DateTimeFilterEnhancer::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
@@ -93,6 +117,24 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension
 
         $container
             ->register(ChoiceFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(ComparisonFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(ArrayFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(EntityFilterEnhancer::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;

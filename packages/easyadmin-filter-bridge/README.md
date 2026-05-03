@@ -7,11 +7,11 @@
 ## Status
 
 **Pre-v0.1.0 — PoC stage.** The seam is technically validated (cf.
-[ADR-012](../../docs/adr/0012-dual-product-positioning.md)). Five of
-the seven built-in EasyAdmin filters now have an Enhancer
-(`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`); the remaining
-ones (`Comparison`, `Array`, `Entity`) plus the Twig templates and
-session persistence land in
+[ADR-012](../../docs/adr/0012-dual-product-positioning.md)). **All 8
+built-in EasyAdmin filters are now covered** by an Enhancer
+(`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`,
+`Array`, `Entity`). The Twig templates that render the new options
+visible in the browser, plus session persistence of filters, land in
 [Phase 9.7](../../docs/roadmap/development-plan.md).
 
 ## What it does
@@ -19,14 +19,16 @@ session persistence land in
 Once installed, EasyAdmin's built-in filters gain richer form types,
 **without any change to your existing CRUD controllers**:
 
-| Built-in filter | Enhancement (today) | Enhancement (Phase 9.7) |
+| Built-in filter | Enhancement (today) | Visual rendering (Phase 9.7) |
 |---|---|---|
-| `DateTimeFilter` | `presets` option (`today`, `last_7_days`, `last_30_days`, `this_month`, `custom`), `show_clear` flag. | Twig theme with one-click preset buttons. |
+| `DateTimeFilter` | `presets` option (`today`, `last_7_days`, `last_30_days`, `this_month`, `custom`), `show_clear` flag. | One-click preset buttons rendered next to the date inputs. |
 | `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. | Toggle-switch UI variant. |
 | `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). | Mode toggle (exact / starts_with / ends_with / contains) inline. |
-| `NumericFilter` | `step` option (granularity hint), `quick_ranges` option (preset buttons like `<100` / `100-1000` / `1000+`). | Twig theme with quick-range buttons. |
-| `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. | Twig theme for inline rendering. |
-| `EntityFilter`, `ComparisonFilter`, `ArrayFilter` | — | Coming in Phase 9.7. |
+| `NumericFilter` | `step` option (granularity hint), `quick_ranges` option (preset buttons like `<100` / `100-1000` / `1000+`). | Quick-range buttons rendered next to the value inputs. |
+| `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. | Inline pills rendering. |
+| `ComparisonFilter` | `comparisons` option — whitelist of operators to expose in the dropdown (default `[]` = all). | Restricted operator dropdown. |
+| `ArrayFilter` | `chip_display` option — selected items as removable chips instead of multi-line list. | Chips rendering. |
+| `EntityFilter` | `placeholder` option — custom placeholder text for the dropdown / autocomplete. | Custom placeholder text. |
 
 Plus, post-9.7:
 - Filter **chips/tags** above the table (active filters visible, click X to remove).

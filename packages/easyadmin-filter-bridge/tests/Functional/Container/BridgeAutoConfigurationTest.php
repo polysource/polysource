@@ -6,15 +6,21 @@ namespace Polysource\EasyAdminFilterBridge\Tests\Functional\Container;
 
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterConfiguratorInterface;
 use PHPUnit\Framework\TestCase;
+use Polysource\EasyAdminFilterBridge\Configurator\ArrayFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\ComparisonFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\PolysourceEasyAdminFilterBridgeExtension;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedComparisonFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -74,11 +80,17 @@ final class BridgeAutoConfigurationTest extends TestCase
             TextFilterEnhancer::class,
             NumericFilterEnhancer::class,
             ChoiceFilterEnhancer::class,
+            ComparisonFilterEnhancer::class,
+            ArrayFilterEnhancer::class,
+            EntityFilterEnhancer::class,
             EnhancedDateTimeFilterType::class,
             EnhancedBooleanFilterType::class,
             EnhancedTextFilterType::class,
             EnhancedNumericFilterType::class,
             EnhancedChoiceFilterType::class,
+            EnhancedComparisonFilterType::class,
+            EnhancedArrayFilterType::class,
+            EnhancedEntityFilterType::class,
         ] as $serviceId) {
             if ($this->container->hasDefinition($serviceId)) {
                 $this->container->getDefinition($serviceId)->setPublic(true);
@@ -163,6 +175,45 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
+    public function test_comparison_configurator_is_registered_and_tagged(): void
+    {
+        self::assertTrue($this->container->hasDefinition(ComparisonFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(ComparisonFilterEnhancer::class)->isAutoconfigured());
+
+        $this->container->compile();
+
+        self::assertArrayHasKey(
+            'ea.filter_configurator',
+            $this->container->getDefinition(ComparisonFilterEnhancer::class)->getTags(),
+        );
+    }
+
+    public function test_array_configurator_is_registered_and_tagged(): void
+    {
+        self::assertTrue($this->container->hasDefinition(ArrayFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(ArrayFilterEnhancer::class)->isAutoconfigured());
+
+        $this->container->compile();
+
+        self::assertArrayHasKey(
+            'ea.filter_configurator',
+            $this->container->getDefinition(ArrayFilterEnhancer::class)->getTags(),
+        );
+    }
+
+    public function test_entity_configurator_is_registered_and_tagged(): void
+    {
+        self::assertTrue($this->container->hasDefinition(EntityFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(EntityFilterEnhancer::class)->isAutoconfigured());
+
+        $this->container->compile();
+
+        self::assertArrayHasKey(
+            'ea.filter_configurator',
+            $this->container->getDefinition(EntityFilterEnhancer::class)->getTags(),
+        );
+    }
+
     public function test_form_types_are_registered_and_tagged(): void
     {
         $allFormTypes = [
@@ -171,6 +222,9 @@ final class BridgeAutoConfigurationTest extends TestCase
             EnhancedTextFilterType::class,
             EnhancedNumericFilterType::class,
             EnhancedChoiceFilterType::class,
+            EnhancedComparisonFilterType::class,
+            EnhancedArrayFilterType::class,
+            EnhancedEntityFilterType::class,
         ];
 
         foreach ($allFormTypes as $formType) {
