@@ -60,19 +60,6 @@ final class ComparisonFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedComparisonFilterType::class, $this->comparisonFilterDto->getFormType());
     }
 
-    public function test_configure_adds_comparisons_default_empty(): void
-    {
-        $this->enhancer->configure($this->comparisonFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->comparisonFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('comparisons', $options);
-        self::assertSame(
-            [],
-            $options['comparisons'],
-            'Default must be empty list to expose every upstream operator — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->comparisonFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());

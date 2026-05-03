@@ -93,23 +93,6 @@ final class BooleanFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_adds_include_null_default(): void
-    {
-        $this->enhancer->configure(
-            $this->booleanFilterDto,
-            null,
-            $this->makeEntityDto(),
-            $this->makeAdminContext(),
-        );
-
-        $options = $this->booleanFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('include_null', $options);
-        self::assertFalse(
-            $options['include_null'],
-            'Default must be false so the bridge install is non-breaking — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure(

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -52,6 +54,13 @@ final class EnhancedBooleanFilterType extends BooleanFilterType
 
             return $choices;
         });
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+
+        $view->vars['include_null'] = $options['include_null'];
     }
 
     public function getBlockPrefix(): string

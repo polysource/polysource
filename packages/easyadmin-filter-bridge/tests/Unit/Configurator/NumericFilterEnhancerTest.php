@@ -60,17 +60,6 @@ final class NumericFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedNumericFilterType::class, $this->numericFilterDto->getFormType());
     }
 
-    public function test_configure_adds_step_and_quick_ranges_defaults(): void
-    {
-        $this->enhancer->configure($this->numericFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->numericFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('step', $options);
-        self::assertSame(0, $options['step']);
-        self::assertArrayHasKey('quick_ranges', $options);
-        self::assertSame([], $options['quick_ranges']);
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->numericFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());

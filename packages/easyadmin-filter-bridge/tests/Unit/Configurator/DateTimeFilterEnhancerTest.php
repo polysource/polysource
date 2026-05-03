@@ -111,32 +111,6 @@ final class DateTimeFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_adds_presets_option_with_default_set(): void
-    {
-        $entityDto = $this->makeEntityDto();
-        $context = $this->makeAdminContext();
-
-        $this->enhancer->configure($this->dateTimeFilterDto, null, $entityDto, $context);
-
-        $options = $this->dateTimeFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('presets', $options);
-        self::assertSame(EnhancedDateTimeFilterType::DEFAULT_PRESETS, $options['presets']);
-        self::assertContains(EnhancedDateTimeFilterType::PRESET_TODAY, $options['presets']);
-        self::assertContains(EnhancedDateTimeFilterType::PRESET_LAST_7_DAYS, $options['presets']);
-    }
-
-    public function test_configure_adds_show_clear_option(): void
-    {
-        $entityDto = $this->makeEntityDto();
-        $context = $this->makeAdminContext();
-
-        $this->enhancer->configure($this->dateTimeFilterDto, null, $entityDto, $context);
-
-        $options = $this->dateTimeFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('show_clear', $options);
-        self::assertTrue($options['show_clear']);
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $entityDto = $this->makeEntityDto();

@@ -60,18 +60,6 @@ final class ArrayFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedArrayFilterType::class, $this->arrayFilterDto->getFormType());
     }
 
-    public function test_configure_adds_chip_display_default_false(): void
-    {
-        $this->enhancer->configure($this->arrayFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->arrayFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('chip_display', $options);
-        self::assertFalse(
-            $options['chip_display'],
-            'Default must be false to preserve upstream rendering — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->arrayFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());

@@ -32,13 +32,5 @@ final class NumericFilterEnhancer implements FilterConfiguratorInterface
     public function configure(FilterDto $filterDto, ?FieldDto $fieldDto, EntityDto $entityDto, AdminContext $context): void
     {
         $filterDto->setFormType(EnhancedNumericFilterType::class);
-
-        $filterDto->setFormTypeOptions(array_merge(
-            $filterDto->getFormTypeOptions(),
-            [
-                'step' => 0,
-                'quick_ranges' => [],
-            ],
-        ));
     }
 }

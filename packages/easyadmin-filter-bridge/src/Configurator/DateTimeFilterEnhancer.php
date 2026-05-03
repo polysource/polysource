@@ -37,13 +37,5 @@ final class DateTimeFilterEnhancer implements FilterConfiguratorInterface
     public function configure(FilterDto $filterDto, ?FieldDto $fieldDto, EntityDto $entityDto, AdminContext $context): void
     {
         $filterDto->setFormType(EnhancedDateTimeFilterType::class);
-
-        $filterDto->setFormTypeOptions(array_merge(
-            $filterDto->getFormTypeOptions(),
-            [
-                'presets' => EnhancedDateTimeFilterType::DEFAULT_PRESETS,
-                'show_clear' => true,
-            ],
-        ));
     }
 }

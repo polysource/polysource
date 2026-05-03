@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\TextFilterType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -33,6 +35,13 @@ final class EnhancedTextFilterType extends TextFilterType
 
         $resolver->setAllowedTypes('min_length', 'int');
         $resolver->setAllowedValues('min_length', static fn (int $v): bool => $v >= 0);
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+
+        $view->vars['min_length'] = $options['min_length'];
     }
 
     public function getBlockPrefix(): string

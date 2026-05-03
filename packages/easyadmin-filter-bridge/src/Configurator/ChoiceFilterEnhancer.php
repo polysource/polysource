@@ -32,12 +32,5 @@ final class ChoiceFilterEnhancer implements FilterConfiguratorInterface
     public function configure(FilterDto $filterDto, ?FieldDto $fieldDto, EntityDto $entityDto, AdminContext $context): void
     {
         $filterDto->setFormType(EnhancedChoiceFilterType::class);
-
-        $filterDto->setFormTypeOptions(array_merge(
-            $filterDto->getFormTypeOptions(),
-            [
-                'inline' => false,
-            ],
-        ));
     }
 }

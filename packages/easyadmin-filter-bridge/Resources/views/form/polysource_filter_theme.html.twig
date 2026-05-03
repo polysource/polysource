@@ -1,103 +1,129 @@
-{# polysource/easyadmin-filter-bridge — Form theme for the 8 enhanced filter form types.
+{# polysource/easyadmin-filter-bridge — Form theme.
 
-   Each block matches the block_prefix of the corresponding EnhancedXxxFilterType.
-   We render the underlying compound form children manually (comparison/value/value2)
-   to avoid recursing into our own widget block, then append the option-specific
-   addons (preset buttons, quick ranges, chips, data-attributes…) so the
-   enhancement options become visible in the rendered HTML.
+   STRICT delegation pattern: every `polysource_enhanced_*_filter_widget`
+   block renders its content via the corresponding upstream block
+   (`form_widget_compound`, `ea_numeric_filter_widget`,
+   `ea_datetime_filter_widget`, `choice_widget`) and only WRAPS that
+   output in a `<div>` carrying:
 
-   The styling and JS interactivity (clicking a preset to fill the date inputs,
-   etc.) are intentionally left out — host apps wire those via their own CSS/JS.
-   The data-attributes and explicit DOM nodes here are the contract that JS
-   layers can hook into. #}
+   - `data-controller="polysource--filter"` so the Stimulus controller
+     binds to the wrapper.
+   - `data-polysource--filter-{option}-value="…"` for each option the
+     enhanced FormType exposes via `buildView()` (presets, quick_ranges,
+     min_length, step, show_clear, include_null, chip_display,
+     placeholder, comparisons).
+   - Optional appended UI elements (preset buttons, quick-range buttons,
+     clear button) — the controller reads `data-action` on each to
+     dispatch the right handler.
 
-{%- block polysource_enhanced_datetime_filter_widget -%}
-    <div class="polysource-enhanced-datetime-filter"
-         data-show-clear="{{ show_clear|default(false) ? 'true' : 'false' }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
-        {%- if form.value2 is defined -%}
-            {{ form_widget(form.value2) }}
-        {%- endif -%}
-        {%- if presets|default([])|length > 0 -%}
-            <div class="polysource-presets" role="group" aria-label="{{ 'polysource.filter.presets'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
-                {%- for preset in presets -%}
-                    <button type="button"
-                            class="polysource-preset"
-                            data-preset="{{ preset }}"
-                            data-target="{{ id }}">{{ ('polysource.filter.preset.' ~ preset)|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
-                {%- endfor -%}
-            </div>
-        {%- endif -%}
-    </div>
-{%- endblock -%}
+   By delegating to the upstream blocks, host applications that have
+   customized `@EasyAdmin/crud/form_theme.html.twig` (or any of the
+   inherited blocks) automatically inherit those customizations — the
+   bridge never duplicates the upstream markup. #}
 
+{# Boolean filter inherits from ChoiceType, not ComparisonFilterType,
+   so it falls back to `choice_widget`. #}
 {%- block polysource_enhanced_boolean_filter_widget -%}
-    <div class="polysource-enhanced-boolean-filter"
-         data-include-null="{{ include_null|default(false) ? 'true' : 'false' }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
+    <div class="polysource-filter polysource-filter--boolean"
+         data-controller="polysource--filter"
+         data-polysource--filter-include-null-value="{{ include_null|default(false) ? 'true' : 'false' }}">
+        {{- block('choice_widget') -}}
     </div>
 {%- endblock -%}
 
-{%- block polysource_enhanced_text_filter_widget -%}
-    <div class="polysource-enhanced-text-filter"
-         data-min-length="{{ min_length|default(0) }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
-    </div>
-{%- endblock -%}
-
+{# NumericFilterType has a dedicated upstream block that already handles
+   the value2 d-none toggle — we just wrap it. #}
 {%- block polysource_enhanced_numeric_filter_widget -%}
-    <div class="polysource-enhanced-numeric-filter"
-         data-step="{{ step|default(0) }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
-        {%- if form.value2 is defined -%}
-            {{ form_widget(form.value2) }}
-        {%- endif -%}
+    <div class="polysource-filter polysource-filter--numeric"
+         data-controller="polysource--filter"
+         data-polysource--filter-step-value="{{ step|default(0) }}"
+         data-polysource--filter-quick-ranges-value="{{ quick_ranges|default([])|json_encode|e('html_attr') }}">
+        {{- block('ea_numeric_filter_widget') -}}
         {%- if quick_ranges|default([])|length > 0 -%}
-            <div class="polysource-quick-ranges" role="group" aria-label="{{ 'polysource.filter.quick_ranges'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
+            <div class="polysource-quick-ranges d-flex flex-wrap gap-1 mt-2"
+                 role="group"
+                 aria-label="{{ 'polysource.filter.quick_ranges.label'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
                 {%- for range in quick_ranges -%}
                     <button type="button"
-                            class="polysource-quick-range"
-                            data-min="{{ range.min is defined and range.min is not null ? range.min : '' }}"
-                            data-max="{{ range.max is defined and range.max is not null ? range.max : '' }}"
-                            data-target="{{ id }}">{{ range.label|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
+                            class="btn btn-sm btn-outline-secondary polysource-quick-range"
+                            data-action="polysource--filter#applyQuickRange"
+                            data-polysource--filter-min-param="{{ range.min is defined and range.min is not null ? range.min : '' }}"
+                            data-polysource--filter-max-param="{{ range.max is defined and range.max is not null ? range.max : '' }}">{{ range.label|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
                 {%- endfor -%}
             </div>
         {%- endif -%}
     </div>
 {%- endblock -%}
 
-{%- block polysource_enhanced_choice_filter_widget -%}
-    <div class="polysource-enhanced-choice-filter{% if inline|default(false) %} polysource-inline{% endif %}"
-         data-inline="{{ inline|default(false) ? 'true' : 'false' }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
+{# DateTimeFilterType has its own upstream block too. #}
+{%- block polysource_enhanced_datetime_filter_widget -%}
+    <div class="polysource-filter polysource-filter--datetime"
+         data-controller="polysource--filter"
+         data-polysource--filter-show-clear-value="{{ show_clear|default(false) ? 'true' : 'false' }}"
+         data-polysource--filter-presets-value="{{ presets|default([])|json_encode|e('html_attr') }}">
+        {{- block('ea_datetime_filter_widget') -}}
+        {%- if presets|default([])|length > 0 -%}
+            <div class="polysource-presets d-flex flex-wrap gap-1 mt-2"
+                 role="group"
+                 aria-label="{{ 'polysource.filter.presets.label'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
+                {%- for preset in presets -%}
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary polysource-preset"
+                            data-action="polysource--filter#applyPreset"
+                            data-polysource--filter-preset-param="{{ preset }}">{{ ('polysource.filter.preset.' ~ preset)|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
+                {%- endfor -%}
+            </div>
+        {%- endif -%}
+        {%- if show_clear|default(false) -%}
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm polysource-clear mt-2"
+                    data-action="polysource--filter#clearValues">
+                {{ 'polysource.filter.clear'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+            </button>
+        {%- endif -%}
+    </div>
+{%- endblock -%}
+
+{# Text/Comparison/Choice/Array/Entity have no upstream-specific filter
+   block — they use Symfony Form's default `form_widget_compound` (which
+   iterates children via `form_row` for proper Bootstrap spacing). #}
+
+{%- block polysource_enhanced_text_filter_widget -%}
+    <div class="polysource-filter polysource-filter--text"
+         data-controller="polysource--filter"
+         data-polysource--filter-min-length-value="{{ min_length|default(0) }}">
+        {{- block('form_widget_compound') -}}
     </div>
 {%- endblock -%}
 
 {%- block polysource_enhanced_comparison_filter_widget -%}
-    <div class="polysource-enhanced-comparison-filter"
-         data-comparisons="{{ comparisons|default([])|json_encode|e('html_attr') }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
+    <div class="polysource-filter polysource-filter--comparison"
+         data-controller="polysource--filter"
+         data-polysource--filter-comparisons-value="{{ comparisons|default([])|json_encode|e('html_attr') }}">
+        {{- block('form_widget_compound') -}}
+    </div>
+{%- endblock -%}
+
+{%- block polysource_enhanced_choice_filter_widget -%}
+    <div class="polysource-filter polysource-filter--choice"
+         data-controller="polysource--filter"
+         data-polysource--filter-inline-value="{{ inline|default(false) ? 'true' : 'false' }}">
+        {{- block('form_widget_compound') -}}
     </div>
 {%- endblock -%}
 
 {%- block polysource_enhanced_array_filter_widget -%}
-    <div class="polysource-enhanced-array-filter{% if chip_display|default(false) %} polysource-chip-display{% endif %}"
-         data-chip-display="{{ chip_display|default(false) ? 'true' : 'false' }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
+    <div class="polysource-filter polysource-filter--array"
+         data-controller="polysource--filter"
+         data-polysource--filter-chip-display-value="{{ chip_display|default(false) ? 'true' : 'false' }}">
+        {{- block('form_widget_compound') -}}
     </div>
 {%- endblock -%}
 
 {%- block polysource_enhanced_entity_filter_widget -%}
-    <div class="polysource-enhanced-entity-filter"
-         data-placeholder="{{ placeholder|default('')|e('html_attr') }}">
-        {{ form_widget(form.comparison) }}
-        {{ form_widget(form.value) }}
+    <div class="polysource-filter polysource-filter--entity"
+         data-controller="polysource--filter"
+         data-polysource--filter-placeholder-value="{{ placeholder|default('')|e('html_attr') }}">
+        {{- block('form_widget_compound') -}}
     </div>
 {%- endblock -%}

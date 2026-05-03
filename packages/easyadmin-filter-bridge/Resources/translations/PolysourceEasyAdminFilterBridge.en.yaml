@@ -1,0 +1,16 @@
+polysource:
+    filter:
+        clear: 'Clear'
+        presets:
+            label: 'Date presets'
+        quick_ranges:
+            label: 'Quick ranges'
+        preset:
+            today: 'Today'
+            yesterday: 'Yesterday'
+            last_7_days: 'Last 7 days'
+            last_30_days: 'Last 30 days'
+            this_month: 'This month'
+            last_month: 'Last month'
+            this_year: 'This year'
+            custom: 'Custom…'

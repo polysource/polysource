@@ -32,12 +32,5 @@ final class TextFilterEnhancer implements FilterConfiguratorInterface
     public function configure(FilterDto $filterDto, ?FieldDto $fieldDto, EntityDto $entityDto, AdminContext $context): void
     {
         $filterDto->setFormType(EnhancedTextFilterType::class);
-
-        $filterDto->setFormTypeOptions(array_merge(
-            $filterDto->getFormTypeOptions(),
-            [
-                'min_length' => 0,
-            ],
-        ));
     }
 }

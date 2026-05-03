@@ -32,12 +32,5 @@ final class ArrayFilterEnhancer implements FilterConfiguratorInterface
     public function configure(FilterDto $filterDto, ?FieldDto $fieldDto, EntityDto $entityDto, AdminContext $context): void
     {
         $filterDto->setFormType(EnhancedArrayFilterType::class);
-
-        $filterDto->setFormTypeOptions(array_merge(
-            $filterDto->getFormTypeOptions(),
-            [
-                'chip_display' => false,
-            ],
-        ));
     }
 }

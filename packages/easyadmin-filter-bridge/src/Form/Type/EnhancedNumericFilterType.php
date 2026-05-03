@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\NumericFilterType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -51,6 +53,14 @@ final class EnhancedNumericFilterType extends NumericFilterType
 
             return $value;
         });
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+
+        $view->vars['step'] = $options['step'];
+        $view->vars['quick_ranges'] = $options['quick_ranges'];
     }
 
     public function getBlockPrefix(): string

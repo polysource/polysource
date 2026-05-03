@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\EntityFilterType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -32,6 +34,13 @@ final class EnhancedEntityFilterType extends EntityFilterType
         ]);
 
         $resolver->setAllowedTypes('placeholder', ['null', 'string']);
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+
+        $view->vars['placeholder'] = $options['placeholder'];
     }
 
     public function getBlockPrefix(): string

@@ -60,18 +60,6 @@ final class ChoiceFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedChoiceFilterType::class, $this->choiceFilterDto->getFormType());
     }
 
-    public function test_configure_adds_inline_default_false(): void
-    {
-        $this->enhancer->configure($this->choiceFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->choiceFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('inline', $options);
-        self::assertFalse(
-            $options['inline'],
-            'Default must be false to preserve upstream rendering — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->choiceFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());

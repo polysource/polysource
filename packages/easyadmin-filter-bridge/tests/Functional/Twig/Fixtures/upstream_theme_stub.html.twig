@@ -1,0 +1,36 @@
+{# Test stub for upstream EasyAdmin form theme blocks.
+
+   The real upstream `crud/form_theme.html.twig` uses custom Twig
+   filters (`ea_as_string` etc.) that require the EasyAdminTwigExtension
+   to parse. Booting that extension in a unit test would mean wiring
+   AdminContextProvider services etc. — overkill for asserting our
+   wrapper-and-delegate contract.
+
+   So we provide minimal stubs that mirror the structure of the upstream
+   blocks our theme delegates to:
+   - `ea_numeric_filter_widget` → wraps comparison + value (+ value2 in
+     a `data-ea-value2-of-comparison-id` div).
+   - `ea_datetime_filter_widget` → reuses the numeric block (same
+     contract upstream).
+
+   The stubs render placeholder markup so our assertions can verify
+   that:
+   1. The bridge wrapper is around the upstream block output.
+   2. Our buttons are appended *after* the upstream content.
+#}
+
+{%- block ea_numeric_filter_widget -%}
+    <div class="upstream-stub form-widget-compound">
+        {{- form_widget(form.comparison) -}}
+        {{- form_widget(form.value) -}}
+        {%- if form.value2 is defined -%}
+            <div data-ea-value2-of-comparison-id="{{ form.comparison.vars.id }}" class="d-none">
+                {{- form_widget(form.value2) -}}
+            </div>
+        {%- endif -%}
+    </div>
+{%- endblock -%}
+
+{%- block ea_datetime_filter_widget -%}
+    {{- block('ea_numeric_filter_widget') -}}
+{%- endblock -%}

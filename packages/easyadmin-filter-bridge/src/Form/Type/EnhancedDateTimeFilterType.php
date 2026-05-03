@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\DateTimeFilterType;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -47,6 +49,14 @@ final class EnhancedDateTimeFilterType extends DateTimeFilterType
 
         $resolver->setAllowedTypes('presets', 'array');
         $resolver->setAllowedTypes('show_clear', 'bool');
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        parent::buildView($view, $form, $options);
+
+        $view->vars['presets'] = $options['presets'];
+        $view->vars['show_clear'] = $options['show_clear'];
     }
 
     public function getBlockPrefix(): string

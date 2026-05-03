@@ -60,18 +60,6 @@ final class EntityFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedEntityFilterType::class, $this->entityFilterDto->getFormType());
     }
 
-    public function test_configure_adds_placeholder_default_null(): void
-    {
-        $this->enhancer->configure($this->entityFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->entityFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('placeholder', $options);
-        self::assertNull(
-            $options['placeholder'],
-            'Default must be null to preserve upstream behaviour — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->entityFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());

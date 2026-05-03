@@ -63,19 +63,6 @@ final class TextFilterEnhancerTest extends TestCase
         self::assertSame(EnhancedTextFilterType::class, $this->textFilterDto->getFormType());
     }
 
-    public function test_configure_adds_min_length_default(): void
-    {
-        $this->enhancer->configure($this->textFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
-
-        $options = $this->textFilterDto->getFormTypeOptions();
-        self::assertArrayHasKey('min_length', $options);
-        self::assertSame(
-            0,
-            $options['min_length'],
-            'Default must be 0 so the bridge install is non-breaking — host apps opt in per-resource',
-        );
-    }
-
     public function test_configure_preserves_upstream_options(): void
     {
         $this->enhancer->configure($this->textFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
