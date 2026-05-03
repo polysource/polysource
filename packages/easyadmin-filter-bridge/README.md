@@ -7,13 +7,19 @@
 ## Status
 
 **Pre-v0.1.0.** The seam is technically validated (cf.
-[ADR-012](../../docs/adr/0012-dual-product-positioning.md)). **All 8
-built-in EasyAdmin filters are covered** by an Enhancer (`DateTime`,
-`Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`, `Array`,
-`Entity`) **with Twig templates that auto-register** via
-`PrependExtensionInterface` — host apps installing the package get
-the enhanced widget HTML rendered with zero config. Session
-persistence of filters lands next.
+[ADR-012](../../docs/adr/0012-dual-product-positioning.md)).
+
+Feature-complete on the bridge side:
+
+- **All 8 built-in EasyAdmin filters covered** by an Enhancer
+  (`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`,
+  `Array`, `Entity`).
+- **Twig templates auto-register** via `PrependExtensionInterface` —
+  enhanced widget HTML renders with zero config.
+- **Filter session persistence** via `FilterSessionPersistenceSubscriber`
+  on `BeforeCrudActionEvent` — operators returning to the index page
+  see their previous filters restored automatically (scoped per CRUD
+  controller FQCN, no leak across resources).
 
 ## What it does
 

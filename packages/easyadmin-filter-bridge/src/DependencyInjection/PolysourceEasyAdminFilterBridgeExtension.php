@@ -12,6 +12,7 @@ use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -156,6 +157,12 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
         $container
             ->register(EntityFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(FilterSessionPersistenceSubscriber::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;
