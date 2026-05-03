@@ -6,13 +6,14 @@
 
 ## Status
 
-**Pre-v0.1.0 — PoC stage.** The seam is technically validated (cf.
+**Pre-v0.1.0.** The seam is technically validated (cf.
 [ADR-012](../../docs/adr/0012-dual-product-positioning.md)). **All 8
-built-in EasyAdmin filters are now covered** by an Enhancer
-(`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`,
-`Array`, `Entity`). The Twig templates that render the new options
-visible in the browser, plus session persistence of filters, land in
-[Phase 9.7](../../docs/roadmap/development-plan.md).
+built-in EasyAdmin filters are covered** by an Enhancer (`DateTime`,
+`Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`, `Array`,
+`Entity`) **with Twig templates that auto-register** via
+`PrependExtensionInterface` — host apps installing the package get
+the enhanced widget HTML rendered with zero config. Session
+persistence of filters lands next.
 
 ## What it does
 

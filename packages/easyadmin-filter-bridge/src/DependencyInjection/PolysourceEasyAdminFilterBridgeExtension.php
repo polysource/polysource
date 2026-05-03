@@ -21,6 +21,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -36,8 +37,28 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  * Form types tagged `form.type` are auto-discovered by Symfony Form when
  * autoconfiguration is on (default).
  */
-final class PolysourceEasyAdminFilterBridgeExtension extends Extension
+final class PolysourceEasyAdminFilterBridgeExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * Auto-register our form theme into the host app's `twig.form_themes`
+     * config. Means a host that does `composer require
+     * polysource/easyadmin-filter-bridge` immediately gets the rendered
+     * preset buttons / chips / data-attributes — no Twig config to write.
+     */
+    public function prepend(ContainerBuilder $container): void
+    {
+        if (!\in_array('TwigBundle', array_keys($container->getParameter('kernel.bundles')), true)) {
+            return;
+        }
+
+        $container->prependExtensionConfig('twig', [
+            'form_themes' => [
+                '@PolysourceEasyAdminFilterBridge/form/polysource_filter_theme.html.twig',
+            ],
+        ]);
+    }
+
+
     /**
      * @param array<int, array<string, mixed>> $configs
      */
