@@ -1,0 +1,45 @@
+{
+    "name": "polysource/easyadmin-bridge-demo",
+    "description": "Polysource — runnable demo: EasyAdmin v5 + polysource/easyadmin-filter-bridge with all 8 enhanced filters in action.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "doctrine/dbal": "^3.10|^4.4",
+        "doctrine/doctrine-bundle": "^2.18",
+        "doctrine/orm": "^2.20|^3.6",
+        "easycorp/easyadmin-bundle": "^4.24",
+        "polysource/easyadmin-filter-bridge": "0.1.x-dev",
+        "symfony/console": "^7.4",
+        "symfony/dotenv": "^7.4",
+        "symfony/form": "^7.4",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/runtime": "^7.4",
+        "symfony/security-bundle": "^7.4",
+        "symfony/twig-bundle": "^7.4",
+        "symfony/yaml": "^7.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Demo\\EasyAdminBridge\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        { "type": "path", "url": "../../packages/easyadmin-filter-bridge" }
+    ],
+    "extra": {
+        "runtime": {
+            "use_putenv": true
+        }
+    }
+}

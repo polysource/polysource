@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Polysource\Demo\EasyAdminBridge\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+if (!is_file(dirname(__DIR__) . '/vendor/autoload_runtime.php')) {
+    throw new LogicException('Symfony Runtime is missing — run `composer install` in examples/messenger-demo first.');
+}
+
+require_once dirname(__DIR__) . '/vendor/autoload_runtime.php';
+
+return static function (array $context) {
+    $kernel = new Kernel($context['APP_ENV'] ?? 'dev', (bool) ($context['APP_DEBUG'] ?? true));
+
+    return new Application($kernel);
+};

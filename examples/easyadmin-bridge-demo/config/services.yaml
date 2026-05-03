@@ -1,0 +1,17 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Polysource\Demo\EasyAdminBridge\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Entity/'
+
+    Polysource\Demo\EasyAdminBridge\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']

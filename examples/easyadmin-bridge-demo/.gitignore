@@ -1,0 +1,9 @@
+/vendor/
+/var/
+composer.lock
+.env.local
+.env.*.local
+
+# Symfony ConfigBuilder dump (auto-generated on cache warmup)
+/config/reference.php
+/config/definition/

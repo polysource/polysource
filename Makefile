@@ -99,6 +99,18 @@ demo-down: ## Stop the demo container
 demo-logs: ## Tail demo container logs
 	@$(MAKE) -C examples/messenger-demo logs
 
+.PHONY: demo-bridge
+demo-bridge: ## Start the EasyAdmin filter bridge demo on http://localhost:8081
+	@$(MAKE) -C examples/easyadmin-bridge-demo up
+
+.PHONY: demo-bridge-down
+demo-bridge-down: ## Stop the bridge demo container
+	@$(MAKE) -C examples/easyadmin-bridge-demo down
+
+.PHONY: demo-bridge-clean
+demo-bridge-clean: ## Wipe the bridge demo vendor + database
+	@$(MAKE) -C examples/easyadmin-bridge-demo clean
+
 .PHONY: demo-clean
 demo-clean: ## Wipe demo vendor + database (rebuild on next `make demo`)
 	@$(MAKE) -C examples/messenger-demo clean

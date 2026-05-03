@@ -1,0 +1,28 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\InMemoryUser: 'plaintext'
+
+    providers:
+        in_memory:
+            memory:
+                users:
+                    admin:
+                        password: 'admin'
+                        roles: ['ROLE_ADMIN']
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            lazy: true
+            provider: in_memory
+            http_basic:
+                realm: 'Polysource EasyAdmin filter bridge demo (admin / admin)'
+            logout:
+                path: logout
+                target: /admin
+
+    access_control:
+        - { path: ^/admin, roles: ROLE_ADMIN }

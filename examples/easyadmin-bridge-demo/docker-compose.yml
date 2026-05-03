@@ -1,0 +1,31 @@
+# Polysource EasyAdmin filter bridge demo — single PHP container served via php -S.
+#
+# `make demo-bridge` (from the repo root) wires this up: composer install →
+# create the SQLite DB → seed sample data → start the dev server on :8081.
+
+name: polysource-easyadmin-bridge-demo
+
+services:
+  php:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: polysource-easyadmin-bridge-demo:php8.4
+    volumes:
+      # Mount the entire monorepo so the path repository
+      # (`packages/easyadmin-filter-bridge`) resolves to the live working tree.
+      - ../..:/repo:cached
+      - composer-cache:/home/demo/.composer
+    working_dir: /repo/examples/easyadmin-bridge-demo
+    environment:
+      COMPOSER_MEMORY_LIMIT: -1
+      APP_ENV: dev
+      APP_DEBUG: '1'
+    ports:
+      - '8081:8081'
+
+volumes:
+  composer-cache:
+    driver: local

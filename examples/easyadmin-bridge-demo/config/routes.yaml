@@ -1,0 +1,12 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: Polysource\Demo\EasyAdminBridge\Controller
+    type: attribute
+
+easyadmin:
+    resource: .
+    type: easyadmin.routes
+
+logout:
+    path: /logout
