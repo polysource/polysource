@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\DependencyInjection;
 
+use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -36,7 +38,19 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension
         ;
 
         $container
+            ->register(EnhancedBooleanFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
             ->register(DateTimeFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(BooleanFilterEnhancer::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;
