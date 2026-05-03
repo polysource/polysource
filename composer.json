@@ -31,6 +31,8 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/extension-installer": "^1.4",
         "friendsofphp/php-cs-fixer": "^3.65",
+        "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
+        "polysource/easyadmin-filter-bridge": "0.1.x-dev",
         "symfony/browser-kit": "^7.4",
         "symfony/dom-crawler": "^7.4",
         "symfony/framework-bundle": "^7.4",

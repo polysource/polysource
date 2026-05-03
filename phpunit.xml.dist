@@ -22,10 +22,12 @@
             <directory>packages/core/tests/Unit</directory>
             <directory>packages/symfony-bundle/tests/Unit</directory>
             <directory>packages/adapter-messenger/tests/Unit</directory>
+            <directory>packages/easyadmin-filter-bridge/tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
             <directory>packages/symfony-bundle/tests/Functional</directory>
             <directory>packages/adapter-messenger/tests/Functional</directory>
+            <directory>packages/easyadmin-filter-bridge/tests/Functional</directory>
         </testsuite>
     </testsuites>
     <source>
@@ -33,6 +35,7 @@
             <directory>packages/core/src</directory>
             <directory>packages/symfony-bundle/src</directory>
             <directory>packages/adapter-messenger/src</directory>
+            <directory>packages/easyadmin-filter-bridge/src</directory>
         </include>
     </source>
 </phpunit>
