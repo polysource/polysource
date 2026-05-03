@@ -53,6 +53,7 @@ final class ModelTest extends TestCase
     public function test_criterion_rejects_associative_values(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        /** @phpstan-ignore-next-line argument.type */
         new FilterCriterion('name', '=', ['key' => 'value']);
     }
 
@@ -114,6 +115,7 @@ final class ModelTest extends TestCase
     public function test_collection_rejects_non_criterion_items(): void
     {
         $this->expectException(\InvalidArgumentException::class);
+        /** @phpstan-ignore-next-line argument.type */
         new FilterCollection('scope', ['not a criterion']);
     }
 

@@ -15,15 +15,22 @@ namespace Polysource\Filter\Model;
  * filters wrap their value in a 1-tuple. This keeps the contract
  * uniform across `=` (1 value), `between` (2 values), `in` (n values).
  *
+ * **Allowed value types**: scalars (string, int, float, bool, null) and
+ * nested arrays of scalars. Objects (`DateTimeImmutable`, etc.) are
+ * intentionally NOT supported — they would defeat structural equality
+ * via `equals()` and break session serialisation in `FilterService`.
+ * Mappers must convert their domain types to plain strings/numbers
+ * before constructing a criterion (e.g. format dates as ISO 8601).
+ *
  * @see \Polysource\Filter\Model\FilterCollection
  * @see \Polysource\Filter\Pipeline\FilterMapperInterface
  */
 final readonly class FilterCriterion
 {
     /**
-     * @param non-empty-string $property      The Resource property targeted (e.g. `createdAt`).
-     * @param non-empty-string $operator      The applied operator (`=`, `>=`, `between`, `like`, `in`, …).
-     * @param list<mixed>      $values        Positional values consumed by the operator.
+     * @param string      $property The Resource property targeted (e.g. `createdAt`). Must be non-empty (validated at runtime).
+     * @param string      $operator The applied operator (`=`, `>=`, `between`, `like`, `in`, …). Must be non-empty (validated at runtime).
+     * @param list<mixed> $values   Positional values consumed by the operator.
      */
     public function __construct(
         public string $property,

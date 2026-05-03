@@ -14,8 +14,11 @@ namespace Polysource\Filter\Model;
  *
  * Immutable: `with()` and `without()` return new instances, never
  * mutate this one. Two criterions with the same `property` are
- * treated as a replacement (latest wins) — supports the common
- * "user updates an active filter" UX.
+ * treated as a **replacement at the original position** (the updated
+ * criterion stays where the previous one was) — supports the common
+ * "user updates an active filter" UX without making the chips bar
+ * jump around. Hosts that want "latest update goes to the end" can
+ * compose `->without($property)->with($criterion)` instead.
  *
  * @implements \IteratorAggregate<int, FilterCriterion>
  */
@@ -25,8 +28,8 @@ final readonly class FilterCollection implements \IteratorAggregate, \Countable
     public array $criteria;
 
     /**
-     * @param non-empty-string         $id        Stable scope identifier (host-defined).
-     * @param iterable<FilterCriterion> $criteria  Active criterions, in display order.
+     * @param string                    $id       Stable scope identifier (host-defined). Must be non-empty (validated at runtime).
+     * @param iterable<FilterCriterion> $criteria Active criterions, in display order.
      */
     public function __construct(
         public string $id,

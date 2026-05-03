@@ -131,6 +131,21 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'));
     }
 
+    public function test_load_returns_null_when_values_key_is_missing(): void
+    {
+        // Stricter than the previous "?? []" fallback: a payload that
+        // doesn't even carry the `values` key is treated as a schema
+        // mismatch (older bridge / hand-edited session), not silently
+        // coerced to an empty-values criterion.
+        $session = $this->createMock(SessionInterface::class);
+        $session->method('get')->willReturn([
+            ['property' => 'p', 'operator' => '='], // no `values` key
+        ]);
+        $service = $this->makeService($session);
+
+        self::assertNull($service->load('scope-1'));
+    }
+
     public function test_load_rejects_empty_id(): void
     {
         $service = $this->makeService($this->createMock(SessionInterface::class));
@@ -204,8 +219,12 @@ final class FilterServiceTest extends TestCase
         $service->save(new FilterCollection('A', [new FilterCriterion('p', '=', ['valA'])]));
         $service->save(new FilterCollection('B', [new FilterCriterion('p', '=', ['valB'])]));
 
-        self::assertSame(['valA'], $service->load('A')->criteria[0]->values);
-        self::assertSame(['valB'], $service->load('B')->criteria[0]->values);
+        $loadedA = $service->load('A');
+        $loadedB = $service->load('B');
+        self::assertNotNull($loadedA);
+        self::assertNotNull($loadedB);
+        self::assertSame(['valA'], $loadedA->criteria[0]->values);
+        self::assertSame(['valB'], $loadedB->criteria[0]->values);
     }
 }
 
@@ -229,7 +248,9 @@ final class InMemorySession implements SessionInterface
     public function has(string $name): bool { return isset($this->data[$name]); }
     public function get(string $name, mixed $default = null): mixed { return $this->data[$name] ?? $default; }
     public function set(string $name, mixed $value): void { $this->data[$name] = $value; }
+    /** @return array<string, mixed> */
     public function all(): array { return $this->data; }
+    /** @phpstan-ignore-next-line missingType.iterableValue, assign.propertyType — LSP requires bare `array` type to match SessionInterface */
     public function replace(array $attributes): void { $this->data = $attributes; }
     public function remove(string $name): mixed { $v = $this->data[$name] ?? null; unset($this->data[$name]); return $v; }
     public function clear(): void { $this->data = []; }

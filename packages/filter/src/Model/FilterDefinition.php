@@ -30,10 +30,10 @@ namespace Polysource\Filter\Model;
 final readonly class FilterDefinition
 {
     /**
-     * @param non-empty-string             $name           Pipeline routing key (e.g. "datetime").
-     * @param non-empty-string             $property       Resource property the filter targets.
+     * @param string                       $name           Pipeline routing key (e.g. "datetime"). Must be non-empty (validated at runtime).
+     * @param string                       $property       Resource property the filter targets. Must be non-empty (validated at runtime).
      * @param string                       $label          Human label, can be empty (host falls back to property).
-     * @param ?non-empty-string            $group          Optional group label for multi-group UI mode.
+     * @param ?string                      $group          Optional group label for multi-group UI mode. Either null or non-empty (validated at runtime).
      * @param array<string, mixed>         $formSpec       Form-side configuration (FormType FQCN, options, …).
      * @param array<string, mixed>         $datasourceSpec Data-source-side configuration (columns, operator, …).
      */
@@ -94,6 +94,10 @@ final readonly class FilterDefinition
     }
 
     /**
+     * Replaces the entire `formSpec` (no merge with the existing one).
+     * Hosts wanting partial updates should compose:
+     *     `$d->withFormSpec([...$d->formSpec, 'key' => 'value'])`.
+     *
      * @param array<string, mixed> $formSpec
      */
     public function withFormSpec(array $formSpec): self
@@ -109,6 +113,9 @@ final readonly class FilterDefinition
     }
 
     /**
+     * Replaces the entire `datasourceSpec` (no merge). Same composition
+     * pattern as `withFormSpec()` for partial updates.
+     *
      * @param array<string, mixed> $datasourceSpec
      */
     public function withDatasourceSpec(array $datasourceSpec): self

@@ -142,13 +142,18 @@ final class FilterService
         $criteria = [];
         foreach ($raw as $entry) {
             if (!\is_array($entry)
-                || !isset($entry['property'], $entry['operator'])
+                || !isset($entry['property'], $entry['operator'], $entry['values'])
                 || !\is_string($entry['property'])
                 || !\is_string($entry['operator'])
             ) {
+                // Strict: every entry MUST carry property + operator + values
+                // explicitly. A missing `values` key is a schema mismatch
+                // (older bridge writing payload without it, or hand-edited
+                // session) — surface it via the load()-level fallback to
+                // null instead of silently producing empty-values criteria.
                 throw new \InvalidArgumentException('Malformed filter session payload.');
             }
-            $values = $entry['values'] ?? [];
+            $values = $entry['values'];
             if (!\is_array($values) || !array_is_list($values)) {
                 throw new \InvalidArgumentException('Malformed filter session payload (values).');
             }
