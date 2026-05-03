@@ -4,11 +4,22 @@
 
 ## 1. Vision
 
-> *Permettre à n'importe quelle équipe Symfony d'avoir un admin pour ses ressources techniques (queues, flags, files, configs, APIs) en quelques minutes, sans réinventer le CRUD à chaque fois.*
+> *Polysource fournit deux outils complémentaires aux applications Symfony :*
+> *(1) une couche d'enrichissement pour les filtres EasyAdmin qui s'installe par dessus EasyAdmin sans le forker ;*
+> *(2) un panel d'admin standalone pour les ressources que Doctrine ORM ne couvre pas naturellement (Messenger, S3, Redis, HTTP, Meilisearch).*
 
-Polysource Admin est un moteur d'administration **Symfony**, **multi-source**, qui se concentre sur **ce que Doctrine ne couvre pas naturellement** : Messenger failed messages, feature flags, Redis, fichiers, APIs externes, Meilisearch, jobs, webhooks, configurations YAML/JSON.
+Les deux produits **partagent les mêmes primitives** (`polysource/core`,
+`polysource/filter`) et **peuvent vivre dans la même application Symfony**.
+Le pivot dual-produit a été acté en [ADR-012](../adr/0012-dual-product-positioning.md).
 
-Le succès du projet se mesure à : *« Combien de temps faut-il pour passer d'un Messenger failed transport invisible à un dashboard avec retry/dismiss qui marche ? »* — cible : **5 minutes**.
+Le succès du projet se mesure à deux questions :
+
+- *« En combien de temps un utilisateur EasyAdmin existant gagne des
+  filtres avancés (presets dates, ranges, multi-select, persistance
+  session, chips) ? »* — cible : **5 minutes**, zéro config.
+- *« En combien de temps un utilisateur Symfony passe d'un Messenger failed
+  transport invisible à un dashboard avec retry/dismiss qui marche ? »* —
+  cible : **5 minutes**.
 
 ## 2. Non-objectifs (ce que Polysource ne fera pas)
 
@@ -27,15 +38,40 @@ Ces non-objectifs ne sont pas négociables avant d'avoir validé le scope étroi
 
 ## 3. Positionnement par rapport à EasyAdmin
 
-| Aspect | EasyAdmin | Polysource |
+Polysource cohabite avec EasyAdmin de **deux manières distinctes** selon le
+produit considéré :
+
+### Produit 1 — `polysource/admin` standalone
+
+| Aspect | EasyAdmin | `polysource/admin` |
 |---|---|---|
 | Cible | Entités Doctrine ORM | Ressources techniques non-Doctrine ou multi-source |
-| Couplage | Doctrine obligatoire (composer require) | Aucune dépendance Doctrine dans `core` |
-| Premier cas | Admin produit / utilisateur / commande | Messenger failed messages / feature flags / S3 |
-| Maturité | 9 ans, stable, riche en features | Phase de conception, scope minimal |
-| Cohabitation | — | Bridge officiel `polysource/easyadmin-bridge` (v0.3) |
+| Couplage | Doctrine obligatoire | Aucune dépendance Doctrine dans `core` |
+| Premier cas | Admin produit / utilisateur / commande | Messenger failed messages / S3 / Redis |
+| Cohabitation | — | URL prefix séparé, peut vivre dans le même app Symfony |
 
-**Le projet refuse explicitement de se définir comme « concurrent d'EasyAdmin ».** Le pitch reste : *« Un admin Symfony pour tout ce qui n'est pas une entité Doctrine. »*
+Ici le projet **refuse explicitement de se définir comme « concurrent
+d'EasyAdmin »**. Pitch : *« un admin Symfony pour tout ce qui n'est pas une
+entité Doctrine. »*
+
+### Produit 2 — `polysource/easyadmin-filter-bridge`
+
+Ici Polysource n'est pas un concurrent : c'est un **complément qui
+s'installe par-dessus EasyAdmin** et enrichit son système de filtres natif
+**sans forker**. Voir [ADR-012](../adr/0012-dual-product-positioning.md) pour
+les seams techniques utilisés (`FilterConfiguratorInterface` auto-tagué,
+override Twig de `crud/filters.html.twig`, EventSubscriber sur
+`BeforeCrudActionEvent`).
+
+Pitch : *« Tu as déjà EasyAdmin. Installe `polysource/easyadmin-filter-bridge`,
+tes filtres deviennent magiques. »*
+
+### Règle commune aux deux produits
+
+Aucun des deux ne tente de remplacer EasyAdmin sur le cas Doctrine pur.
+Aucun ne se présente comme « alternative à EasyAdmin ». Les deux sont
+documentés comme **outils complémentaires** dans toute communication
+publique (issues GitHub, PR, blog, talks).
 
 ## 4. Premier cas d'usage recommandé
 
@@ -91,23 +127,37 @@ Anti-inspirations :
 
 Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque package a son propre `composer.json`, son propre `composer install`, et est publié indépendamment sur Packagist.
 
-### Packages v0.1 (sortie initiale, 6-8 semaines)
+### Packages v0.1 (sortie initiale, ~12-14 semaines après pivot ADR-012)
+
+**Primitives partagées** (utilisables seules) :
 
 - `polysource/core` — contracts + value objects, **zéro dépendance Symfony**
+- `polysource/filter` — `FilterCollection`, `FilterService` (session), form
+  types abstraits, Twig extension `filter_tags` (utilisable seul, sans
+  Polysource Admin ni EasyAdmin)
+
+**Produit 1 — `polysource/admin` standalone** :
+
 - `polysource/symfony-bundle` — wiring (DI, routing, ArgumentResolvers, Twig)
 - `polysource/twig-theme` — templates Twig par défaut (copiés et adaptés depuis EasyAdmin v5, MIT)
-- `polysource/adapter-messenger` — premier adapter (failed messages + queue)
+- `polysource/adapter-messenger` — adapter showcase (failed messages + queue)
 
-### Packages v0.2 (3 mois)
+**Produit 2 — Bridge EasyAdmin** :
 
-- `polysource/adapter-doctrine` — pour cohabitation EasyAdmin et resources Doctrine simples
+- `polysource/easyadmin-filter-bridge` — `FilterConfiguratorInterface`
+  auto-tagués, enhanced form types, EventSubscriber session, override Twig
+  de `crud/filters.html.twig`. Ne touche pas au code d'EasyAdmin.
+
+### Packages v0.2 (3 mois après v0.1)
+
+- `polysource/adapter-doctrine` — adapter Doctrine pour `polysource/admin`
+  (cohabitation avec EasyAdmin sur des cas légers)
 - `polysource/adapter-flysystem` — fichiers locaux et S3 via league/flysystem
 
-### Packages v0.3 (6 mois)
+### Packages v0.3 (6 mois après v0.1)
 
 - `polysource/adapter-http` — APIs REST externes via Symfony HttpClient
 - `polysource/adapter-redis` — feature flags, hashes Redis
-- `polysource/easyadmin-bridge` — intégration bidirectionnelle avec EasyAdmin
 
 ### Packages v1.0 (12 mois, scope strict)
 
@@ -139,15 +189,24 @@ Liste prioritisée des risques principaux pour la v0.1.
 ## 9. Critères de succès
 
 À 6 mois :
-- [ ] v0.1.0 publiée sur Packagist
+- [ ] v0.1.0 publiée sur Packagist (les 6 packages : `core`, `filter`,
+      `symfony-bundle`, `twig-theme`, `adapter-messenger`,
+      `easyadmin-filter-bridge`)
 - [ ] démo Messenger failed disponible et fonctionnelle
+- [ ] démo « EasyAdmin avant/après » disponible (avec et sans le bridge)
 - [ ] 5 issues utilisateur créées par des tiers
-- [ ] 50 stars
+- [ ] 50 stars cumulés sur les packages
+
+À 12 mois (cf. ADR-012 §critères de succès propres au pivot) :
+- [ ] `polysource/easyadmin-filter-bridge` : 200 installations Packagist,
+      30 stars
+- [ ] `polysource/admin` (standalone) : 50 installations Packagist
+- [ ] Au moins **un** issue / PR EasyAdmin référençant le bridge
 
 À 18 mois :
 - [ ] v1.0.0 publiée
 - [ ] 4-5 adapters maintenus
-- [ ] 100 stars
+- [ ] 100 stars cumulés
 - [ ] 10 utilisateurs publics confirmés (recherche `composer.lock` GitHub)
 - [ ] 3 contributeurs externes ayant mergé du code
 - [ ] 1 talk SymfonyCon ou Symfony Live accepté

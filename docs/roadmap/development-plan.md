@@ -1,8 +1,19 @@
 # Polysource — Plan de développement
 
-> Plan détaillé de la phase 0 à la phase 10. Objectif : sortir une **v0.1.0** publiée sur Packagist en 6-8 semaines pour 1 développeur senior, avec un cas tueur démontré (Messenger failed messages dashboard).
+> Plan détaillé de la phase 0 à la phase 10. Objectif : sortir une **v0.1.0**
+> publiée sur Packagist avec un produit dual (cf.
+> [ADR-012](../adr/0012-dual-product-positioning.md)) :
+> *(1)* `polysource/easyadmin-filter-bridge` — couche d'enrichissement filtres
+> EasyAdmin ; *(2)* `polysource/admin` standalone avec adapter Messenger.
 >
-> Ce plan est **un contrat**. Avant de commencer le code, il doit être validé. Toute déviation significative pendant l'implémentation doit faire l'objet d'une mise à jour explicite de ce fichier (ADR si nécessaire).
+> Ce plan est **un contrat**. Avant de commencer le code, il doit être
+> validé. Toute déviation significative pendant l'implémentation doit faire
+> l'objet d'une mise à jour explicite de ce fichier (ADR si nécessaire).
+>
+> **Mise à jour majeure 2026-05-03** — pivot dual-produit acté
+> ([ADR-012](../adr/0012-dual-product-positioning.md)). Phases 9.5 et 9.7
+> ajoutées. Phase 10 (release) repoussée. Estimation totale v0.1.0 portée de
+> ~7 à ~12-14 semaines.
 
 ## 0. Hypothèses de travail
 
@@ -17,20 +28,22 @@
 
 ## 0bis. Vue d'ensemble
 
-| Phase | Objet | Estimation | Livrable visible |
-|---|---|---|---|
-| 0 | Setup repo + docs + Docker + Makefile + ADR | 0,5 sem | repo prêt à recevoir du code |
-| 1 | `core` — contracts + VO `final readonly` | 1 sem | package Composer publiable |
-| 2 | `symfony-bundle` — DI + routing | 1 sem | `composer require` qui ne plante pas |
-| 3 | `twig-theme` — templates minimaux | 0,5 sem | rendu HTML basique |
-| 4 | `adapter-messenger` — read-only | 1 sem | liste failed messages affichée |
-| 5 | Actions retry / dismiss | 0,5 sem | boutons fonctionnels |
-| 6 | Permissions Symfony | 0,3 sem | Voter respecté |
-| 7 | Tests unitaires + fonctionnels | 1 sem | CI verte, coverage `core` ≥ 90 % |
-| 8 | App de démo Docker | 0,5 sem | `make demo` qui marche |
-| 9 | Documentation utilisateur | 0,5 sem | guide « 5 minutes » prêt |
-| 10 | Préparation release v0.1.0 | 0,3 sem | tags, Packagist, annonce |
-| **Total v0.1** | | **~7 semaines** | v0.1.0 publiée |
+| Phase | Objet | Estimation | Livrable visible | Statut |
+|---|---|---|---|---|
+| 0 | Setup repo + docs + Docker + Makefile + ADR | 0,5 sem | repo prêt à recevoir du code | ✅ |
+| 1 | `core` — contracts + VO `final readonly` | 1 sem | package Composer publiable | ✅ |
+| 2 | `symfony-bundle` — DI + routing | 1 sem | `composer require` qui ne plante pas | ✅ |
+| 3 | `twig-theme` — templates minimaux | 0,5 sem | rendu HTML basique | ✅ |
+| 4 | `adapter-messenger` — read-only | 1 sem | liste failed messages affichée | ✅ |
+| 5 | Actions retry / dismiss | 0,5 sem | boutons fonctionnels | ✅ |
+| 6 | Permissions Symfony | 0,3 sem | Voter respecté | ✅ |
+| 7 | Tests unitaires + fonctionnels | 1 sem | CI verte, coverage `core` ≥ 90 % | ✅ |
+| 8 | App de démo Docker | 0,5 sem | `make demo` qui marche | ✅ |
+| 9 | Documentation utilisateur | 0,5 sem | guide « 5 minutes » prêt | ✅ |
+| **9.5** | **`polysource/filter`** — extraction primitive filtre | **2-3 sem** | **package autonome avec session + form types abstraits** | ⏳ |
+| **9.7** | **`polysource/easyadmin-filter-bridge`** — Produit 2 | **2-3 sem** | **drop-in dans une app EasyAdmin** | ⏳ |
+| 10 | Préparation release v0.1.0 (dual product) | 0,5 sem | tags, Packagist, 2 annonces | ⏳ |
+| **Total v0.1** | | **~12-14 semaines** | v0.1.0 publiée (dual product) |
 
 ## Phase 0 — Setup repo, Docker et ADR (0,5 semaine)
 
@@ -762,18 +775,174 @@ docs/user/
 4. adapters/messenger.md
 5. cookbook/* (3 articles)
 
-## Phase 10 — Préparation release v0.1.0 (0,3 semaine)
+## Phase 9.5 — `polysource/filter` (primitive autonome) — 2-3 semaines
+
+> Phase **ajoutée par [ADR-012](../adr/0012-dual-product-positioning.md)**
+> (pivot dual-produit acté le 2026-05-03).
 
 ### Objectif
 
-Tagger v0.1.0, publier sur Packagist, écrire l'annonce.
+Extraire le système de filtres dans son propre package
+`polysource/filter`, **utilisable seul** par une application Symfony
+quelconque (sans Polysource Admin ni EasyAdmin), et **réutilisé** par
+les deux produits v0.1 :
+- `polysource/admin` standalone (Phase 9.7 + cas Messenger).
+- `polysource/easyadmin-filter-bridge` (Phase 9.7).
 
 ### Livrables
 
-- 4 packages publiés
-- Tag Git `v0.1.0`
-- Annonce blog / Twitter / discussion Symfony
-- CHANGELOG.md
+- **Nouveau package** `polysource/filter` avec :
+  - `FilterCollection`, `Filter` (immutable VO + builders)
+  - `FilterService` — persistance en session HTTP par identifiant
+    de collection
+  - `FilterCollectionFormType` — Symfony FormType paramétré, build
+    dynamique des champs depuis `FilterCollection`
+  - Form types abstraits : `EnhancedDateTimeType` (presets : aujourd'hui,
+    7 derniers jours, 30 derniers jours, ce mois, custom range),
+    `EnhancedChoiceType` (multi-select avec recherche, Select2-style),
+    `BetweenType`, `InType`
+  - Twig extension `filter_tags` avec template par défaut
+    (chips avec X pour retirer)
+  - Modes UI : `simple` (chips bar uniquement), `integrated`
+    (accordéon inline), `subpanel` (panneau coulissant)
+  - Tag DI `polysource.filter.form_type` pour permettre à un host
+    d'enregistrer ses propres form types
+- Tests unitaires `core` ≥ 90 % coverage
+- Doc utilisateur `docs/user/concepts/filter.md` mise à jour
+
+### Critères d'acceptation
+
+- [ ] `composer require polysource/filter` sur un projet Symfony 7.4
+      vierge : OK.
+- [ ] `composer require polysource/filter` sans Doctrine ni
+      Polysource Admin : OK.
+- [ ] Les filtres soumis sont persistés en session ; refresh de page
+      → filtres restaurés.
+- [ ] Click sur le X d'un chip → filtre retiré → form re-soumis.
+- [ ] Les 4 form types riches (date avec presets, multi-select, range,
+      between) marchent en isolation (form Symfony classique, sans le
+      reste de Polysource).
+
+### Risques
+
+- **Risque #1 : couplage involontaire à `polysource/symfony-bundle`.**
+  Mitigation : tests d'intégration dans un kernel Symfony minimal sans
+  `PolysourceBundle`.
+- **Risque #2 : explosion du scope (« et un picker date plus joli »,
+  « et un range slider »).** Mitigation : 4 form types pour v0.1, pas
+  un de plus.
+
+### Ordre d'implémentation
+
+1. Extraction `FilterCollection` + `Filter` depuis `polysource/core`
+   (les types restent dans `core` mais le builder + service vont
+   dans `filter`).
+2. `FilterService` (session) + tests unitaires.
+3. `FilterCollectionFormType` + tests fonctionnels en kernel minimal.
+4. Form types riches (1 par jour : date / choice / between / in).
+5. Twig extension + chips template.
+6. Modes UI multiples (subpanel / integrated / simple).
+7. Doc + cookbook.
+
+## Phase 9.7 — `polysource/easyadmin-filter-bridge` — 2-3 semaines
+
+> Phase **ajoutée par [ADR-012](../adr/0012-dual-product-positioning.md)**.
+
+### Objectif
+
+Drop-in package qui s'installe dans une application EasyAdmin v5
+existante et **enrichit le système de filtres natif sans forker**.
+
+### Livrables
+
+- **Nouveau package** `polysource/easyadmin-filter-bridge` avec :
+  - 7 `FilterConfiguratorInterface` (auto-tagués `ea.filter_configurator`)
+    qui swappent les `formType` des filtres built-in EasyAdmin :
+    `DateTimeFilter`, `TextFilter`, `NumericFilter`, `BooleanFilter`,
+    `ComparisonFilter`, `ArrayFilter`, `EntityFilter`
+  - 4 nouveaux `FilterInterface` activables manuellement par
+    `configureFilters()` : `BetweenDateFilter`, `InFilter`,
+    `NotNullFilter`, `FullTextSearchFilter`
+  - `EventSubscriber` sur `BeforeCrudActionEvent` qui persiste les
+    filtres en session par CRUD controller FQCN
+  - Override Twig `templates/bundles/EasyAdminBundle/crud/filters.html.twig`
+    pour afficher les chips au-dessus du tableau
+  - Bridge avec `polysource/filter` pour réutiliser les form types
+    riches déjà construits en Phase 9.5
+- Tests fonctionnels avec une app EasyAdmin v5 minimale
+- Application de démo `examples/easyadmin-bridge-demo/` (Symfony 7.4
+  + EasyAdmin v5 + bridge + 1 entité Doctrine simple type Product)
+- Doc utilisateur `docs/user/easyadmin-bridge/` (parallèle à
+  `docs/user/adapters/messenger.md`)
+
+### Critères d'acceptation
+
+- [ ] `composer require polysource/easyadmin-filter-bridge` sur un
+      projet EasyAdmin v5 existant : zéro config, les filtres existants
+      gagnent les form types riches sans modification de code.
+- [ ] La démo `examples/easyadmin-bridge-demo/` boot avec `make demo-bridge`
+      et montre les 5 améliorations en action (presets, multi-select,
+      ranges, chips, persistance session).
+- [ ] CI matrix verte sur EasyAdmin 5.x.
+- [ ] Aucune ligne de code d'EasyAdmin n'a été modifiée (vérification
+      par `composer diff` ou équivalent dans la CI).
+
+### Risques
+
+- **Risque #1 : EasyAdmin v6 sort en cours de route avec breaking
+  changes.** Mitigation : surveiller le repo EasyAdmin, ajouter v6 à
+  la CI matrix dès qu'une beta sort.
+- **Risque #2 : conflit avec un autre Configurator déjà installé**
+  (priorité, ordre d'application). Mitigation : tag DI avec priorité
+  négative, doc d'override claire.
+- **Risque #3 : dépendance circulaire `polysource/filter` ↔
+  `easyadmin-filter-bridge`.** Mitigation : `polysource/filter` ne
+  dépend **jamais** d'EasyAdmin ; seul le bridge dépend des deux.
+
+### Ordre d'implémentation
+
+1. Squelette du package + DI extension + tests vides.
+2. App de démo `examples/easyadmin-bridge-demo/` avec EasyAdmin nu
+   (avant le bridge) — sert de baseline visuelle.
+3. Le `DateTimeFilterEnhancer` end-to-end (Configurator + form type
+   réutilisé de `polysource/filter` + tests fonctionnels). Quand
+   celui-là marche, les 6 autres sont du copier-coller.
+4. Les 6 autres Configurators (1 par jour).
+5. EventSubscriber session.
+6. Override Twig pour les chips.
+7. Doc utilisateur.
+
+## Phase 10 — Préparation release v0.1.0 dual-product (0,5 semaine)
+
+> **Mise à jour 2026-05-03** ([ADR-012](../adr/0012-dual-product-positioning.md)) :
+> phase reformatée pour refléter le pivot dual-produit. La release v0.1.0
+> publie **6 packages** (au lieu de 4 prévus initialement) et fait
+> **2 annonces distinctes** ciblant 2 audiences.
+
+### Objectif
+
+Tagger v0.1.0, publier les 6 packages sur Packagist, écrire les annonces.
+
+### Livrables
+
+- **6 packages publiés** :
+  - `polysource/core`
+  - `polysource/filter` (nouveau, Phase 9.5)
+  - `polysource/twig-theme`
+  - `polysource/symfony-bundle`
+  - `polysource/adapter-messenger`
+  - `polysource/easyadmin-filter-bridge` (nouveau, Phase 9.7)
+- Tag Git `v0.1.0` annoté
+- **Deux annonces séparées** :
+  - **Annonce A — audience EasyAdmin** (large) : *"Enhance your
+    EasyAdmin filters in 5 minutes"* — focus sur le bridge.
+    Canaux : r/symfony, X, Symfony Insider, issue dédiée sur le repo
+    EasyAdmin.
+  - **Annonce B — audience non-Doctrine** (niche) : *"Polysource:
+    admin for non-Doctrine resources"* — focus sur le standalone et
+    le cas Messenger. Canaux : r/symfony, forum Symfony, Reddit
+    spécialisés.
+- CHANGELOG.md (Keep a Changelog format) listant les deux produits
 
 ### Tâches
 
