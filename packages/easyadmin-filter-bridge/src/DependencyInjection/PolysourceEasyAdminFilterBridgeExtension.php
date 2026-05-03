@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\DependencyInjection;
 
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
@@ -44,6 +50,24 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension
         ;
 
         $container
+            ->register(EnhancedTextFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(EnhancedNumericFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(EnhancedChoiceFilterType::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
             ->register(DateTimeFilterEnhancer::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
@@ -51,6 +75,24 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension
 
         $container
             ->register(BooleanFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(TextFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(NumericFilterEnhancer::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        $container
+            ->register(ChoiceFilterEnhancer::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;

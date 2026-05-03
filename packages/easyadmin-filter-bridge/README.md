@@ -7,8 +7,11 @@
 ## Status
 
 **Pre-v0.1.0 — PoC stage.** The seam is technically validated (cf.
-[ADR-012](../../docs/adr/0012-dual-product-positioning.md)). Two
-enhancers shipped so far (`DateTime`, `Boolean`); the rest land in
+[ADR-012](../../docs/adr/0012-dual-product-positioning.md)). Five of
+the seven built-in EasyAdmin filters now have an Enhancer
+(`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`); the remaining
+ones (`Comparison`, `Array`, `Entity`) plus the Twig templates and
+session persistence land in
 [Phase 9.7](../../docs/roadmap/development-plan.md).
 
 ## What it does
@@ -18,9 +21,12 @@ Once installed, EasyAdmin's built-in filters gain richer form types,
 
 | Built-in filter | Enhancement (today) | Enhancement (Phase 9.7) |
 |---|---|---|
-| `DateTimeFilter` | Presets option (`today`, `last_7_days`, `last_30_days`, `this_month`, `custom`), `show_clear` flag. | Date range UI, Twig theme with one-click preset buttons. |
+| `DateTimeFilter` | `presets` option (`today`, `last_7_days`, `last_30_days`, `this_month`, `custom`), `show_clear` flag. | Twig theme with one-click preset buttons. |
 | `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. | Toggle-switch UI variant. |
-| `TextFilter`, `NumericFilter`, `ChoiceFilter`, `EntityFilter`, `ComparisonFilter`, `ArrayFilter` | — | Coming in Phase 9.7. |
+| `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). | Mode toggle (exact / starts_with / ends_with / contains) inline. |
+| `NumericFilter` | `step` option (granularity hint), `quick_ranges` option (preset buttons like `<100` / `100-1000` / `1000+`). | Twig theme with quick-range buttons. |
+| `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. | Twig theme for inline rendering. |
+| `EntityFilter`, `ComparisonFilter`, `ArrayFilter` | — | Coming in Phase 9.7. |
 
 Plus, post-9.7:
 - Filter **chips/tags** above the table (active filters visible, click X to remove).

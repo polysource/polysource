@@ -7,10 +7,16 @@ namespace Polysource\EasyAdminFilterBridge\Tests\Functional\Container;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterConfiguratorInterface;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\PolysourceEasyAdminFilterBridgeExtension;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Form\AbstractType;
 
@@ -65,8 +71,14 @@ final class BridgeAutoConfigurationTest extends TestCase
         foreach ([
             DateTimeFilterEnhancer::class,
             BooleanFilterEnhancer::class,
+            TextFilterEnhancer::class,
+            NumericFilterEnhancer::class,
+            ChoiceFilterEnhancer::class,
             EnhancedDateTimeFilterType::class,
             EnhancedBooleanFilterType::class,
+            EnhancedTextFilterType::class,
+            EnhancedNumericFilterType::class,
+            EnhancedChoiceFilterType::class,
         ] as $serviceId) {
             if ($this->container->hasDefinition($serviceId)) {
                 $this->container->getDefinition($serviceId)->setPublic(true);
@@ -112,21 +124,70 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_form_types_are_registered_and_tagged(): void
+    public function test_text_configurator_is_registered_and_tagged(): void
     {
-        self::assertTrue($this->container->hasDefinition(EnhancedDateTimeFilterType::class));
-        self::assertTrue($this->container->hasDefinition(EnhancedBooleanFilterType::class));
+        self::assertTrue($this->container->hasDefinition(TextFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(TextFilterEnhancer::class)->isAutoconfigured());
 
         $this->container->compile();
 
         self::assertArrayHasKey(
-            'form.type',
-            $this->container->getDefinition(EnhancedDateTimeFilterType::class)->getTags(),
-            'EnhancedDateTimeFilterType must be tagged form.type so Symfony Form resolves it from FQCN',
+            'ea.filter_configurator',
+            $this->container->getDefinition(TextFilterEnhancer::class)->getTags(),
         );
+    }
+
+    public function test_numeric_configurator_is_registered_and_tagged(): void
+    {
+        self::assertTrue($this->container->hasDefinition(NumericFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(NumericFilterEnhancer::class)->isAutoconfigured());
+
+        $this->container->compile();
+
         self::assertArrayHasKey(
-            'form.type',
-            $this->container->getDefinition(EnhancedBooleanFilterType::class)->getTags(),
+            'ea.filter_configurator',
+            $this->container->getDefinition(NumericFilterEnhancer::class)->getTags(),
         );
+    }
+
+    public function test_choice_configurator_is_registered_and_tagged(): void
+    {
+        self::assertTrue($this->container->hasDefinition(ChoiceFilterEnhancer::class));
+        self::assertTrue($this->container->getDefinition(ChoiceFilterEnhancer::class)->isAutoconfigured());
+
+        $this->container->compile();
+
+        self::assertArrayHasKey(
+            'ea.filter_configurator',
+            $this->container->getDefinition(ChoiceFilterEnhancer::class)->getTags(),
+        );
+    }
+
+    public function test_form_types_are_registered_and_tagged(): void
+    {
+        $allFormTypes = [
+            EnhancedDateTimeFilterType::class,
+            EnhancedBooleanFilterType::class,
+            EnhancedTextFilterType::class,
+            EnhancedNumericFilterType::class,
+            EnhancedChoiceFilterType::class,
+        ];
+
+        foreach ($allFormTypes as $formType) {
+            self::assertTrue(
+                $this->container->hasDefinition($formType),
+                \sprintf('FormType %s must be registered', $formType),
+            );
+        }
+
+        $this->container->compile();
+
+        foreach ($allFormTypes as $formType) {
+            self::assertArrayHasKey(
+                'form.type',
+                $this->container->getDefinition($formType)->getTags(),
+                \sprintf('%s must be tagged form.type so Symfony Form resolves it from FQCN', $formType),
+            );
+        }
     }
 }
