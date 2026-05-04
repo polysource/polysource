@@ -55,6 +55,8 @@ Desktop.ini
 # local agent — local-only context (cf. ADR-009)
 /.local/CLAUDE.local.md
 /.local/settings.local.json
+/.local/scheduled_tasks.lock
+/.local/scheduled_tasks.json
 
 # Docker
 /docker-compose.override.yml
