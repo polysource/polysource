@@ -213,7 +213,7 @@ final class ChipValueFormatterTest extends TestCase
         $filter = $this->makeFilterStub(BooleanFilter::class, 'isVisible');
         $filter->getAsDto()->setCustomOption(
             \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
-            static fn (mixed $v): string => 'CUSTOM-'.(\is_scalar($v) ? (string) $v : 'null'),
+            static fn (mixed $v): string => 'CUSTOM-' . (\is_scalar($v) ? (string) $v : 'null'),
         );
 
         $context = $this->makeContext(filtersMap: ['isVisible' => $filter]);
@@ -252,7 +252,7 @@ final class ChipValueFormatterTest extends TestCase
         $rp->setValue($fieldDto, 'isVisible');
         $fieldDto->setCustomOption(
             \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
-            static fn (mixed $v): string => 'FIELD-'.(\is_scalar($v) ? (string) $v : 'null'),
+            static fn (mixed $v): string => 'FIELD-' . (\is_scalar($v) ? (string) $v : 'null'),
         );
 
         $context = $this->makeContext(
