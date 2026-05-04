@@ -1,0 +1,86 @@
+{# polysource/easyadmin-filter-bridge — subpanel-mode index template.
+
+   Opt-in via:
+
+       public function configureCrud(Crud $crud): Crud
+       {
+           return $crud->overrideTemplate(
+               'crud/index',
+               '@PolysourceEasyAdminFilterBridge/crud/index_subpanel.html.twig',
+           );
+       }
+
+   Behaviour:
+   - Inherits the chips bar override (`crud/index.html.twig` via the
+     `@PolysourceEasyAdminFilterBridge` namespace).
+   - Adds the `polysource-filter-subpanel` body class so the inline
+     CSS (defined in `configured_stylesheets`) restyles EA's
+     `#modal-filters` as a right-anchored offcanvas-style panel
+     instead of a centered modal.
+   - EA's AJAX form-loading flow stays intact: the EA JS still
+     fetches `?action=renderFilters` and injects HTML into
+     `.modal-body`. We only change the modal's positioning + slide-in
+     animation via CSS — Bootstrap's modal lifecycle (focus trap,
+     ESC, backdrop) is preserved.
+
+   Why CSS over JS:
+   - Replacing EA's modal with a Bootstrap offcanvas would mean
+     re-implementing EA's filter-form AJAX loader, the
+     apply/clear button wiring, and the autocomplete/toggle
+     handlers — all of which target `.modal-body` and `.modal`
+     selectors. Restyling via CSS keeps EA's JS happy and ships in
+     ~50 lines.
+   - Hosts who want a "real" offcanvas (different focus management,
+     different transition) can override this template with their
+     own.
+#}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
+
+{% block body_class %}{{ parent() }} polysource-filter-subpanel{% endblock %}
+
+{% block configured_stylesheets %}
+    {{ parent() }}
+    <style>
+        /* polysource/easyadmin-filter-bridge — subpanel mode CSS */
+        body.polysource-filter-subpanel #modal-filters .modal-dialog {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            margin: 0;
+            max-width: none;
+            width: 480px;
+            max-height: 100vh;
+            display: flex;
+        }
+        body.polysource-filter-subpanel #modal-filters .modal-content {
+            height: 100vh;
+            border-radius: 0;
+            border-top: none;
+            border-bottom: none;
+            border-right: none;
+            box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        body.polysource-filter-subpanel #modal-filters .modal-body {
+            overflow-y: auto;
+            flex: 1 1 auto;
+        }
+        /* Slide-in animation from the right edge. */
+        body.polysource-filter-subpanel #modal-filters.fade .modal-dialog {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+        }
+        body.polysource-filter-subpanel #modal-filters.show .modal-dialog {
+            transform: none;
+        }
+        /* Optional: tighter mobile size — flush right, full width. */
+        @media (max-width: 575.98px) {
+            body.polysource-filter-subpanel #modal-filters .modal-dialog {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,83 @@
+{# polysource/easyadmin-filter-bridge — override of @EasyAdmin/crud/filters.html.twig
+
+   Renders the AJAX-loaded filter form INSIDE the modal/subpanel,
+   with multi-group support: filters declaring
+   `setFormTypeOption('polysource_group', 'Status')` are bundled
+   into a `<details>` accordion section. Filters with no group
+   render flat at the top.
+
+   Group resolution lives in Twig — the
+   `GroupCarrierConfigurator` (compiled at request time, see
+   `Polysource\EasyAdminFilterBridge\Configurator\GroupCarrierConfigurator`)
+   moves the host-declared `polysource_group` option from
+   `formTypeOptions` (where it would crash the underlying form
+   type's OptionsResolver) to `customOptions`. This template reads
+   it back via
+   `ea().crud.filtersConfig.getFilter(name).asDto.customOption('polysource_group')`.
+
+   Why a Twig override and not a host-side hook:
+   - The filter form is loaded by EA via AJAX (action=renderFilters)
+     into `#modal-filters .modal-body`. The host has no opportunity
+     to wrap that markup. A Twig override is the only seam.
+   - Symfony's `@!EasyAdmin/...` bang-prefix isn't needed here —
+     this template doesn't extend the upstream version, it simply
+     re-implements the body using the form-pieces API. The original
+     was 17 lines anyway.
+#}
+{# @var ea \EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext #}
+{# @var filters_form \Symfony\Component\Form\FormView #}
+{% form_theme filters_form with ea().crud.formThemes only %}
+
+{% set _filtersConfig = ea().crud.filtersConfig %}
+
+{# Build {group => [propertyName, …]} map. Ungrouped filters land
+   in the special key '' (empty string) and render first, flat. #}
+{% set _ungrouped = [] %}
+{% set _groups = {} %}
+{% for child in filters_form %}
+    {% set _property = child.vars.name %}
+    {% set _filter = _filtersConfig.getFilter(_property) %}
+    {% set _group = null %}
+    {% if _filter %}
+        {% set _group = _filter.asDto.customOption('polysource_group') %}
+    {% endif %}
+    {% if _group is null or _group == '' %}
+        {% set _ungrouped = _ungrouped|merge([_property]) %}
+    {% else %}
+        {% set _list = _groups[_group]|default([]) %}
+        {% set _list = _list|merge([_property]) %}
+        {% set _groups = _groups|merge({(_group): _list}) %}
+    {% endif %}
+{% endfor %}
+
+{{ form_start(filters_form, {attr: {
+    id: filters_form.vars.id,
+    'data-ea-filters-form-id': filters_form.vars.id,
+}}) }}
+    {% for paramName, paramValue in form_action_query_string_as_array|ea_flatten_array %}
+        <input type="hidden" name="{{ paramName }}" value="{{ paramValue }}">
+    {% endfor %}
+
+    {# Ungrouped filters — render flat (matches upstream's default). #}
+    {% for _property in _ungrouped %}
+        {{ form_row(filters_form[_property]) }}
+    {% endfor %}
+
+    {# Grouped filters — render each group as a <details> accordion.
+       The first group is `open` by default; subsequent ones are
+       collapsed so the form doesn't sprawl. Hosts can override
+       per-group state with custom CSS. #}
+    {% for _groupName, _properties in _groups %}
+        <details class="polysource-filter-group" {% if loop.first %}open{% endif %}>
+            <summary class="polysource-filter-group__summary">
+                <strong>{{ _groupName|trans({}, ea.i18n.translationDomain) }}</strong>
+                <span class="badge bg-secondary ms-2">{{ _properties|length }}</span>
+            </summary>
+            <div class="polysource-filter-group__body">
+                {% for _property in _properties %}
+                    {{ form_row(filters_form[_property]) }}
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+{{ form_end(filters_form) }}
