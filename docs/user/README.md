@@ -17,6 +17,8 @@ what Doctrine-ORM-centric solutions don't cover.
 | Get a working dashboard in 5 minutes | [getting-started.md](./getting-started.md) |
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |
+| Build filter UIs (standalone primitive) | [filter/](./filter/) |
+| Enrich an EasyAdmin v5 app's filters | [easyadmin-filter-bridge/](./easyadmin-filter-bridge/whats-new.md) |
 | Copy-paste a runnable recipe | [cookbook/](./cookbook/) |
 | Look up a public interface signature | [api/](./api/) |
 
@@ -35,6 +37,11 @@ docs/user/
 │   └── permission.md          ← Symfony Security integration
 ├── adapters/
 │   └── messenger.md           ← reference for polysource/adapter-messenger
+├── filter/                    ← standalone polysource/filter primitive
+│   ├── README.md
+│   └── getting-started.md
+├── easyadmin-filter-bridge/   ← drop-in for EasyAdmin v5
+│   └── whats-new.md
 ├── cookbook/
 │   ├── messenger-failed-dashboard.md
 │   ├── adding-a-custom-action.md

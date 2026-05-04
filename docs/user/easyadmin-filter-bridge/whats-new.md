@@ -16,6 +16,14 @@ data-controller="polysource--filter">` carrying the new options as
 `data-*-value` attrs. If the host app has customised the upstream
 theme, the bridge inherits those customisations automatically.
 
+Since v0.1 the bridge also delegates **session persistence** to
+[`polysource/filter`](../filter/getting-started.md) under the hood,
+and exposes the standalone primitive's surface to host apps that want
+it: a chips bar above the list, an opt-in side subpanel UI, and
+multi-group accordion/tab rendering. None of those replace EasyAdmin's
+own UI — they are **additive**, opt-in via per-controller config, and
+keep the upstream layout intact when not enabled.
+
 ## Per-filter matrix
 
 | Filter type | Bridge option | What it does | Upstream already? | Stimulus action |
@@ -30,6 +38,62 @@ theme, the bridge inherits those customisations automatically.
 | **`ChoiceFilter`** | `inline: bool` | Adds a `data-polysource--filter-inline-value` attr. Intended as a hint that the host theme can use to render choices as inline radios instead of a dropdown. | Partially (you can already pass `expanded: true` via `value_type_options`). | None shipped. |
 | **`ArrayFilter`** | `chip_display: bool` | Adds a `data-polysource--filter-chip-display-value` attr. Intended as a hook for host CSS/JS to render selected items as removable chips. | No. | None shipped — host wires its own UI. |
 | **`EntityFilter`** | `placeholder: ?string` | Adds a `data-polysource--filter-placeholder-value` attr. Intended for the autocomplete/select widget. | Partially (placeholder can be passed via `value_type_options`). | None shipped. |
+
+## Beyond per-filter options — what the bridge layers on top
+
+The matrix above lists per-filter enhancements. The bridge also wires
+three **list-level** capabilities on top of EasyAdmin's filter
+sidebar, all powered by `polysource/filter`:
+
+### Chips bar above the list
+
+When filters are applied the bridge renders a row of removable chips
+above the list (template:
+`@PolysourceFilter/tags/chips.html.twig`). Each chip displays the
+human-readable label produced by the matching
+`FilterFormatterInterface`; clicking the × removes that single
+filter from the URL and re-submits. Up to 7 chips are shown by
+default; the rest collapse behind a "+N more" toggle.
+
+The chips bar is rendered automatically on EA index pages where any
+filter is active. Override the template by aliasing
+`@PolysourceFilter` to your own theme path. Hosts that don't want it
+can hide it via CSS (`.polysource-filter-chips { display: none }`).
+
+### Side subpanel mode (opt-in)
+
+EasyAdmin renders filters in a sidebar that takes a slice of the
+horizontal real estate. For lists with many columns this is awkward.
+Pass `mode: subpanel` in the host's filter configuration to render
+the form into a Bootstrap 5 offcanvas-style side panel that opens on
+click and closes on ESC. The Stimulus controller
+(`polysource--filter-subpanel`) handles focus management,
+aria-hidden, and the body class transition.
+
+The default mode stays `integrated` — i.e. exactly EA's existing
+sidebar — so existing apps see no change unless they explicitly
+opt-in.
+
+### Multi-group accordion / tabs
+
+`FilterDefinition::withGroup('Status')` groups definitions
+together. In integrated mode, each group renders as a `<details>`
+accordion section. In subpanel mode, each group is one tab.
+Definitions without a group land in an unlabelled section displayed
+first.
+
+This solves the "30 filters scrolling forever" problem that EA
+sidebars hit on rich resources.
+
+### Session persistence (always on)
+
+The bridge stores active filters in the HTTP session under
+`polysource.filter.{xxh128(controller-fqcn)}`. Reloading the page,
+navigating back from a detail view, or following a bookmark restores
+the last applied filters automatically. No URL noise.
+
+Cleared via the upstream EA "Reset" button (which the bridge
+intercepts and translates to a `FilterService::clear()` call).
 
 ## Honest summary of what's **not** in v0.1
 
@@ -78,8 +142,15 @@ today, sets comparison to `between`, reveals the second date picker.
 
 ## Where to go for more
 
+- [`polysource/filter` getting-started](../filter/getting-started.md) —
+  the standalone primitive the bridge composes. Useful if you want
+  the same chips/subpanel/multi-group UI in a non-EasyAdmin
+  controller, or if you want to add a custom filter type and
+  understand the 3-tag pipeline.
 - [Roadmap](../../roadmap/development-plan.md) — what's planned for
   v0.2 and beyond (chip-display Stimulus, autocomplete enhancements,
   saved-filter UX).
 - [ADR-012](../../adr/0012-dual-product-positioning.md) — why the bridge
   exists at all (vs forking EasyAdmin).
+- [ADR-013](../../adr/0013-filter-package-architecture.md) — the
+  architecture the bridge sits on top of.
