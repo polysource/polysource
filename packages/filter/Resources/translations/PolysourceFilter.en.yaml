@@ -1,0 +1,14 @@
+polysource:
+    filter:
+        open: 'Filters'
+        cancel: 'Cancel'
+        apply: 'Apply'
+
+        modal:
+            title: 'Filters'
+
+        chip:
+            remove: 'Remove this filter'
+
+        chips:
+            more: '+%count% more'

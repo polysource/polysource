@@ -1,0 +1,116 @@
+{# Subpanel mode — chips bar above + sliding side panel with tabs.
+
+   The subpanel is a fixed-position panel anchored to the right edge
+   of the viewport. Multi-group definitions become tabs (one tab per
+   FilterDefinition group). Stimulus handler:
+   `polysource--filter-subpanel#open|close|switchTab`. ESC closes.
+
+   Vars expected:
+   - filter_form: FilterCollectionType FormView
+   - chips_html:  output of filter_tags()
+   - apply_url:   GET URL for the form
+   - panel_id:    DOM id (default `polysource-filter-subpanel`)
+#}
+
+{%- set panel_id = panel_id|default('polysource-filter-subpanel') -%}
+{%- set groups = filter_form.vars.polysource_filter_groups -%}
+{%- set ungrouped = groups['']|default([]) -%}
+{%- set named_groups = groups|filter((_, key) => key != '') -%}
+
+<div class="polysource-filter polysource-filter--subpanel"
+     data-controller="polysource--filter-subpanel"
+     data-polysource--filter-subpanel-panel-id-value="{{ panel_id }}">
+
+    <div class="polysource-filter-toolbar d-flex flex-wrap align-items-center gap-2 mb-2">
+        <button type="button"
+                class="btn btn-secondary btn-sm polysource-filter-open"
+                data-action="polysource--filter-subpanel#open">
+            {{ 'polysource.filter.open'|trans({}, 'PolysourceFilter') }}
+        </button>
+
+        {{ chips_html|raw }}
+    </div>
+
+    <aside class="polysource-filter-subpanel offcanvas offcanvas-end"
+           id="{{ panel_id }}"
+           tabindex="-1"
+           aria-labelledby="{{ panel_id }}-title"
+           data-polysource--filter-subpanel-target="panel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="{{ panel_id }}-title">
+                {{ 'polysource.filter.modal.title'|trans({}, 'PolysourceFilter') }}
+            </h5>
+            <button type="button"
+                    class="btn-close"
+                    aria-label="Close"
+                    data-action="polysource--filter-subpanel#close"></button>
+        </div>
+        <div class="offcanvas-body">
+            {{ form_start(filter_form, {action: apply_url, method: 'GET', attr: {id: 'polysource-filter-subpanel-form'}}) }}
+
+                {%- if named_groups|length > 0 -%}
+                    {# Multi-group → tabs. Active tab = first group. #}
+                    <ul class="nav nav-tabs polysource-filter-subpanel-tabs"
+                        role="tablist"
+                        data-polysource--filter-subpanel-target="tablist">
+                        {%- for groupName, _ in named_groups -%}
+                            {%- set tab_id = panel_id ~ '-tab-' ~ loop.index -%}
+                            <li class="nav-item" role="presentation">
+                                <button type="button"
+                                        class="nav-link {{ loop.first ? 'active' }}"
+                                        id="{{ tab_id }}"
+                                        role="tab"
+                                        aria-controls="{{ tab_id }}-panel"
+                                        aria-selected="{{ loop.first ? 'true' : 'false' }}"
+                                        data-action="polysource--filter-subpanel#switchTab"
+                                        data-polysource--filter-subpanel-target-param="{{ tab_id }}-panel">
+                                    {{ groupName|trans({}, 'PolysourceFilter') }}
+                                </button>
+                            </li>
+                        {%- endfor -%}
+                    </ul>
+
+                    <div class="tab-content polysource-filter-subpanel-tabcontent">
+                        {%- for groupName, groupDefs in named_groups -%}
+                            {%- set tab_id = panel_id ~ '-tab-' ~ loop.index -%}
+                            <div class="tab-pane fade {{ loop.first ? 'show active' }} pt-3"
+                                 id="{{ tab_id }}-panel"
+                                 role="tabpanel"
+                                 aria-labelledby="{{ tab_id }}"
+                                 data-polysource--filter-subpanel-target="tabpane">
+                                {%- for def in groupDefs -%}
+                                    {{ form_row(filter_form[def.property]) }}
+                                {%- endfor -%}
+                            </div>
+                        {%- endfor -%}
+                    </div>
+
+                    {%- if ungrouped|length > 0 -%}
+                        {# Render ungrouped definitions BELOW the tabs. #}
+                        <hr class="my-3">
+                        {%- for def in ungrouped -%}
+                            {{ form_row(filter_form[def.property]) }}
+                        {%- endfor -%}
+                    {%- endif -%}
+                {%- else -%}
+                    {# No named groups — flat layout, just like the
+                       integrated modal. #}
+                    {%- for def in ungrouped -%}
+                        {{ form_row(filter_form[def.property]) }}
+                    {%- endfor -%}
+                {%- endif -%}
+
+            {{ form_end(filter_form) }}
+        </div>
+        <div class="offcanvas-footer p-3 border-top d-flex gap-2 justify-content-end">
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-action="polysource--filter-subpanel#close">
+                {{ 'polysource.filter.cancel'|trans({}, 'PolysourceFilter') }}
+            </button>
+            <button type="submit" form="polysource-filter-subpanel-form" class="btn btn-primary">
+                {{ 'polysource.filter.apply'|trans({}, 'PolysourceFilter') }}
+            </button>
+        </div>
+    </aside>
+</div>

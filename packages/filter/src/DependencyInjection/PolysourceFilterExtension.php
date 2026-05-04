@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\DependencyInjection;
 
+use Polysource\Filter\Form\Type\FilterCollectionType;
 use Polysource\Filter\Pipeline\FilterFormatterInterface;
 use Polysource\Filter\Pipeline\FilterMapperInterface;
 use Polysource\Filter\Pipeline\FilterRendererInterface;
@@ -75,6 +76,19 @@ final class PolysourceFilterExtension extends Extension
         $container
             ->register(RendererRegistry::class)
             ->setArguments([new TaggedIteratorArgument('polysource.filter.renderer'), []])
+            ->setPublic(true)
+        ;
+
+        // FilterCollectionType — Symfony Form auto-discovers FormType
+        // services tagged `form.type` via the AbstractType
+        // auto-configuration (which is enabled by default in
+        // FrameworkBundle). The class extends AbstractType so
+        // declaring it autowired is enough; FrameworkBundle's
+        // registerForAutoconfiguration tags it on top.
+        $container
+            ->register(FilterCollectionType::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
             ->setPublic(true)
         ;
     }

@@ -1,0 +1,67 @@
+{# Integrated mode — chips bar above + Bootstrap modal opener.
+
+   Each FilterDefinition becomes a sub-form rendered inside the modal.
+   When `definitions` are grouped (FilterDefinition::withGroup), each
+   group becomes a collapsible <details> section in the modal body.
+
+   Vars expected from the host:
+   - filter_form: the FilterCollectionType FormView (compound)
+   - chips_html:  pre-rendered chips bar HTML (output of filter_tags())
+   - apply_url:   the URL to GET-submit the form to
+   - modal_id:    DOM id of the modal (default `polysource-filter-modal`)
+#}
+
+{%- set modal_id = modal_id|default('polysource-filter-modal') -%}
+
+<div class="polysource-filter polysource-filter--integrated">
+    <div class="polysource-filter-toolbar d-flex flex-wrap align-items-center gap-2 mb-2">
+        <button type="button"
+                class="btn btn-secondary btn-sm polysource-filter-open"
+                data-bs-toggle="modal"
+                data-bs-target="#{{ modal_id }}">
+            {{ 'polysource.filter.open'|trans({}, 'PolysourceFilter') }}
+        </button>
+
+        {{ chips_html|raw }}
+    </div>
+
+    <div class="modal fade" id="{{ modal_id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ 'polysource.filter.modal.title'|trans({}, 'PolysourceFilter') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ form_start(filter_form, {action: apply_url, method: 'GET', attr: {id: 'polysource-filter-form'}}) }}
+                        {%- for groupName, groupDefs in filter_form.vars.polysource_filter_groups -%}
+                            {%- if groupName == '' -%}
+                                {# Default (ungrouped) — render flat. #}
+                                {%- for def in groupDefs -%}
+                                    {{ form_row(filter_form[def.property]) }}
+                                {%- endfor -%}
+                            {%- else -%}
+                                <details class="polysource-filter-group mb-3" open>
+                                    <summary class="polysource-filter-group-summary fs-6 fw-bold mb-2">
+                                        {{ groupName|trans({}, 'PolysourceFilter') }}
+                                    </summary>
+                                    {%- for def in groupDefs -%}
+                                        {{ form_row(filter_form[def.property]) }}
+                                    {%- endfor -%}
+                                </details>
+                            {%- endif -%}
+                        {%- endfor -%}
+                    {{ form_end(filter_form) }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ 'polysource.filter.cancel'|trans({}, 'PolysourceFilter') }}
+                    </button>
+                    <button type="submit" form="polysource-filter-form" class="btn btn-primary">
+                        {{ 'polysource.filter.apply'|trans({}, 'PolysourceFilter') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

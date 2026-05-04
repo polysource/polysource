@@ -1,0 +1,57 @@
+{# Chips bar — one chip per active FilterCriterion.
+
+   Click X removes the criterion (Stimulus handler:
+   `polysource--filter-chips#removeChip`). When more than 7 chips are
+   active, the rest are collapsed under a "+N more" toggle (Stimulus
+   handler `expandOverflow`).
+
+   Vars exposed by FilterTagsExtension::renderTags():
+   - chips:         list<{criterion, definition, label}>
+   - collection_id: string scope id of the FilterCollection
+#}
+
+{%- set max_visible = 7 -%}
+{%- set visible_chips = chips|slice(0, max_visible) -%}
+{%- set overflow_chips = chips|slice(max_visible) -%}
+
+<div class="polysource-filter-chips d-flex flex-wrap gap-1"
+     data-controller="polysource--filter-chips"
+     data-polysource--filter-chips-collection-id-value="{{ collection_id }}">
+
+    {%- for chip in visible_chips -%}
+        <span class="badge text-bg-secondary polysource-filter-chip d-inline-flex align-items-center gap-1"
+              data-polysource--filter-chips-target="chip"
+              data-property="{{ chip.criterion.property }}">
+            <span class="polysource-filter-chip-label">{{ chip.label }}</span>
+            <button type="button"
+                    class="btn-close btn-close-white polysource-filter-chip-remove"
+                    aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
+                    data-action="polysource--filter-chips#removeChip"
+                    data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></button>
+        </span>
+    {%- endfor -%}
+
+    {%- if overflow_chips|length > 0 -%}
+        <button type="button"
+                class="btn btn-sm btn-outline-secondary polysource-filter-chips-overflow-toggle"
+                data-action="polysource--filter-chips#expandOverflow"
+                data-polysource--filter-chips-target="overflowToggle">
+            {{ 'polysource.filter.chips.more'|trans({'%count%': overflow_chips|length}, 'PolysourceFilter') }}
+        </button>
+        <span class="polysource-filter-chips-overflow d-none d-flex flex-wrap gap-1"
+              data-polysource--filter-chips-target="overflow">
+            {%- for chip in overflow_chips -%}
+                <span class="badge text-bg-secondary polysource-filter-chip d-inline-flex align-items-center gap-1"
+                      data-polysource--filter-chips-target="chip"
+                      data-property="{{ chip.criterion.property }}">
+                    <span class="polysource-filter-chip-label">{{ chip.label }}</span>
+                    <button type="button"
+                            class="btn-close btn-close-white polysource-filter-chip-remove"
+                            aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
+                            data-action="polysource--filter-chips#removeChip"
+                            data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></button>
+                </span>
+            {%- endfor -%}
+        </span>
+    {%- endif -%}
+</div>
