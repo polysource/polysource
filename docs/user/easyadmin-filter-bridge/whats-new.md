@@ -90,35 +90,57 @@ positioning + animation change.
 The default mode is `integrated` — i.e. exactly EA's modal — so
 existing apps see no change unless they explicitly opt in.
 
-### Multi-group accordion in the filter form
+### Filter organisation: tabs + groups (2-level hierarchy)
 
-The `setFormTypeOption('polysource_group', 'Group label')` option
-on any EA filter buckets it into a named group:
+The bridge ships a fluent facade for organising filters into
+**tabs** and **groups** — modelled after EA's own
+`FormField::addTab()` / `addFieldset()` pattern for forms, but
+extended to a 2-level hierarchy (tab > group > filter).
+
+**Per-filter declaration:**
 
 ```php
-public function configureFilters(Filters $filters): Filters
-{
-    return $filters
-        ->add(BetweenDateFilter::new('archivedAt')
-            ->setFormTypeOption('polysource_group', 'Dates'))
-        ->add(InFilter::new('status')
-            ->setFormTypeOption('polysource_group', 'Lifecycle')
-            ->setFormTypeOption('choices', [...]));
-}
+use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
+
+return $filters
+    ->add(Polysource::filter(BetweenDateFilter::new('archivedAt'))
+        ->tab('Dates')
+        ->group('Archive'))
+    ->add(Polysource::filter(InFilter::new('status'))
+        ->tab('Lifecycle')
+        ->group('Status')
+        ->setFormTypeOption('choices', [...]));
 ```
 
-The bridge's `crud/filters.html.twig` override renders each group
-as a `<details>` accordion (first group `open`, rest collapsed)
-with a count badge. Filters without a group render flat at the
-top. Works in both integrated and subpanel modes.
+**Marker mode** (sequential, EA-tabs ergonomics):
 
-Implementation:
-- A FormTypeExtension widens every form type's `OptionsResolver`
-  to accept `polysource_group` (so EA's stock filter form types
-  don't crash on the unknown option).
-- A `GroupCarrierConfigurator` (always-supports) copies the
-  declared group into the FilterDto's `customOptions` for Twig
-  read-back.
+```php
+return $filters
+    ->add(TextFilter::new('name'))                    // top-level ungrouped
+    ->add(Polysource::tab('Visibility'))              // marker: tab starts
+    ->add(Polysource::group('Active state'))          // marker: group within
+    ->add(BooleanFilter::new('isVisible'))            // inherits both
+    ->add(BooleanFilter::new('isPublished'))          // inherits both
+    ->add(Polysource::tab('Dates'))                   // new tab → group resets
+    ->add(DateTimeFilter::new('createdAt'));          // tab="Dates", no group
+```
+
+Per-filter explicit declarations always override marker
+inheritance.
+
+**Rendering** (Stimulus `polysource--filter-modal-layout`):
+- **Top-level ungrouped** filters render flat at the top
+- **Top-level groups** render as `<details>` accordions
+- **Tabs** render as Bootstrap nav-tabs with nested `<details>`
+  accordions for groups inside each tab
+- Empty/no-tabs/no-groups → flat layout (zero visual change vs
+  upstream EA)
+
+**Storage**: 100% via EA's native `customOptions` channel
+(`BridgeOptions::TAB`, `BridgeOptions::GROUP`). No
+`formTypeOptions` pollution, no global FormTypeExtension —
+matches EA's own internal pattern (cf.
+`LanguageFilter::useAlpha3Codes()` writing to customOptions).
 
 This solves the "30 filters scrolling forever" problem that EA
 modals hit on rich resources.

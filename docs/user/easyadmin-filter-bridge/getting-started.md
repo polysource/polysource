@@ -201,6 +201,47 @@ from the URL via the `polysource--filter-chips` Stimulus
 controller; a "Clear all" link nukes everything via EA's stock
 `ea_url().unset('filters')` helper.
 
+### Value resolution: 5-stage chain
+
+The chip's value text is resolved by `ChipValueFormatter` via a
+5-stage chain, from most specific to most generic:
+
+1. **Filter chipFormatter callable** — declared via
+   `Polysource::filter($f)->chipFormatter(fn ($v) => ...)`.
+   Highest priority, always wins.
+2. **Field chipFormatter callable** — declared via
+   `Polysource::field($f)->chipFormatter(fn ($v) => ...)` on
+   the matching field in `configureFields()`. Enables
+   **table↔chip coherence**: ONE callable, both layers
+   consume it. The chip never disagrees with the column.
+3. **Match by `FilterDto::getFormType()`** — covers EA
+   built-ins AND custom `FilterInterface` impls that use
+   EA form types (e.g. a custom `IsSentFilter` setting
+   `setFormType(BooleanFilterType::class)` gets the boolean
+   Yes/No translation automatically).
+4. **Auto-detect Doctrine association** — when the filter's
+   property maps to a `ManyToOne` / `OneToMany` association
+   on the current entity, the chip resolves the value as
+   the entity's `__toString()`. Covers custom
+   `AssociationByIdFilter`-style filters that filter on
+   relations without using EA's `EntityFilter`.
+5. **Default stringify** — defensive fallback: scalars
+   cast verbatim, arrays joined with commas, objects emit
+   empty string.
+
+### Field-level coherence example
+
+```php
+// In configureFields()
+yield Polysource::field(BooleanField::new('isVisible'))
+    ->chipFormatter(static fn (mixed $v): string =>
+        true === $v || '1' === $v ? '👁️ Visible' : '🚫 Caché');
+```
+
+→ The table column shows the boolean as "👁️ Visible" / "🚫 Caché"
+AND the chip displays the same text when the host filters by
+`isVisible`. No coercion, no second declaration.
+
 The chips bar is hidden when no filters are applied. To opt out
 across the whole app:
 
@@ -254,39 +295,67 @@ Behaviour:
 To customise width or animation, override the template again at
 the app level and tweak the `<style>` block.
 
-## 5c. Multi-group accordion in the filter form
+## 5c. Filter organisation: tabs + groups
 
-For controllers with many filters, group them into named sections
-to declutter the modal/subpanel:
+For controllers with many filters, organise them via the
+`Polysource` fluent facade — modelled after EA's own
+`FormField::addTab()` pattern but with a 2-level hierarchy
+(tab > group > filter).
+
+### Per-filter declaration
 
 ```php
-public function configureFilters(Filters $filters): Filters
-{
-    return $filters
-        ->add(BetweenDateFilter::new('archivedAt')
-            ->setFormTypeOption('polysource_group', 'Dates'))
-        ->add(InFilter::new('status', 'Status (multi)')
-            ->setFormTypeOption('polysource_group', 'Lifecycle')
-            ->setFormTypeOption('choices', [...]))
-        ->add(NotNullFilter::new('description')
-            ->setFormTypeOption('polysource_group', 'Lifecycle'))
-        // No group — renders flat at the top.
-        ->add(FullTextSearchFilter::new('q')
-            ->setFormTypeOption('properties', ['name', 'description']));
-}
+use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
+
+return $filters
+    ->add(Polysource::filter(BetweenDateFilter::new('archivedAt'))
+        ->tab('Dates')
+        ->group('Archive'))
+    ->add(Polysource::filter(InFilter::new('status', 'Status (multi)'))
+        ->tab('Lifecycle')
+        ->group('Status')
+        ->setFormTypeOption('choices', [...]))
+    ->add(NotNullFilter::new('description'));     // ungrouped
 ```
 
-Filters declaring `polysource_group` render inside `<details>`
-accordion sections (first group `open`, rest collapsed) with a
-count badge. Filters without a group render flat above the
-accordions. Works identically in integrated and subpanel modes.
+### Marker mode (sequential, EA-tabs ergonomics)
 
-Two pieces wire it through: a FormTypeExtension widens every form
-type's `OptionsResolver` to accept `polysource_group` (so EA's
-stock filter form types don't crash on the unknown option), and a
-`GroupCarrierConfigurator` copies the value into the FilterDto's
-`customOptions` so the Twig override can read it back when
-rendering the accordion. Hosts don't have to think about either.
+```php
+return $filters
+    ->add(TextFilter::new('name'))                // top-level ungrouped
+    ->add(Polysource::tab('Visibility'))          // marker → tab starts
+    ->add(Polysource::group('Active state'))      // marker → group within
+    ->add(BooleanFilter::new('isVisible'))        // inherits both
+    ->add(BooleanFilter::new('isPublished'))      // inherits both
+    ->add(Polysource::tab('Dates'))               // new tab → group resets
+    ->add(DateTimeFilter::new('createdAt'));      // tab="Dates", no group
+```
+
+Per-filter explicit `Polysource::filter($f)->tab(...)` always
+overrides marker inheritance. The two styles can be mixed
+freely.
+
+### Rendering
+
+A Stimulus controller (`polysource--filter-modal-layout`) reads
+the tabs/groups tree (built server-side from each filter's
+customOptions) and reorganises EA's AJAX-loaded filter form into:
+
+- **Top-level ungrouped** filters → flat at the top of the modal
+- **Top-level groups** → `<details>` accordions
+- **Tabs** → Bootstrap nav-tabs strip with nested `<details>`
+  accordions per group inside each tab pane
+
+Zero visual change vs upstream EA when no tab/group is declared
+— the controller falls through to flat rendering.
+
+### Storage
+
+All metadata lives in EA's native `FilterDto::customOptions`
+(via the bridge's `BridgeOptions::TAB` / `BridgeOptions::GROUP`
+constants). No `formTypeOptions` pollution, no global
+FormTypeExtension — matches EA's own internal pattern (cf.
+`LanguageFilter::useAlpha3Codes()`).
 
 ## 6. Session persistence — auto-wired
 
