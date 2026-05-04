@@ -16,13 +16,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ArrayFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ComparisonFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Polysource\Demo\EasyAdminBridge\Entity\Product;
+use Polysource\EasyAdminFilterBridge\Filter\BetweenDateFilter;
+use Polysource\EasyAdminFilterBridge\Filter\FullTextSearchFilter;
+use Polysource\EasyAdminFilterBridge\Filter\InFilter;
+use Polysource\EasyAdminFilterBridge\Filter\NotNullFilter;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
@@ -108,22 +111,6 @@ final class ProductCrudController extends AbstractCrudController
                 DateTimeFilter::new('createdAt')
                     ->setFormTypeOption('show_clear', true),
             )
-            // DateTimeFilter on `archivedAt` — same enhancement.
-            ->add(
-                DateTimeFilter::new('archivedAt')
-                    ->setFormTypeOption('show_clear', true),
-            )
-            // ChoiceFilter on `status` — render inline (3 choices, no
-            // need for a dropdown).
-            ->add(
-                ChoiceFilter::new('status')
-                    ->setChoices([
-                        'Draft' => Product::STATUS_DRAFT,
-                        'Published' => Product::STATUS_PUBLISHED,
-                        'Archived' => Product::STATUS_ARCHIVED,
-                    ])
-                    ->setFormTypeOption('inline', true),
-            )
             // ArrayFilter on `tags` — chip display.
             ->add(
                 ArrayFilter::new('tags')
@@ -133,6 +120,47 @@ final class ProductCrudController extends AbstractCrudController
             ->add(
                 EntityFilter::new('category')
                     ->setFormTypeOption('placeholder', 'Pick a category…'),
+            )
+            // ─── 4 custom filter types shipped by the bridge ───
+            // (Phase 9.7 livrables §3 — usable manually via
+            // configureFilters(); not auto-applied like the 8
+            // enhancers above.)
+
+            // BetweenDateFilter on `archivedAt` — strips EA's
+            // comparison dropdown, always emits BETWEEN with
+            // graceful one-sided fallback (only-from → `>=`,
+            // only-to → `<=`). Replaces a second DateTimeFilter
+            // that would otherwise force users through the
+            // "Between" comparison toggle.
+            ->add(
+                BetweenDateFilter::new('archivedAt', 'Archived between'),
+            )
+            // InFilter on `status` — multi-select status picker
+            // emitting `IN (…)`. Replaces the upstream `ChoiceFilter`
+            // (single-value) so users can pick e.g. "Draft +
+            // Published" in one go.
+            ->add(
+                InFilter::new('status', 'Status (multi)')
+                    ->setFormTypeOption('choices', [
+                        'Draft' => Product::STATUS_DRAFT,
+                        'Published' => Product::STATUS_PUBLISHED,
+                        'Archived' => Product::STATUS_ARCHIVED,
+                    ]),
+            )
+            // NotNullFilter on `description` — tri-state toggle
+            // (Any / Has value / Empty). Demonstrates the
+            // "filter rows where this nullable column is
+            // populated" UX which EA built-ins cannot express.
+            ->add(
+                NotNullFilter::new('description', 'Description state'),
+            )
+            // FullTextSearchFilter on synthetic `q` — single
+            // text input matched LIKE-OR'd across `name` and
+            // `description`. Demonstrates a cheap multi-column
+            // search without standing up Meilisearch.
+            ->add(
+                FullTextSearchFilter::new('q', 'Search anywhere')
+                    ->setFormTypeOption('properties', ['name', 'description']),
             )
         ;
     }

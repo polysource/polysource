@@ -223,3 +223,61 @@ test.describe('filter bridge — End-to-end submit + session persistence', () =>
         await expect(page).not.toHaveURL(/filters%5Bprice%5D/);
     });
 });
+
+test.describe('filter bridge — chips bar (Phase 9.7 #70)', () => {
+    test('renders chips above the table when filters are applied', async ({ page }) => {
+        // Apply a filter via URL — bypass the modal flow so this
+        // test isolates the chips-bar concern.
+        await page.goto(`${PRODUCT_INDEX}?filters%5Bprice%5D%5Bvalue%5D=50&filters%5Bprice%5D%5Bcomparison%5D=%3E%3D`);
+
+        const chipsBar = page.locator('.polysource-filter-chips-bar');
+        await expect(chipsBar).toBeVisible();
+        await expect(chipsBar).toContainText('Active filters:');
+
+        const priceChip = chipsBar.locator('.polysource-filter-chip[data-property="price"]');
+        await expect(priceChip).toBeVisible();
+        await expect(priceChip).toContainText(/Price/i);
+    });
+
+    test('hides the chips bar when no filters are applied', async ({ page }) => {
+        await page.goto(PRODUCT_INDEX);
+        // Either the bar is absent OR present but invisible. We
+        // expect absent (Twig `{% if applied_filters %}` short-circuits).
+        await expect(page.locator('.polysource-filter-chips-bar')).toHaveCount(0);
+    });
+
+    test('clicking the X removes only that chip from the URL', async ({ page }) => {
+        await page.goto(`${PRODUCT_INDEX}?filters%5Bprice%5D%5Bvalue%5D=50&filters%5Bprice%5D%5Bcomparison%5D=%3E%3D&filters%5Bstatus%5D%5Bvalue%5D%5B0%5D=draft&filters%5Bstatus%5D%5Bcomparison%5D=IN`);
+
+        // Two chips visible.
+        await expect(page.locator('.polysource-filter-chip')).toHaveCount(2);
+
+        // Click X on the price chip.
+        await page
+            .locator('.polysource-filter-chip[data-property="price"]')
+            .locator('button')
+            .click();
+
+        // Status chip should remain; price chip should be gone.
+        await expect(page).toHaveURL(/filters%5Bstatus%5D/);
+        await expect(page).not.toHaveURL(/filters%5Bprice%5D/);
+    });
+});
+
+test.describe('filter bridge — 4 custom filter types (Phase 9.7 #66-#69)', () => {
+    test('the demo configureFilters() registers the 4 custom filters', async ({ page }) => {
+        await page.goto(PRODUCT_INDEX);
+        await page.locator('.action-filters-button').click();
+
+        // The modal lists every configured filter by property. The 4
+        // customs from the demo: archivedAt (BetweenDateFilter),
+        // status (InFilter), description (NotNullFilter), q
+        // (FullTextSearchFilter).
+        const modal = page.locator('#modal-filters');
+        await expect(modal).toBeVisible();
+        await expect(modal.locator('[data-filter-property="archivedAt"]')).toBeVisible();
+        await expect(modal.locator('[data-filter-property="status"]')).toBeVisible();
+        await expect(modal.locator('[data-filter-property="description"]')).toBeVisible();
+        await expect(modal.locator('[data-filter-property="q"]')).toBeVisible();
+    });
+});
