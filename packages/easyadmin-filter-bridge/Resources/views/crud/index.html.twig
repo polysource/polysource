@@ -1,0 +1,62 @@
+{# polysource/easyadmin-filter-bridge — override of @EasyAdmin/crud/index.html.twig
+
+   Injects an "active filters" chips bar above the table on EA index
+   pages. Each chip displays the property name (humanised) and an X
+   button that strips that filter slice from the URL via the
+   `polysource--filter-chips` Stimulus controller (shipped with
+   `polysource/filter`).
+
+   Why this is the right extension point:
+   - EA's filter modal renders inside a Bootstrap dialog and only
+     surfaces the operator/value form. There's no upstream surface
+     that lists "what's currently applied" outside the modal — users
+     have to open the modal to see what's filtered, which is poor
+     scanning UX on lists with many columns.
+   - The chips bar gives users an at-a-glance summary without
+     reopening the modal, plus one-click removal per filter.
+
+   Strict additivity:
+   - We only override the `main` block to prepend the chips bar
+     before delegating to the upstream block via `parent()`. Every
+     other EA block (page actions, table head, paginator, …)
+     remains untouched.
+   - The chips bar is hidden when no filters are applied (CSS
+     handled by Bootstrap's `d-none`-on-empty pattern via Twig
+     `{% if applied_filters %}` guard).
+
+   Why `@!EasyAdmin/...`:
+   - Symfony's Twig namespace resolution finds OUR copy of
+     `crud/index.html.twig` first (since DI prepends our views to
+     the `@EasyAdmin` namespace). The bang-prefix `@!EasyAdmin`
+     skips that resolution and reaches the original upstream file
+     directly, preventing an infinite extends loop.
+#}
+{% extends '@!EasyAdmin/crud/index.html.twig' %}
+
+{% block main %}
+    {% set applied_filters = ea.request.query.all['filters']|default([]) %}
+    {% if applied_filters|length > 0 %}
+        <div class="polysource-filter-chips-bar mb-3"
+             data-controller="polysource--filter-chips">
+            <span class="text-muted me-2">{{ 'polysource.filter.chips.heading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}</span>
+            {% for property, _ in applied_filters %}
+                <span class="badge bg-secondary me-1 polysource-filter-chip"
+                      data-polysource--filter-chips-target="chip"
+                      data-property="{{ property }}">
+                    {{ property|replace({'_': ' '})|capitalize }}
+                    <button type="button"
+                            class="btn-close btn-close-white ms-1"
+                            aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+                            data-action="click->polysource--filter-chips#removeChip"
+                            data-polysource--filter-chips-property-param="{{ property }}"></button>
+                </span>
+            {% endfor %}
+            <a href="{{ ea_url().unset('filters').setAction('index') }}"
+               class="btn btn-link btn-sm polysource-filter-chips-clear-all">
+                {{ 'polysource.filter.chips.clear_all'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+            </a>
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+{% endblock main %}

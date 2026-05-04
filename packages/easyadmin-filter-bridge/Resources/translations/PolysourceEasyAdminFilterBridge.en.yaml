@@ -1,6 +1,10 @@
 polysource:
     filter:
         clear: 'Clear'
+        chips:
+            heading: 'Active filters:'
+            remove: 'Remove this filter'
+            clear_all: 'Clear all'
         presets:
             label: 'Date presets'
         quick_ranges:

@@ -36,8 +36,16 @@ final class PrependFormThemeTest extends TestCase
         $twigConfig = $container->getExtensionConfig('twig');
         self::assertNotEmpty($twigConfig, 'prepend() must inject a twig config block');
 
-        $formThemes = $twigConfig[0]['form_themes'] ?? [];
-        self::assertIsArray($formThemes);
+        // `prepend()` issues multiple `prependExtensionConfig` calls
+        // (form_themes + EasyAdmin namespace splice); the resulting
+        // config array is order-dependent on Symfony's prepend stack.
+        // Flatten and search.
+        $formThemes = [];
+        foreach ($twigConfig as $block) {
+            if (isset($block['form_themes']) && \is_array($block['form_themes'])) {
+                $formThemes = array_merge($formThemes, $block['form_themes']);
+            }
+        }
         self::assertContains(
             self::EXPECTED_THEME,
             $formThemes,

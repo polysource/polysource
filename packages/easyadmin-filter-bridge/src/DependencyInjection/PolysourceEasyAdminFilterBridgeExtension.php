@@ -54,9 +54,24 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             return;
         }
 
+        // 1) Register our form theme so the enhanced widgets render
+        //    without any host-side Twig config.
         $container->prependExtensionConfig('twig', [
             'form_themes' => [
                 '@PolysourceEasyAdminFilterBridge/form/polysource_filter_theme.html.twig',
+            ],
+        ]);
+
+        // 2) Splice our `Resources/views/` into the `@EasyAdmin`
+        //    Twig namespace at higher priority so that
+        //    `Resources/views/crud/index.html.twig` is picked up
+        //    instead of the upstream one. The override extends
+        //    `@!EasyAdmin/crud/index.html.twig` to fall back to
+        //    the original within Twig — no infinite loop.
+        $bridgeViewsDir = \dirname(__DIR__, 2).'/Resources/views';
+        $container->prependExtensionConfig('twig', [
+            'paths' => [
+                $bridgeViewsDir => 'EasyAdmin',
             ],
         ]);
     }
