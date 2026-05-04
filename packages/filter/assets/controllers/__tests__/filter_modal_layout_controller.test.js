@@ -81,6 +81,64 @@ describe('polysource--filter-modal-layout Stimulus controller', () => {
         expect(groups[0].querySelectorAll('.filter-field').length).toBe(2);
     });
 
+    it('shows a per-tab applied-filter count when filters are checked inside it', async () => {
+        // Build a custom DOM with checkboxes — `flag1` checked,
+        // `isVisible` checked, `createdAt` NOT checked.
+        const tree = JSON.stringify({
+            ungrouped: [],
+            groups: [],
+            tabs: [
+                {
+                    label: 'Visibility',
+                    ungrouped: ['flag1'],
+                    groups: [{ label: 'Active state', properties: ['isVisible'] }],
+                },
+                {
+                    label: 'Dates',
+                    ungrouped: ['createdAt'],
+                    groups: [],
+                },
+            ],
+        });
+        document.body.innerHTML = `
+            <div id="modal-filters"
+                 data-controller="polysource--filter-modal-layout"
+                 data-polysource--filter-modal-layout-tree-value='${tree}'>
+                <div class="modal-body">
+                    <form>
+                        <div class="filter-field" data-filter-property="flag1">
+                            <input type="checkbox" class="filter-checkbox">
+                        </div>
+                        <div class="filter-field" data-filter-property="isVisible">
+                            <input type="checkbox" class="filter-checkbox">
+                        </div>
+                        <div class="filter-field" data-filter-property="createdAt">
+                            <input type="checkbox" class="filter-checkbox">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        // JSDOM is finicky with HTML-attribute `checked`; setting
+        // the property explicitly guarantees `:checked` matches.
+        document.querySelector('[data-filter-property="flag1"] .filter-checkbox').checked = true;
+        document.querySelector('[data-filter-property="isVisible"] .filter-checkbox').checked = true;
+
+        const app = Application.start();
+        app.register('polysource--filter-modal-layout', FilterModalLayoutController);
+        runningApp = app;
+        await new Promise((r) => setTimeout(r, 20));
+
+        const navButtons = document.querySelectorAll('ul.nav.nav-tabs button.nav-link');
+        // Visibility = 2 applied (flag1 + isVisible) → count appended
+        const visBadge = navButtons[0].querySelector('.polysource-filter-tab-count');
+        expect(visBadge).toBeTruthy();
+        expect(visBadge.textContent).toBe('2');
+
+        // Dates = 0 applied → no count badge
+        expect(navButtons[1].querySelector('.polysource-filter-tab-count')).toBeNull();
+    });
+
     it('builds Bootstrap nav-tabs when tabs exist', async () => {
         const tree = JSON.stringify({
             ungrouped: [],

@@ -196,6 +196,20 @@ export default class extends Controller {
             button.setAttribute('aria-controls', `${tabId}-pane`);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
             button.textContent = tab.label;
+
+            // Count applied filters across the tab's ungrouped +
+            // grouped properties. If any are applied, append a
+            // bold primary-color count after the label so the user
+            // sees at a glance which tabs hold active filters
+            // without clicking through them.
+            const tabAppliedCount = this.countAppliedInTab(tab, byProperty);
+            if (tabAppliedCount > 0) {
+                const count = document.createElement('span');
+                count.classList.add('polysource-filter-tab-count');
+                count.textContent = String(tabAppliedCount);
+                button.appendChild(count);
+            }
+
             li.appendChild(button);
             navList.appendChild(li);
 
@@ -222,5 +236,35 @@ export default class extends Controller {
         wrapper.appendChild(navList);
         wrapper.appendChild(content);
         return wrapper;
+    }
+
+    /**
+     * Counts the applied filters inside a tab — sum across the
+     * tab's `ungrouped` list and every `groups[].properties` list.
+     * A filter is "applied" when its `.filter-checkbox` is checked
+     * (EA toggles `checked` on filter-fields whose value is
+     * present in the URL filter slice).
+     *
+     * @param {object} tab    — the tree's tab descriptor
+     * @param {object} byProperty — map property → .filter-field node
+     * @returns {number}
+     */
+    countAppliedInTab(tab, byProperty) {
+        const isApplied = (property) => {
+            const node = byProperty[property];
+            return node?.querySelector('.filter-checkbox:checked') ? 1 : 0;
+        };
+
+        let count = 0;
+        (tab.ungrouped || []).forEach((p) => {
+            count += isApplied(p);
+        });
+        (tab.groups || []).forEach((group) => {
+            (group.properties || []).forEach((p) => {
+                count += isApplied(p);
+            });
+        });
+
+        return count;
     }
 }
