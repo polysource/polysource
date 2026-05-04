@@ -6,28 +6,46 @@ namespace Polysource\EasyAdminFilterBridge\Tests\Unit\EventListener;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
+use EasyCorp\Bundle\EasyAdminBundle\Context\CrudContext;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Registry\AdminControllerRegistryInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\CrudDto;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
+use Polysource\Filter\Service\FilterService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
- * Verifies the save / restore behaviour of the session persistence
- * subscriber.
+ * Verifies that the bridge's subscriber delegates persistence to
+ * `polysource/filter`'s `FilterService` and keeps the EA-specific
+ * Referer-based reset detection + canonical-path redirect logic.
  *
- * `AdminContext` and `CrudDto` are final in EasyAdmin v5; we use
- * `ReflectionClass::newInstanceWithoutConstructor()` to satisfy the
- * typehints, then poke private fields via Reflection to inject the
- * test data the subscriber reads (currentAction, controllerFqcn,
- * request).
+ * Uses a real `FilterService` + `InMemorySession` rather than mocks
+ * because `FilterService` is final. We assert the OBSERVABLE effect
+ * (session contents after the subscriber runs / response set on the
+ * event) instead of which methods got called.
  */
 final class FilterSessionPersistenceSubscriberTest extends TestCase
 {
-    private const SESSION_KEY_PREFIX = 'polysource.filters.';
+    private const PRODUCT_FQCN = 'App\\Controller\\Admin\\ProductCrudController';
+
+    private InMemorySession $session;
+    private RequestStack $requestStack;
+    private FilterService $filterService;
+
+    protected function setUp(): void
+    {
+        $this->session = new InMemorySession();
+        $this->requestStack = new RequestStack();
+        $request = new Request();
+        $request->setSession($this->session);
+        $this->requestStack->push($request);
+
+        $this->filterService = new FilterService($this->requestStack);
+    }
 
     public function test_subscribes_to_before_crud_action_event(): void
     {
@@ -37,127 +55,143 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertSame('onBeforeCrudAction', $events[BeforeCrudActionEvent::class]);
     }
 
-    public function test_save_filters_to_session_when_query_carries_them(): void
+    public function test_save_stores_collection_in_session(): void
     {
-        $request = Request::create('/admin?crudAction=index&filters%5BcreatedAt%5D%5Bvalue%5D=2026-05-01');
-        $session = $this->createMock(SessionInterface::class);
+        $request = Request::create('/admin?crudAction=index&filters%5BcreatedAt%5D%5Bvalue%5D=2026-05-01&filters%5BcreatedAt%5D%5Bcomparison%5D=%3E%3D');
+        $event = $this->makeEvent($request);
 
-        $expectedKey = self::SESSION_KEY_PREFIX . hash('xxh128', 'App\\Controller\\Admin\\ProductCrudController');
-        $session->expects(self::once())
-            ->method('set')
-            ->with($expectedKey, self::callback(function (array $value): bool {
-                return isset($value['createdAt']['value']) && '2026-05-01' === $value['createdAt']['value'];
-            }))
-        ;
-        $session->expects(self::never())->method('get');
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
 
-        $subscriber = new FilterSessionPersistenceSubscriber($this->makeRequestStackWithSession($request, $session));
-        $event = new BeforeCrudActionEvent($this->makeContext($request, Action::INDEX, 'App\\Controller\\Admin\\ProductCrudController'));
-
-        $subscriber->onBeforeCrudAction($event);
-
-        self::assertFalse($event->isPropagationStopped(), 'No redirect on the save path — filters were already in the URL');
+        $loaded = $this->filterService->load(self::PRODUCT_FQCN);
+        self::assertNotNull($loaded);
+        self::assertCount(1, $loaded);
+        self::assertSame('createdAt', $loaded->criteria[0]->property);
+        self::assertSame('>=', $loaded->criteria[0]->operator);
+        self::assertSame(['2026-05-01'], $loaded->criteria[0]->values);
     }
 
-    public function test_restore_filters_via_redirect_when_query_has_none_and_session_does(): void
+    public function test_load_redirects_with_url_encoded_filters_when_session_has_a_collection(): void
     {
-        $request = Request::create('/admin?crudAction=index');
-        $session = $this->createMock(SessionInterface::class);
+        // Pre-seed the session through the service (going through
+        // FilterService keeps the same hash key the subscriber will
+        // look up).
+        $this->filterService->save(new \Polysource\Filter\Model\FilterCollection(self::PRODUCT_FQCN, [
+            new \Polysource\Filter\Model\FilterCriterion('price', 'between', [50, 200]),
+        ]));
 
-        $expectedKey = self::SESSION_KEY_PREFIX . hash('xxh128', 'App\\Controller\\Admin\\ProductCrudController');
-        $session->method('get')
-            ->with($expectedKey)
-            ->willReturn(['createdAt' => ['value' => '2026-04-01', 'comparison' => '>=']])
-        ;
-        $session->expects(self::never())->method('set');
+        $request = Request::create('/admin/product');
+        $event = $this->makeEvent($request);
 
-        $subscriber = new FilterSessionPersistenceSubscriber($this->makeRequestStackWithSession($request, $session));
-        $event = new BeforeCrudActionEvent($this->makeContext($request, Action::INDEX, 'App\\Controller\\Admin\\ProductCrudController'));
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
 
-        $subscriber->onBeforeCrudAction($event);
-
-        self::assertTrue($event->isPropagationStopped());
         $response = $event->getResponse();
         self::assertInstanceOf(RedirectResponse::class, $response);
-        self::assertStringContainsString('filters', $response->getTargetUrl());
-        self::assertStringContainsString('2026-04-01', $response->getTargetUrl());
+        self::assertStringContainsString('filters%5Bprice%5D%5Bcomparison%5D=between', $response->getTargetUrl());
+        self::assertStringContainsString('filters%5Bprice%5D%5Bvalue%5D=50', $response->getTargetUrl());
+        self::assertStringContainsString('filters%5Bprice%5D%5Bvalue2%5D=200', $response->getTargetUrl());
     }
 
-    public function test_does_nothing_when_no_filters_in_query_and_no_session_state(): void
+    public function test_explicit_reset_clears_session(): void
     {
-        $request = Request::create('/admin?crudAction=index');
-        $session = $this->createMock(SessionInterface::class);
-        $session->method('get')->willReturn(null);
-        $session->expects(self::never())->method('set');
+        $this->filterService->save(new \Polysource\Filter\Model\FilterCollection(self::PRODUCT_FQCN, [
+            new \Polysource\Filter\Model\FilterCriterion('name', 'like', ['hat']),
+        ]));
 
-        $subscriber = new FilterSessionPersistenceSubscriber($this->makeRequestStackWithSession($request, $session));
-        $event = new BeforeCrudActionEvent($this->makeContext($request, Action::INDEX, 'App\\Controller\\Admin\\ProductCrudController'));
+        $request = Request::create('/admin/product');
+        $request->headers->set('Referer', 'http://localhost/admin/product?filters%5Bname%5D%5Bvalue%5D=hat');
+        $event = $this->makeEvent($request);
 
-        $subscriber->onBeforeCrudAction($event);
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
 
-        self::assertFalse($event->isPropagationStopped());
+        self::assertNull($this->filterService->load(self::PRODUCT_FQCN));
     }
 
-    public function test_no_op_for_non_index_actions(): void
+    public function test_no_op_for_non_index_action(): void
     {
-        $request = Request::create('/admin?crudAction=edit&filters%5Bfoo%5D=bar');
-        $session = $this->createMock(SessionInterface::class);
-        $session->expects(self::never())->method('set');
-        $session->expects(self::never())->method('get');
+        $request = Request::create('/admin/product/1/edit?filters%5Bname%5D%5Bvalue%5D=hat');
+        $event = $this->makeEvent($request, currentAction: Action::EDIT);
 
-        $subscriber = new FilterSessionPersistenceSubscriber($this->makeRequestStackWithSession($request, $session));
-        $event = new BeforeCrudActionEvent($this->makeContext($request, Action::EDIT, 'App\\Controller\\Admin\\ProductCrudController'));
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
 
-        $subscriber->onBeforeCrudAction($event);
-
-        self::assertFalse($event->isPropagationStopped());
+        self::assertNull($this->filterService->load(self::PRODUCT_FQCN));
+        self::assertFalse($event->isPropagationStopped(), 'no response set means propagation continues');
     }
 
-    public function test_scopes_session_key_per_controller_fqcn(): void
+    public function test_load_returning_null_leaves_request_untouched(): void
     {
-        $key1 = hash('xxh128', 'App\\Controller\\Admin\\ProductCrudController');
-        $key2 = hash('xxh128', 'App\\Controller\\Admin\\OrderCrudController');
+        // Empty session — load returns null, no redirect.
+        $request = Request::create('/admin/product');
+        $event = $this->makeEvent($request);
 
-        self::assertNotSame(
-            $key1,
-            $key2,
-            'Different CRUD controllers must produce different session keys — otherwise filters leak across resources',
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
+
+        self::assertFalse($event->isPropagationStopped(), 'no response set means no redirect');
+    }
+
+    private function makeEvent(
+        Request $request,
+        string $currentAction = Action::INDEX,
+        string $controllerFqcn = self::PRODUCT_FQCN,
+    ): BeforeCrudActionEvent {
+        $crudDto = new CrudDto();
+        $crudDto->setCurrentAction($currentAction);
+        /** @phpstan-ignore-next-line argument.type — test passes an arbitrary string FQCN */
+        $crudDto->setControllerFqcn($controllerFqcn);
+
+        $crudContext = new CrudContext(
+            crudDto: $crudDto,
+            entityDto: null,
+            searchDto: null,
+            adminControllers: $this->createMock(AdminControllerRegistryInterface::class),
         );
-    }
 
-    private function makeRequestStackWithSession(Request $request, SessionInterface $session): RequestStack
-    {
-        $stack = new RequestStack();
-        $request->setSession($session);
-        $stack->push($request);
-
-        return $stack;
-    }
-
-    private function makeContext(Request $request, string $action, string $controllerFqcn): AdminContext
-    {
-        $crud = (new \ReflectionClass(CrudDto::class))->newInstanceWithoutConstructor();
-
-        $actionProp = new \ReflectionProperty(CrudDto::class, 'actionName');
-        $actionProp->setValue($crud, $action);
-
-        $fqcnProp = new \ReflectionProperty(CrudDto::class, 'controllerFqcn');
-        $fqcnProp->setValue($crud, $controllerFqcn);
+        $requestContext = new \EasyCorp\Bundle\EasyAdminBundle\Context\RequestContext(
+            request: $request,
+            user: null,
+        );
 
         $context = (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
 
-        $crudProp = new \ReflectionProperty(AdminContext::class, 'crudContext');
-        $crudContext = (new \ReflectionClass(\EasyCorp\Bundle\EasyAdminBundle\Context\CrudContext::class))->newInstanceWithoutConstructor();
-        $crudDtoProp = new \ReflectionProperty(\EasyCorp\Bundle\EasyAdminBundle\Context\CrudContext::class, 'crudDto');
-        $crudDtoProp->setValue($crudContext, $crud);
-        $crudProp->setValue($context, $crudContext);
+        $crudContextProp = new \ReflectionProperty(AdminContext::class, 'crudContext');
+        $crudContextProp->setAccessible(true);
+        $crudContextProp->setValue($context, $crudContext);
 
         $requestContextProp = new \ReflectionProperty(AdminContext::class, 'requestContext');
-        $requestContext = (new \ReflectionClass(\EasyCorp\Bundle\EasyAdminBundle\Context\RequestContext::class))->newInstanceWithoutConstructor();
-        $requestProp = new \ReflectionProperty(\EasyCorp\Bundle\EasyAdminBundle\Context\RequestContext::class, 'request');
-        $requestProp->setValue($requestContext, $request);
+        $requestContextProp->setAccessible(true);
         $requestContextProp->setValue($context, $requestContext);
 
-        return $context;
+        return new BeforeCrudActionEvent($context);
     }
+}
+
+/**
+ * Tiny in-memory session double — same shape as the one in
+ * polysource/filter's FilterServiceTest.
+ */
+final class InMemorySession implements SessionInterface
+{
+    /** @var array<string, mixed> */
+    private array $data = [];
+
+    public function start(): bool { return true; }
+    public function getId(): string { return 'in-memory'; }
+    public function setId(string $id): void {}
+    public function getName(): string { return 'session'; }
+    public function setName(string $name): void {}
+    public function invalidate(?int $lifetime = null): bool { $this->data = []; return true; }
+    public function migrate(bool $destroy = false, ?int $lifetime = null): bool { return true; }
+    public function save(): void {}
+    public function has(string $name): bool { return isset($this->data[$name]); }
+    public function get(string $name, mixed $default = null): mixed { return $this->data[$name] ?? $default; }
+    public function set(string $name, mixed $value): void { $this->data[$name] = $value; }
+    /** @return array<string, mixed> */
+    public function all(): array { return $this->data; }
+    /** @phpstan-ignore-next-line missingType.iterableValue, assign.propertyType */
+    public function replace(array $attributes): void { $this->data = $attributes; }
+    public function remove(string $name): mixed { $v = $this->data[$name] ?? null; unset($this->data[$name]); return $v; }
+    public function clear(): void { $this->data = []; }
+    public function isStarted(): bool { return true; }
+    public function registerBag(\Symfony\Component\HttpFoundation\Session\SessionBagInterface $bag): void {}
+    public function getBag(string $name): \Symfony\Component\HttpFoundation\Session\SessionBagInterface { throw new \BadMethodCallException(); }
+    public function getMetadataBag(): \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag { throw new \BadMethodCallException(); }
 }

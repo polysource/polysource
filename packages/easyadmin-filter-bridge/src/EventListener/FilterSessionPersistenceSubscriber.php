@@ -6,51 +6,45 @@ namespace Polysource\EasyAdminFilterBridge\EventListener;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
+use Polysource\Filter\Model\FilterCollection;
+use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\Service\FilterService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Persists filter values in the HTTP session, scoped per CRUD controller
  * FQCN, so an operator returning to the index page after navigating away
  * sees their previous filters restored automatically.
  *
+ * Storage delegates to `polysource/filter`'s `FilterService` — the
+ * subscriber translates EasyAdmin's URL-based filter shape
+ * (`?filters[<property>][comparison|value|value2]=…`) into a
+ * `FilterCollection` and back. The translation is mechanical: each
+ * URL property slot becomes one `FilterCriterion`.
+ *
  * Behaviour, on every `BeforeCrudActionEvent` for the INDEX action:
  *
  * 1. **Save**: if the request URL carries a `filters[…]` query parameter,
- *    snapshot the current filter array into the session under
- *    `polysource.filters.{hash(controllerFqcn)}`.
+ *    convert it to a `FilterCollection` and persist via FilterService.
  *
- * 2. **Reset detection**: if the request URL has NO filters AND the
- *    `Referer` header points at the same path (typical of EasyAdmin's
- *    `action-filters-reset` link, which goes from
- *    `/admin/product?filters[…]` back to `/admin/product`), treat it
- *    as an explicit user reset and CLEAR the session slot. Otherwise
- *    a saved filter would re-attach immediately and the X reset
- *    button would appear broken.
+ * 2. **Reset detection**: same-path Referer with filters set + no
+ *    filters in target URL = explicit reset → `FilterService::clear()`.
+ *    Modal Clear's trailing `?` is also normalised by redirecting to
+ *    the canonical path.
  *
- * 3. **Restore**: if neither save nor reset matches AND the session
- *    has saved filters for this CRUD, redirect to the same URL with
- *    the saved filters appended as `?filters[…]=…`.
- *    `BeforeCrudActionEvent::setResponse()` short-circuits the
- *    controller and returns the redirect immediately. This is what
- *    lets an operator open a row's edit page and come back with
- *    their filter intact.
+ * 3. **Restore**: no filters in URL AND a saved collection exists →
+ *    redirect to the same URL with the collection re-encoded as
+ *    `filters[…]=…` query string.
  *
- * Scoping by `controllerFqcn` (hashed for shorter session keys) means
- * filters on `ProductCrudController` don't leak into
- * `OrderCrudController` — every CRUD has its own slot.
- *
- * No effect on non-INDEX actions (edit / detail / new) — those are
- * single-record operations and don't have a filter form.
+ * No effect on non-INDEX actions.
  */
 final class FilterSessionPersistenceSubscriber implements EventSubscriberInterface
 {
-    private const SESSION_KEY_PREFIX = 'polysource.filters.';
     private const FILTERS_QUERY_PARAM = 'filters';
 
-    public function __construct(private readonly RequestStack $requestStack)
+    public function __construct(private readonly FilterService $filterService)
     {
     }
 
@@ -85,41 +79,22 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
             return;
         }
 
-        $session = $this->getSession();
-        if (null === $session) {
-            return;
-        }
-
         $request = $context->getRequest();
-        $sessionKey = self::SESSION_KEY_PREFIX . hash('xxh128', $controllerFqcn);
 
         if ($request->query->has(self::FILTERS_QUERY_PARAM)) {
-            // Save: capture the active filters into the session.
-            $session->set($sessionKey, $request->query->all(self::FILTERS_QUERY_PARAM));
+            /** @var array<string, mixed> $rawFilters */
+            $rawFilters = $request->query->all(self::FILTERS_QUERY_PARAM);
+            $collection = $this->collectionFromUrlFilters($controllerFqcn, $rawFilters);
+            if (!$collection->isEmpty()) {
+                $this->filterService->save($collection);
+            }
 
             return;
         }
 
-        // Reset detection: same-path Referer + no filters in target = user
-        // explicitly clicked EA's `action-filters-reset` (or another link
-        // that strips filters while keeping the path). Wipe the session
-        // slot so the user actually sees an unfiltered list.
-        //
-        // We also redirect to the canonical path so the modal Clear (which
-        // submits the GET form with all filter inputs removed) doesn't
-        // leave a trailing `?` or stale `crudAction`/`crudControllerFqcn`
-        // params in the URL.
         if ($this->isExplicitReset($request)) {
-            $session->remove($sessionKey);
+            $this->filterService->clear($controllerFqcn);
 
-            // Modal Clear submits the GET form with all filter inputs
-            // removed — the browser appends a stale `?` (or stray
-            // crudAction/crudControllerFqcn params from the form action
-            // URL) even when no filters remain, leaving the user staring
-            // at `/admin/product?`. Redirect to the canonical path so
-            // the URL bar lands clean. The `action-filters-reset` link
-            // already produces a bare path; in that case the raw
-            // REQUEST_URI matches getPathInfo() and we skip the redirect.
             $requestUri = $request->server->get('REQUEST_URI', '');
             if ($requestUri !== $request->getPathInfo()) {
                 $event->setResponse(new RedirectResponse($request->getPathInfo()));
@@ -128,27 +103,90 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
             return;
         }
 
-        // Restore: no filters in the URL — replay the saved ones if any.
-        $saved = $session->get($sessionKey);
-        if (!\is_array($saved) || [] === $saved) {
+        // Restore: no filters in URL — load the saved collection.
+        $saved = $this->filterService->load($controllerFqcn);
+        if (null === $saved || $saved->isEmpty()) {
             return;
         }
 
+        $urlFilters = $this->urlFiltersFromCollection($saved);
         $separator = str_contains($request->getUri(), '?') ? '&' : '?';
-        $query = http_build_query([self::FILTERS_QUERY_PARAM => $saved]);
+        $query = http_build_query([self::FILTERS_QUERY_PARAM => $urlFilters]);
         $event->setResponse(new RedirectResponse($request->getUri() . $separator . $query));
     }
 
     /**
-     * The user explicitly asked to clear filters when:
-     *  - the target URL has no `filters[…]`, AND
-     *  - the Referer header is on the same path with `filters[…]` set.
+     * Translate the URL filter shape into a `FilterCollection`.
      *
-     * Different paths (coming back from edit / detail / dashboard) are
-     * NOT a reset — those are exactly the case session restore exists
-     * for.
+     * Convention: each `filters[<property>]` slice becomes one
+     * `FilterCriterion(property, operator=comparison, values=[value, value2?])`.
+     * Empty slices (no value AND no value2) are dropped.
+     *
+     * @param array<string, mixed> $rawFilters
      */
-    private function isExplicitReset(\Symfony\Component\HttpFoundation\Request $request): bool
+    private function collectionFromUrlFilters(string $id, array $rawFilters): FilterCollection
+    {
+        $collection = new FilterCollection($id);
+        foreach ($rawFilters as $property => $slice) {
+            if (!\is_string($property) || '' === $property) {
+                continue;
+            }
+            if (!\is_array($slice)) {
+                // Bare scalar slice — treat as a single value with `=`.
+                if (null === $slice || '' === $slice) {
+                    continue;
+                }
+                $collection = $collection->with(new FilterCriterion($property, '=', [$slice]));
+                continue;
+            }
+
+            $operator = $slice['comparison'] ?? null;
+            if (!\is_string($operator) || '' === $operator) {
+                $operator = '=';
+            }
+
+            $values = [];
+            if (isset($slice['value']) && '' !== $slice['value']) {
+                $values[] = $slice['value'];
+            }
+            if (isset($slice['value2']) && '' !== $slice['value2']) {
+                $values[] = $slice['value2'];
+            }
+
+            if ([] === $values) {
+                continue;
+            }
+
+            $collection = $collection->with(new FilterCriterion($property, $operator, $values));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Inverse of `collectionFromUrlFilters()` — produce the URL
+     * filters array shape from a stored `FilterCollection`.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function urlFiltersFromCollection(FilterCollection $collection): array
+    {
+        $urlFilters = [];
+        foreach ($collection as $criterion) {
+            $slice = ['comparison' => $criterion->operator];
+            if (isset($criterion->values[0])) {
+                $slice['value'] = $criterion->values[0];
+            }
+            if (isset($criterion->values[1])) {
+                $slice['value2'] = $criterion->values[1];
+            }
+            $urlFilters[$criterion->property] = $slice;
+        }
+
+        return $urlFilters;
+    }
+
+    private function isExplicitReset(Request $request): bool
     {
         $referer = $request->headers->get('referer');
         if (null === $referer || '' === $referer) {
@@ -161,25 +199,12 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
         }
 
         $refererQuery = parse_url($referer, \PHP_URL_QUERY);
-        if (null === $refererQuery || '' === $refererQuery) {
+        if (!\is_string($refererQuery) || '' === $refererQuery) {
             return false;
         }
 
-        // The Referer URL had `filters[…]`, the target doesn't — that's
-        // a reset.
         parse_str($refererQuery, $parsed);
 
         return isset($parsed[self::FILTERS_QUERY_PARAM]);
-    }
-
-    private function getSession(): ?SessionInterface
-    {
-        try {
-            return $this->requestStack->getSession();
-        } catch (\Throwable) {
-            // No session available (e.g. CLI command, or stateless route)
-            // — gracefully no-op rather than crash the whole request.
-            return null;
-        }
     }
 }
