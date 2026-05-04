@@ -11,13 +11,11 @@ use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\ComparisonFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
-use Polysource\EasyAdminFilterBridge\Configurator\GroupCarrierConfigurator;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
-use Polysource\EasyAdminFilterBridge\Form\Extension\PolysourceFilterFormTypeExtension;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -175,22 +173,6 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
         $container
             ->register(EntityFilterEnhancer::class)
-            ->setAutoconfigured(true)
-            ->setAutowired(true)
-        ;
-
-        $container
-            ->register(GroupCarrierConfigurator::class)
-            ->setAutoconfigured(true)
-            ->setAutowired(true)
-        ;
-
-        // FormTypeExtension that whitelists `polysource_group` on
-        // every form type so EA's stock filter form types tolerate
-        // the option (Symfony auto-tags `form.type_extension` via
-        // setAutoconfigured + AbstractTypeExtension inheritance).
-        $container
-            ->register(PolysourceFilterFormTypeExtension::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;
