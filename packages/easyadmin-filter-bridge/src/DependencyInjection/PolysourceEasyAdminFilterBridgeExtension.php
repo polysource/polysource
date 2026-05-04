@@ -25,6 +25,8 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -188,6 +190,22 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
         $container
             ->register(ChipExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // Filter tree builder + Twig function — consumed by
+        // `crud/includes/_filters_modal.html.twig` to inject the
+        // groups/tabs JSON tree on `#modal-filters` so the
+        // Stimulus controller can reorganise the filter form.
+        $container
+            ->register(FilterTreeBuilder::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        $container
+            ->register(FilterTreeExtension::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;

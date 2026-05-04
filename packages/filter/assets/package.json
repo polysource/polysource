@@ -18,6 +18,13 @@
                 "fetch": "eager",
                 "enabled": true,
                 "autoimport": {}
+            },
+            "polysource--filter-modal-layout": {
+                "main": "./controllers/filter_modal_layout_controller.js",
+                "name": "polysource--filter-modal-layout",
+                "fetch": "eager",
+                "enabled": true,
+                "autoimport": {}
             }
         }
     },

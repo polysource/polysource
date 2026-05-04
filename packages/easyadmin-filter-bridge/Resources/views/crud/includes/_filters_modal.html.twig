@@ -1,0 +1,47 @@
+{# polysource/easyadmin-filter-bridge — override of
+   `@EasyAdmin/crud/includes/_filters_modal.html.twig`.
+
+   Identical to upstream EXCEPT the root `<div id="modal-filters">`
+   is enriched with:
+     - `data-controller="polysource--filter-modal-layout"` to bind
+       the Stimulus controller that reorganises the AJAX-loaded
+       filter form into tabs + group accordions.
+     - `data-polysource--filter-modal-layout-tree-value="{...}"`
+       carrying the JSON tree built server-side from the current
+       `FilterConfigDto`'s customOptions
+       (`polysource.tab` / `polysource.group`).
+
+   When the host doesn't declare any tab/group on their filters,
+   the tree is `{ungrouped: [all properties], groups: [], tabs: []}`
+   and the controller renders the form flat — same visual output
+   as upstream EA. Zero-cost when not used.
+
+   Conditional on the modal-filters being present at all (some
+   pages render this template even without filters configured —
+   we keep the upstream guard).
+#}
+<div id="modal-filters"
+     class="modal fade"
+     tabindex="-1"
+     data-controller="polysource--filter-modal-layout"
+     data-polysource--filter-modal-layout-tree-value="{{ polysource_filter_tree(ea.crud ? ea.crud.filtersConfig : null) }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header justify-content-between">
+                <twig:ea:Button type="button" size="sm" icon="internal:xmark" data-bs-dismiss="modal" id="modal-clear-button" formtarget="_self">
+                    {{ 'filter.button.clear'|trans(domain: 'EasyAdminBundle') }}
+                </twig:ea:Button>
+                <h5 class="modal-title">
+                    <twig:ea:Icon name="internal:filter" /> {{ 'filter.title'|trans(domain: 'EasyAdminBundle') }}
+                </h5>
+                <twig:ea:Button type="button" variant="primary" size="sm" data-bs-dismiss="modal" class="btn btn-sm btn-primary" id="modal-apply-button" formtarget="_self" icon="internal:check">
+                    {{ 'filter.button.apply'|trans(domain: 'EasyAdminBundle') }}
+                </twig:ea:Button>
+            </div>
+            <div class="modal-body p-0">
+                {# The filters form will be loaded via AJAX for better performance #}
+                {# See @EasyAdmin/default/filters.html.twig template #}
+            </div>
+        </div>
+    </div>
+</div>
