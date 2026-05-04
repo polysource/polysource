@@ -42,17 +42,17 @@ use Throwable;
  * the flash bag carries a sanitised "Unexpected error" message, and
  * the request still redirects (rather than producing a naked 500).
  */
-final readonly class ActionController
+final class ActionController
 {
     public const CSRF_TOKEN_ID = 'polysource_action';
 
     private LoggerInterface $logger;
 
     public function __construct(
-        private PolysourceUrlGenerator $urlGenerator,
-        private CsrfTokenManagerInterface $csrfTokenManager,
-        private ControllerSupport $support,
-        private int $maxBulkIds = 500,
+        private readonly PolysourceUrlGenerator $urlGenerator,
+        private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly ControllerSupport $support,
+        private readonly int $maxBulkIds = 500,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();

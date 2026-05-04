@@ -35,6 +35,10 @@ package-lock.json
 /examples/*/public/assets/
 /examples/*/assets/vendor/
 
+# Playwright artefacts
+/examples/*/tests/e2e/test-results/
+/examples/*/playwright-report/
+
 # IDE / editors
 /.idea/
 /.vscode/

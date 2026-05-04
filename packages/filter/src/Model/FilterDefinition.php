@@ -29,7 +29,7 @@ use InvalidArgumentException;
  *
  * Immutable. Build via the static `new()` factory + `with*()` setters.
  */
-final readonly class FilterDefinition
+final class FilterDefinition
 {
     /**
      * @param string                       $name           Pipeline routing key (e.g. "datetime"). Must be non-empty (validated at runtime).
@@ -40,12 +40,12 @@ final readonly class FilterDefinition
      * @param array<string, mixed>         $datasourceSpec data-source-side configuration (columns, operator, …)
      */
     public function __construct(
-        public string $name,
-        public string $property,
-        public string $label = '',
-        public ?string $group = null,
-        public array $formSpec = [],
-        public array $datasourceSpec = [],
+        public readonly string $name,
+        public readonly string $property,
+        public readonly string $label = '',
+        public readonly ?string $group = null,
+        public readonly array $formSpec = [],
+        public readonly array $datasourceSpec = [],
     ) {
         if ('' === $name) {
             throw new InvalidArgumentException('FilterDefinition name cannot be empty.');

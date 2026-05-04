@@ -15,12 +15,12 @@ use InvalidArgumentException;
  *
  * Cf. ADR-002 for the rationale.
  */
-final readonly class Pagination
+final class Pagination
 {
     public function __construct(
-        public int $offset = 0,
-        public int $limit = 20,
-        public ?string $cursor = null,
+        public readonly int $offset = 0,
+        public readonly int $limit = 20,
+        public readonly ?string $cursor = null,
     ) {
         if ($offset < 0) {
             throw new InvalidArgumentException(\sprintf('Pagination offset must be >= 0, got %d.', $offset));

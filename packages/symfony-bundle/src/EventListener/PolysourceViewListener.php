@@ -34,12 +34,12 @@ use Twig\Error\LoaderError;
  * `LoaderError` warnings — a sustained stream means Twig is
  * misconfigured.
  */
-final readonly class PolysourceViewListener implements EventSubscriberInterface
+final class PolysourceViewListener implements EventSubscriberInterface
 {
     private LoggerInterface $logger;
 
     public function __construct(
-        private ?Environment $twig = null,
+        private readonly ?Environment $twig = null,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();

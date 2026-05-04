@@ -26,14 +26,14 @@ use Throwable;
  * cap so a runaway transport with thousands of messages cannot DoS the
  * worker pool from a single click.
  */
-final readonly class RetryAllFailedMessagesAction implements BulkActionInterface
+final class RetryAllFailedMessagesAction implements BulkActionInterface
 {
     private LoggerInterface $logger;
 
     public function __construct(
-        private MessageBusInterface $bus,
-        private ListableReceiverInterface $failedReceiver,
-        private int $maxRetries = 1000,
+        private readonly MessageBusInterface $bus,
+        private readonly ListableReceiverInterface $failedReceiver,
+        private readonly int $maxRetries = 1000,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();

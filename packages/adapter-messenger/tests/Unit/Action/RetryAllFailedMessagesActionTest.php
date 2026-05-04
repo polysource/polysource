@@ -33,7 +33,7 @@ final class RetryAllFailedMessagesActionTest extends TestCase
 
         self::assertTrue($result->success);
         self::assertCount(3, $bus->dispatched);
-        self::assertSame([], iterator_to_array($receiver->all()));
+        self::assertSame([], [...$receiver->all()]);
         self::assertNotNull($result->message);
         self::assertStringContainsString('3 messages queued', $result->message);
     }

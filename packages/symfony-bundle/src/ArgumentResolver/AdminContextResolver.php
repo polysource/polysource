@@ -24,13 +24,13 @@ use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
  * route attributes. We derive the rest (DataQuery, user, locale) from the
  * request.
  */
-final readonly class AdminContextResolver implements ValueResolverInterface
+final class AdminContextResolver implements ValueResolverInterface
 {
     public function __construct(
-        private ResourceRegistry $resources,
-        private AdminContextProvider $provider,
-        private ?Security $security = null,
-        private int $maxPageSize = 200,
+        private readonly ResourceRegistry $resources,
+        private readonly AdminContextProvider $provider,
+        private readonly ?Security $security = null,
+        private readonly int $maxPageSize = 200,
     ) {
     }
 

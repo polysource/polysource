@@ -20,10 +20,10 @@ use Symfony\Component\Messenger\Stamp\TransportMessageIdStamp;
  * fallback so the mapper never crashes on exotic message bodies. Payloads
  * larger than `payloadMaxBytes` are truncated with a clear marker.
  */
-final readonly class EnvelopeMapper
+final class EnvelopeMapper
 {
     public function __construct(
-        private int $payloadMaxBytes = 50_000,
+        private readonly int $payloadMaxBytes = 50_000,
     ) {
     }
 

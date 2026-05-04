@@ -13,10 +13,10 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  * helper rather than directly. Future Twig globals / helpers will be
  * wired through `polysource/twig-theme`.
  */
-final readonly class PolysourceUrlGenerator
+final class PolysourceUrlGenerator
 {
     public function __construct(
-        private UrlGeneratorInterface $urlGenerator,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 

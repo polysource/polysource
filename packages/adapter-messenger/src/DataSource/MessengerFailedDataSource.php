@@ -26,14 +26,14 @@ use Throwable;
  * Non-listable receivers fail fast at construction time with a
  * {@see LogicException}.
  */
-final readonly class MessengerFailedDataSource implements DataSourceInterface
+final class MessengerFailedDataSource implements DataSourceInterface
 {
     private ListableReceiverInterface $receiver;
     private LoggerInterface $logger;
 
     public function __construct(
         ReceiverInterface $receiver,
-        private EnvelopeMapper $mapper,
+        private readonly EnvelopeMapper $mapper,
         ?LoggerInterface $logger = null,
     ) {
         if (!$receiver instanceof ListableReceiverInterface) {

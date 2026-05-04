@@ -7,18 +7,18 @@ namespace Polysource\Core\Filter;
 /**
  * Configuration snapshot of a {@see FilterInterface}.
  */
-final readonly class FilterDto
+final class FilterDto
 {
     /**
      * @param list<string>         $supportedOperators
      * @param array<string, mixed> $customOptions
      */
     public function __construct(
-        public string $property,
-        public string $label,
-        public array $supportedOperators,
-        public ?string $template = null,
-        public array $customOptions = [],
+        public readonly string $property,
+        public readonly string $label,
+        public readonly array $supportedOperators,
+        public readonly ?string $template = null,
+        public readonly array $customOptions = [],
     ) {
     }
 }

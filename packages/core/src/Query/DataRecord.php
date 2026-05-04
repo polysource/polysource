@@ -11,15 +11,15 @@ namespace Polysource\Core\Query;
  * (Doctrine entities) and opaque/string IDs (S3 object keys, Messenger
  * envelope IDs, Redis keys, Meilisearch documents).
  */
-final readonly class DataRecord
+final class DataRecord
 {
     /**
      * @param array<string, mixed> $properties map of property name => value
      */
     public function __construct(
-        public string|int $identifier,
-        public array $properties,
-        public mixed $rawSource = null,
+        public readonly string|int $identifier,
+        public readonly array $properties,
+        public readonly mixed $rawSource = null,
     ) {
     }
 

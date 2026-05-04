@@ -21,13 +21,13 @@ use Throwable;
  * parameter and operates on the full transport. UI surface should
  * confirm with the user before submitting.
  */
-final readonly class PurgeFailedMessagesAction implements BulkActionInterface
+final class PurgeFailedMessagesAction implements BulkActionInterface
 {
     private LoggerInterface $logger;
 
     public function __construct(
-        private ListableReceiverInterface $failedReceiver,
-        private int $maxPurge = 1000,
+        private readonly ListableReceiverInterface $failedReceiver,
+        private readonly int $maxPurge = 1000,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();

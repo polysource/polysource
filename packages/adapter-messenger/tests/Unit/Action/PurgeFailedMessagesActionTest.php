@@ -29,7 +29,7 @@ final class PurgeFailedMessagesActionTest extends TestCase
         $result = $action->executeBatch([]);
 
         self::assertTrue($result->success);
-        self::assertSame([], iterator_to_array($receiver->all()));
+        self::assertSame([], [...$receiver->all()]);
         self::assertNotNull($result->message);
         self::assertStringContainsString('3 messages purged', $result->message);
     }
@@ -47,7 +47,7 @@ final class PurgeFailedMessagesActionTest extends TestCase
 
         $action->executeBatch([]);
 
-        self::assertCount(2, iterator_to_array($receiver->all()));
+        self::assertCount(2, [...$receiver->all()]);
     }
 
     private static function env(string $id): Envelope

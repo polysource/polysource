@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Tests\Unit\ArgumentResolver;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -209,13 +210,22 @@ final class AdminContextResolverTest extends TestCase
     }
 
     /**
+     * Bridges any iterable to a concrete Generator so PHPStan
+     * (with phpVersion=8.1 per ADR-015) is happy with the
+     * `iterator_to_array()` calls below — that signature requires
+     * Traversable on PHP 8.1, was widened to iterable in 8.2.
+     * Reindexes to int keys so the Generator's key type is
+     * concretely `int` (Generator forbids `mixed` keys).
+     *
      * @param iterable<mixed> $iterable
      *
-     * @return iterable<int|string, mixed>
+     * @return Generator<int, mixed>
      */
-    private function toIterable(iterable $iterable): iterable
+    private function toIterable(iterable $iterable): Generator
     {
-        /** @var iterable<int|string, mixed> $iterable */
-        return $iterable;
+        $i = 0;
+        foreach ($iterable as $value) {
+            yield $i++ => $value;
+        }
     }
 }

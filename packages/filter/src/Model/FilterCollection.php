@@ -27,7 +27,7 @@ use IteratorAggregate;
  *
  * @implements IteratorAggregate<int, FilterCriterion>
  */
-final readonly class FilterCollection implements IteratorAggregate, Countable
+final class FilterCollection implements IteratorAggregate, Countable
 {
     /** @var list<FilterCriterion> */
     public array $criteria;
@@ -37,7 +37,7 @@ final readonly class FilterCollection implements IteratorAggregate, Countable
      * @param iterable<FilterCriterion> $criteria active criterions, in display order
      */
     public function __construct(
-        public string $id,
+        public readonly string $id,
         iterable $criteria = [],
     ) {
         if ('' === $id) {

@@ -19,12 +19,12 @@ namespace Polysource\Core\Query;
  *   - between          : range (value must be a 2-element array)
  *   - null, notnull    : presence check (value ignored)
  */
-final readonly class FilterCriterion
+final class FilterCriterion
 {
     public function __construct(
-        public string $property,
-        public string $operator,
-        public mixed $value = null,
+        public readonly string $property,
+        public readonly string $operator,
+        public readonly mixed $value = null,
     ) {
     }
 }

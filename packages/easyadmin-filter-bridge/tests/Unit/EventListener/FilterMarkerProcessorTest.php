@@ -242,7 +242,11 @@ final class FilterMarkerProcessorTest extends TestCase
     {
         return new ControllerEvent(
             $this->createMock(HttpKernelInterface::class),
-            static fn (): never => throw new LogicException('not invoked'),
+            // PHP 8.1 doesn't support `: never` return type on arrow
+            // functions; use a regular closure that throws instead.
+            static function () {
+                throw new LogicException('not invoked');
+            },
             new Request(),
             HttpKernelInterface::MAIN_REQUEST,
         );

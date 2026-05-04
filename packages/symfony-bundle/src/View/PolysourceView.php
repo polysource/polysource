@@ -11,15 +11,15 @@ namespace Polysource\Bundle\View;
  * opens the door to multiple rendering strategies (Twig in Phase 3, JSON for
  * smoke tests in Phase 2). Cf. dev-plan Phase 2 §kernel.view listener.
  */
-final readonly class PolysourceView
+final class PolysourceView
 {
     /**
      * @param array<string, mixed> $variables passed verbatim to the renderer
      */
     public function __construct(
-        public string $template,
-        public array $variables = [],
-        public int $statusCode = 200,
+        public readonly string $template,
+        public readonly array $variables = [],
+        public readonly int $statusCode = 200,
     ) {
     }
 }

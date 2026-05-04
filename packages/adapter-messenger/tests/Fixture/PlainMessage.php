@@ -7,11 +7,11 @@ namespace Polysource\Adapter\Messenger\Tests\Fixture;
 /**
  * Plain message — JSON-serialisable.
  */
-final readonly class PlainMessage
+final class PlainMessage
 {
     public function __construct(
-        public string $name,
-        public int $count,
+        public readonly string $name,
+        public readonly int $count,
     ) {
     }
 }

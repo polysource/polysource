@@ -14,16 +14,16 @@ use Countable;
  *   - `$total !== null` → classic offset/limit pagination with "Page X / Y"
  *   - `$total === null` → cursor pagination via `$nextCursor` / `$prevCursor`
  */
-final readonly class DataPage
+final class DataPage
 {
     /**
      * @param iterable<DataRecord> $items
      */
     public function __construct(
-        public iterable $items,
-        public ?int $total = null,
-        public ?string $nextCursor = null,
-        public ?string $prevCursor = null,
+        public readonly iterable $items,
+        public readonly ?int $total = null,
+        public readonly ?string $nextCursor = null,
+        public readonly ?string $prevCursor = null,
     ) {
     }
 
@@ -36,7 +36,10 @@ final readonly class DataPage
             return array_values($this->items);
         }
 
-        return iterator_to_array($this->items, false);
+        // array_values + spread keeps the result as a `list` even when
+        // keys would otherwise come through as strings or non-sequential
+        // ints — PHPStan needs the cast to prove the list shape.
+        return array_values([...$this->items]);
     }
 
     /**
@@ -61,6 +64,6 @@ final readonly class DataPage
         }
 
         // Last resort: peek the iterator. Materialises it (one item).
-        return [] === iterator_to_array($this->items, false);
+        return [] === [...$this->items];
     }
 }

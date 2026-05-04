@@ -11,10 +11,10 @@ use Polysource\Core\Exception\ResourceNotFoundException;
 /**
  * Front controller for `GET /{prefix}/{resourceName}/{id}` (single record detail).
  */
-final readonly class DetailController
+final class DetailController
 {
     public function __construct(
-        private ControllerSupport $support,
+        private readonly ControllerSupport $support,
     ) {
     }
 

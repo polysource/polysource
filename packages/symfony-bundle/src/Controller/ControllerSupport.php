@@ -21,10 +21,10 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  * Controllers receive this as a service rather than reimplementing the
  * helpers as static methods.
  */
-final readonly class ControllerSupport
+final class ControllerSupport
 {
     public function __construct(
-        private PermissionInterface $permission,
+        private readonly PermissionInterface $permission,
     ) {
     }
 

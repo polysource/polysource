@@ -14,15 +14,15 @@ namespace Polysource\Core\Action;
  * Cf. ADR architecture — actions can also be asynchronous (the action
  * dispatches a Messenger message, the result reports "scheduled" success).
  */
-final readonly class ActionResult
+final class ActionResult
 {
     /**
      * @param array<string, mixed> $context arbitrary metadata for logging / audit / retry
      */
     public function __construct(
-        public bool $success,
-        public ?string $message = null,
-        public array $context = [],
+        public readonly bool $success,
+        public readonly ?string $message = null,
+        public readonly array $context = [],
     ) {
     }
 

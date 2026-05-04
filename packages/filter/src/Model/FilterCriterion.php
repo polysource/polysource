@@ -27,7 +27,7 @@ use InvalidArgumentException;
  * @see FilterCollection
  * @see \Polysource\Filter\Pipeline\FilterMapperInterface
  */
-final readonly class FilterCriterion
+final class FilterCriterion
 {
     /**
      * @param string      $property The Resource property targeted (e.g. `createdAt`). Must be non-empty (validated at runtime).
@@ -35,9 +35,9 @@ final readonly class FilterCriterion
      * @param list<mixed> $values   positional values consumed by the operator
      */
     public function __construct(
-        public string $property,
-        public string $operator,
-        public array $values = [],
+        public readonly string $property,
+        public readonly string $operator,
+        public readonly array $values = [],
     ) {
         if ('' === $property) {
             throw new InvalidArgumentException('Filter property cannot be empty.');

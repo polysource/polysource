@@ -24,13 +24,13 @@ use Throwable;
  * `TransportMessageIdStamp` so the message routes normally instead of
  * looping back to the failure transport.
  */
-final readonly class RetryFailedMessageAction implements InlineActionInterface
+final class RetryFailedMessageAction implements InlineActionInterface
 {
     private LoggerInterface $logger;
 
     public function __construct(
-        private MessageBusInterface $bus,
-        private ListableReceiverInterface $failedReceiver,
+        private readonly MessageBusInterface $bus,
+        private readonly ListableReceiverInterface $failedReceiver,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();

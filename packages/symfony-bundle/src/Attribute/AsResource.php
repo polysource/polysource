@@ -17,6 +17,6 @@ use Attribute;
  *     final class FailedMessageResource extends AbstractResource { ... }
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-final readonly class AsResource
+final class AsResource
 {
 }

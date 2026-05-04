@@ -11,18 +11,18 @@ namespace Polysource\Core\Query;
  *
  * @see \Polysource\Core\DataSource\DataSourceInterface::search()
  */
-final readonly class DataQuery
+final class DataQuery
 {
     /**
      * @param array<string, FilterCriterion> $filters     map of filter name => criterion
      * @param array<string, SortDirection>   $sort        map of property name => direction
      */
     public function __construct(
-        public string $resourceName,
-        public ?string $searchText = null,
-        public array $filters = [],
-        public array $sort = [],
-        public ?Pagination $pagination = null,
+        public readonly string $resourceName,
+        public readonly ?string $searchText = null,
+        public readonly array $filters = [],
+        public readonly array $sort = [],
+        public readonly ?Pagination $pagination = null,
     ) {
     }
 

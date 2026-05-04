@@ -4,6 +4,12 @@ includes:
 parameters:
     level: max
 
+    # ADR-015: lock baseline at PHP 8.1. PHPStan flags any 8.2+
+    # syntax (readonly class, true/false/null literal types, DNF, …)
+    # so we never accidentally regress to a feature unavailable on
+    # the supported PHP minimum.
+    phpVersion: 80100
+
     paths:
         - packages
 

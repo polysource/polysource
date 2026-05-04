@@ -12,10 +12,10 @@ use Polysource\Bundle\View\PolysourceView;
  *
  * Returns a {@see PolysourceView} consumed by the response listener.
  */
-final readonly class IndexController
+final class IndexController
 {
     public function __construct(
-        private ControllerSupport $support,
+        private readonly ControllerSupport $support,
     ) {
     }
 

@@ -25,10 +25,10 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
  * bypass auth must alias `PermissionInterface` to a fixture
  * implementation (see `tests/Fixture/AlwaysGrantPermission.php`).
  */
-final readonly class SymfonyAuthorizationCheckerPermission implements PermissionInterface
+final class SymfonyAuthorizationCheckerPermission implements PermissionInterface
 {
     public function __construct(
-        private ?AuthorizationCheckerInterface $authorizationChecker = null,
+        private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
     ) {
     }
 

@@ -11,13 +11,13 @@ namespace Polysource\Core\Query;
  * Carries the raw form/API data — adapters decide how to map keys to their
  * native model (Doctrine entity setter, Redis HMSET, HTTP POST body, ...).
  */
-final readonly class DataPayload
+final class DataPayload
 {
     /**
      * @param array<string, mixed> $properties
      */
     public function __construct(
-        public array $properties,
+        public readonly array $properties,
     ) {
     }
 

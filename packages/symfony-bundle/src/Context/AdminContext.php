@@ -19,16 +19,16 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * Stop-the-line: keep this to ≤ 10 properties. Beyond that, decompose into
  * sub-contexts.
  */
-final readonly class AdminContext
+final class AdminContext
 {
     public function __construct(
-        public Request $request,
-        public ResourceInterface $resource,
-        public string $action,
-        public ?string $recordId,
-        public string $locale,
-        public ?UserInterface $user,
-        public DataQuery $query,
+        public readonly Request $request,
+        public readonly ResourceInterface $resource,
+        public readonly string $action,
+        public readonly ?string $recordId,
+        public readonly string $locale,
+        public readonly ?UserInterface $user,
+        public readonly DataQuery $query,
     ) {
     }
 

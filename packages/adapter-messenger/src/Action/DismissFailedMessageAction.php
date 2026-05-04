@@ -17,12 +17,12 @@ use Throwable;
  * Acks a single failed envelope without retrying it — effectively
  * deletes the message from the failure transport.
  */
-final readonly class DismissFailedMessageAction implements InlineActionInterface
+final class DismissFailedMessageAction implements InlineActionInterface
 {
     private LoggerInterface $logger;
 
     public function __construct(
-        private ListableReceiverInterface $failedReceiver,
+        private readonly ListableReceiverInterface $failedReceiver,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();
