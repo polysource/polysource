@@ -15,6 +15,7 @@ use Polysource\EasyAdminFilterBridge\Configurator\GroupCarrierConfigurator;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
+use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\Form\Extension\PolysourceFilterFormTypeExtension;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
@@ -217,6 +218,14 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
         $container
             ->register(FilterFormThemeRegistrationSubscriber::class)
+            ->setAutoconfigured(true)
+            ->setAutowired(true)
+        ;
+
+        // Walks FilterConfigDto, propagates Polysource::tab/group
+        // markers to subsequent filters, removes the markers.
+        $container
+            ->register(FilterMarkerProcessor::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
         ;
