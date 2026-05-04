@@ -30,9 +30,27 @@ final class SeedProductsCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $categoryNames = ['Electronics', 'Books', 'Clothing', 'Home & Garden', 'Sports'];
+        $categoryDescriptions = [
+            'Electronics' => 'Phones, laptops, accessories',
+            'Books' => 'Fiction, non-fiction, comics',
+            // 'Clothing' deliberately left out — null demoes NotNullFilter "Empty".
+            'Home & Garden' => 'Furniture, gardening, kitchen',
+            // 'Sports' likewise left out.
+        ];
         $categories = [];
-        foreach ($categoryNames as $name) {
-            $cat = (new Category())->setName($name);
+        foreach ($categoryNames as $i => $name) {
+            $createdAt = (new DateTimeImmutable())->modify(\sprintf('-%d days', random_int(30, 365)));
+            $archivedAt = 0 === $i % 4
+                ? $createdAt->modify('+15 days')
+                : null;
+            $cat = (new Category())
+                ->setName($name)
+                ->setSlug(strtolower(str_replace([' ', '&'], ['-', 'and'], $name)))
+                ->setDescription($categoryDescriptions[$name] ?? null)
+                ->setIsVisible(0 !== $i % 5)
+                ->setDisplayOrder(($i + 1) * 10)
+                ->setCreatedAt($createdAt)
+                ->setArchivedAt($archivedAt);
             $this->em->persist($cat);
             $categories[] = $cat;
         }

@@ -1,0 +1,90 @@
+{# polysource/easyadmin-filter-bridge — chips bar template.
+
+   Renders the active-filters bar above the EA index table. Iterates
+   through the URL's `filters[*]` slices, skips slices that don't
+   carry a real value (`is_slice_applied` macro below), then
+   delegates each chip's body to `_chip.html.twig` so hosts can
+   override per-chip markup independently.
+
+   Why the per-slice "is applied" guard:
+   - When a host ticks N filter checkboxes in the modal but only
+     fills values for some of them, EA's submit handler keeps every
+     ticked filter in the URL — the empty ones land as
+     `?filters[foo][value]=&filters[foo][comparison]=` which would
+     otherwise render as a chip with no value. We filter them out
+     so chips reflect the actual list of *active* filters.
+   - `IS NULL` / `IS NOT NULL` are exceptions: they ARE applied
+     even with empty value (the predicate is the data).
+
+   Inputs:
+   - `applied_filters` (array<string, array>) — `ea.request.query.all['filters']`
+
+   Default styling lives in the bridge CSS file
+   `Resources/public/css/chips.css` (auto-mounted via
+   `@PolysourceEasyAdminFilterBridge` AssetMapper namespace).
+#}
+{% macro is_slice_applied(slice) %}
+    {%- set comparison = (slice.comparison|default(''))|upper -%}
+    {%- set value = slice.value|default(null) -%}
+    {%- set value2 = slice.value2|default(null) -%}
+    {%- if comparison in ['IS NULL', 'IS NOT NULL'] -%}
+        1
+    {%- elseif value is iterable and value is not empty -%}
+        1
+    {%- elseif value is not iterable and value is not null and value != '' -%}
+        1
+    {%- elseif value2 is not null and value2 != '' -%}
+        1
+    {%- endif -%}
+{% endmacro %}
+
+{% import _self as helpers %}
+
+{# Filter the slices to only those with real values. We do this in
+   two passes (filter, then iterate) so the empty `{% if %}` check
+   below short-circuits cleanly when nothing is applied. #}
+{% set _active_chips = [] %}
+{% for property, slice in applied_filters %}
+    {% if helpers.is_slice_applied(slice)|trim == '1' %}
+        {% set _active_chips = _active_chips|merge([{property: property, slice: slice}]) %}
+    {% endif %}
+{% endfor %}
+
+{% if _active_chips|length > 0 %}
+    <div class="ea-filter-chips-bar"
+         data-controller="polysource--filter-chips"
+         role="region"
+         aria-label="{{ 'polysource.filter.chips.heading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
+        <span class="ea-filter-chips-bar__heading">
+            {{ 'polysource.filter.chips.heading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+        </span>
+        <div class="ea-filter-chips-bar__list">
+            {% for entry in _active_chips %}
+                {% set property = entry.property %}
+                {% set slice = entry.slice %}
+                {% set comparison = (slice.comparison|default(''))|upper %}
+                {% set value = slice.value|default(null) %}
+                {% set value2 = slice.value2|default(null) %}
+
+                {# Humanise camelCase / snake_case → "Created at". #}
+                {% set label = property
+                    |replace({'_': ' '})
+                    |replace({'A':' A','B':' B','C':' C','D':' D','E':' E','F':' F','G':' G','H':' H','I':' I','J':' J','K':' K','L':' L','M':' M','N':' N','O':' O','P':' P','Q':' Q','R':' R','S':' S','T':' T','U':' U','V':' V','W':' W','X':' X','Y':' Y','Z':' Z'})
+                    |trim|capitalize %}
+
+                {{ include('@EasyAdmin/crud/_chip.html.twig', {
+                    property: property,
+                    slice: slice,
+                    label: label,
+                    comparison: comparison,
+                    value: value,
+                    value2: value2,
+                }) }}
+            {% endfor %}
+        </div>
+        <a href="{{ ea_url().unset('filters').setAction('index') }}"
+           class="ea-filter-chips-bar__clear">
+            {{ 'polysource.filter.chips.clear_all'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+        </a>
+    </div>
+{% endif %}

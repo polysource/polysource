@@ -230,11 +230,11 @@ test.describe('filter bridge — chips bar (Phase 9.7 #70)', () => {
         // test isolates the chips-bar concern.
         await page.goto(`${PRODUCT_INDEX}?filters%5Bprice%5D%5Bvalue%5D=50&filters%5Bprice%5D%5Bcomparison%5D=%3E%3D`);
 
-        const chipsBar = page.locator('.polysource-filter-chips-bar');
+        const chipsBar = page.locator('.ea-filter-chips-bar');
         await expect(chipsBar).toBeVisible();
         await expect(chipsBar).toContainText('Active filters:');
 
-        const priceChip = chipsBar.locator('.polysource-filter-chip[data-property="price"]');
+        const priceChip = chipsBar.locator('.ea-filter-chip[data-property="price"]');
         await expect(priceChip).toBeVisible();
         await expect(priceChip).toContainText(/Price/i);
     });
@@ -243,18 +243,18 @@ test.describe('filter bridge — chips bar (Phase 9.7 #70)', () => {
         await page.goto(PRODUCT_INDEX);
         // Either the bar is absent OR present but invisible. We
         // expect absent (Twig `{% if applied_filters %}` short-circuits).
-        await expect(page.locator('.polysource-filter-chips-bar')).toHaveCount(0);
+        await expect(page.locator('.ea-filter-chips-bar')).toHaveCount(0);
     });
 
     test('clicking the X removes only that chip from the URL', async ({ page }) => {
         await page.goto(`${PRODUCT_INDEX}?filters%5Bprice%5D%5Bvalue%5D=50&filters%5Bprice%5D%5Bcomparison%5D=%3E%3D&filters%5Bstatus%5D%5Bvalue%5D%5B0%5D=draft&filters%5Bstatus%5D%5Bcomparison%5D=IN`);
 
         // Two chips visible.
-        await expect(page.locator('.polysource-filter-chip')).toHaveCount(2);
+        await expect(page.locator('.ea-filter-chip')).toHaveCount(2);
 
         // Click X on the price chip.
         await page
-            .locator('.polysource-filter-chip[data-property="price"]')
+            .locator('.ea-filter-chip[data-property="price"]')
             .locator('button')
             .click();
 
@@ -279,5 +279,50 @@ test.describe('filter bridge — 4 custom filter types (Phase 9.7 #66-#69)', () 
         await expect(modal.locator('[data-filter-property="status"]')).toBeVisible();
         await expect(modal.locator('[data-filter-property="description"]')).toBeVisible();
         await expect(modal.locator('[data-filter-property="q"]')).toBeVisible();
+    });
+});
+
+test.describe('filter bridge — empty-value chip suppression (#79)', () => {
+    test('a filter slice with no value does NOT render a chip', async ({ page }) => {
+        // EA submits checked-but-empty filters as `?filters[name][value]=`.
+        // The chips bar must skip those — only filters with a real
+        // value should chip.
+        await page.goto(
+            `${PRODUCT_INDEX}?filters%5Bname%5D%5Bvalue%5D=&filters%5Bname%5D%5Bcomparison%5D=like` +
+                `&filters%5Bstock%5D%5Bvalue%5D=10&filters%5Bstock%5D%5Bcomparison%5D=%3E%3D`,
+        );
+
+        // Only the stock chip should be visible.
+        await expect(page.locator('.ea-filter-chip[data-property="stock"]')).toBeVisible();
+        await expect(page.locator('.ea-filter-chip[data-property="name"]')).toHaveCount(0);
+    });
+});
+
+const CATEGORY_INDEX = '/admin/category';
+
+test.describe('filter bridge — subpanel mode + multi-group on Categories (#76, #77)', () => {
+    test('Category index page has the subpanel body class', async ({ page }) => {
+        await page.goto(CATEGORY_INDEX);
+        await expect(page.locator('body.polysource-filter-subpanel')).toHaveCount(1);
+    });
+
+    test('Product index page does NOT have the subpanel body class', async ({ page }) => {
+        await page.goto(PRODUCT_INDEX);
+        await expect(page.locator('body.polysource-filter-subpanel')).toHaveCount(0);
+    });
+
+    test('Category filter form renders 3 group accordions (Visibility / Display / Dates)', async ({ page }) => {
+        await page.goto(CATEGORY_INDEX);
+        await page.locator('.action-filters-button').click();
+
+        const modal = page.locator('#modal-filters');
+        await expect(modal).toBeVisible();
+
+        // Each `<details class="polysource-filter-group">` carries a
+        // <summary><strong>Group name</strong></summary>.
+        await expect(modal.locator('details.polysource-filter-group')).toHaveCount(3);
+        await expect(modal.locator('summary >> text=Visibility')).toBeVisible();
+        await expect(modal.locator('summary >> text=Display')).toBeVisible();
+        await expect(modal.locator('summary >> text=Dates')).toBeVisible();
     });
 });

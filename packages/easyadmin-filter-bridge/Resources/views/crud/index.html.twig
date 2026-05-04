@@ -1,26 +1,21 @@
 {# polysource/easyadmin-filter-bridge — override of @EasyAdmin/crud/index.html.twig
 
-   Injects an "active filters" chips bar above the table. Each chip
-   shows: property label + comparison operator + applied value(s),
-   with an X button that strips that filter slice from the URL via
-   the `polysource--filter-chips` Stimulus controller (shipped with
-   `polysource/filter`).
+   Injects an "active filters" chips bar above the table on EA index
+   pages. The chips bar markup lives in two reusable templates:
+     - `crud/_chips_bar.html.twig` — wrapper + iteration
+     - `crud/_chip.html.twig`      — single chip body
 
-   The chip body is rendered by the `chip_body` macro defined below.
-   It branches on the comparison operator to format value/value2
-   appropriately:
-     - BETWEEN          → "v1 → v2"
-     - IN / NOT IN      → "v1, v2, …"
-     - IS [NOT] NULL    → no value rendered
-     - else (=, >=, …)  → "<op> v"
+   Hosts override either independently at the app level via
+   `templates/bundles/EasyAdminBundle/crud/_chip.html.twig` (Symfony
+   convention) without touching the index template.
 
-   Pure Twig, no Twig extension needed. This intentionally does NOT
-   use `polysource/filter`'s `FilterFormatterInterface` registry:
-   - The bridge consumes EA filters (which carry their own
-     `FilterDataDto` shape), not `FilterDefinition`s. Wiring the
-     formatter registry would require a side-translation step we
-     don't need at v0.1. The Twig macro is local to this template
-     and ~30 lines — easier to override than to register a service.
+   Why two templates instead of one inline macro:
+   - A common request is "I just want chips with my company colors";
+     overriding `_chip.html.twig` is a 5-line change.
+   - Another common request is "I want chips inside the page actions
+     row, not above"; overriding `_chips_bar.html.twig` covers that.
+   - Splitting them is cheaper than letting hosts overload our index
+     and re-implement the chips bar.
 
    Why `@!EasyAdmin/...`:
    - Our DI extension splices this views path into the `@EasyAdmin`
@@ -30,59 +25,108 @@
 #}
 {% extends '@!EasyAdmin/crud/index.html.twig' %}
 
-{% macro chip_body(property, slice) %}
-    {% set comparison = (slice.comparison|default(''))|upper %}
-    {% set value = slice.value|default(null) %}
-    {% set value2 = slice.value2|default(null) %}
-    {# Humanise camelCase / snake_case property names: insert a space
-       before every uppercase letter, replace underscores, capitalize.
-       `createdAt` → `Created at`, `is_active` → `Is active`. #}
-    {% set label = property
-        |replace({'_': ' '})
-        |replace({'A':' A','B':' B','C':' C','D':' D','E':' E','F':' F','G':' G','H':' H','I':' I','J':' J','K':' K','L':' L','M':' M','N':' N','O':' O','P':' P','Q':' Q','R':' R','S':' S','T':' T','U':' U','V':' V','W':' W','X':' X','Y':' Y','Z':' Z'})
-        |trim|capitalize %}
+{% block configured_stylesheets %}
+    {{ parent() }}
+    <style>
+        /* polysource/easyadmin-filter-bridge — chips bar (default).
+           Hosts can override by shipping a custom CSS file before
+           this one in their twig.form_themes / asset stack. */
+        .ea-filter-chips-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bs-tertiary-bg, #f5f5f5);
+            border: 1px solid var(--bs-border-color, #dee2e6);
+            border-radius: 0.375rem;
+        }
+        .ea-filter-chips-bar__heading {
+            font-size: 0.875rem;
+            color: var(--bs-secondary-color, #6c757d);
+            font-weight: 500;
+            margin-right: 0.25rem;
+        }
+        .ea-filter-chips-bar__list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            flex: 1 1 auto;
+        }
+        .ea-filter-chips-bar__clear {
+            font-size: 0.8125rem;
+            color: var(--bs-secondary-color, #6c757d);
+            text-decoration: underline;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .ea-filter-chips-bar__clear:hover {
+            color: var(--bs-danger, #dc3545);
+        }
 
-    <strong>{{ label }}</strong>
-    {%- if comparison == 'BETWEEN' and value is not null and value2 is not null %}
-        : {{ value }} → {{ value2 }}
-    {%- elseif comparison in ['IN', 'NOT IN'] and value is iterable %}
-        : {{ comparison|lower }} {{ value|join(', ') }}
-    {%- elseif comparison in ['IS NULL', 'IS NOT NULL'] %}
-        : {{ comparison|lower }}
-    {%- elseif value is iterable %}
-        : {{ value|join(', ') }}
-    {%- elseif value is not null and value != '' %}
-        {%- if comparison and comparison != '=' %} : {{ comparison|lower }} {{ value }}
-        {%- else %} : {{ value }}
-        {%- endif %}
-    {%- endif %}
-{% endmacro %}
+        /* Single chip — pill shape with subtle EA-styled border. */
+        .ea-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            background: var(--bs-body-bg, #fff);
+            border: 1px solid var(--bs-border-color, #dee2e6);
+            border-radius: 999px;
+            font-size: 0.8125rem;
+            line-height: 1.4;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+        }
+        .ea-filter-chip__label {
+            font-weight: 600;
+            color: var(--bs-emphasis-color, #212529);
+        }
+        .ea-filter-chip__sep {
+            color: var(--bs-secondary-color, #6c757d);
+            margin: 0 0.125rem;
+        }
+        .ea-filter-chip__value {
+            color: var(--bs-body-color, #212529);
+        }
+        .ea-filter-chip__operator {
+            color: var(--bs-secondary-color, #6c757d);
+            font-style: italic;
+            margin-right: 0.25rem;
+        }
+        .ea-filter-chip__arrow {
+            color: var(--bs-secondary-color, #6c757d);
+            margin: 0 0.125rem;
+        }
+        .ea-filter-chip__remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.125rem;
+            height: 1.125rem;
+            margin-left: 0.25rem;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            border-radius: 50%;
+            color: var(--bs-secondary-color, #6c757d);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .ea-filter-chip__remove:hover,
+        .ea-filter-chip__remove:focus {
+            background: var(--bs-danger, #dc3545);
+            color: #fff;
+            outline: none;
+        }
+    </style>
+{% endblock %}
 
 {% block main %}
-    {% import _self as chip %}
     {% set applied_filters = ea.request.query.all['filters']|default([]) %}
-    {% if applied_filters|length > 0 %}
-        <div class="polysource-filter-chips-bar mb-3 d-flex align-items-center flex-wrap gap-1"
-             data-controller="polysource--filter-chips">
-            <span class="text-muted me-2">{{ 'polysource.filter.chips.heading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}</span>
-            {% for property, slice in applied_filters %}
-                <span class="badge bg-secondary polysource-filter-chip"
-                      data-polysource--filter-chips-target="chip"
-                      data-property="{{ property }}">
-                    {{ chip.chip_body(property, slice) }}
-                    <button type="button"
-                            class="btn-close btn-close-white btn-close-sm ms-2"
-                            aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
-                            data-action="click->polysource--filter-chips#removeChip"
-                            data-polysource--filter-chips-property-param="{{ property }}"></button>
-                </span>
-            {% endfor %}
-            <a href="{{ ea_url().unset('filters').setAction('index') }}"
-               class="btn btn-link btn-sm polysource-filter-chips-clear-all ms-2">
-                {{ 'polysource.filter.chips.clear_all'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
-            </a>
-        </div>
-    {% endif %}
+    {{ include('@EasyAdmin/crud/_chips_bar.html.twig', {
+        applied_filters: applied_filters,
+    }) }}
 
     {{ parent() }}
 {% endblock main %}

@@ -41,7 +41,15 @@
 {% block configured_stylesheets %}
     {{ parent() }}
     <style>
-        /* polysource/easyadmin-filter-bridge — subpanel mode CSS */
+        /* polysource/easyadmin-filter-bridge — subpanel mode CSS.
+
+           Repositions EA's `#modal-filters` as a right-anchored
+           slide-in panel WITHOUT touching the inner markup. The
+           goal: render the exact same content as the centered
+           modal — same header (title + close), same body (filter
+           form), same footer (Apply / Clear buttons) — just
+           docked to the right edge.
+        */
         body.polysource-filter-subpanel #modal-filters .modal-dialog {
             position: fixed;
             right: 0;
@@ -49,12 +57,17 @@
             bottom: 0;
             margin: 0;
             max-width: none;
-            width: 480px;
-            max-height: 100vh;
-            display: flex;
+            width: 560px;
+            height: 100vh;
+            /* override Bootstrap's default flex centering on
+               .modal-dialog so .modal-content can stretch full
+               height without stacking weirdly. */
+            display: block;
+            pointer-events: none;
         }
         body.polysource-filter-subpanel #modal-filters .modal-content {
             height: 100vh;
+            max-height: 100vh;
             border-radius: 0;
             border-top: none;
             border-bottom: none;
@@ -62,13 +75,20 @@
             box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
-            width: 100%;
+            pointer-events: auto;
+        }
+        /* The 3 sections of the modal: header pinned top, footer
+           pinned bottom, body scrolls between. */
+        body.polysource-filter-subpanel #modal-filters .modal-header,
+        body.polysource-filter-subpanel #modal-filters .modal-footer {
+            flex: 0 0 auto;
         }
         body.polysource-filter-subpanel #modal-filters .modal-body {
-            overflow-y: auto;
             flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
-        /* Slide-in animation from the right edge. */
+        /* Slide-in from the right edge. */
         body.polysource-filter-subpanel #modal-filters.fade .modal-dialog {
             transform: translateX(100%);
             transition: transform 0.3s ease-out;
@@ -76,10 +96,16 @@
         body.polysource-filter-subpanel #modal-filters.show .modal-dialog {
             transform: none;
         }
-        /* Optional: tighter mobile size — flush right, full width. */
+        /* Mobile: flush-right, full-width. */
         @media (max-width: 575.98px) {
             body.polysource-filter-subpanel #modal-filters .modal-dialog {
                 width: 100%;
+            }
+        }
+        /* Tablet (576-991px): 480px to leave breathing room. */
+        @media (min-width: 576px) and (max-width: 991.98px) {
+            body.polysource-filter-subpanel #modal-filters .modal-dialog {
+                width: 480px;
             }
         }
     </style>

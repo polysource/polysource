@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Polysource\Demo\EasyAdminBridge\Controller\Admin;
 
-use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
@@ -32,30 +31,23 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
 /**
- * The killer demo of polysource/easyadmin-filter-bridge.
+ * Modal-mode demo of polysource/easyadmin-filter-bridge.
  *
- * Every filter declared below is a stock EasyAdmin filter — the host app
- * code is identical to a non-bridge install. Once the bridge is loaded,
- * each filter automatically gains the enhancement options shipped by the
- * bridge (presets, quick_ranges, include_null, etc.) — see the
- * `setFormTypeOption()` calls below for the per-filter opt-ins.
+ * This CRUD uses EasyAdmin's default centered-modal filter UI.
+ * Every filter is a stock EasyAdmin filter — the host app code is
+ * identical to a non-bridge install. Once the bridge is loaded,
+ * each filter automatically gains the bridge-side enhancements
+ * (presets, quick_ranges, include_null, …) plus the chips bar
+ * above the table.
+ *
+ * For the subpanel-mode + multi-group demo, see
+ * {@see CategoryCrudController}.
  */
 final class ProductCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string
     {
         return Product::class;
-    }
-
-    public function configureCrud(Crud $crud): Crud
-    {
-        // Opt into subpanel mode: filters slide in from the right
-        // instead of opening as a centered modal. Driven by the
-        // `polysource-filter-subpanel` body class + bridge CSS.
-        return $crud->overrideTemplate(
-            'crud/index',
-            '@PolysourceEasyAdminFilterBridge/crud/index_subpanel.html.twig',
-        );
     }
 
     /**
@@ -146,13 +138,8 @@ final class ProductCrudController extends AbstractCrudController
             // only-to → `<=`). Replaces a second DateTimeFilter
             // that would otherwise force users through the
             // "Between" comparison toggle.
-            //
-            // `polysource_group` puts this filter in the "Dates"
-            // group — rendered as a <details> accordion in the
-            // filter modal/subpanel.
             ->add(
-                BetweenDateFilter::new('archivedAt', 'Archived between')
-                    ->setFormTypeOption('polysource_group', 'Dates'),
+                BetweenDateFilter::new('archivedAt', 'Archived between'),
             )
             // InFilter on `status` — multi-select status picker
             // emitting `IN (…)`. Replaces the upstream `ChoiceFilter`
@@ -160,7 +147,6 @@ final class ProductCrudController extends AbstractCrudController
             // Published" in one go.
             ->add(
                 InFilter::new('status', 'Status (multi)')
-                    ->setFormTypeOption('polysource_group', 'Lifecycle')
                     ->setFormTypeOption('choices', [
                         'Draft' => Product::STATUS_DRAFT,
                         'Published' => Product::STATUS_PUBLISHED,
@@ -172,8 +158,7 @@ final class ProductCrudController extends AbstractCrudController
             // "filter rows where this nullable column is
             // populated" UX which EA built-ins cannot express.
             ->add(
-                NotNullFilter::new('description', 'Description state')
-                    ->setFormTypeOption('polysource_group', 'Lifecycle'),
+                NotNullFilter::new('description', 'Description state'),
             )
             // FullTextSearchFilter on synthetic `q` — single
             // text input matched LIKE-OR'd across `name` and

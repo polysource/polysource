@@ -1,0 +1,53 @@
+{# polysource/easyadmin-filter-bridge — single-chip template.
+
+   Renders one applied-filter chip with property label + value
+   summary + remove button. Designed to be the smallest unit of
+   override: a host that just wants different chip styling can
+   ship `templates/bundles/EasyAdminBundle/crud/_chip.html.twig`
+   (Symfony's app-level override convention) without touching the
+   surrounding chips bar layout.
+
+   Inputs:
+   - `property`     (string)         — filter property name
+   - `slice`        (array)          — `{comparison, value, value2}` from URL
+   - `label`        (string)         — humanised label ("Created at", …)
+   - `comparison`   (string, upper)  — "BETWEEN" / "IN" / "IS NULL" / "=" / …
+   - `value`        (mixed)          — single value or list
+   - `value2`       (mixed)          — secondary value (BETWEEN)
+
+   Visual contract: produces ONE element of the chips bar. Hosts
+   wanting structural changes (chip groups, different markup) override
+   `_chips_bar.html.twig` instead.
+#}
+<span class="ea-filter-chip"
+      data-polysource--filter-chips-target="chip"
+      data-property="{{ property }}">
+    <span class="ea-filter-chip__label">{{ label }}</span>
+    <span class="ea-filter-chip__sep">:</span>
+    <span class="ea-filter-chip__value">
+        {%- if comparison == 'BETWEEN' and value is not null and value2 is not null -%}
+            {{ value }} <span class="ea-filter-chip__arrow">→</span> {{ value2 }}
+        {%- elseif comparison in ['IN', 'NOT IN'] and value is iterable -%}
+            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+            {{ value|join(', ') }}
+        {%- elseif comparison in ['IS NULL', 'IS NOT NULL'] -%}
+            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+        {%- elseif value is iterable -%}
+            {{ value|join(', ') }}
+        {%- elseif comparison and comparison != '=' -%}
+            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+            {{ value }}
+        {%- else -%}
+            {{ value }}
+        {%- endif -%}
+    </span>
+    <button type="button"
+            class="ea-filter-chip__remove"
+            aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+            data-action="click->polysource--filter-chips#removeChip"
+            data-polysource--filter-chips-property-param="{{ property }}">
+        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+    </button>
+</span>
