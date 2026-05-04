@@ -8,38 +8,50 @@ use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Context\AdminContextInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
+use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\EntityFilterType;
+use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 /**
- * Formats raw filter values from the URL into human-readable
- * chip text by inspecting EA's `FilterDto` type.
+ * Resolves a raw filter value (from the URL) to a human-readable
+ * chip label via a 5-stage routing chain — ordered from most
+ * specific (host's per-filter callable) to most generic (default
+ * stringify).
  *
- * The internal pattern's formatter pipeline (in `polysource/filter`)
- * is designed for non-EA hosts that consume `FilterDefinition`s.
- * The bridge consumes EA's `FilterDto`s (with EA's filter FQCNs)
- * directly — wiring the polysource pipeline through the bridge
- * would mean a side-translation step (FQCN → polysource name)
- * for every chip render, with no DX gain. So the bridge ships
- * its own EA-aware formatter that solves the two end-user pain
- * points:
+ * The chain:
  *
- * - **Boolean**: `1` / `0` / `''` resolved to translated
- *   "Yes" / "No" / "Empty" (via the `EasyAdminBundle` translation
- *   domain so locale comes for free).
- * - **Entity**: scalar PK resolved via Doctrine to the entity's
- *   `__toString()` — `Category : 2` becomes `Category : Electronics`.
+ *   1. Filter `customOption(CHIP_FORMATTER)` callable — host's
+ *      per-filter override declared via
+ *      `Polysource::filter($f)->chipFormatter(fn ($v) => ...)`.
+ *   2. Matching Field `customOption(CHIP_FORMATTER)` callable —
+ *      host's per-field override declared via
+ *      `Polysource::field($f)->chipFormatter(fn ($v) => ...)`.
+ *      Looked up by property name on the EntityDto's FieldCollection.
+ *      ENABLES TABLE↔CHIP COHERENCE: the same callable formats
+ *      the column AND the chip with one declaration.
+ *   3. Match by `FilterDto::getFormType()` — handles every filter
+ *      that uses BooleanFilterType / EntityFilterType regardless
+ *      of the FilterInterface implementation. Covers EA built-ins
+ *      AND host customs (e.g. a `FreewheelCreativeIsSentFilter`
+ *      that sets `setFormType(BooleanFilterType::class)` gets the
+ *      Yes/No translation for free).
+ *   4. Auto-detect Doctrine association on the property — covers
+ *      hosts filtering on an association property without using
+ *      `EntityFilter` explicitly (e.g. a custom
+ *      `AssociationByIdFilter`).
+ *   5. Default stringify — defensive fallback. Scalars cast
+ *      verbatim, arrays joined with commas, objects emit empty
+ *      string.
  *
- * All other filter shapes (text, numeric, datetime, choice, …)
- * fall through to a defensive `stringify` that joins arrays with
- * commas and casts scalars verbatim.
- *
- * Hosts wanting custom resolution decorate this service or
- * register a competing Twig extension shadowing
- * `polysource_chip_value`.
+ * Hosts can shadow the entire chain by registering a competing
+ * Twig extension exposing `polysource_chip_value` (Twig's last-
+ * registered-wins precedence), or by service-decorating
+ * {@see \Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension}.
  */
 final class ChipValueFormatter
 {
@@ -67,13 +79,59 @@ final class ChipValueFormatter
             return $this->stringify($rawValue);
         }
 
-        $fqcn = $filter->getAsDto()->getFqcn();
+        // ─── Stage 1: Filter chip_formatter callable ───
+        $callable = $filter->getAsDto()->getCustomOption(BridgeOptions::CHIP_FORMATTER);
+        if (\is_callable($callable)) {
+            $result = $callable($rawValue);
 
-        return match ($fqcn) {
-            BooleanFilter::class => $this->formatBoolean($rawValue),
-            EntityFilter::class => $this->formatEntity($context, $property, $rawValue),
-            default => $this->stringify($rawValue),
-        };
+            return \is_string($result) ? $result : $this->stringify($rawValue);
+        }
+
+        // ─── Stage 2: Matching Field chip_formatter callable ───
+        $fieldCallable = $this->lookupFieldChipFormatter($context, $property);
+        if (null !== $fieldCallable) {
+            $result = $fieldCallable($rawValue);
+
+            return \is_string($result) ? $result : $this->stringify($rawValue);
+        }
+
+        // ─── Stage 3: Match by FormType (covers EA built-ins +
+        //              custom FilterInterface using EA form types) ───
+        $formType = $filter->getAsDto()->getFormType();
+        if (\in_array($formType, [BooleanFilterType::class, EnhancedBooleanFilterType::class], true)) {
+            return $this->formatBoolean($rawValue);
+        }
+        if (\in_array($formType, [EntityFilterType::class, EnhancedEntityFilterType::class], true)) {
+            return $this->formatEntity($context, $property, $rawValue);
+        }
+
+        // ─── Stage 4: Auto-detect Doctrine association ───
+        if ($this->isDoctrineAssociation($context, $property)) {
+            return $this->formatEntity($context, $property, $rawValue);
+        }
+
+        // ─── Stage 5: Default stringify ───
+        return $this->stringify($rawValue);
+    }
+
+    /**
+     * @param AdminContextInterface<object> $context
+     */
+    private function lookupFieldChipFormatter(AdminContextInterface $context, string $property): ?callable
+    {
+        $fields = $context->getEntity()->getFields();
+        if (null === $fields) {
+            return null;
+        }
+
+        $field = $fields->getByProperty($property);
+        if (null === $field) {
+            return null;
+        }
+
+        $callable = $field->getCustomOption(BridgeOptions::CHIP_FORMATTER);
+
+        return \is_callable($callable) ? $callable : null;
     }
 
     private function formatBoolean(mixed $rawValue): string
@@ -110,11 +168,6 @@ final class ChipValueFormatter
             return implode(', ', array_filter($resolved, static fn (string $s): bool => '' !== $s));
         }
 
-        // Resolve metadata via the EntityManager rather than
-        // EntityDto::getDoctrineMetadata() — the latter is wired
-        // lazily by EA and may not be initialised at the point
-        // the chips bar renders (before EA's own pre-render hooks
-        // populate it). EM's classMetadataFactory always works.
         $entityFqcn = $context->getEntity()->getFqcn();
         if (!class_exists($entityFqcn)) {
             return $this->stringify($rawValue);
@@ -144,6 +197,25 @@ final class ChipValueFormatter
         }
 
         return (string) $entity;
+    }
+
+    /**
+     * @param AdminContextInterface<object> $context
+     */
+    private function isDoctrineAssociation(AdminContextInterface $context, string $property): bool
+    {
+        $entityFqcn = $context->getEntity()->getFqcn();
+        if (!class_exists($entityFqcn)) {
+            return false;
+        }
+
+        try {
+            $metadata = $this->entityManager->getClassMetadata($entityFqcn);
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $metadata->hasAssociation($property);
     }
 
     private function stringify(mixed $value): string
