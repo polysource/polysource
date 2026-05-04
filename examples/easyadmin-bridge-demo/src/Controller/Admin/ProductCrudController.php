@@ -23,6 +23,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Polysource\Demo\EasyAdminBridge\Entity\Product;
+use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
 use Polysource\EasyAdminFilterBridge\Filter\BetweenDateFilter;
 use Polysource\EasyAdminFilterBridge\Filter\FullTextSearchFilter;
 use Polysource\EasyAdminFilterBridge\Filter\InFilter;
@@ -33,15 +34,15 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 /**
  * Modal-mode demo of polysource/easyadmin-filter-bridge.
  *
- * This CRUD uses EasyAdmin's default centered-modal filter UI.
- * Every filter is a stock EasyAdmin filter — the host app code is
- * identical to a non-bridge install. Once the bridge is loaded,
- * each filter automatically gains the bridge-side enhancements
- * (presets, quick_ranges, include_null, …) plus the chips bar
- * above the table.
+ * This CRUD uses EasyAdmin's default centered-modal filter UI
+ * with the SAME tabs+groups organisation as
+ * {@see CategoryCrudController} — the user can compare both
+ * rendering modes (modal vs subpanel) on the same content.
  *
- * For the subpanel-mode + multi-group demo, see
- * {@see CategoryCrudController}.
+ * Every filter declaration uses marker mode
+ * (`Polysource::tab()` / `Polysource::group()`) for ergonomic
+ * sequential reading. Per-filter bridge enhancements
+ * (presets, quick_ranges, include_null, …) are layered on top.
  */
 final class ProductCrudController extends AbstractCrudController
 {
@@ -75,20 +76,22 @@ final class ProductCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // TextFilter on `name` — raise min_length to 2 so a single
-            // character doesn't trigger a wildcard match.
+            // ─── Top-level ungrouped (no tab) — render flat above tabs ───
+            ->add(
+                FullTextSearchFilter::new('q', 'Search anywhere')
+                    ->setFormTypeOption('properties', ['name', 'description']),
+            )
             ->add(
                 TextFilter::new('name')
                     ->setFormTypeOption('min_length', 2),
             )
-            // NumericFilter on `price` — preset ranges to skip typing.
+
+            // ─── Tab "Pricing" with 2 groups inside ───
+            ->add(Polysource::tab('Pricing'))
+            ->add(Polysource::group('Price'))
             ->add(
                 NumericFilter::new('price')
                     ->setFormTypeOption('step', 0.01)
-                    // Quick-range buckets calibrated on the seeded
-                    // product price distribution (min 8€, max 478€,
-                    // avg 220€) — each bucket holds ~25% of the rows
-                    // so the demo exercises every comparison branch.
                     ->setFormTypeOption('quick_ranges', [
                         ['label' => '< 50€', 'min' => null, 'max' => 50],
                         ['label' => '50–200€', 'min' => 50, 'max' => 200],
@@ -96,55 +99,21 @@ final class ProductCrudController extends AbstractCrudController
                         ['label' => '> 400€', 'min' => 400, 'max' => null],
                     ]),
             )
-            // ComparisonFilter on `stock` — only expose >=, <=, =.
-            // `value_type` is required by upstream ComparisonFilterType
-            // when used directly (vs NumericFilter which presets it).
+            ->add(Polysource::group('Stock'))
             ->add(
                 ComparisonFilter::new('stock')
                     ->setFormTypeOption('value_type', NumberType::class)
                     ->setFormTypeOption('comparisons', ['=', '>=', '<=']),
             )
-            // BooleanFilter on `isActive` — include "Null" choice for
-            // when the column is left unset (rare on this demo, but
-            // proves the option works).
+
+            // ─── Tab "Lifecycle" with 2 groups inside ───
+            ->add(Polysource::tab('Lifecycle'))
+            ->add(Polysource::group('Status'))
             ->add(
                 BooleanFilter::new('isActive')
                     ->setFormType(EnhancedBooleanFilterType::class)
                     ->setFormTypeOption('include_null', true),
             )
-            // DateTimeFilter on `createdAt` — full preset bar.
-            ->add(
-                DateTimeFilter::new('createdAt')
-                    ->setFormTypeOption('show_clear', true),
-            )
-            // ArrayFilter on `tags` — chip display.
-            ->add(
-                ArrayFilter::new('tags')
-                    ->setFormTypeOption('chip_display', true),
-            )
-            // EntityFilter on `category` — custom placeholder.
-            ->add(
-                EntityFilter::new('category')
-                    ->setFormTypeOption('placeholder', 'Pick a category…'),
-            )
-            // ─── 4 custom filter types shipped by the bridge ───
-            // (Phase 9.7 livrables §3 — usable manually via
-            // configureFilters(); not auto-applied like the 8
-            // enhancers above.)
-
-            // BetweenDateFilter on `archivedAt` — strips EA's
-            // comparison dropdown, always emits BETWEEN with
-            // graceful one-sided fallback (only-from → `>=`,
-            // only-to → `<=`). Replaces a second DateTimeFilter
-            // that would otherwise force users through the
-            // "Between" comparison toggle.
-            ->add(
-                BetweenDateFilter::new('archivedAt', 'Archived between'),
-            )
-            // InFilter on `status` — multi-select status picker
-            // emitting `IN (…)`. Replaces the upstream `ChoiceFilter`
-            // (single-value) so users can pick e.g. "Draft +
-            // Published" in one go.
             ->add(
                 InFilter::new('status', 'Status (multi)')
                     ->setFormTypeOption('choices', [
@@ -153,20 +122,23 @@ final class ProductCrudController extends AbstractCrudController
                         'Archived' => Product::STATUS_ARCHIVED,
                     ]),
             )
-            // NotNullFilter on `description` — tri-state toggle
-            // (Any / Has value / Empty). Demonstrates the
-            // "filter rows where this nullable column is
-            // populated" UX which EA built-ins cannot express.
+            ->add(NotNullFilter::new('description', 'Description state'))
+            ->add(Polysource::group('Dates'))
             ->add(
-                NotNullFilter::new('description', 'Description state'),
+                DateTimeFilter::new('createdAt')
+                    ->setFormTypeOption('show_clear', true),
             )
-            // FullTextSearchFilter on synthetic `q` — single
-            // text input matched LIKE-OR'd across `name` and
-            // `description`. Demonstrates a cheap multi-column
-            // search without standing up Meilisearch.
+            ->add(BetweenDateFilter::new('archivedAt', 'Archived between'))
+
+            // ─── Tab "Catalog" without groups (filters render flat in the tab) ───
+            ->add(Polysource::tab('Catalog'))
             ->add(
-                FullTextSearchFilter::new('q', 'Search anywhere')
-                    ->setFormTypeOption('properties', ['name', 'description']),
+                EntityFilter::new('category')
+                    ->setFormTypeOption('placeholder', 'Pick a category…'),
+            )
+            ->add(
+                ArrayFilter::new('tags')
+                    ->setFormTypeOption('chip_display', true),
             )
         ;
     }
