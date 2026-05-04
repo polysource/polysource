@@ -98,7 +98,10 @@ final class CategoryCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // ─── Top-level ungrouped (no tab, no group) — flat at top ───
+            // ─── Tab "Search" — flat (no groups) ───
+            // Strict-mode (mirrors EA's FormField::addTab()): once any
+            // tab marker is declared, EVERY filter must be under a tab.
+            ->add(Polysource::tab('Search'))
             ->add(TextFilter::new('name'))
             ->add(
                 FullTextSearchFilter::new('q', 'Search anywhere')

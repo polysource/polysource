@@ -128,10 +128,21 @@ export default class extends Controller {
         label.textContent = group.label;
         summary.appendChild(label);
 
-        const badge = document.createElement('span');
-        badge.classList.add('badge');
-        badge.textContent = String((group.properties || []).length);
-        summary.appendChild(badge);
+        // Count badge — emitted only when at least one filter inside
+        // the group is currently applied (= its filter-checkbox is
+        // checked, which EA toggles based on the URL filter slice).
+        // We compute the count synchronously here since the
+        // filter-field nodes have already been moved by the caller.
+        const appliedCount = (group.properties || []).reduce((n, property) => {
+            const node = byProperty[property];
+            return n + (node?.querySelector('.filter-checkbox:checked') ? 1 : 0);
+        }, 0);
+        if (appliedCount > 0) {
+            const count = document.createElement('span');
+            count.classList.add('polysource-filter-group__count');
+            count.textContent = String(appliedCount);
+            summary.appendChild(count);
+        }
 
         details.appendChild(summary);
 

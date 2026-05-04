@@ -7,6 +7,7 @@ namespace Polysource\EasyAdminFilterBridge\EventListener;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterConfigDto;
+use LogicException;
 use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -93,6 +94,8 @@ final class FilterMarkerProcessor implements EventSubscriberInterface
         $rebuilt = new FilterConfigDto();
         $currentTab = null;
         $currentGroup = null;
+        $hasAnyTabMarker = false;
+        $orphanedFilters = [];
 
         foreach ($entries as $entry) {
             if ($this->isMarker($entry)) {
@@ -101,6 +104,7 @@ final class FilterMarkerProcessor implements EventSubscriberInterface
 
                 $tab = $dto->getCustomOption(BridgeOptions::TAB);
                 if (\is_string($tab)) {
+                    $hasAnyTabMarker = true;
                     $currentTab = $tab;
                     // Tab marker resets the group context — a new
                     // tab implicitly starts fresh. Hosts that want
@@ -134,6 +138,13 @@ final class FilterMarkerProcessor implements EventSubscriberInterface
                 if (null !== $currentGroup && null === $dto->getCustomOption(BridgeOptions::GROUP)) {
                     $dto->setCustomOption(BridgeOptions::GROUP, $currentGroup);
                 }
+
+                // Track filters that ended up with no tab — used by
+                // the strict-mode check after the loop.
+                $resolvedTab = $dto->getCustomOption(BridgeOptions::TAB);
+                if (!\is_string($resolvedTab) || '' === $resolvedTab) {
+                    $orphanedFilters[] = $dto->getProperty();
+                }
             }
 
             // FilterConfigDto::addFilter() accepts FilterInterface|string;
@@ -143,6 +154,14 @@ final class FilterMarkerProcessor implements EventSubscriberInterface
             if ($entry instanceof FilterInterface || \is_string($entry)) {
                 $rebuilt->addFilter($entry);
             }
+        }
+
+        // Strict-mode check (mirrors EA's `FormField::addTab()` rule):
+        // if ANY tab marker was used, EVERY filter must end up under
+        // a tab. Same wording / mental model as EA's "When using form
+        // tabs, all fields must be rendered inside a tab".
+        if ($hasAnyTabMarker && [] !== $orphanedFilters) {
+            throw new LogicException(\sprintf('When using filter tabs, all filters must belong to a tab. However, your filter(s) "%s" do not belong to any tab. Move them under a tab marker (Polysource::tab(\'X\')) BEFORE the filter declarations, or remove all tab markers from configureFilters() to fall back to a flat layout.', implode('", "', $orphanedFilters)));
         }
 
         $crud->setFiltersConfig($rebuilt);

@@ -153,6 +153,41 @@ final class FilterMarkerProcessorTest extends TestCase
         self::assertSame($afterFirst, $afterSecond);
     }
 
+    public function testThrowsWhenTabsUsedButSomeFiltersOrphan(): void
+    {
+        // Two filters BEFORE the first tab marker → orphans
+        // (no tab inherited). Once a tab marker fires, strict mode
+        // demands every filter end up under a tab.
+        $config = new FilterConfigDto();
+        $config->addFilter(TextFilter::new('orphanA'));
+        $config->addFilter(TextFilter::new('orphanB'));
+        $config->addFilter(Polysource::tab('Visibility'));
+        $config->addFilter(TextFilter::new('isVisible'));
+
+        $crud = $this->makeCrudWithFilters($config);
+        $processor = new FilterMarkerProcessor($this->makeProvider($crud));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('"orphanA", "orphanB"');
+
+        $processor->onKernelController($this->makeEvent());
+    }
+
+    public function testNoExceptionWhenNoTabsUsed(): void
+    {
+        // No tab markers → flat layout, no strict-mode constraint.
+        $config = new FilterConfigDto();
+        $config->addFilter(TextFilter::new('a'));
+        $config->addFilter(Polysource::group('Misc'));
+        $config->addFilter(TextFilter::new('b'));
+
+        $crud = $this->makeCrudWithFilters($config);
+        $processor = new FilterMarkerProcessor($this->makeProvider($crud));
+
+        $processor->onKernelController($this->makeEvent());
+        $this->expectNotToPerformAssertions();
+    }
+
     public function testMarkersAreNoLongerInTheRebuiltConfig(): void
     {
         $config = new FilterConfigDto();

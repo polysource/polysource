@@ -76,7 +76,12 @@ final class ProductCrudController extends AbstractCrudController
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // ─── Top-level ungrouped (no tab) — render flat above tabs ───
+            // ─── Tab "Search" — flat (no groups) ───
+            // (Strict-mode rule mirrored from EA's FormField::addTab():
+            // once any tab marker is declared, EVERY filter must be
+            // under a tab. FilterMarkerProcessor enforces this and
+            // throws a LogicException naming the orphans.)
+            ->add(Polysource::tab('Search'))
             ->add(
                 FullTextSearchFilter::new('q', 'Search anywhere')
                     ->setFormTypeOption('properties', ['name', 'description']),

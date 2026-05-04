@@ -120,6 +120,12 @@
             outline: none;
         }
 
+        /* ─── Modal body padding (EA strips it via .p-0; we add ours
+             back so the form doesn't kiss the modal edges). ─── */
+        #modal-filters .modal-body {
+            padding: 1rem 1.25rem !important;
+        }
+
         /* ─── EA-style tabs (underline, no boxes) ─── */
         .polysource-filter-tabs {
             margin: 0 0 1rem 0;
@@ -146,33 +152,35 @@
             border-bottom: 2px solid transparent;
             transition: color 0.15s, border-color 0.15s;
             cursor: pointer;
+            line-height: 1.5;
         }
         .polysource-filter-tabs > .nav.nav-tabs .nav-link:hover {
             color: var(--bs-emphasis-color, #212529);
             border-bottom-color: transparent;
         }
+        /* Active state: same font-weight as inactive (avoids baseline
+           shift between weights), differentiated by color + underline. */
         .polysource-filter-tabs > .nav.nav-tabs .nav-link.active {
             color: var(--bs-primary, #4f46e5);
             border-bottom-color: var(--bs-primary, #4f46e5);
-            font-weight: 600;
+            font-weight: 500;
             background: transparent;
         }
 
         /* ─── Group sections (subtle, EA-aligned) ─── */
         details.polysource-filter-group {
-            margin: 0 0 1rem 0;
+            margin: 0 0 0.75rem 0;
+            padding-left: 0.5rem;
             border: 0;
             background: transparent;
         }
         details.polysource-filter-group > summary {
             list-style: none;
             cursor: pointer;
-            padding: 0.375rem 0;
+            padding: 0.25rem 0;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
             user-select: none;
         }
         details.polysource-filter-group > summary::-webkit-details-marker {
@@ -201,14 +209,30 @@
             letter-spacing: 0.06em;
             flex: 1;
         }
-        details.polysource-filter-group > summary > .badge {
-            background: var(--bs-tertiary-bg, #f1f3f5) !important;
-            color: var(--bs-secondary-color, #6c757d) !important;
-            font-size: 0.6875rem;
-            font-weight: 500;
-            padding: 0.125rem 0.5rem;
+        /* Badge — only emitted by JS when at least one filter inside
+           the group is currently applied. Bold + count, primary color. */
+        details.polysource-filter-group > summary > .polysource-filter-group__count {
+            color: var(--bs-primary, #4f46e5);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0;
+            background: transparent;
         }
         details.polysource-filter-group .polysource-filter-group__body {
+            padding-left: 0.25rem;
+        }
+
+        /* ─── First filter inside a tab pane / group body has no
+             top border (the EA filter form theme sets one between
+             siblings; we strip it on the first child to avoid a
+             double line right under the group header). ─── */
+        .tab-pane > .filter-field:first-child,
+        .polysource-filter-group__body > .filter-field:first-child {
+            border-top: 0 !important;
+        }
+
+        /* Tab pane content: vertical breathing room. */
+        .tab-pane.show.active {
             padding-left: 0.25rem;
         }
     </style>
