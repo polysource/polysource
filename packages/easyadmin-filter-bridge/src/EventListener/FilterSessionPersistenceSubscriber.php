@@ -145,12 +145,18 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
                 $operator = '=';
             }
 
+            // Only keep scalar value/value2 — a malformed or hostile
+            // request could send `?filters[name][value][]=foo` which
+            // would arrive as an array. Forcing scalars keeps the
+            // criterion roundtrippable (http_build_query would
+            // serialise arrays in a different shape than the input)
+            // and prevents accidental data corruption when restoring.
             $values = [];
-            if (isset($slice['value']) && '' !== $slice['value']) {
-                $values[] = $slice['value'];
+            if (isset($slice['value']) && \is_scalar($slice['value']) && '' !== $slice['value']) {
+                $values[] = (string) $slice['value'];
             }
-            if (isset($slice['value2']) && '' !== $slice['value2']) {
-                $values[] = $slice['value2'];
+            if (isset($slice['value2']) && \is_scalar($slice['value2']) && '' !== $slice['value2']) {
+                $values[] = (string) $slice['value2'];
             }
 
             if ([] === $values) {

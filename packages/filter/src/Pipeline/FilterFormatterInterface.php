@@ -29,7 +29,15 @@ interface FilterFormatterInterface
      * Returns the human label for the chip (e.g. `Date: 01/05 → 03/05`,
      * `Price: 50 € – 200 €`, `Status: Published`).
      *
-     * MUST NOT contain HTML — Twig escapes the result before rendering.
+     * **MUST return plain text** — no HTML, no script. The chips
+     * template auto-escapes the result via `{{ chip.label }}`, BUT
+     * `filter_tags()` itself is declared `is_safe => ['html']` (so
+     * the surrounding rendered HTML isn't double-escaped). A
+     * formatter returning `<script>...</script>` would *still* be
+     * escaped at chip render time, but a host who templates the
+     * output of a formatter directly elsewhere would expose XSS.
+     * Treat the contract as "plain text only" — translate via the
+     * Symfony Translator if locale-awareness is needed.
      */
     public function format(FilterCriterion $criterion): string;
 }
