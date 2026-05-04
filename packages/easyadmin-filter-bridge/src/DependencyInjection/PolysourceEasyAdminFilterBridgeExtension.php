@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\DependencyInjection;
 
+use Polysource\EasyAdminFilterBridge\Chip\ChipValueFormatter;
 use Polysource\EasyAdminFilterBridge\Configurator\ArrayFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
@@ -24,6 +25,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -190,6 +192,21 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             ->register(PolysourceFilterFormTypeExtension::class)
             ->setAutoconfigured(true)
             ->setAutowired(true)
+        ;
+
+        // Chip-rendering services: ChipValueFormatter resolves
+        // boolean/entity values to human-readable strings; ChipExtension
+        // exposes it to Twig as `polysource_chip_value()`.
+        $container
+            ->register(ChipValueFormatter::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        $container
+            ->register(ChipExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
         ;
 
         $container

@@ -26,19 +26,21 @@
     <span class="ea-filter-chip__sep">:</span>
     <span class="ea-filter-chip__value">
         {%- if comparison == 'BETWEEN' and value is not null and value2 is not null -%}
-            {{ value }} <span class="ea-filter-chip__arrow">→</span> {{ value2 }}
+            {{ polysource_chip_value(property, value) }}
+            <span class="ea-filter-chip__arrow">→</span>
+            {{ polysource_chip_value(property, value2) }}
         {%- elseif comparison in ['IN', 'NOT IN'] and value is iterable -%}
             <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
-            {{ value|join(', ') }}
+            {{ polysource_chip_value(property, value) }}
         {%- elseif comparison in ['IS NULL', 'IS NOT NULL'] -%}
             <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
         {%- elseif value is iterable -%}
-            {{ value|join(', ') }}
+            {{ polysource_chip_value(property, value) }}
         {%- elseif comparison and comparison != '=' -%}
             <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
-            {{ value }}
+            {{ polysource_chip_value(property, value) }}
         {%- else -%}
-            {{ value }}
+            {{ polysource_chip_value(property, value) }}
         {%- endif -%}
     </span>
     <button type="button"
