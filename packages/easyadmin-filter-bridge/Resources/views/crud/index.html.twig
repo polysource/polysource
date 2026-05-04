@@ -1,58 +1,84 @@
 {# polysource/easyadmin-filter-bridge — override of @EasyAdmin/crud/index.html.twig
 
-   Injects an "active filters" chips bar above the table on EA index
-   pages. Each chip displays the property name (humanised) and an X
-   button that strips that filter slice from the URL via the
-   `polysource--filter-chips` Stimulus controller (shipped with
+   Injects an "active filters" chips bar above the table. Each chip
+   shows: property label + comparison operator + applied value(s),
+   with an X button that strips that filter slice from the URL via
+   the `polysource--filter-chips` Stimulus controller (shipped with
    `polysource/filter`).
 
-   Why this is the right extension point:
-   - EA's filter modal renders inside a Bootstrap dialog and only
-     surfaces the operator/value form. There's no upstream surface
-     that lists "what's currently applied" outside the modal — users
-     have to open the modal to see what's filtered, which is poor
-     scanning UX on lists with many columns.
-   - The chips bar gives users an at-a-glance summary without
-     reopening the modal, plus one-click removal per filter.
+   The chip body is rendered by the `chip_body` macro defined below.
+   It branches on the comparison operator to format value/value2
+   appropriately:
+     - BETWEEN          → "v1 → v2"
+     - IN / NOT IN      → "v1, v2, …"
+     - IS [NOT] NULL    → no value rendered
+     - else (=, >=, …)  → "<op> v"
 
-   Strict additivity:
-   - We only override the `main` block to prepend the chips bar
-     before delegating to the upstream block via `parent()`. Every
-     other EA block (page actions, table head, paginator, …)
-     remains untouched.
-   - The chips bar is hidden when no filters are applied (CSS
-     handled by Bootstrap's `d-none`-on-empty pattern via Twig
-     `{% if applied_filters %}` guard).
+   Pure Twig, no Twig extension needed. This intentionally does NOT
+   use `polysource/filter`'s `FilterFormatterInterface` registry:
+   - The bridge consumes EA filters (which carry their own
+     `FilterDataDto` shape), not `FilterDefinition`s. Wiring the
+     formatter registry would require a side-translation step we
+     don't need at v0.1. The Twig macro is local to this template
+     and ~30 lines — easier to override than to register a service.
 
    Why `@!EasyAdmin/...`:
-   - Symfony's Twig namespace resolution finds OUR copy of
-     `crud/index.html.twig` first (since DI prepends our views to
-     the `@EasyAdmin` namespace). The bang-prefix `@!EasyAdmin`
-     skips that resolution and reaches the original upstream file
-     directly, preventing an infinite extends loop.
+   - Our DI extension splices this views path into the `@EasyAdmin`
+     namespace at higher priority. The bang-prefix skips the
+     override resolution and reaches the upstream file directly,
+     preventing an infinite extends loop.
 #}
 {% extends '@!EasyAdmin/crud/index.html.twig' %}
 
+{% macro chip_body(property, slice) %}
+    {% set comparison = (slice.comparison|default(''))|upper %}
+    {% set value = slice.value|default(null) %}
+    {% set value2 = slice.value2|default(null) %}
+    {# Humanise camelCase / snake_case property names: insert a space
+       before every uppercase letter, replace underscores, capitalize.
+       `createdAt` → `Created at`, `is_active` → `Is active`. #}
+    {% set label = property
+        |replace({'_': ' '})
+        |replace({'A':' A','B':' B','C':' C','D':' D','E':' E','F':' F','G':' G','H':' H','I':' I','J':' J','K':' K','L':' L','M':' M','N':' N','O':' O','P':' P','Q':' Q','R':' R','S':' S','T':' T','U':' U','V':' V','W':' W','X':' X','Y':' Y','Z':' Z'})
+        |trim|capitalize %}
+
+    <strong>{{ label }}</strong>
+    {%- if comparison == 'BETWEEN' and value is not null and value2 is not null %}
+        : {{ value }} → {{ value2 }}
+    {%- elseif comparison in ['IN', 'NOT IN'] and value is iterable %}
+        : {{ comparison|lower }} {{ value|join(', ') }}
+    {%- elseif comparison in ['IS NULL', 'IS NOT NULL'] %}
+        : {{ comparison|lower }}
+    {%- elseif value is iterable %}
+        : {{ value|join(', ') }}
+    {%- elseif value is not null and value != '' %}
+        {%- if comparison and comparison != '=' %} : {{ comparison|lower }} {{ value }}
+        {%- else %} : {{ value }}
+        {%- endif %}
+    {%- endif %}
+{% endmacro %}
+
 {% block main %}
+    {% import _self as chip %}
     {% set applied_filters = ea.request.query.all['filters']|default([]) %}
     {% if applied_filters|length > 0 %}
-        <div class="polysource-filter-chips-bar mb-3"
+        <div class="polysource-filter-chips-bar mb-3 d-flex align-items-center flex-wrap gap-1"
              data-controller="polysource--filter-chips">
             <span class="text-muted me-2">{{ 'polysource.filter.chips.heading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}</span>
-            {% for property, _ in applied_filters %}
-                <span class="badge bg-secondary me-1 polysource-filter-chip"
+            {% for property, slice in applied_filters %}
+                <span class="badge bg-secondary polysource-filter-chip"
                       data-polysource--filter-chips-target="chip"
                       data-property="{{ property }}">
-                    {{ property|replace({'_': ' '})|capitalize }}
+                    {{ chip.chip_body(property, slice) }}
                     <button type="button"
-                            class="btn-close btn-close-white ms-1"
+                            class="btn-close btn-close-white btn-close-sm ms-2"
                             aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
                             data-action="click->polysource--filter-chips#removeChip"
                             data-polysource--filter-chips-property-param="{{ property }}"></button>
                 </span>
             {% endfor %}
             <a href="{{ ea_url().unset('filters').setAction('index') }}"
-               class="btn btn-link btn-sm polysource-filter-chips-clear-all">
+               class="btn btn-link btn-sm polysource-filter-chips-clear-all ms-2">
                 {{ 'polysource.filter.chips.clear_all'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
             </a>
         </div>
