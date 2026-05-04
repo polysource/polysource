@@ -311,18 +311,40 @@ test.describe('filter bridge — subpanel mode + multi-group on Categories (#76,
         await expect(page.locator('body.polysource-filter-subpanel')).toHaveCount(0);
     });
 
-    test('Category filter form renders 3 group accordions (Visibility / Display / Dates)', async ({ page }) => {
+    test('Category filter form renders 3 nav-tabs (Visibility / Dates / Display) with nested groups', async ({ page }) => {
         await page.goto(CATEGORY_INDEX);
         await page.locator('.action-filters-button').click();
 
         const modal = page.locator('#modal-filters');
         await expect(modal).toBeVisible();
+        // Wait for the Stimulus controller to reorganise the DOM
+        // after EA's AJAX form load.
+        await page.waitForSelector('#modal-filters ul.nav.nav-tabs', { state: 'visible' });
 
-        // Each `<details class="polysource-filter-group">` carries a
-        // <summary><strong>Group name</strong></summary>.
-        await expect(modal.locator('details.polysource-filter-group')).toHaveCount(3);
-        await expect(modal.locator('summary >> text=Visibility')).toBeVisible();
-        await expect(modal.locator('summary >> text=Display')).toBeVisible();
-        await expect(modal.locator('summary >> text=Dates')).toBeVisible();
+        // 3 nav-tabs at the top of the modal body.
+        const tabButtons = modal.locator('ul.nav.nav-tabs button.nav-link');
+        await expect(tabButtons).toHaveCount(3);
+        await expect(tabButtons.nth(0)).toHaveText('Visibility');
+        await expect(tabButtons.nth(1)).toHaveText('Dates');
+        await expect(tabButtons.nth(2)).toHaveText('Display');
+
+        // Tab "Visibility" has 2 nested group accordions.
+        const activePane = modal.locator('.tab-pane.active');
+        await expect(activePane.locator('details.polysource-filter-group')).toHaveCount(2);
+        await expect(activePane.locator('summary >> text=Active state')).toBeVisible();
+        await expect(activePane.locator('summary >> text=Description state')).toBeVisible();
+    });
+
+    test('Category isVisible chip uses the field chipFormatter (table↔chip coherence)', async ({ page }) => {
+        // Apply the isVisible=1 filter via URL.
+        await page.goto(`${CATEGORY_INDEX}?filters%5BisVisible%5D=1`);
+
+        const chip = page.locator('.ea-filter-chip[data-property="isVisible"]');
+        await expect(chip).toBeVisible();
+        // The Polysource::field()->chipFormatter() callable on
+        // CategoryCrudController emits "👁️ Visible" / "🚫 Caché"
+        // — overrides the default Yes/No translation (stage 2 of
+        // the chip resolution chain).
+        await expect(chip).toContainText('Visible');
     });
 });
