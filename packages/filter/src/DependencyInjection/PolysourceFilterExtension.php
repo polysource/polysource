@@ -14,6 +14,7 @@ use Polysource\Filter\Pipeline\Registry\RendererRegistry;
 use Polysource\Filter\Service\FilterService;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -33,8 +34,43 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  * The known-names list is populated by the compiler pass; here the
  * registries are seeded with an empty list and patched at compile.
  */
-final class PolysourceFilterExtension extends Extension
+final class PolysourceFilterExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * Register the bundle's `assets/` directory as an AssetMapper path
+     * AND its `assets/controllers.json` as a StimulusBundle source.
+     *
+     * Without these prepends, the controllers declared in
+     * `assets/package.json` (`polysource--filter-chips`,
+     * `polysource--filter-subpanel`) are invisible to host apps —
+     * AssetMapper only scans paths it has been told about, and
+     * StimulusBundle's auto-discovery only reads
+     * `assets/controllers.json` files registered as sources.
+     */
+    public function prepend(ContainerBuilder $container): void
+    {
+        $bundles = $container->getParameter('kernel.bundles');
+        if (!\is_array($bundles)) {
+            return;
+        }
+
+        // From .../src/DependencyInjection/PolysourceFilterExtension.php
+        // up two levels = package root → `/assets`.
+        $assetsDir = \dirname(__DIR__, 2) . '/assets';
+
+        // 1) Register `assets/` as a public AssetMapper path so the
+        //    `.js` controller files are servable.
+        if (\array_key_exists('FrameworkBundle', $bundles)) {
+            $container->prependExtensionConfig('framework', [
+                'asset_mapper' => [
+                    'paths' => [
+                        $assetsDir => '@polysource/filter',
+                    ],
+                ],
+            ]);
+        }
+    }
+
     public function load(array $configs, ContainerBuilder $container): void
     {
         // Auto-configure tag for each pipeline phase so host services

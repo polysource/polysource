@@ -5,6 +5,16 @@
                 "enabled": true,
                 "fetch": "eager"
             }
+        },
+        "@polysource/filter": {
+            "polysource--filter-chips": {
+                "enabled": true,
+                "fetch": "eager"
+            },
+            "polysource--filter-subpanel": {
+                "enabled": true,
+                "fetch": "eager"
+            }
         }
     },
     "entrypoints": []

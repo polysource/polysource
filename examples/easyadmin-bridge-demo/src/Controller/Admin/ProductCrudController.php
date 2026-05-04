@@ -6,6 +6,7 @@ namespace Polysource\Demo\EasyAdminBridge\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -63,6 +64,7 @@ final class ProductCrudController extends AbstractCrudController
         ]);
         yield DateTimeField::new('createdAt');
         yield DateTimeField::new('archivedAt')->hideOnIndex();
+        yield ArrayField::new('tags')->hideOnIndex();
         yield AssociationField::new('category');
     }
 
