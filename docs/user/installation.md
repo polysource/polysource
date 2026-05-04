@@ -21,7 +21,7 @@ only the ones you need.
 | Package | What it provides | Required? |
 |---|---|---|
 | `polysource/core` | Pure-PHP contracts and value objects (`DataSourceInterface`, `ResourceInterface`, `DataQuery`, …). Zero Symfony dependency. | yes (transitive) |
-| `polysource/symfony-bundle` | Symfony 7.4 bundle: routing, controllers, DI, Twig view layer. | yes |
+| `polysource/symfony-bundle` | Symfony bundle (5.4 / 6.4 / 7.4 LTS): routing, controllers, DI, Twig view layer. | yes |
 | `polysource/twig-theme` | Layout + index + detail + paginator + 6 field templates. Pure templates, no PHP. | yes (transitive) |
 | `polysource/adapter-messenger` | Read-only data source over Symfony Messenger's failed transport, plus retry / dismiss / retry-all / purge actions. | only for the Messenger dashboard |
 

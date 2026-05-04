@@ -28,15 +28,24 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 
 | Component | Required |
 |---|---|
-| PHP | 8.4+ |
-| Symfony | 7.4 LTS |
-| EasyAdmin | 5.0+ (the bridge advertises `^4.24 \|\| ^5.0` but only 5.x is gated by CI at v0.1) |
+| PHP | 8.1+ |
+| Symfony | 5.4 LTS \|\| 6.4 LTS \|\| 7.4 LTS |
+| EasyAdmin | 4.24+ \|\| 5.0+ |
+| Doctrine ORM | 2.20+ \|\| 3.6+ |
 | Twig | 3.x |
 | Bootstrap | 5 (the chips bar markup uses Bootstrap 5 classes) |
 
-If you're on EasyAdmin 4.24 the bridge should still work, but you
-may run into edge cases around filter DTO shapes — please file an
-issue. EA 6 support will arrive once a beta drops.
+The bridge is gated by CI on 5 explicit combos covering the realistic
+profiles of EA-using Symfony apps in 2026 (cf.
+[ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)):
+
+- PHP 8.1 + Symfony 5.4 + EA 4.x (legacy stack)
+- PHP 8.2 + Symfony 6.4 + EA 4.x (mainstream 2024-2025)
+- PHP 8.2 + Symfony 6.4 + EA 5.x (bridge transfer audience)
+- PHP 8.3 + Symfony 7.4 + EA 5.x (modern)
+- PHP 8.4 + Symfony 7.4 + EA 5.x (bleeding-edge / our dev local)
+
+EA 6 support will arrive once a beta drops.
 
 ## 2. Install
 
@@ -206,14 +215,16 @@ controller; a "Clear all" link nukes everything via EA's stock
 The chip's value text is resolved by `ChipValueFormatter` via a
 5-stage chain, from most specific to most generic:
 
-1. **Filter chipFormatter callable** — declared via
-   `Polysource::filter($f)->chipFormatter(fn ($v) => ...)`.
-   Highest priority, always wins.
-2. **Field chipFormatter callable** — declared via
-   `Polysource::field($f)->chipFormatter(fn ($v) => ...)` on
-   the matching field in `configureFields()`. Enables
-   **table↔chip coherence**: ONE callable, both layers
-   consume it. The chip never disagrees with the column.
+1. **Filter chipFormatter** — declared via
+   `Polysource::filter($f)->chipFormatter(...)`. Highest
+   priority, always wins. Accepts an inline callable OR a
+   service implementing `ChipFormatterInterface` (cf. ADR-016).
+2. **Field chipFormatter** — declared via
+   `Polysource::field($f)->chipFormatter(...)` on the matching
+   field in `configureFields()`. Same accepted shapes (callable
+   or `ChipFormatterInterface`). Enables **table↔chip
+   coherence**: ONE callable, both layers consume it. The chip
+   never disagrees with the column.
 3. **Match by `FilterDto::getFormType()`** — covers EA
    built-ins AND custom `FilterInterface` impls that use
    EA form types (e.g. a custom `IsSentFilter` setting
@@ -241,6 +252,56 @@ yield Polysource::field(BooleanField::new('isVisible'))
 → The table column shows the boolean as "👁️ Visible" / "🚫 Caché"
 AND the chip displays the same text when the host filters by
 `isVisible`. No coercion, no second declaration.
+
+### Service-based chip formatter (`ChipFormatterInterface`)
+
+Inline closures are great for one-off cases, but break down once
+the formatter needs DI (Translator, EntityManager, business
+services), reuse across multiple controllers, or isolated unit
+tests. For those cases, implement
+`Polysource\Filter\Bridge\Contract\ChipFormatterInterface` —
+shipped from the tronc commun (`polysource/filter`) so future
+Sonata or API Platform bridges accept the same contract.
+
+```php
+namespace App\ChipFormatter;
+
+use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+final class VisibilityChipFormatter implements ChipFormatterInterface
+{
+    public function __construct(private readonly TranslatorInterface $translator) {}
+
+    public function format(mixed $rawValue): string
+    {
+        $isShown = true === $rawValue || '1' === $rawValue || 1 === $rawValue;
+
+        return $this->translator->trans(
+            $isShown ? 'visibility.shown' : 'visibility.hidden',
+        );
+    }
+}
+```
+
+Inject and pass it like a regular service:
+
+```php
+// CategoryCrudController.php
+public function __construct(
+    private readonly VisibilityChipFormatter $visibilityChipFormatter,
+) {}
+
+public function configureFields(string $pageName): iterable
+{
+    yield Polysource::field(BooleanField::new('isVisible'))
+        ->chipFormatter($this->visibilityChipFormatter);
+}
+```
+
+Run the demo to see both styles side-by-side: `ProductCrudController`
+keeps an inline closure, `CategoryCrudController` uses the service
+shape (cf. `examples/easyadmin-bridge-demo/`).
 
 The chips bar is hidden when no filters are applied. To opt out
 across the whole app:

@@ -18,8 +18,10 @@
 ## 0. Hypothèses de travail
 
 - **1 développeur senior à temps plein** (ou équivalent ~25 h/semaine)
-- **Stack v0.1** : **PHP 8.4** + **Symfony 7.4 LTS**, Twig 3 — confort moderne (cf. [ADR-007](../adr/0007-php-symfony-versions.md))
-- **Roadmap globale** : élargir à **PHP 8.0+ / Symfony 5.4+** à partir de v0.5+ (cf. ADR-007 §Migration)
+- **Stack v0.1** : **PHP 8.1+** + **Symfony 5.4 \|\| 6.4 \|\| 7.4 LTS**, Twig 3 — baseline élargi pour audience max (cf. [ADR-015](../adr/0015-multi-version-compatibility-baseline.md), supersedes ADR-007)
+- **Bridge EasyAdmin** : EA **4.24+ \|\| 5.0+** (capture audience EA v4)
+- **Doctrine ORM** (côté bridge) : **2.20+ \|\| 3.6+**
+- **CI matrix** : 5 jobs explicites (cf. ADR-015 §Stratégie de tests)
 - **Environnement de dev** : Docker Compose + Makefile + DDEV optionnel (cf. [ADR-008](../adr/0008-development-environment.md))
 - **Pas de DX builders fluides en v0.1** (Filament-style arrive en v0.3+)
 - **Pas de bridge EasyAdmin en v0.1** (v0.3)

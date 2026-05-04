@@ -200,6 +200,25 @@ Same: clicking "Last 7 days" fills the two date inputs to today − 6 and
 today, sets comparison to `between`, reveals the second date picker.
 "Clear" empties both. Out of the box.
 
+## Multi-version support since v0.1
+
+The bridge is intentionally low-bar to install: PHP 8.1+, Symfony
+5.4 LTS|6.4 LTS|7.4 LTS, EasyAdmin 4.24+|5.0+, Doctrine ORM
+2.20+|3.6+. Five explicit CI combos run on each push (cf.
+[ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)) so
+the realistic profiles of EA-using Symfony apps in 2026 are gated.
+
+## ChipFormatterInterface (since v0.1)
+
+Beside inline `chipFormatter()` callables, the bridge accepts service
+objects implementing
+`Polysource\Filter\Bridge\Contract\ChipFormatterInterface` (cf.
+[ADR-016](../../adr/0016-bridge-contracts-shared-with-polysource-filter.md)).
+The contract lives in `polysource/filter`, so future Sonata or API
+Platform bridges accept the same formatter without changes. Use the
+service shape when you need DI, cross-controller reuse, or isolated
+unit tests.
+
 ## Where to go for more
 
 - [`polysource/filter` getting-started](../filter/getting-started.md) —
