@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -138,7 +139,7 @@ final class ChipValueFormatter
             return $this->stringify($rawValue);
         }
 
-        if (!$entity instanceof \Stringable) {
+        if (!$entity instanceof Stringable) {
             return $this->stringify($rawValue);
         }
 

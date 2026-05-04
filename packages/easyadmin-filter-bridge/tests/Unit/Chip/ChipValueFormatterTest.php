@@ -44,12 +44,16 @@ use Symfony\Component\Translation\Translator;
  *
  * @internal
  */
-class StubProduct {}
+class StubProduct
+{
+}
 
 /**
  * @internal
  */
-class StubCategory {}
+class StubCategory
+{
+}
 
 final class ChipValueFormatterTest extends TestCase
 {
@@ -182,7 +186,7 @@ final class ChipValueFormatterTest extends TestCase
 
                 public function __toString(): string
                 {
-                    return 'C'.$this->id;
+                    return 'C' . $this->id;
                 }
             };
         });
