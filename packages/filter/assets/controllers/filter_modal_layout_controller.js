@@ -89,7 +89,7 @@ export default class extends Controller {
 
         // 2. Top-level groups — <details> accordions.
         (tree.groups || []).forEach((group, idx) => {
-            layout.appendChild(this.buildGroupAccordion(group, byProperty, idx === 0));
+            layout.appendChild(this.buildGroupAccordion(group, byProperty));
         });
 
         // 3. Tabs — Bootstrap nav-tabs.
@@ -114,10 +114,12 @@ export default class extends Controller {
         form.dataset.polysourceLayoutApplied = '1';
     }
 
-    buildGroupAccordion(group, byProperty, openByDefault) {
+    buildGroupAccordion(group, byProperty) {
         const details = document.createElement('details');
         details.classList.add('polysource-filter-group');
-        if (openByDefault) details.setAttribute('open', '');
+        // Always open — group sections are visual hierarchy, not
+        // an interaction. Users can click to collapse if they want.
+        details.setAttribute('open', '');
 
         const summary = document.createElement('summary');
         summary.classList.add('polysource-filter-group__summary');
@@ -127,7 +129,7 @@ export default class extends Controller {
         summary.appendChild(label);
 
         const badge = document.createElement('span');
-        badge.classList.add('badge', 'bg-secondary', 'ms-2');
+        badge.classList.add('badge');
         badge.textContent = String((group.properties || []).length);
         summary.appendChild(badge);
 
@@ -150,7 +152,11 @@ export default class extends Controller {
 
         // <ul class="nav nav-tabs">
         const navList = document.createElement('ul');
-        navList.classList.add('nav', 'nav-tabs', 'mb-3');
+        // .nav.nav-tabs preserves Bootstrap's tab-switching JS;
+        // .polysource-filter-tabs > .nav.nav-tabs CSS in the index
+        // template's <style> block overrides the boxed look with
+        // an EA-style underline.
+        navList.classList.add('nav', 'nav-tabs');
         navList.setAttribute('role', 'tablist');
 
         // Tab content container.
@@ -196,7 +202,7 @@ export default class extends Controller {
                 if (node) pane.appendChild(node);
             });
             (tab.groups || []).forEach((group, gIdx) => {
-                pane.appendChild(this.buildGroupAccordion(group, byProperty, gIdx === 0));
+                pane.appendChild(this.buildGroupAccordion(group, byProperty));
             });
 
             content.appendChild(pane);
