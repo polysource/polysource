@@ -63,7 +63,11 @@ export default class extends Controller {
         if (!form) return;
         if (form.dataset.polysourceLayoutApplied === '1') return;
 
-        const filterFields = form.querySelectorAll(':scope > .filter-field[data-filter-property]');
+        // EA wraps each filter inside its own `<div class="col-12">`
+        // direct child of the form, so `.filter-field` lives at
+        // depth 2, not depth 1. Use a non-scoped selector to reach
+        // them at any depth.
+        const filterFields = form.querySelectorAll('.filter-field[data-filter-property]');
         if (filterFields.length === 0) return;
 
         // Index filter rows by property for O(1) lookup.
