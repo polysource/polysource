@@ -68,7 +68,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         //    instead of the upstream one. The override extends
         //    `@!EasyAdmin/crud/index.html.twig` to fall back to
         //    the original within Twig — no infinite loop.
-        $bridgeViewsDir = \dirname(__DIR__, 2).'/Resources/views';
+        $bridgeViewsDir = \dirname(__DIR__, 2) . '/Resources/views';
         $container->prependExtensionConfig('twig', [
             'paths' => [
                 $bridgeViewsDir => 'EasyAdmin',
