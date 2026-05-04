@@ -47,43 +47,81 @@ sidebar, all powered by `polysource/filter`:
 
 ### Chips bar above the list
 
-When filters are applied the bridge renders a row of removable chips
-above the list (template:
-`@PolysourceFilter/tags/chips.html.twig`). Each chip displays the
-human-readable label produced by the matching
-`FilterFormatterInterface`; clicking the × removes that single
-filter from the URL and re-submits. Up to 7 chips are shown by
-default; the rest collapse behind a "+N more" toggle.
+When filters are applied the bridge renders a row of removable
+chips above the list (override template at
+`Resources/views/crud/index.html.twig` in the bridge). Each chip
+shows `<property>: <comparison> <value>` with operator-aware
+formatting (`BETWEEN` shows `v1 → v2`, `IN` shows `v1, v2, …`,
+`IS [NOT] NULL` shows the predicate). Clicking the × strips that
+filter slice from the URL via the
+`polysource--filter-chips` Stimulus controller; a "Clear all"
+link nukes everything via EA's stock `ea_url().unset('filters')`.
 
-The chips bar is rendered automatically on EA index pages where any
-filter is active. Override the template by aliasing
-`@PolysourceFilter` to your own theme path. Hosts that don't want it
-can hide it via CSS (`.polysource-filter-chips { display: none }`).
+The chips bar renders automatically on every EA index page where
+filters are applied. Hosts that don't want it can hide it via CSS
+(`.polysource-filter-chips-bar { display: none }`) or override
+`crud/index.html.twig` at the app level.
 
 ### Side subpanel mode (opt-in)
 
-EasyAdmin renders filters in a sidebar that takes a slice of the
-horizontal real estate. For lists with many columns this is awkward.
-Pass `mode: subpanel` in the host's filter configuration to render
-the form into a Bootstrap 5 offcanvas-style side panel that opens on
-click and closes on ESC. The Stimulus controller
-(`polysource--filter-subpanel`) handles focus management,
-aria-hidden, and the body class transition.
+EasyAdmin renders filters in a centered Bootstrap modal. For lists
+with many columns or for analyst-style workflows where filters
+need to stay reachable while you scan the table, that's awkward.
+Opt in to subpanel mode by overriding the index template in your
+`configureCrud()`:
 
-The default mode stays `integrated` — i.e. exactly EA's existing
-sidebar — so existing apps see no change unless they explicitly
-opt-in.
+```php
+public function configureCrud(Crud $crud): Crud
+{
+    return $crud->overrideTemplate(
+        'crud/index',
+        '@PolysourceEasyAdminFilterBridge/crud/index_subpanel.html.twig',
+    );
+}
+```
 
-### Multi-group accordion / tabs
+The bridge then re-positions EA's `#modal-filters` as a
+right-anchored slide-in panel (480px wide, full-height, slide-in
+animation) via inline CSS keyed off a `polysource-filter-subpanel`
+body class. EA's modal lifecycle (focus trap, ESC, backdrop, AJAX
+form loading, apply/clear buttons) stays intact — only the
+positioning + animation change.
 
-`FilterDefinition::withGroup('Status')` groups definitions
-together. In integrated mode, each group renders as a `<details>`
-accordion section. In subpanel mode, each group is one tab.
-Definitions without a group land in an unlabelled section displayed
-first.
+The default mode is `integrated` — i.e. exactly EA's modal — so
+existing apps see no change unless they explicitly opt in.
+
+### Multi-group accordion in the filter form
+
+The `setFormTypeOption('polysource_group', 'Group label')` option
+on any EA filter buckets it into a named group:
+
+```php
+public function configureFilters(Filters $filters): Filters
+{
+    return $filters
+        ->add(BetweenDateFilter::new('archivedAt')
+            ->setFormTypeOption('polysource_group', 'Dates'))
+        ->add(InFilter::new('status')
+            ->setFormTypeOption('polysource_group', 'Lifecycle')
+            ->setFormTypeOption('choices', [...]));
+}
+```
+
+The bridge's `crud/filters.html.twig` override renders each group
+as a `<details>` accordion (first group `open`, rest collapsed)
+with a count badge. Filters without a group render flat at the
+top. Works in both integrated and subpanel modes.
+
+Implementation:
+- A FormTypeExtension widens every form type's `OptionsResolver`
+  to accept `polysource_group` (so EA's stock filter form types
+  don't crash on the unknown option).
+- A `GroupCarrierConfigurator` (always-supports) copies the
+  declared group into the FilterDto's `customOptions` for Twig
+  read-back.
 
 This solves the "30 filters scrolling forever" problem that EA
-sidebars hit on rich resources.
+modals hit on rich resources.
 
 ### Session persistence (always on)
 

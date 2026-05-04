@@ -187,10 +187,19 @@ code, never request data) — SQL injection is impossible.
 ## 5. Chips bar — auto-rendered
 
 When any filter is applied, the bridge renders an "Active filters"
-row above the table on every EA index page. Each chip shows the
-property name (humanised) with an X button that strips that filter
-slice from the URL via the `polysource--filter-chips` Stimulus
-controller.
+row above the table on every EA index page. Each chip shows
+`<property>: <comparison> <value>` with operator-aware formatting:
+
+- `BETWEEN`        → `Created at : 2026-01-01 → 2026-12-31`
+- `IN` / `NOT IN`  → `Status : in draft, published`
+- `IS [NOT] NULL`  → `Description state : is not null`
+- else (`=`, `>=`, …) → `Price : >= 50`
+
+Property names get humanised on the fly (`createdAt` → "Created at",
+`is_active` → "Is active"). The X button strips that filter slice
+from the URL via the `polysource--filter-chips` Stimulus
+controller; a "Clear all" link nukes everything via EA's stock
+`ea_url().unset('filters')` helper.
 
 The chips bar is hidden when no filters are applied. To opt out
 across the whole app:
@@ -199,7 +208,7 @@ across the whole app:
 .polysource-filter-chips-bar { display: none !important; }
 ```
 
-To customise the markup, override the override:
+To customise the markup, override the override at the app level:
 
 ```twig
 {# templates/bundles/EasyAdminBundle/crud/index.html.twig #}
@@ -211,8 +220,73 @@ To customise the markup, override the override:
 {% endblock %}
 ```
 
-Symfony's app-level template-override convention takes priority over
-the bridge's bundle-level override.
+Symfony's app-level template-override convention takes priority
+over the bridge's bundle-level override.
+
+## 5b. Subpanel mode — opt in per-controller
+
+EasyAdmin renders filters in a centered Bootstrap modal. For lists
+with many columns or analyst workflows where filters need to stay
+reachable while you scan the table, that's awkward. Switch to a
+right-anchored slide-in panel (480px wide, full-height) by
+overriding the index template in `configureCrud()`:
+
+```php
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+
+public function configureCrud(Crud $crud): Crud
+{
+    return $crud->overrideTemplate(
+        'crud/index',
+        '@PolysourceEasyAdminFilterBridge/crud/index_subpanel.html.twig',
+    );
+}
+```
+
+Behaviour:
+
+- Adds a `polysource-filter-subpanel` body class to the index page.
+- Inline CSS re-positions EA's `#modal-filters` as an offcanvas-style
+  panel + slides it in from the right edge.
+- EA's modal lifecycle (focus trap, ESC, backdrop, AJAX form
+  loading, apply/clear buttons) stays intact.
+
+To customise width or animation, override the template again at
+the app level and tweak the `<style>` block.
+
+## 5c. Multi-group accordion in the filter form
+
+For controllers with many filters, group them into named sections
+to declutter the modal/subpanel:
+
+```php
+public function configureFilters(Filters $filters): Filters
+{
+    return $filters
+        ->add(BetweenDateFilter::new('archivedAt')
+            ->setFormTypeOption('polysource_group', 'Dates'))
+        ->add(InFilter::new('status', 'Status (multi)')
+            ->setFormTypeOption('polysource_group', 'Lifecycle')
+            ->setFormTypeOption('choices', [...]))
+        ->add(NotNullFilter::new('description')
+            ->setFormTypeOption('polysource_group', 'Lifecycle'))
+        // No group — renders flat at the top.
+        ->add(FullTextSearchFilter::new('q')
+            ->setFormTypeOption('properties', ['name', 'description']));
+}
+```
+
+Filters declaring `polysource_group` render inside `<details>`
+accordion sections (first group `open`, rest collapsed) with a
+count badge. Filters without a group render flat above the
+accordions. Works identically in integrated and subpanel modes.
+
+Two pieces wire it through: a FormTypeExtension widens every form
+type's `OptionsResolver` to accept `polysource_group` (so EA's
+stock filter form types don't crash on the unknown option), and a
+`GroupCarrierConfigurator` copies the value into the FilterDto's
+`customOptions` so the Twig override can read it back when
+rendering the accordion. Hosts don't have to think about either.
 
 ## 6. Session persistence — auto-wired
 
@@ -271,14 +345,20 @@ there is available to your EA controllers via
 
 ## What's deferred to v0.2+
 
-- A multi-tab subpanel mode (the chips bar is integrated; subpanel
-  is currently primitive-only — see
-  [`polysource/filter` getting started §4](../filter/getting-started.md#4-render-in-twig)).
-- Saved-filter UX (a la "My drafts" / "My pending review" stored
-  presets per user).
-- A query serializer so links can carry filter state without a
-  session (today the form roundtrips through GET, but persistent
-  links require a tiny encoder).
+- **Tab-style multi-group rendering.** Today multi-group renders
+  as `<details>` accordions in the EA modal/subpanel. Tab
+  rendering exists in `polysource/filter`'s standalone subpanel
+  template but isn't yet wired through to EA — adding it would
+  mean re-implementing EA's filter form template completely. Open
+  for v0.2 if user feedback wants it.
+- **Saved-filter UX** (a la "My drafts" / "My pending review"
+  stored presets per user).
+- **A query serializer** so links can carry filter state without
+  a session (today the form roundtrips through GET, but
+  persistent links require a tiny encoder).
+- **Datasource lifecycle** (`Factory → Builder → Loader`) for
+  hosts wanting to compose multiple data sources in one
+  Resource — see [ADR-014](../../adr/0014-datasource-lifecycle-deferred.md).
 
 ## See also
 
