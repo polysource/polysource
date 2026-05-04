@@ -24,17 +24,26 @@
    `@PolysourceEasyAdminFilterBridge` AssetMapper namespace).
 #}
 {% macro is_slice_applied(slice) %}
-    {%- set comparison = (slice.comparison|default(''))|upper -%}
-    {%- set value = slice.value|default(null) -%}
-    {%- set value2 = slice.value2|default(null) -%}
-    {%- if comparison in ['IS NULL', 'IS NOT NULL'] -%}
-        1
-    {%- elseif value is iterable and value is not empty -%}
-        1
-    {%- elseif value is not iterable and value is not null and value != '' -%}
-        1
-    {%- elseif value2 is not null and value2 != '' -%}
-        1
+    {%- if slice is iterable -%}
+        {%- set comparison = (slice.comparison|default(''))|upper -%}
+        {%- set value = slice.value|default(null) -%}
+        {%- set value2 = slice.value2|default(null) -%}
+        {%- if comparison in ['IS NULL', 'IS NOT NULL'] -%}
+            1
+        {%- elseif value is iterable and value is not empty -%}
+            1
+        {%- elseif value is not iterable and value is not null and value != '' -%}
+            1
+        {%- elseif value2 is not null and value2 != '' -%}
+            1
+        {%- endif -%}
+    {%- else -%}
+        {#- Scalar slice — EA's BooleanFilter submits as
+            `filters[isActive]=1` (just the value, no comparison
+            envelope). Treat the scalar itself as the value. -#}
+        {%- if slice is not null and slice != '' -%}
+            1
+        {%- endif -%}
     {%- endif -%}
 {% endmacro %}
 
@@ -62,9 +71,18 @@
             {% for entry in _active_chips %}
                 {% set property = entry.property %}
                 {% set slice = entry.slice %}
-                {% set comparison = (slice.comparison|default(''))|upper %}
-                {% set value = slice.value|default(null) %}
-                {% set value2 = slice.value2|default(null) %}
+                {# Slice can be either an array `{comparison, value, value2}`
+                   (most filters) or a bare scalar (EA's BooleanFilter submits
+                   `filters[isActive]=1`). Normalize. #}
+                {% if slice is iterable %}
+                    {% set comparison = (slice.comparison|default(''))|upper %}
+                    {% set value = slice.value|default(null) %}
+                    {% set value2 = slice.value2|default(null) %}
+                {% else %}
+                    {% set comparison = '' %}
+                    {% set value = slice %}
+                    {% set value2 = null %}
+                {% endif %}
 
                 {# Humanise camelCase / snake_case → "Created at". #}
                 {% set label = property
