@@ -16,6 +16,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\ComparisonFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use Polysource\Demo\EasyAdminBridge\ChipFormatter\VisibilityChipFormatter;
 use Polysource\Demo\EasyAdminBridge\Entity\Category;
 use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
 use Polysource\EasyAdminFilterBridge\Filter\BetweenDateFilter;
@@ -58,6 +59,11 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
  */
 final class CategoryCrudController extends AbstractCrudController
 {
+    public function __construct(
+        private readonly VisibilityChipFormatter $visibilityChipFormatter,
+    ) {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Category::class;
@@ -81,14 +87,17 @@ final class CategoryCrudController extends AbstractCrudController
         yield TextField::new('slug');
         yield TextField::new('description')->onlyOnDetail();
 
-        // Polysource::field() proxies the BooleanField and writes
-        // the chipFormatter callable on the FieldDto's
-        // customOptions. ChipValueFormatter (5-stage chain, stage 2)
-        // looks it up by property name and uses it in lieu of the
-        // default Yes/No translation. Both the table column AND
-        // the chip render with this callable.
+        // Service-based chip formatter (ADR-016): the
+        // VisibilityChipFormatter implements ChipFormatterInterface
+        // and gets a Translator via constructor DI. The bridge's
+        // PolysourceField::chipFormatter() accepts both an inline
+        // closure (cf. ProductCrudController) and a service like
+        // this one — pick whichever fits the host's complexity.
+        // ChipValueFormatter (5-stage chain, stage 2) reads it by
+        // property name; both the table column AND the active-
+        // filters chip render through the same logic.
         yield Polysource::field(BooleanField::new('isVisible'))
-            ->chipFormatter(static fn (mixed $v): string => true === $v || '1' === $v || 1 === $v ? '👁️ Visible' : '🚫 Caché');
+            ->chipFormatter($this->visibilityChipFormatter);
 
         yield IntegerField::new('displayOrder');
         yield DateTimeField::new('createdAt');

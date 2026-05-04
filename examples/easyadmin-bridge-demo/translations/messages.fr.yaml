@@ -1,0 +1,4 @@
+category:
+  visibility:
+    shown: 'Visible aux clients'
+    hidden: 'Masquée des listings'

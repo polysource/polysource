@@ -273,6 +273,85 @@ final class ChipValueFormatterTest extends TestCase
     }
 
     /**
+     * Stage 1 (interface variant) — A {@see ChipFormatterInterface}
+     * service registered as the filter's chip formatter is invoked
+     * just like a callable. Demonstrates DI-based formatters per
+     * ADR-016: hosts can `chipFormatter($this->myService)` instead
+     * of inline closures, getting Translator/EM/etc. via the
+     * service constructor.
+     */
+    public function testStage1FilterChipFormatterInterfaceWins(): void
+    {
+        $filter = $this->makeFilterStub(BooleanFilter::class, 'isVisible');
+        $service = new class implements \Polysource\Filter\Bridge\Contract\ChipFormatterInterface {
+            public function format(mixed $rawValue): string
+            {
+                return 'IFACE-' . (\is_scalar($rawValue) ? (string) $rawValue : 'null');
+            }
+        };
+        $filter->getAsDto()->setCustomOption(
+            \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
+            $service,
+        );
+
+        $context = $this->makeContext(filtersMap: ['isVisible' => $filter]);
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        self::assertSame('IFACE-1', $formatter->format('isVisible', '1'));
+    }
+
+    /**
+     * Stage 2 (interface variant) — Same DI shape on the field side.
+     * Confirms `lookupFieldChipFormatter()` returns the service to
+     * the dispatcher, and the dispatcher routes via the
+     * ChipFormatterInterface branch.
+     */
+    public function testStage2FieldChipFormatterInterfaceWins(): void
+    {
+        $filter = $this->makeFilterStub(BooleanFilter::class, 'isVisible');
+
+        $fieldDto = (new ReflectionClass(\EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto::class))
+            ->newInstanceWithoutConstructor();
+        $rp = new ReflectionProperty(\EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto::class, 'customOptions');
+        $rp->setValue($fieldDto, \EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore::new());
+        $rp = new ReflectionProperty(\EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto::class, 'propertyName');
+        $rp->setValue($fieldDto, 'isVisible');
+
+        $service = new class implements \Polysource\Filter\Bridge\Contract\ChipFormatterInterface {
+            public function format(mixed $rawValue): string
+            {
+                return 'FIELD-IFACE-' . (\is_scalar($rawValue) ? (string) $rawValue : 'null');
+            }
+        };
+        $fieldDto->setCustomOption(
+            \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
+            $service,
+        );
+
+        $context = $this->makeContext(
+            filtersMap: ['isVisible' => $filter],
+            fields: [$fieldDto],
+        );
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        self::assertSame('FIELD-IFACE-1', $formatter->format('isVisible', '1'));
+    }
+
+    /**
      * Stage 3 — Custom FilterInterface using BooleanFilterType
      * (the user's `FreewheelCreativeIsSentFilter` case). The
      * filter's FQCN doesn't match BooleanFilter::class but its

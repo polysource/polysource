@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\EntityFilterType;
 use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
+use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
@@ -79,20 +80,18 @@ final class ChipValueFormatter
             return $this->stringify($rawValue);
         }
 
-        // ─── Stage 1: Filter chip_formatter callable ───
-        $callable = $filter->getAsDto()->getCustomOption(BridgeOptions::CHIP_FORMATTER);
-        if (\is_callable($callable)) {
-            $result = $callable($rawValue);
-
-            return \is_string($result) ? $result : $this->stringify($rawValue);
+        // ─── Stage 1: Filter chip_formatter (callable | ChipFormatterInterface) ───
+        $formatter = $filter->getAsDto()->getCustomOption(BridgeOptions::CHIP_FORMATTER);
+        $stage1 = $this->invokeChipFormatter($formatter, $rawValue);
+        if (null !== $stage1) {
+            return $stage1;
         }
 
-        // ─── Stage 2: Matching Field chip_formatter callable ───
-        $fieldCallable = $this->lookupFieldChipFormatter($context, $property);
-        if (null !== $fieldCallable) {
-            $result = $fieldCallable($rawValue);
-
-            return \is_string($result) ? $result : $this->stringify($rawValue);
+        // ─── Stage 2: Matching Field chip_formatter (callable | ChipFormatterInterface) ───
+        $fieldFormatter = $this->lookupFieldChipFormatter($context, $property);
+        $stage2 = $this->invokeChipFormatter($fieldFormatter, $rawValue);
+        if (null !== $stage2) {
+            return $stage2;
         }
 
         // ─── Stage 3: Match by FormType (covers EA built-ins +
@@ -115,9 +114,32 @@ final class ChipValueFormatter
     }
 
     /**
+     * Invokes a chip formatter — either a callable or an
+     * implementation of {@see ChipFormatterInterface} (cf. ADR-016).
+     * Returns the formatted label, or null when no formatter was
+     * supplied (caller falls through to the next stage). Non-string
+     * results from a callable are stringified defensively to keep
+     * the contract honest.
+     */
+    private function invokeChipFormatter(mixed $formatter, mixed $rawValue): ?string
+    {
+        if ($formatter instanceof ChipFormatterInterface) {
+            return $formatter->format($rawValue);
+        }
+
+        if (\is_callable($formatter)) {
+            $result = $formatter($rawValue);
+
+            return \is_string($result) ? $result : $this->stringify($rawValue);
+        }
+
+        return null;
+    }
+
+    /**
      * @param AdminContextInterface<object> $context
      */
-    private function lookupFieldChipFormatter(AdminContextInterface $context, string $property): ?callable
+    private function lookupFieldChipFormatter(AdminContextInterface $context, string $property): mixed
     {
         $fields = $context->getEntity()->getFields();
         if (null === $fields) {
@@ -129,9 +151,16 @@ final class ChipValueFormatter
             return null;
         }
 
-        $callable = $field->getCustomOption(BridgeOptions::CHIP_FORMATTER);
+        $value = $field->getCustomOption(BridgeOptions::CHIP_FORMATTER);
 
-        return \is_callable($callable) ? $callable : null;
+        // Pass through callables and ChipFormatterInterface
+        // implementations — the dispatcher upstream
+        // ({@see invokeChipFormatter}) routes both shapes.
+        if ($value instanceof ChipFormatterInterface || \is_callable($value)) {
+            return $value;
+        }
+
+        return null;
     }
 
     private function formatBoolean(mixed $rawValue): string

@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDataDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDto;
+use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
 
 /**
  * Fluent decorator over an EA `FilterInterface` exposing the
@@ -58,11 +59,21 @@ final class PolysourceFilter implements FilterInterface
     }
 
     /**
-     * @param callable(mixed): string $callable
+     * Sets a chip formatter that turns the filter's raw URL value
+     * into a human-readable chip label.
+     *
+     * Two shapes accepted (cf. ADR-016):
+     * - `callable(mixed $rawValue): string` — inline closure or
+     *   first-class callable. Convenient for one-off cases.
+     * - `ChipFormatterInterface` — service with constructor DI
+     *   (TranslatorInterface, EntityManagerInterface, etc.) for
+     *   reusable / testable / cross-bridge logic.
+     *
+     * @param callable(mixed): string|ChipFormatterInterface $formatter
      */
-    public function chipFormatter(callable $callable): self
+    public function chipFormatter(callable|ChipFormatterInterface $formatter): self
     {
-        $this->filter->getAsDto()->setCustomOption(BridgeOptions::CHIP_FORMATTER, $callable);
+        $this->filter->getAsDto()->setCustomOption(BridgeOptions::CHIP_FORMATTER, $formatter);
 
         return $this;
     }

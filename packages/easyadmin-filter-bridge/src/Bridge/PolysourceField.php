@@ -7,6 +7,7 @@ namespace Polysource\EasyAdminFilterBridge\Bridge;
 use BadMethodCallException;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Field\FieldInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto;
+use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
 use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
@@ -39,11 +40,14 @@ final class PolysourceField implements FieldInterface
     }
 
     /**
-     * @param callable(mixed): string $callable
+     * Sets a chip formatter that turns the field's raw filter value
+     * into a human-readable chip label. Cf. ADR-016.
+     *
+     * @param callable(mixed): string|ChipFormatterInterface $formatter
      */
-    public function chipFormatter(callable $callable): self
+    public function chipFormatter(callable|ChipFormatterInterface $formatter): self
     {
-        $this->field->getAsDto()->setCustomOption(BridgeOptions::CHIP_FORMATTER, $callable);
+        $this->field->getAsDto()->setCustomOption(BridgeOptions::CHIP_FORMATTER, $formatter);
 
         return $this;
     }
