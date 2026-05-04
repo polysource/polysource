@@ -183,8 +183,21 @@ final class ChipValueFormatter
             return $this->stringify($rawValue);
         }
 
-        $mapping = $metadata->getAssociationMapping($property);
-        $targetClass = $mapping->targetEntity;
+        // Doctrine ORM 2.x exposes the mapping as an array
+        // (`$mapping['targetEntity']`), 3.x exposes it as an
+        // AssociationMapping object (`$mapping->targetEntity`).
+        // Casting to array uniformly works on both: 2.x is a
+        // no-op, 3.x converts public properties to array entries.
+        // Per ADR-015 we support both Doctrine majors and the
+        // static analyser only sees the installed one, so this
+        // cast is the only branch-free way to access the field.
+        $targetClass = $this->extractTargetEntity(
+            $metadata->getAssociationMapping($property),
+        );
+
+        if (null === $targetClass) {
+            return $this->stringify($rawValue);
+        }
 
         try {
             $entity = $this->entityManager->find($targetClass, $rawValue);
@@ -197,6 +210,39 @@ final class ChipValueFormatter
         }
 
         return (string) $entity;
+    }
+
+    /**
+     * Extracts `targetEntity` from a Doctrine association mapping.
+     *
+     * Doctrine ORM 2.x returns an array with the field as an offset;
+     * 3.x returns an `AssociationMapping` object with a public
+     * property. Per ADR-015 (multi-version baseline) we accept both.
+     * The parameter is `mixed` so PHPStan doesn't try to narrow
+     * against whichever Doctrine major happens to be installed
+     * during static analysis.
+     *
+     * @return class-string|null
+     */
+    private function extractTargetEntity(mixed $mapping): ?string
+    {
+        $value = null;
+        if (\is_array($mapping) && \array_key_exists('targetEntity', $mapping)) {
+            $value = $mapping['targetEntity'];
+        } elseif (\is_object($mapping)) {
+            // Object-shaped mapping (Doctrine 3.x) — read via array
+            // cast so PHPStan can't apply class-specific narrowing
+            // that would block Doctrine 2.x (where the object branch
+            // is dead) or vice versa.
+            $asArray = (array) $mapping;
+            $value = $asArray['targetEntity'] ?? null;
+        }
+
+        if (!\is_string($value) || '' === $value || !class_exists($value)) {
+            return null;
+        }
+
+        return $value;
     }
 
     /**
