@@ -18,7 +18,8 @@ what Doctrine-ORM-centric solutions don't cover.
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |
 | Build filter UIs (standalone primitive) | [filter/](./filter/) |
-| Enrich an EasyAdmin v5 app's filters | [easyadmin-filter-bridge/](./easyadmin-filter-bridge/whats-new.md) |
+| Enrich an EasyAdmin v5 app's filters (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
+| Honest per-filter matrix vs upstream EA | [easyadmin-filter-bridge/whats-new.md](./easyadmin-filter-bridge/whats-new.md) |
 | Copy-paste a runnable recipe | [cookbook/](./cookbook/) |
 | Look up a public interface signature | [api/](./api/) |
 
@@ -41,6 +42,7 @@ docs/user/
 │   ├── README.md
 │   └── getting-started.md
 ├── easyadmin-filter-bridge/   ← drop-in for EasyAdmin v5
+│   ├── getting-started.md
 │   └── whats-new.md
 ├── cookbook/
 │   ├── messenger-failed-dashboard.md
