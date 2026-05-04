@@ -12,6 +12,7 @@ use Polysource\Filter\Pipeline\FilterRendererInterface;
 use Polysource\Filter\Pipeline\Registry\FormatterRegistry;
 use Polysource\Filter\Pipeline\Registry\MapperRegistry;
 use Polysource\Filter\Pipeline\Registry\RendererRegistry;
+use RuntimeException;
 
 /**
  * Contract for the 3 pipeline registries: each indexes its services
@@ -20,7 +21,7 @@ use Polysource\Filter\Pipeline\Registry\RendererRegistry;
  */
 final class RegistryTest extends TestCase
 {
-    public function test_mapper_registry_indexes_by_supports_predicate(): void
+    public function testMapperRegistryIndexesBySupportsPredicate(): void
     {
         $textMapper = $this->makeMapper('text');
         $dateMapper = $this->makeMapper('datetime');
@@ -34,15 +35,15 @@ final class RegistryTest extends TestCase
         self::assertSame(['text', 'datetime'], $registry->getKnownNames());
     }
 
-    public function test_mapper_registry_throws_when_no_service_supports_name(): void
+    public function testMapperRegistryThrowsWhenNoServiceSupportsName(): void
     {
         $registry = new MapperRegistry([$this->makeMapper('text')], ['text']);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $registry->forName('does_not_exist');
     }
 
-    public function test_first_supporting_mapper_wins_when_multiple_match(): void
+    public function testFirstSupportingMapperWinsWhenMultipleMatch(): void
     {
         // First mapper claims to support 'text'; second one too. The
         // first one registered should win — host overrides via
@@ -55,11 +56,18 @@ final class RegistryTest extends TestCase
         self::assertSame($first, $registry->forName('text'));
     }
 
-    public function test_formatter_registry_works_the_same_way(): void
+    public function testFormatterRegistryWorksTheSameWay(): void
     {
         $textFormatter = new class implements FilterFormatterInterface {
-            public function supports(string $name): bool { return 'text' === $name; }
-            public function format(FilterCriterion $criterion): string { return 'formatted'; }
+            public function supports(string $name): bool
+            {
+                return 'text' === $name;
+            }
+
+            public function format(FilterCriterion $criterion): string
+            {
+                return 'formatted';
+            }
         };
 
         $registry = new FormatterRegistry([$textFormatter], ['text', 'numeric']);
@@ -69,11 +77,18 @@ final class RegistryTest extends TestCase
         self::assertSame(['text'], $registry->getKnownNames());
     }
 
-    public function test_renderer_registry_works_the_same_way(): void
+    public function testRendererRegistryWorksTheSameWay(): void
     {
         $renderer = new class implements FilterRendererInterface {
-            public function supports(string $name): bool { return 'choice' === $name; }
-            public function getFormType(): string { return 'Symfony\\Component\\Form\\Extension\\Core\\Type\\ChoiceType'; }
+            public function supports(string $name): bool
+            {
+                return 'choice' === $name;
+            }
+
+            public function getFormType(): string
+            {
+                return 'Symfony\\Component\\Form\\Extension\\Core\\Type\\ChoiceType';
+            }
         };
 
         $registry = new RendererRegistry([$renderer], ['choice']);
@@ -85,7 +100,9 @@ final class RegistryTest extends TestCase
     private function makeMapper(string $supportedName, string $label = ''): FilterMapperInterface
     {
         return new class($supportedName, $label) implements FilterMapperInterface {
-            public function __construct(private readonly string $supportedName, public readonly string $label) {}
+            public function __construct(private readonly string $supportedName, public readonly string $label)
+            {
+            }
 
             public function supports(string $name): bool
             {

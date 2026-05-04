@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Model;
 
+use InvalidArgumentException;
+
 /**
  * Declarative spec for a filter that hosts can offer.
  *
@@ -32,10 +34,10 @@ final readonly class FilterDefinition
     /**
      * @param string                       $name           Pipeline routing key (e.g. "datetime"). Must be non-empty (validated at runtime).
      * @param string                       $property       Resource property the filter targets. Must be non-empty (validated at runtime).
-     * @param string                       $label          Human label, can be empty (host falls back to property).
+     * @param string                       $label          human label, can be empty (host falls back to property)
      * @param ?string                      $group          Optional group label for multi-group UI mode. Either null or non-empty (validated at runtime).
-     * @param array<string, mixed>         $formSpec       Form-side configuration (FormType FQCN, options, …).
-     * @param array<string, mixed>         $datasourceSpec Data-source-side configuration (columns, operator, …).
+     * @param array<string, mixed>         $formSpec       form-side configuration (FormType FQCN, options, …)
+     * @param array<string, mixed>         $datasourceSpec data-source-side configuration (columns, operator, …)
      */
     public function __construct(
         public string $name,
@@ -46,17 +48,15 @@ final readonly class FilterDefinition
         public array $datasourceSpec = [],
     ) {
         if ('' === $name) {
-            throw new \InvalidArgumentException('FilterDefinition name cannot be empty.');
+            throw new InvalidArgumentException('FilterDefinition name cannot be empty.');
         }
 
         if ('' === $property) {
-            throw new \InvalidArgumentException('FilterDefinition property cannot be empty.');
+            throw new InvalidArgumentException('FilterDefinition property cannot be empty.');
         }
 
         if (null !== $group && '' === $group) {
-            throw new \InvalidArgumentException(
-                'FilterDefinition group must be either null (no group) or a non-empty string.',
-            );
+            throw new InvalidArgumentException('FilterDefinition group must be either null (no group) or a non-empty string.');
         }
     }
 

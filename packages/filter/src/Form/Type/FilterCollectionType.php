@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Form\Type;
 
+use InvalidArgumentException;
 use Polysource\Filter\Form\EventListener\FilterHydrator;
 use Polysource\Filter\Model\FilterDefinition;
 use Polysource\Filter\Pipeline\Registry\MapperRegistry;
 use Polysource\Filter\Pipeline\Registry\RendererRegistry;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Form\FormView;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormTypeInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -109,16 +110,12 @@ final class FilterCollectionType extends AbstractType
 
         $resolver->setNormalizer('definitions', static function ($options, mixed $value): array {
             if (!\is_array($value)) {
-                throw new \InvalidArgumentException('definitions must be an array of FilterDefinition.');
+                throw new InvalidArgumentException('definitions must be an array of FilterDefinition.');
             }
             $list = [];
             foreach ($value as $i => $entry) {
                 if (!$entry instanceof FilterDefinition) {
-                    throw new \InvalidArgumentException(\sprintf(
-                        'definitions[%s] must be a FilterDefinition, got %s.',
-                        (string) $i,
-                        get_debug_type($entry),
-                    ));
+                    throw new InvalidArgumentException(\sprintf('definitions[%s] must be a FilterDefinition, got %s.', (string) $i, get_debug_type($entry)));
                 }
                 $list[] = $entry;
             }

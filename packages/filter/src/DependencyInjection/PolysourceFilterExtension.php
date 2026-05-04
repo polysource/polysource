@@ -14,7 +14,6 @@ use Polysource\Filter\Pipeline\Registry\RendererRegistry;
 use Polysource\Filter\Service\FilterService;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**

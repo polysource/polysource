@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\ArrayFilterType;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\ArrayFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
+use ReflectionClass;
 
 final class ArrayFilterEnhancerTest extends TestCase
 {
@@ -33,34 +34,40 @@ final class ArrayFilterEnhancerTest extends TestCase
         $this->unrelatedFilterDto->setFqcn('EasyCorp\\Bundle\\EasyAdminBundle\\Filter\\TextFilter');
     }
 
+    /**
+     * @return EntityDto<object>
+     */
     private function makeEntityDto(): EntityDto
     {
-        return (new \ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(): AdminContext
     {
-        return (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
     }
 
-    public function test_supports_returns_true_for_array_filter(): void
+    public function testSupportsReturnsTrueForArrayFilter(): void
     {
         self::assertTrue($this->enhancer->supports($this->arrayFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()));
     }
 
-    public function test_supports_returns_false_for_unrelated_filter(): void
+    public function testSupportsReturnsFalseForUnrelatedFilter(): void
     {
         self::assertFalse($this->enhancer->supports($this->unrelatedFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()));
     }
 
-    public function test_configure_swaps_form_type_to_enhanced_one(): void
+    public function testConfigureSwapsFormTypeToEnhancedOne(): void
     {
         $this->enhancer->configure($this->arrayFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 
         self::assertSame(EnhancedArrayFilterType::class, $this->arrayFilterDto->getFormType());
     }
 
-    public function test_configure_preserves_upstream_options(): void
+    public function testConfigurePreservesUpstreamOptions(): void
     {
         $this->enhancer->configure($this->arrayFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 

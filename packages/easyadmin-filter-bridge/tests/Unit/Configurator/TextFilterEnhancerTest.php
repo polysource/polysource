@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\TextFilterType;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
+use ReflectionClass;
 
 final class TextFilterEnhancerTest extends TestCase
 {
@@ -33,22 +34,28 @@ final class TextFilterEnhancerTest extends TestCase
         $this->unrelatedFilterDto->setFqcn('EasyCorp\\Bundle\\EasyAdminBundle\\Filter\\BooleanFilter');
     }
 
+    /**
+     * @return EntityDto<object>
+     */
     private function makeEntityDto(): EntityDto
     {
-        return (new \ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(): AdminContext
     {
-        return (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
     }
 
-    public function test_supports_returns_true_for_text_filter(): void
+    public function testSupportsReturnsTrueForTextFilter(): void
     {
         self::assertTrue($this->enhancer->supports($this->textFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()));
     }
 
-    public function test_supports_returns_false_for_unrelated_filter(): void
+    public function testSupportsReturnsFalseForUnrelatedFilter(): void
     {
         self::assertFalse(
             $this->enhancer->supports($this->unrelatedFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()),
@@ -56,14 +63,14 @@ final class TextFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_swaps_form_type_to_enhanced_one(): void
+    public function testConfigureSwapsFormTypeToEnhancedOne(): void
     {
         $this->enhancer->configure($this->textFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 
         self::assertSame(EnhancedTextFilterType::class, $this->textFilterDto->getFormType());
     }
 
-    public function test_configure_preserves_upstream_options(): void
+    public function testConfigurePreservesUpstreamOptions(): void
     {
         $this->enhancer->configure($this->textFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 

@@ -16,9 +16,9 @@ use Symfony\Bridge\Twig\Extension\FormExtension;
 use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\Forms;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormRenderer;
+use Symfony\Component\Form\Forms;
 use Symfony\Component\Translation\Translator;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -89,7 +89,7 @@ final class FormThemeRenderingTest extends TestCase
         ]));
     }
 
-    public function test_text_filter_wraps_with_data_min_length(): void
+    public function testTextFilterWrapsWithDataMinLength(): void
     {
         $form = $this->formFactory->create(EnhancedTextFilterType::class, null, [
             'min_length' => 3,
@@ -102,7 +102,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-min-length-value="3"', $html);
     }
 
-    public function test_numeric_filter_wraps_and_renders_quick_range_buttons(): void
+    public function testNumericFilterWrapsAndRendersQuickRangeButtons(): void
     {
         $form = $this->formFactory->create(EnhancedNumericFilterType::class, null, [
             'value_type' => NumberType::class,
@@ -124,7 +124,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-max-param=""', $html);
     }
 
-    public function test_datetime_filter_wraps_and_renders_presets_and_clear(): void
+    public function testDatetimeFilterWrapsAndRendersPresetsAndClear(): void
     {
         $form = $this->formFactory->create(EnhancedDateTimeFilterType::class, null, [
             'value_type' => \Symfony\Component\Form\Extension\Core\Type\DateTimeType::class,
@@ -142,7 +142,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('polysource--filter#clearValues', $html);
     }
 
-    public function test_boolean_filter_wraps_choice_widget(): void
+    public function testBooleanFilterWrapsChoiceWidget(): void
     {
         $form = $this->formFactory->create(EnhancedBooleanFilterType::class, null, [
             'include_null' => true,
@@ -159,7 +159,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('label.null', $html);
     }
 
-    public function test_choice_filter_wraps_with_inline_flag(): void
+    public function testChoiceFilterWrapsWithInlineFlag(): void
     {
         // ChoiceFilterType's parent (ComparisonFilterType) requires
         // `value_type` and forwards `choices` via `value_type_options`.
@@ -175,7 +175,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-inline-value="true"', $html);
     }
 
-    public function test_comparison_filter_exposes_whitelist_in_dataset(): void
+    public function testComparisonFilterExposesWhitelistInDataset(): void
     {
         $form = $this->formFactory->create(EnhancedComparisonFilterType::class, null, [
             'value_type' => NumberType::class,
@@ -200,7 +200,7 @@ final class FormThemeRenderingTest extends TestCase
         );
     }
 
-    public function test_array_filter_wraps_with_chip_display_flag(): void
+    public function testArrayFilterWrapsWithChipDisplayFlag(): void
     {
         $form = $this->formFactory->create(EnhancedArrayFilterType::class, null, [
             'chip_display' => true,
@@ -212,7 +212,7 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-chip-display-value="true"', $html);
     }
 
-    public function test_renders_no_buttons_when_options_empty(): void
+    public function testRendersNoButtonsWhenOptionsEmpty(): void
     {
         $form = $this->formFactory->create(EnhancedDateTimeFilterType::class, null, [
             'value_type' => \Symfony\Component\Form\Extension\Core\Type\DateTimeType::class,
@@ -241,7 +241,9 @@ final class FormThemeRenderingTest extends TestCase
         ];
         foreach ($candidates as $path) {
             if (is_dir($path)) {
-                return realpath($path) ?: $path;
+                $real = realpath($path);
+
+                return false !== $real ? $real : $path;
             }
         }
         self::fail('Could not locate symfony/twig-bridge under any expected vendor path');

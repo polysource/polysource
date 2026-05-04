@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Filter\Pipeline\Registry;
 
 use Polysource\Filter\Pipeline\FilterFormatterInterface;
+use RuntimeException;
 
 /**
  * O(1) lookup for `FilterFormatterInterface` services by filter `name`.
@@ -36,10 +37,7 @@ final class FormatterRegistry
     public function forName(string $name): FilterFormatterInterface
     {
         if (!isset($this->byName[$name])) {
-            throw new \RuntimeException(\sprintf(
-                'No FilterFormatterInterface service supports filter name "%s".',
-                $name,
-            ));
+            throw new RuntimeException(\sprintf('No FilterFormatterInterface service supports filter name "%s".', $name));
         }
 
         return $this->byName[$name];

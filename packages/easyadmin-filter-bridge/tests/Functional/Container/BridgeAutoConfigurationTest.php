@@ -98,7 +98,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         }
     }
 
-    public function test_datetime_configurator_is_registered_and_tagged(): void
+    public function testDatetimeConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue(
             $this->container->hasDefinition(DateTimeFilterEnhancer::class),
@@ -123,7 +123,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_boolean_configurator_is_registered_and_tagged(): void
+    public function testBooleanConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(BooleanFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(BooleanFilterEnhancer::class)->isAutoconfigured());
@@ -136,7 +136,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_text_configurator_is_registered_and_tagged(): void
+    public function testTextConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(TextFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(TextFilterEnhancer::class)->isAutoconfigured());
@@ -149,7 +149,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_numeric_configurator_is_registered_and_tagged(): void
+    public function testNumericConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(NumericFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(NumericFilterEnhancer::class)->isAutoconfigured());
@@ -162,7 +162,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_choice_configurator_is_registered_and_tagged(): void
+    public function testChoiceConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(ChoiceFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(ChoiceFilterEnhancer::class)->isAutoconfigured());
@@ -175,7 +175,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_comparison_configurator_is_registered_and_tagged(): void
+    public function testComparisonConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(ComparisonFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(ComparisonFilterEnhancer::class)->isAutoconfigured());
@@ -188,7 +188,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_array_configurator_is_registered_and_tagged(): void
+    public function testArrayConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(ArrayFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(ArrayFilterEnhancer::class)->isAutoconfigured());
@@ -201,7 +201,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_entity_configurator_is_registered_and_tagged(): void
+    public function testEntityConfiguratorIsRegisteredAndTagged(): void
     {
         self::assertTrue($this->container->hasDefinition(EntityFilterEnhancer::class));
         self::assertTrue($this->container->getDefinition(EntityFilterEnhancer::class)->isAutoconfigured());
@@ -214,7 +214,7 @@ final class BridgeAutoConfigurationTest extends TestCase
         );
     }
 
-    public function test_form_types_are_registered_and_tagged(): void
+    public function testFormTypesAreRegisteredAndTagged(): void
     {
         $allFormTypes = [
             EnhancedDateTimeFilterType::class,

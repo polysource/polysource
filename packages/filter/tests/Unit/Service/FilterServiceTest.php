@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Tests\Unit\Service;
 
+use BadMethodCallException;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
@@ -11,6 +13,7 @@ use Polysource\Filter\Service\FilterService;
 use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Throwable;
 
 /**
  * Unit contract for FilterService.
@@ -28,10 +31,10 @@ final class FilterServiceTest extends TestCase
         return self::KEY_FOR_SCOPE_1 . hash('xxh128', $id);
     }
 
-    private function makeService(SessionInterface|\Throwable|null $sessionOrException): FilterService
+    private function makeService(SessionInterface|Throwable|null $sessionOrException): FilterService
     {
         $stack = $this->createMock(RequestStack::class);
-        if ($sessionOrException instanceof \Throwable) {
+        if ($sessionOrException instanceof Throwable) {
             $stack->method('getSession')->willThrowException($sessionOrException);
         } elseif (null === $sessionOrException) {
             $stack->method('getSession')->willThrowException(new SessionNotFoundException('no session'));
@@ -42,7 +45,7 @@ final class FilterServiceTest extends TestCase
         return new FilterService($stack);
     }
 
-    public function test_save_persists_collection_payload_under_hashed_key(): void
+    public function testSavePersistsCollectionPayloadUnderHashedKey(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $service = $this->makeService($session);
@@ -65,7 +68,7 @@ final class FilterServiceTest extends TestCase
         self::assertTrue($service->save($collection));
     }
 
-    public function test_save_returns_false_when_no_session_available(): void
+    public function testSaveReturnsFalseWhenNoSessionAvailable(): void
     {
         $service = $this->makeService(null);
         $coll = new FilterCollection('scope-1', [new FilterCriterion('p', '=', ['v'])]);
@@ -73,7 +76,7 @@ final class FilterServiceTest extends TestCase
         self::assertFalse($service->save($coll));
     }
 
-    public function test_load_returns_collection_from_valid_payload(): void
+    public function testLoadReturnsCollectionFromValidPayload(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $session->method('get')
@@ -94,13 +97,13 @@ final class FilterServiceTest extends TestCase
         self::assertSame(['2026-01-01', '2026-12-31'], $loaded->criteria[0]->values);
     }
 
-    public function test_load_returns_null_when_no_session(): void
+    public function testLoadReturnsNullWhenNoSession(): void
     {
         $service = $this->makeService(null);
         self::assertNull($service->load('scope-1'));
     }
 
-    public function test_load_returns_null_when_slot_is_missing(): void
+    public function testLoadReturnsNullWhenSlotIsMissing(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $session->method('get')->willReturn(null);
@@ -109,7 +112,7 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'));
     }
 
-    public function test_load_returns_null_when_payload_is_corrupted(): void
+    public function testLoadReturnsNullWhenPayloadIsCorrupted(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $session->method('get')->willReturn([
@@ -120,7 +123,7 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'), 'corrupted payload must fall back to null, not crash');
     }
 
-    public function test_load_returns_null_when_values_are_associative(): void
+    public function testLoadReturnsNullWhenValuesAreAssociative(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $session->method('get')->willReturn([
@@ -131,7 +134,7 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'));
     }
 
-    public function test_load_returns_null_when_values_key_is_missing(): void
+    public function testLoadReturnsNullWhenValuesKeyIsMissing(): void
     {
         // Stricter than the previous "?? []" fallback: a payload that
         // doesn't even carry the `values` key is treated as a schema
@@ -146,14 +149,14 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'));
     }
 
-    public function test_load_rejects_empty_id(): void
+    public function testLoadRejectsEmptyId(): void
     {
         $service = $this->makeService($this->createMock(SessionInterface::class));
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $service->load('');
     }
 
-    public function test_clear_removes_session_slot(): void
+    public function testClearRemovesSessionSlot(): void
     {
         $session = $this->createMock(SessionInterface::class);
         $session->expects(self::once())
@@ -164,20 +167,20 @@ final class FilterServiceTest extends TestCase
         self::assertTrue($service->clear('scope-1'));
     }
 
-    public function test_clear_returns_false_when_no_session(): void
+    public function testClearReturnsFalseWhenNoSession(): void
     {
         $service = $this->makeService(null);
         self::assertFalse($service->clear('scope-1'));
     }
 
-    public function test_clear_rejects_empty_id(): void
+    public function testClearRejectsEmptyId(): void
     {
         $service = $this->makeService($this->createMock(SessionInterface::class));
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $service->clear('');
     }
 
-    public function test_save_load_roundtrip_preserves_collection(): void
+    public function testSaveLoadRoundtripPreservesCollection(): void
     {
         $session = new InMemorySession();
         $service = $this->makeService($session);
@@ -199,7 +202,7 @@ final class FilterServiceTest extends TestCase
         self::assertSame([], $loaded->criteria[2]->values);
     }
 
-    public function test_clear_after_save_drops_payload(): void
+    public function testClearAfterSaveDropsPayload(): void
     {
         $session = new InMemorySession();
         $service = $this->makeService($session);
@@ -211,7 +214,7 @@ final class FilterServiceTest extends TestCase
         self::assertNull($service->load('scope-1'));
     }
 
-    public function test_id_scopes_are_isolated(): void
+    public function testIdScopesAreIsolated(): void
     {
         $session = new InMemorySession();
         $service = $this->makeService($session);
@@ -237,25 +240,102 @@ final class InMemorySession implements SessionInterface
     /** @var array<string, mixed> */
     private array $data = [];
 
-    public function start(): bool { return true; }
-    public function getId(): string { return 'in-memory'; }
-    public function setId(string $id): void {}
-    public function getName(): string { return 'session'; }
-    public function setName(string $name): void {}
-    public function invalidate(?int $lifetime = null): bool { $this->data = []; return true; }
-    public function migrate(bool $destroy = false, ?int $lifetime = null): bool { return true; }
-    public function save(): void {}
-    public function has(string $name): bool { return isset($this->data[$name]); }
-    public function get(string $name, mixed $default = null): mixed { return $this->data[$name] ?? $default; }
-    public function set(string $name, mixed $value): void { $this->data[$name] = $value; }
+    public function start(): bool
+    {
+        return true;
+    }
+
+    public function getId(): string
+    {
+        return 'in-memory';
+    }
+
+    public function setId(string $id): void
+    {
+    }
+
+    public function getName(): string
+    {
+        return 'session';
+    }
+
+    public function setName(string $name): void
+    {
+    }
+
+    public function invalidate(?int $lifetime = null): bool
+    {
+        $this->data = [];
+
+        return true;
+    }
+
+    public function migrate(bool $destroy = false, ?int $lifetime = null): bool
+    {
+        return true;
+    }
+
+    public function save(): void
+    {
+    }
+
+    public function has(string $name): bool
+    {
+        return isset($this->data[$name]);
+    }
+
+    public function get(string $name, mixed $default = null): mixed
+    {
+        return $this->data[$name] ?? $default;
+    }
+
+    public function set(string $name, mixed $value): void
+    {
+        $this->data[$name] = $value;
+    }
+
     /** @return array<string, mixed> */
-    public function all(): array { return $this->data; }
-    /** @phpstan-ignore-next-line missingType.iterableValue, assign.propertyType — LSP requires bare `array` type to match SessionInterface */
-    public function replace(array $attributes): void { $this->data = $attributes; }
-    public function remove(string $name): mixed { $v = $this->data[$name] ?? null; unset($this->data[$name]); return $v; }
-    public function clear(): void { $this->data = []; }
-    public function isStarted(): bool { return true; }
-    public function registerBag(\Symfony\Component\HttpFoundation\Session\SessionBagInterface $bag): void {}
-    public function getBag(string $name): \Symfony\Component\HttpFoundation\Session\SessionBagInterface { throw new \BadMethodCallException(); }
-    public function getMetadataBag(): \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag { throw new \BadMethodCallException(); }
+    public function all(): array
+    {
+        return $this->data;
+    }
+
+    /** @phpstan-ignore-next-line missingType.iterableValue — LSP requires bare `array` to match SessionInterface::replace() */
+    public function replace(array $attributes): void
+    {
+        /** @var array<string, mixed> $attributes */
+        $this->data = $attributes;
+    }
+
+    public function remove(string $name): mixed
+    {
+        $v = $this->data[$name] ?? null;
+        unset($this->data[$name]);
+
+        return $v;
+    }
+
+    public function clear(): void
+    {
+        $this->data = [];
+    }
+
+    public function isStarted(): bool
+    {
+        return true;
+    }
+
+    public function registerBag(\Symfony\Component\HttpFoundation\Session\SessionBagInterface $bag): void
+    {
+    }
+
+    public function getBag(string $name): \Symfony\Component\HttpFoundation\Session\SessionBagInterface
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getMetadataBag(): \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag
+    {
+        throw new BadMethodCallException();
+    }
 }

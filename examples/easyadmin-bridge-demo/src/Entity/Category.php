@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Polysource\Demo\EasyAdminBridge\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Stringable;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'category')]
-class Category implements \Stringable
+class Category implements Stringable
 {
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]

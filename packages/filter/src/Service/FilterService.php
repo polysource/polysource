@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Service;
 
+use InvalidArgumentException;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Throwable;
 
 /**
  * Persists `FilterCollection` instances in the HTTP session,
@@ -74,7 +76,7 @@ final class FilterService
     public function load(string $id): ?FilterCollection
     {
         if ('' === $id) {
-            throw new \InvalidArgumentException('FilterService::load() id cannot be empty.');
+            throw new InvalidArgumentException('FilterService::load() id cannot be empty.');
         }
 
         $session = $this->getSession();
@@ -89,7 +91,7 @@ final class FilterService
 
         try {
             return $this->deserialize($id, $raw);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Corrupted payload (e.g. session schema drift between
             // bridge versions). Treat as "no saved filters" — better
             // than crashing the request.
@@ -104,7 +106,7 @@ final class FilterService
     public function clear(string $id): bool
     {
         if ('' === $id) {
-            throw new \InvalidArgumentException('FilterService::clear() id cannot be empty.');
+            throw new InvalidArgumentException('FilterService::clear() id cannot be empty.');
         }
 
         $session = $this->getSession();
@@ -151,11 +153,11 @@ final class FilterService
                 // (older bridge writing payload without it, or hand-edited
                 // session) — surface it via the load()-level fallback to
                 // null instead of silently producing empty-values criteria.
-                throw new \InvalidArgumentException('Malformed filter session payload.');
+                throw new InvalidArgumentException('Malformed filter session payload.');
             }
             $values = $entry['values'];
             if (!\is_array($values) || !array_is_list($values)) {
-                throw new \InvalidArgumentException('Malformed filter session payload (values).');
+                throw new InvalidArgumentException('Malformed filter session payload (values).');
             }
             $criteria[] = new FilterCriterion($entry['property'], $entry['operator'], $values);
         }
@@ -172,7 +174,7 @@ final class FilterService
     {
         try {
             return $this->requestStack->getSession();
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // No active request / no session bag wired (CLI, sub-request).
             return null;
         }

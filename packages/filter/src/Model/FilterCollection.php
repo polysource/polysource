@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Model;
 
+use ArrayIterator;
+use Countable;
+use InvalidArgumentException;
+use IteratorAggregate;
+
 /**
  * An ordered list of `FilterCriterion`, scoped by a stable `id`.
  *
@@ -20,32 +25,29 @@ namespace Polysource\Filter\Model;
  * jump around. Hosts that want "latest update goes to the end" can
  * compose `->without($property)->with($criterion)` instead.
  *
- * @implements \IteratorAggregate<int, FilterCriterion>
+ * @implements IteratorAggregate<int, FilterCriterion>
  */
-final readonly class FilterCollection implements \IteratorAggregate, \Countable
+final readonly class FilterCollection implements IteratorAggregate, Countable
 {
     /** @var list<FilterCriterion> */
     public array $criteria;
 
     /**
      * @param string                    $id       Stable scope identifier (host-defined). Must be non-empty (validated at runtime).
-     * @param iterable<FilterCriterion> $criteria Active criterions, in display order.
+     * @param iterable<FilterCriterion> $criteria active criterions, in display order
      */
     public function __construct(
         public string $id,
         iterable $criteria = [],
     ) {
         if ('' === $id) {
-            throw new \InvalidArgumentException('FilterCollection id cannot be empty.');
+            throw new InvalidArgumentException('FilterCollection id cannot be empty.');
         }
 
         $list = [];
         foreach ($criteria as $criterion) {
             if (!$criterion instanceof FilterCriterion) {
-                throw new \InvalidArgumentException(\sprintf(
-                    'FilterCollection criteria must be FilterCriterion instances, got %s.',
-                    get_debug_type($criterion),
-                ));
+                throw new InvalidArgumentException(\sprintf('FilterCollection criteria must be FilterCriterion instances, got %s.', get_debug_type($criterion)));
             }
             $list[] = $criterion;
         }
@@ -118,10 +120,10 @@ final readonly class FilterCollection implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @return \ArrayIterator<int, FilterCriterion>
+     * @return ArrayIterator<int, FilterCriterion>
      */
-    public function getIterator(): \ArrayIterator
+    public function getIterator(): ArrayIterator
     {
-        return new \ArrayIterator($this->criteria);
+        return new ArrayIterator($this->criteria);
     }
 }

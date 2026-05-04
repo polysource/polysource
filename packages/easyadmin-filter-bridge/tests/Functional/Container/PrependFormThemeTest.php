@@ -21,7 +21,7 @@ final class PrependFormThemeTest extends TestCase
 {
     private const EXPECTED_THEME = '@PolysourceEasyAdminFilterBridge/form/polysource_filter_theme.html.twig';
 
-    public function test_prepend_registers_form_theme_when_twig_bundle_is_loaded(): void
+    public function testPrependRegistersFormThemeWhenTwigBundleIsLoaded(): void
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.bundles', [
@@ -37,6 +37,7 @@ final class PrependFormThemeTest extends TestCase
         self::assertNotEmpty($twigConfig, 'prepend() must inject a twig config block');
 
         $formThemes = $twigConfig[0]['form_themes'] ?? [];
+        self::assertIsArray($formThemes);
         self::assertContains(
             self::EXPECTED_THEME,
             $formThemes,
@@ -44,7 +45,7 @@ final class PrependFormThemeTest extends TestCase
         );
     }
 
-    public function test_prepend_is_a_noop_when_twig_bundle_is_absent(): void
+    public function testPrependIsANoopWhenTwigBundleIsAbsent(): void
     {
         $container = new ContainerBuilder();
         $container->setParameter('kernel.bundles', [
@@ -63,7 +64,7 @@ final class PrependFormThemeTest extends TestCase
         );
     }
 
-    public function test_form_theme_template_file_exists(): void
+    public function testFormThemeTemplateFileExists(): void
     {
         $absolute = \dirname(__DIR__, 3) . '/Resources/views/form/polysource_filter_theme.html.twig';
 

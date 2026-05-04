@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Tests\Unit\EventListener;
 
+use BadMethodCallException;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Context\CrudContext;
@@ -13,6 +14,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\Filter\Service\FilterService;
+use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -47,7 +50,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         $this->filterService = new FilterService($this->requestStack);
     }
 
-    public function test_subscribes_to_before_crud_action_event(): void
+    public function testSubscribesToBeforeCrudActionEvent(): void
     {
         $events = FilterSessionPersistenceSubscriber::getSubscribedEvents();
 
@@ -55,7 +58,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertSame('onBeforeCrudAction', $events[BeforeCrudActionEvent::class]);
     }
 
-    public function test_save_stores_collection_in_session(): void
+    public function testSaveStoresCollectionInSession(): void
     {
         $request = Request::create('/admin?crudAction=index&filters%5BcreatedAt%5D%5Bvalue%5D=2026-05-01&filters%5BcreatedAt%5D%5Bcomparison%5D=%3E%3D');
         $event = $this->makeEvent($request);
@@ -70,7 +73,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertSame(['2026-05-01'], $loaded->criteria[0]->values);
     }
 
-    public function test_load_redirects_with_url_encoded_filters_when_session_has_a_collection(): void
+    public function testLoadRedirectsWithUrlEncodedFiltersWhenSessionHasACollection(): void
     {
         // Pre-seed the session through the service (going through
         // FilterService keeps the same hash key the subscriber will
@@ -91,7 +94,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertStringContainsString('filters%5Bprice%5D%5Bvalue2%5D=200', $response->getTargetUrl());
     }
 
-    public function test_explicit_reset_clears_session(): void
+    public function testExplicitResetClearsSession(): void
     {
         $this->filterService->save(new \Polysource\Filter\Model\FilterCollection(self::PRODUCT_FQCN, [
             new \Polysource\Filter\Model\FilterCriterion('name', 'like', ['hat']),
@@ -106,7 +109,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertNull($this->filterService->load(self::PRODUCT_FQCN));
     }
 
-    public function test_no_op_for_non_index_action(): void
+    public function testNoOpForNonIndexAction(): void
     {
         $request = Request::create('/admin/product/1/edit?filters%5Bname%5D%5Bvalue%5D=hat');
         $event = $this->makeEvent($request, currentAction: Action::EDIT);
@@ -117,7 +120,7 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertFalse($event->isPropagationStopped(), 'no response set means propagation continues');
     }
 
-    public function test_load_returning_null_leaves_request_untouched(): void
+    public function testLoadReturningNullLeavesRequestUntouched(): void
     {
         // Empty session — load returns null, no redirect.
         $request = Request::create('/admin/product');
@@ -150,13 +153,13 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
             user: null,
         );
 
-        $context = (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        $context = (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
 
-        $crudContextProp = new \ReflectionProperty(AdminContext::class, 'crudContext');
+        $crudContextProp = new ReflectionProperty(AdminContext::class, 'crudContext');
         $crudContextProp->setAccessible(true);
         $crudContextProp->setValue($context, $crudContext);
 
-        $requestContextProp = new \ReflectionProperty(AdminContext::class, 'requestContext');
+        $requestContextProp = new ReflectionProperty(AdminContext::class, 'requestContext');
         $requestContextProp->setAccessible(true);
         $requestContextProp->setValue($context, $requestContext);
 
@@ -173,25 +176,102 @@ final class InMemorySession implements SessionInterface
     /** @var array<string, mixed> */
     private array $data = [];
 
-    public function start(): bool { return true; }
-    public function getId(): string { return 'in-memory'; }
-    public function setId(string $id): void {}
-    public function getName(): string { return 'session'; }
-    public function setName(string $name): void {}
-    public function invalidate(?int $lifetime = null): bool { $this->data = []; return true; }
-    public function migrate(bool $destroy = false, ?int $lifetime = null): bool { return true; }
-    public function save(): void {}
-    public function has(string $name): bool { return isset($this->data[$name]); }
-    public function get(string $name, mixed $default = null): mixed { return $this->data[$name] ?? $default; }
-    public function set(string $name, mixed $value): void { $this->data[$name] = $value; }
+    public function start(): bool
+    {
+        return true;
+    }
+
+    public function getId(): string
+    {
+        return 'in-memory';
+    }
+
+    public function setId(string $id): void
+    {
+    }
+
+    public function getName(): string
+    {
+        return 'session';
+    }
+
+    public function setName(string $name): void
+    {
+    }
+
+    public function invalidate(?int $lifetime = null): bool
+    {
+        $this->data = [];
+
+        return true;
+    }
+
+    public function migrate(bool $destroy = false, ?int $lifetime = null): bool
+    {
+        return true;
+    }
+
+    public function save(): void
+    {
+    }
+
+    public function has(string $name): bool
+    {
+        return isset($this->data[$name]);
+    }
+
+    public function get(string $name, mixed $default = null): mixed
+    {
+        return $this->data[$name] ?? $default;
+    }
+
+    public function set(string $name, mixed $value): void
+    {
+        $this->data[$name] = $value;
+    }
+
     /** @return array<string, mixed> */
-    public function all(): array { return $this->data; }
-    /** @phpstan-ignore-next-line missingType.iterableValue, assign.propertyType */
-    public function replace(array $attributes): void { $this->data = $attributes; }
-    public function remove(string $name): mixed { $v = $this->data[$name] ?? null; unset($this->data[$name]); return $v; }
-    public function clear(): void { $this->data = []; }
-    public function isStarted(): bool { return true; }
-    public function registerBag(\Symfony\Component\HttpFoundation\Session\SessionBagInterface $bag): void {}
-    public function getBag(string $name): \Symfony\Component\HttpFoundation\Session\SessionBagInterface { throw new \BadMethodCallException(); }
-    public function getMetadataBag(): \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag { throw new \BadMethodCallException(); }
+    public function all(): array
+    {
+        return $this->data;
+    }
+
+    /** @phpstan-ignore-next-line missingType.iterableValue — LSP requires bare `array` to match SessionInterface::replace() */
+    public function replace(array $attributes): void
+    {
+        /** @var array<string, mixed> $attributes */
+        $this->data = $attributes;
+    }
+
+    public function remove(string $name): mixed
+    {
+        $v = $this->data[$name] ?? null;
+        unset($this->data[$name]);
+
+        return $v;
+    }
+
+    public function clear(): void
+    {
+        $this->data = [];
+    }
+
+    public function isStarted(): bool
+    {
+        return true;
+    }
+
+    public function registerBag(\Symfony\Component\HttpFoundation\Session\SessionBagInterface $bag): void
+    {
+    }
+
+    public function getBag(string $name): \Symfony\Component\HttpFoundation\Session\SessionBagInterface
+    {
+        throw new BadMethodCallException();
+    }
+
+    public function getMetadataBag(): \Symfony\Component\HttpFoundation\Session\Storage\MetadataBag
+    {
+        throw new BadMethodCallException();
+    }
 }

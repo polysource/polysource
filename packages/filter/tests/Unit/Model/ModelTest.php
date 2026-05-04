@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Tests\Unit\Model;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
@@ -23,7 +24,7 @@ final class ModelTest extends TestCase
     // FilterCriterion
     // -------------------------------------------------------------------
 
-    public function test_criterion_stores_property_operator_values(): void
+    public function testCriterionStoresPropertyOperatorValues(): void
     {
         $c = new FilterCriterion('createdAt', 'between', ['2026-01-01', '2026-12-31']);
 
@@ -32,32 +33,32 @@ final class ModelTest extends TestCase
         self::assertSame(['2026-01-01', '2026-12-31'], $c->values);
     }
 
-    public function test_criterion_defaults_values_to_empty_list(): void
+    public function testCriterionDefaultsValuesToEmptyList(): void
     {
         $c = new FilterCriterion('isArchived', 'isNull');
         self::assertSame([], $c->values);
     }
 
-    public function test_criterion_rejects_empty_property(): void
+    public function testCriterionRejectsEmptyProperty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new FilterCriterion('', '=', ['x']);
     }
 
-    public function test_criterion_rejects_empty_operator(): void
+    public function testCriterionRejectsEmptyOperator(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new FilterCriterion('name', '', ['x']);
     }
 
-    public function test_criterion_rejects_associative_values(): void
+    public function testCriterionRejectsAssociativeValues(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         /** @phpstan-ignore-next-line argument.type */
         new FilterCriterion('name', '=', ['key' => 'value']);
     }
 
-    public function test_criterion_with_operator_returns_new_instance(): void
+    public function testCriterionWithOperatorReturnsNewInstance(): void
     {
         $original = new FilterCriterion('price', '=', [42]);
         $modified = $original->withOperator('>=');
@@ -68,7 +69,7 @@ final class ModelTest extends TestCase
         self::assertSame([42], $modified->values, 'values must be preserved');
     }
 
-    public function test_criterion_with_values_returns_new_instance(): void
+    public function testCriterionWithValuesReturnsNewInstance(): void
     {
         $original = new FilterCriterion('price', 'between', [10, 20]);
         $modified = $original->withValues([50, 100]);
@@ -78,7 +79,7 @@ final class ModelTest extends TestCase
         self::assertSame('between', $modified->operator);
     }
 
-    public function test_criterion_equals_compares_structurally(): void
+    public function testCriterionEqualsComparesStructurally(): void
     {
         $a = new FilterCriterion('p', '=', [1, 2]);
         $b = new FilterCriterion('p', '=', [1, 2]);
@@ -92,7 +93,7 @@ final class ModelTest extends TestCase
     // FilterCollection
     // -------------------------------------------------------------------
 
-    public function test_collection_stores_id_and_criteria(): void
+    public function testCollectionStoresIdAndCriteria(): void
     {
         $criteria = [
             new FilterCriterion('p1', '=', ['a']),
@@ -106,20 +107,20 @@ final class ModelTest extends TestCase
         self::assertFalse($coll->isEmpty());
     }
 
-    public function test_collection_rejects_empty_id(): void
+    public function testCollectionRejectsEmptyId(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new FilterCollection('', []);
     }
 
-    public function test_collection_rejects_non_criterion_items(): void
+    public function testCollectionRejectsNonCriterionItems(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         /** @phpstan-ignore-next-line argument.type */
         new FilterCollection('scope', ['not a criterion']);
     }
 
-    public function test_collection_with_appends_new_criterion(): void
+    public function testCollectionWithAppendsNewCriterion(): void
     {
         $coll = new FilterCollection('s', [new FilterCriterion('p1', '=', ['a'])]);
 
@@ -130,7 +131,7 @@ final class ModelTest extends TestCase
         self::assertSame('p2', $next->criteria[1]->property);
     }
 
-    public function test_collection_with_replaces_same_property_criterion(): void
+    public function testCollectionWithReplacesSamePropertyCriterion(): void
     {
         $coll = new FilterCollection('s', [
             new FilterCriterion('p1', '=', ['old']),
@@ -146,7 +147,7 @@ final class ModelTest extends TestCase
         self::assertSame('p2', $next->criteria[1]->property, 'order preserved');
     }
 
-    public function test_collection_without_removes_criterion_by_property(): void
+    public function testCollectionWithoutRemovesCriterionByProperty(): void
     {
         $coll = new FilterCollection('s', [
             new FilterCriterion('p1', '=', ['a']),
@@ -160,7 +161,7 @@ final class ModelTest extends TestCase
         self::assertSame('p2', $next->criteria[0]->property);
     }
 
-    public function test_collection_without_is_noop_when_property_missing(): void
+    public function testCollectionWithoutIsNoopWhenPropertyMissing(): void
     {
         $coll = new FilterCollection('s', [new FilterCriterion('p1', '=', ['a'])]);
         $next = $coll->without('does_not_exist');
@@ -168,7 +169,7 @@ final class ModelTest extends TestCase
         self::assertCount(1, $next);
     }
 
-    public function test_collection_get_and_has(): void
+    public function testCollectionGetAndHas(): void
     {
         $coll = new FilterCollection('s', [new FilterCriterion('p1', '=', ['a'])]);
 
@@ -178,7 +179,7 @@ final class ModelTest extends TestCase
         self::assertNull($coll->get('p2'));
     }
 
-    public function test_collection_iterates_in_order(): void
+    public function testCollectionIteratesInOrder(): void
     {
         $criteria = [
             new FilterCriterion('p1', '=', ['a']),
@@ -195,7 +196,7 @@ final class ModelTest extends TestCase
         self::assertSame(['p1', 'p2', 'p3'], $iterated);
     }
 
-    public function test_collection_is_empty_returns_true_for_no_criteria(): void
+    public function testCollectionIsEmptyReturnsTrueForNoCriteria(): void
     {
         $coll = new FilterCollection('s', []);
         self::assertTrue($coll->isEmpty());
@@ -206,7 +207,7 @@ final class ModelTest extends TestCase
     // FilterDefinition
     // -------------------------------------------------------------------
 
-    public function test_definition_new_factory_with_minimal_args(): void
+    public function testDefinitionNewFactoryWithMinimalArgs(): void
     {
         $d = FilterDefinition::new('datetime', 'createdAt');
 
@@ -218,7 +219,7 @@ final class ModelTest extends TestCase
         self::assertSame([], $d->datasourceSpec);
     }
 
-    public function test_definition_constructor_with_all_args(): void
+    public function testDefinitionConstructorWithAllArgs(): void
     {
         $d = new FilterDefinition(
             name: 'numeric',
@@ -235,28 +236,28 @@ final class ModelTest extends TestCase
         self::assertSame('p.price', $d->datasourceSpec['column']);
     }
 
-    public function test_definition_rejects_empty_name(): void
+    public function testDefinitionRejectsEmptyName(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new FilterDefinition('', 'p');
     }
 
-    public function test_definition_rejects_empty_property(): void
+    public function testDefinitionRejectsEmptyProperty(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         new FilterDefinition('name', '');
     }
 
-    public function test_definition_rejects_empty_string_group_but_accepts_null(): void
+    public function testDefinitionRejectsEmptyStringGroupButAcceptsNull(): void
     {
         $ok = FilterDefinition::new('n', 'p')->withGroup(null);
         self::assertNull($ok->group);
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         FilterDefinition::new('n', 'p')->withGroup('');
     }
 
-    public function test_definition_with_setters_return_new_instances(): void
+    public function testDefinitionWithSettersReturnNewInstances(): void
     {
         $base = FilterDefinition::new('text', 'name');
 

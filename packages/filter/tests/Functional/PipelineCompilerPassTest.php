@@ -27,7 +27,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class PipelineCompilerPassTest extends TestCase
 {
-    public function test_default_text_mapper_is_auto_tagged_and_indexed_by_name(): void
+    public function testDefaultTextMapperIsAutoTaggedAndIndexedByName(): void
     {
         $container = $this->buildContainer([
             TextMapper::class => TextMapper::class,
@@ -45,7 +45,7 @@ final class PipelineCompilerPassTest extends TestCase
         self::assertInstanceOf(NumericMapper::class, $registry->forName('numeric'));
     }
 
-    public function test_explicit_tag_name_attribute_takes_precedence_over_class_constant(): void
+    public function testExplicitTagNameAttributeTakesPrecedenceOverClassConstant(): void
     {
         $container = $this->makeBaseContainer();
         // Custom mapper class (no NAME constant) — declares its name via tag attribute.
@@ -63,7 +63,7 @@ final class PipelineCompilerPassTest extends TestCase
         self::assertContains('custom-name', $registry->getKnownNames());
     }
 
-    public function test_three_registries_are_public(): void
+    public function testThreeRegistriesArePublic(): void
     {
         $container = $this->buildContainer([]);
 

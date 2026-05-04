@@ -7,6 +7,7 @@ namespace Polysource\EasyAdminFilterBridge\Form\Type;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
@@ -42,7 +43,7 @@ final class EnhancedBooleanFilterType extends BooleanFilterType
         // When include_null is true, normalize the 'choices' default to
         // include the third option. This way the host app can also pass
         // a custom 'choices' map; we only auto-extend the upstream default.
-        $resolver->setNormalizer('choices', static function ($options, $value) {
+        $resolver->setNormalizer('choices', static function (Options $options, mixed $value): array {
             $choices = \is_array($value) ? $value : [
                 self::CHOICE_TRUE => true,
                 self::CHOICE_FALSE => false,

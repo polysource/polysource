@@ -57,7 +57,6 @@ final class PipelineCompilerPass implements CompilerPassInterface
             $definition = $container->getDefinition($serviceId);
             $class = $definition->getClass();
             if (\is_string($class) && \defined($class . '::NAME')) {
-                /** @var mixed $constant */
                 $constant = \constant($class . '::NAME');
                 if (\is_string($constant) && '' !== $constant) {
                     $names[$constant] = true;

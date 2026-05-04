@@ -33,7 +33,7 @@ final class BooleanFormatter implements FilterFormatterInterface
         $rendered = array_map(
             static fn (mixed $value): string => \is_scalar($value)
                 ? (string) $value
-                : (string) \json_encode($value),
+                : (string) json_encode($value),
             $criterion->values,
         );
 

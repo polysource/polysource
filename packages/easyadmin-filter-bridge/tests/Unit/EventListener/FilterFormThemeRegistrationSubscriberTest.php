@@ -11,6 +11,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Registry\AdminControllerRegistryIn
 use EasyCorp\Bundle\EasyAdminBundle\Dto\CrudDto;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
+use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -28,7 +30,7 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
 {
     private const FORM_THEME_PATH = '@PolysourceEasyAdminFilterBridge/form/polysource_filter_theme.html.twig';
 
-    public function test_subscribes_to_kernel_controller(): void
+    public function testSubscribesToKernelController(): void
     {
         $events = FilterFormThemeRegistrationSubscriber::getSubscribedEvents();
 
@@ -36,7 +38,7 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
         self::assertSame('onKernelController', $events[KernelEvents::CONTROLLER]);
     }
 
-    public function test_adds_form_theme_when_admin_context_is_present(): void
+    public function testAddsFormThemeWhenAdminContextIsPresent(): void
     {
         $crud = new CrudDto();
         $context = $this->makeAdminContextWithCrud($crud);
@@ -54,7 +56,7 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
         );
     }
 
-    public function test_no_op_when_no_admin_context(): void
+    public function testNoOpWhenNoAdminContext(): void
     {
         $provider = $this->createMock(AdminContextProviderInterface::class);
         $provider->method('getContext')->willReturn(null);
@@ -62,11 +64,11 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
         $subscriber = new FilterFormThemeRegistrationSubscriber($provider);
         $subscriber->onKernelController($this->makeControllerEvent());
 
-        // No exception, no side effect — implicit by reaching this line.
-        self::assertTrue(true);
+        // No exception, no side effect — guarded by `expectNotToPerformAssertions`.
+        $this->expectNotToPerformAssertions();
     }
 
-    public function test_no_op_when_admin_context_has_no_crud(): void
+    public function testNoOpWhenAdminContextHasNoCrud(): void
     {
         $crudContext = new CrudContext(
             crudDto: null,
@@ -82,9 +84,12 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
         $subscriber = new FilterFormThemeRegistrationSubscriber($provider);
         $subscriber->onKernelController($this->makeControllerEvent());
 
-        self::assertTrue(true);
+        $this->expectNotToPerformAssertions();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContextWithCrud(CrudDto $crud): AdminContext
     {
         $crudContext = CrudContext::forTesting(crudDto: $crud);
@@ -92,11 +97,14 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
         return $this->makeAdminContext($crudContext);
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(CrudContext $crudContext): AdminContext
     {
-        $context = (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        $context = (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
 
-        $reflection = new \ReflectionProperty(AdminContext::class, 'crudContext');
+        $reflection = new ReflectionProperty(AdminContext::class, 'crudContext');
         $reflection->setAccessible(true);
         $reflection->setValue($context, $crudContext);
 

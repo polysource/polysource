@@ -47,7 +47,7 @@ final class FilterTagsExtensionTest extends TestCase
         $this->twig->addExtension($this->extension);
     }
 
-    public function test_renders_one_chip_per_active_criterion(): void
+    public function testRendersOneChipPerActiveCriterion(): void
     {
         $collection = new FilterCollection('scope-1', [
             new FilterCriterion('name', 'like', ['hat']),
@@ -69,7 +69,7 @@ final class FilterTagsExtensionTest extends TestCase
         self::assertSame(2, substr_count($html, 'polysource-filter-chip-remove'));
     }
 
-    public function test_skips_chips_for_unknown_filter_names(): void
+    public function testSkipsChipsForUnknownFilterNames(): void
     {
         $collection = new FilterCollection('scope-1', [
             new FilterCriterion('name', 'like', ['hat']),
@@ -88,7 +88,7 @@ final class FilterTagsExtensionTest extends TestCase
         self::assertStringNotContainsString('data-property="mystery"', $html);
     }
 
-    public function test_renders_overflow_toggle_past_7_chips(): void
+    public function testRendersOverflowTogglePast7Chips(): void
     {
         $criteria = [];
         $definitions = [];
@@ -108,7 +108,7 @@ final class FilterTagsExtensionTest extends TestCase
         self::assertSame(9, $visibleCount, 'all 9 chips rendered (7 visible + 2 in overflow)');
     }
 
-    public function test_no_overflow_when_at_or_below_7_chips(): void
+    public function testNoOverflowWhenAtOrBelow7Chips(): void
     {
         $criteria = [];
         $definitions = [];
@@ -123,7 +123,7 @@ final class FilterTagsExtensionTest extends TestCase
         self::assertStringNotContainsString('overflow-toggle', $html);
     }
 
-    public function test_empty_collection_renders_empty_chips_bar(): void
+    public function testEmptyCollectionRendersEmptyChipsBar(): void
     {
         $collection = new FilterCollection('scope-1');
 

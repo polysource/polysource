@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Tests\Functional\Form;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\Filter\Form\Type\FilterCollectionType;
 use Polysource\Filter\Model\FilterCollection;
@@ -48,7 +49,7 @@ final class FilterCollectionTypeTest extends TestCase
         );
     }
 
-    public function test_pre_set_data_pre_fills_form_from_collection(): void
+    public function testPreSetDataPreFillsFormFromCollection(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
@@ -76,7 +77,7 @@ final class FilterCollectionTypeTest extends TestCase
         self::assertSame('Price', $priceView->vars['label']);
     }
 
-    public function test_post_submit_builds_collection_from_raw_data(): void
+    public function testPostSubmitBuildsCollectionFromRawData(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
@@ -102,7 +103,7 @@ final class FilterCollectionTypeTest extends TestCase
         self::assertSame('scope-1', $data->id);
     }
 
-    public function test_empty_submission_yields_empty_collection(): void
+    public function testEmptySubmissionYieldsEmptyCollection(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
@@ -120,7 +121,7 @@ final class FilterCollectionTypeTest extends TestCase
         self::assertTrue($data->isEmpty());
     }
 
-    public function test_view_exposes_groups_and_mode(): void
+    public function testViewExposesGroupsAndMode(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
@@ -146,7 +147,7 @@ final class FilterCollectionTypeTest extends TestCase
         self::assertCount(2, $groups['Pricing']);
     }
 
-    public function test_invalid_mode_is_rejected(): void
+    public function testInvalidModeIsRejected(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
@@ -158,14 +159,14 @@ final class FilterCollectionTypeTest extends TestCase
         ]);
     }
 
-    public function test_definitions_must_be_FilterDefinition_instances(): void
+    public function testDefinitionsMustBeFilterDefinitionInstances(): void
     {
         $factory = Forms::createFormFactoryBuilder()->addType($this->type)->getFormFactory();
 
         // Symfony OptionsResolver wraps normalizer-thrown exceptions
         // depending on version; accept either the wrapping
         // InvalidOptionsException or the raw InvalidArgumentException.
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $factory->create(FilterCollectionType::class, null, [
             'collection_id' => 'scope-1',
             'definitions' => ['not a FilterDefinition'],

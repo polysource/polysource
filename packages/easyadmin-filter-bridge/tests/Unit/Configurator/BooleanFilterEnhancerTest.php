@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\BooleanFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
+use ReflectionClass;
 
 /**
  * Mirrors {@see DateTimeFilterEnhancerTest} for the BooleanFilter case.
@@ -43,17 +44,23 @@ final class BooleanFilterEnhancerTest extends TestCase
         $this->dateTimeFilterDto->setFqcn('EasyCorp\\Bundle\\EasyAdminBundle\\Filter\\DateTimeFilter');
     }
 
+    /**
+     * @return EntityDto<object>
+     */
     private function makeEntityDto(): EntityDto
     {
-        return (new \ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(): AdminContext
     {
-        return (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
     }
 
-    public function test_supports_returns_true_for_boolean_filter(): void
+    public function testSupportsReturnsTrueForBooleanFilter(): void
     {
         self::assertTrue(
             $this->enhancer->supports(
@@ -65,7 +72,7 @@ final class BooleanFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_supports_returns_false_for_datetime_filter(): void
+    public function testSupportsReturnsFalseForDatetimeFilter(): void
     {
         self::assertFalse(
             $this->enhancer->supports(
@@ -78,7 +85,7 @@ final class BooleanFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_swaps_form_type_to_enhanced_one(): void
+    public function testConfigureSwapsFormTypeToEnhancedOne(): void
     {
         $this->enhancer->configure(
             $this->booleanFilterDto,
@@ -93,7 +100,7 @@ final class BooleanFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_preserves_upstream_options(): void
+    public function testConfigurePreservesUpstreamOptions(): void
     {
         $this->enhancer->configure(
             $this->booleanFilterDto,

@@ -18,8 +18,7 @@ declare(strict_types=1);
  * type, which manifests as an unstyled admin page even though the
  * CSS file is reachable.
  */
-
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path = parse_url($_SERVER['REQUEST_URI'], \PHP_URL_PATH);
 $file = __DIR__ . $path;
 
 if ('/' !== $path && file_exists($file) && !is_dir($file)) {

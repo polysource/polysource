@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\ChoiceFilterType;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\ChoiceFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
+use ReflectionClass;
 
 final class ChoiceFilterEnhancerTest extends TestCase
 {
@@ -33,34 +34,40 @@ final class ChoiceFilterEnhancerTest extends TestCase
         $this->unrelatedFilterDto->setFqcn('EasyCorp\\Bundle\\EasyAdminBundle\\Filter\\NumericFilter');
     }
 
+    /**
+     * @return EntityDto<object>
+     */
     private function makeEntityDto(): EntityDto
     {
-        return (new \ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(): AdminContext
     {
-        return (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
     }
 
-    public function test_supports_returns_true_for_choice_filter(): void
+    public function testSupportsReturnsTrueForChoiceFilter(): void
     {
         self::assertTrue($this->enhancer->supports($this->choiceFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()));
     }
 
-    public function test_supports_returns_false_for_unrelated_filter(): void
+    public function testSupportsReturnsFalseForUnrelatedFilter(): void
     {
         self::assertFalse($this->enhancer->supports($this->unrelatedFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext()));
     }
 
-    public function test_configure_swaps_form_type_to_enhanced_one(): void
+    public function testConfigureSwapsFormTypeToEnhancedOne(): void
     {
         $this->enhancer->configure($this->choiceFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 
         self::assertSame(EnhancedChoiceFilterType::class, $this->choiceFilterDto->getFormType());
     }
 
-    public function test_configure_preserves_upstream_options(): void
+    public function testConfigurePreservesUpstreamOptions(): void
     {
         $this->enhancer->configure($this->choiceFilterDto, null, $this->makeEntityDto(), $this->makeAdminContext());
 

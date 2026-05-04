@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Form\EventListener;
 
+use InvalidArgumentException;
 use Polysource\Filter\Model\FilterCollection;
-use Polysource\Filter\Model\FilterCriterion;
 use Polysource\Filter\Model\FilterDefinition;
 use Polysource\Filter\Pipeline\Registry\MapperRegistry;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Hydrates a `FilterCollectionType` form bidirectionally between the
@@ -119,7 +119,7 @@ final class FilterHydrator implements EventSubscriberInterface
             $mapper = $this->mappers->forName($definition->name);
             try {
                 $criterion = $mapper->fromRequest($definition->property, $slice);
-            } catch (\InvalidArgumentException) {
+            } catch (InvalidArgumentException) {
                 continue;
             }
             if ([] === $criterion->values) {

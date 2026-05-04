@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\DateTimeFilterType;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
+use ReflectionClass;
 
 /**
  * The PoC seam test.
@@ -59,17 +60,23 @@ final class DateTimeFilterEnhancerTest extends TestCase
      * reflection without calling the constructor, which satisfies the
      * typehints with minimal coupling to internal shape.
      */
+    /**
+     * @return EntityDto<object>
+     */
     private function makeEntityDto(): EntityDto
     {
-        return (new \ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(EntityDto::class))->newInstanceWithoutConstructor();
     }
 
+    /**
+     * @return AdminContext<object>
+     */
     private function makeAdminContext(): AdminContext
     {
-        return (new \ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
+        return (new ReflectionClass(AdminContext::class))->newInstanceWithoutConstructor();
     }
 
-    public function test_supports_returns_true_for_datetime_filter(): void
+    public function testSupportsReturnsTrueForDatetimeFilter(): void
     {
         $entityDto = $this->makeEntityDto();
         $context = $this->makeAdminContext();
@@ -80,7 +87,7 @@ final class DateTimeFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_supports_returns_false_for_unrelated_filter(): void
+    public function testSupportsReturnsFalseForUnrelatedFilter(): void
     {
         $entityDto = $this->makeEntityDto();
         $context = $this->makeAdminContext();
@@ -91,7 +98,7 @@ final class DateTimeFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_swaps_form_type_to_enhanced_one(): void
+    public function testConfigureSwapsFormTypeToEnhancedOne(): void
     {
         $entityDto = $this->makeEntityDto();
         $context = $this->makeAdminContext();
@@ -111,7 +118,7 @@ final class DateTimeFilterEnhancerTest extends TestCase
         );
     }
 
-    public function test_configure_preserves_upstream_options(): void
+    public function testConfigurePreservesUpstreamOptions(): void
     {
         $entityDto = $this->makeEntityDto();
         $context = $this->makeAdminContext();

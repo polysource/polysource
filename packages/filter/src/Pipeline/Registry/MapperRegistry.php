@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Filter\Pipeline\Registry;
 
 use Polysource\Filter\Pipeline\FilterMapperInterface;
+use RuntimeException;
 
 /**
  * O(1) lookup for `FilterMapperInterface` services by filter `name`.
@@ -40,10 +41,7 @@ final class MapperRegistry
     public function forName(string $name): FilterMapperInterface
     {
         if (!isset($this->byName[$name])) {
-            throw new \RuntimeException(\sprintf(
-                'No FilterMapperInterface service supports filter name "%s". Tag a service `polysource.filter.mapper` whose supports() returns true for this name.',
-                $name,
-            ));
+            throw new RuntimeException(\sprintf('No FilterMapperInterface service supports filter name "%s". Tag a service `polysource.filter.mapper` whose supports() returns true for this name.', $name));
         }
 
         return $this->byName[$name];

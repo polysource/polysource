@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\Model;
 
+use InvalidArgumentException;
+
 /**
  * One active filter on a property — `(property, operator, values)`.
  *
@@ -22,7 +24,7 @@ namespace Polysource\Filter\Model;
  * Mappers must convert their domain types to plain strings/numbers
  * before constructing a criterion (e.g. format dates as ISO 8601).
  *
- * @see \Polysource\Filter\Model\FilterCollection
+ * @see FilterCollection
  * @see \Polysource\Filter\Pipeline\FilterMapperInterface
  */
 final readonly class FilterCriterion
@@ -30,7 +32,7 @@ final readonly class FilterCriterion
     /**
      * @param string      $property The Resource property targeted (e.g. `createdAt`). Must be non-empty (validated at runtime).
      * @param string      $operator The applied operator (`=`, `>=`, `between`, `like`, `in`, …). Must be non-empty (validated at runtime).
-     * @param list<mixed> $values   Positional values consumed by the operator.
+     * @param list<mixed> $values   positional values consumed by the operator
      */
     public function __construct(
         public string $property,
@@ -38,20 +40,18 @@ final readonly class FilterCriterion
         public array $values = [],
     ) {
         if ('' === $property) {
-            throw new \InvalidArgumentException('Filter property cannot be empty.');
+            throw new InvalidArgumentException('Filter property cannot be empty.');
         }
 
         if ('' === $operator) {
-            throw new \InvalidArgumentException('Filter operator cannot be empty.');
+            throw new InvalidArgumentException('Filter operator cannot be empty.');
         }
 
         // Enforce list semantics — `array_is_list` rejects associative
         // arrays so `values` is always positional. Empty list is OK
         // (e.g. an "isNull" operator that takes no value).
         if (!array_is_list($values)) {
-            throw new \InvalidArgumentException(
-                \sprintf('Filter values must be a list (positional array), got an associative array for property "%s".', $property),
-            );
+            throw new InvalidArgumentException(\sprintf('Filter values must be a list (positional array), got an associative array for property "%s".', $property));
         }
     }
 

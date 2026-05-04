@@ -49,7 +49,8 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
      */
     public function prepend(ContainerBuilder $container): void
     {
-        if (!\in_array('TwigBundle', array_keys($container->getParameter('kernel.bundles')), true)) {
+        $bundles = $container->getParameter('kernel.bundles');
+        if (!\is_array($bundles) || !\in_array('TwigBundle', array_keys($bundles), true)) {
             return;
         }
 
@@ -60,10 +61,6 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         ]);
     }
 
-
-    /**
-     * @param array<int, array<string, mixed>> $configs
-     */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $container

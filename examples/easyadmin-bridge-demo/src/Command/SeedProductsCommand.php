@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Demo\EasyAdminBridge\Command;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Demo\EasyAdminBridge\Entity\Category;
 use Polysource\Demo\EasyAdminBridge\Entity\Product;
@@ -49,13 +50,13 @@ final class SeedProductsCommand extends Command
             if (\is_string($tags)) {
                 $tags = [$tags];
             }
-            $createdAt = (new \DateTimeImmutable())->modify(sprintf('-%d days', random_int(0, 90)));
+            $createdAt = (new DateTimeImmutable())->modify(\sprintf('-%d days', random_int(0, 90)));
             $archivedAt = Product::STATUS_ARCHIVED === $status
                 ? $createdAt->modify('+30 days')
                 : null;
 
             $product = (new Product())
-                ->setName(sprintf('Product #%02d', $i))
+                ->setName(\sprintf('Product #%02d', $i))
                 ->setDescription("Sample description for product $i — long enough to be searchable")
                 ->setPrice($price)
                 ->setStock($stock)

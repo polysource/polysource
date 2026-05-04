@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\ComparisonFilterType;
+use InvalidArgumentException;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\Options;
@@ -47,9 +48,7 @@ final class EnhancedComparisonFilterType extends ComparisonFilterType
         $resolver->setNormalizer('comparisons', static function (Options $options, array $value): array {
             foreach ($value as $i => $comparison) {
                 if (!\is_string($comparison)) {
-                    throw new \InvalidArgumentException(
-                        \sprintf('comparisons[%d] must be a string operator (e.g. "=", "!="), got %s.', $i, get_debug_type($comparison)),
-                    );
+                    throw new InvalidArgumentException(\sprintf('comparisons[%d] must be a string operator (e.g. "=", "!="), got %s.', $i, get_debug_type($comparison)));
                 }
             }
 
@@ -60,7 +59,8 @@ final class EnhancedComparisonFilterType extends ComparisonFilterType
         // into the inner ComparisonType — Symfony's ChoiceType drops
         // any option whose value the filter rejects.
         $resolver->setNormalizer('comparison_type_options', static function (Options $options, array $value): array {
-            $whitelist = $options['comparisons'];
+            /** @var list<string> $whitelist */
+            $whitelist = \is_array($options['comparisons']) ? $options['comparisons'] : [];
             if ([] === $whitelist) {
                 return $value;
             }

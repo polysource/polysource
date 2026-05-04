@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Filter\Pipeline\Registry;
 
 use Polysource\Filter\Pipeline\FilterRendererInterface;
+use RuntimeException;
 
 /**
  * O(1) lookup for `FilterRendererInterface` services by filter `name`.
@@ -36,10 +37,7 @@ final class RendererRegistry
     public function forName(string $name): FilterRendererInterface
     {
         if (!isset($this->byName[$name])) {
-            throw new \RuntimeException(\sprintf(
-                'No FilterRendererInterface service supports filter name "%s".',
-                $name,
-            ));
+            throw new RuntimeException(\sprintf('No FilterRendererInterface service supports filter name "%s".', $name));
         }
 
         return $this->byName[$name];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Form\Type;
 
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\NumericFilterType;
+use InvalidArgumentException;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -45,9 +46,7 @@ final class EnhancedNumericFilterType extends NumericFilterType
         $resolver->setNormalizer('quick_ranges', static function ($options, array $value): array {
             foreach ($value as $i => $range) {
                 if (!\is_array($range) || !\array_key_exists('label', $range)) {
-                    throw new \InvalidArgumentException(
-                        \sprintf('quick_ranges[%d] must be an array with at least a "label" key.', $i),
-                    );
+                    throw new InvalidArgumentException(\sprintf('quick_ranges[%d] must be an array with at least a "label" key.', $i));
                 }
             }
 
