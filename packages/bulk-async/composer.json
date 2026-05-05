@@ -1,0 +1,54 @@
+{
+    "name": "polysource/bulk-async",
+    "description": "Polysource — async bulk actions via Symfony Messenger + live progress via Mercure SSE.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "polysource",
+        "async",
+        "bulk",
+        "messenger",
+        "mercure",
+        "symfony"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": ">=8.1",
+        "polysource/core": "0.1.x-dev",
+        "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/messenger": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "doctrine/dbal": "^3.6 || ^4.0",
+        "doctrine/orm": "^2.20 || ^3.0",
+        "phpunit/phpunit": "^10.5 || ^11.5",
+        "polysource/symfony-bundle": "0.1.x-dev",
+        "symfony/mercure": "^0.6 || ^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\BulkAsync\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Polysource\\BulkAsync\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
