@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Doctrine\ORM\EntityManagerInterface;
+use Polysource\Audit\Action\ExportAuditCsvAction;
 use Polysource\Audit\DataSource\AuditLogDataSource;
 use Polysource\Audit\EventListener\ActionAuditSubscriber;
+use Polysource\Audit\Export\AuditCsvExporter;
 use Polysource\Audit\Logger\AggregateAuditLogger;
 use Polysource\Audit\Logger\AuditLoggerInterface;
 use Polysource\Audit\Logger\DoctrineAuditLogger;
@@ -53,6 +55,17 @@ return static function (ContainerConfigurator $container): void {
         $services->set(AuditLogResource::class)
             ->arg('$dataSource', service(AuditLogDataSource::class))
             ->arg('$actions', tagged_iterator('polysource.audit.action'));
+
+        /* CSV export action — GDPR Art. 30 register extraction.
+           Default export directory is `%kernel.cache_dir%/polysource-audit-export`;
+           hosts override via a parameter or by re-defining the service. */
+        $services->set(AuditCsvExporter::class);
+
+        $services->set(ExportAuditCsvAction::class)
+            ->arg('$em', service(EntityManagerInterface::class))
+            ->arg('$exporter', service(AuditCsvExporter::class))
+            ->arg('$exportDirectory', '%kernel.cache_dir%/polysource-audit-export')
+            ->tag('polysource.audit.action');
     } else {
         $services->set(NullAuditLogger::class)
             ->tag('polysource.audit_logger');
