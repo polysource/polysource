@@ -1,0 +1,27 @@
+{# polysource/workflow-bridge — single state chip.
+
+   Renders one Bootstrap badge representing a record's current
+   workflow place. Hosts include it from their resource detail /
+   index templates:
+
+       {{ include('@PolysourceWorkflowBridge/_state_chip.html.twig', {
+           workflow: 'order',
+           state: record.properties.state,
+       }) }}
+
+   Hosts that want a different look (custom CSS, no Bootstrap)
+   ship `templates/bundles/PolysourceWorkflowBridgeBundle/_state_chip.html.twig`
+   to override at the app level — same Symfony override convention
+   as the EA bridge's _chip.html.twig.
+
+   Inputs:
+   - workflow (string|null) — workflow name, used to pick the palette
+   - state    (string)      — current place name (e.g. "draft", "paid")
+#}
+{%- set palette = polysource_workflow_chip_palette(workflow, state) -%}
+{%- set label = polysource_workflow_state_label(state)|trans({}, 'PolysourceWorkflowBridge') -%}
+<span class="badge text-bg-{{ palette }} polysource-workflow-chip"
+      data-workflow="{{ workflow }}"
+      data-state="{{ state }}">
+    {{- label -}}
+</span>
