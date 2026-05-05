@@ -32,8 +32,9 @@
             </li>
         {%- else -%}
             {%- for view in views -%}
-                <li>
-                    <a class="dropdown-item polysource-saved-views__item
+                {%- set is_owner = app.user is defined and app.user is not null and app.user.userIdentifier == view.ownerId -%}
+                <li class="d-flex align-items-center polysource-saved-views__row">
+                    <a class="dropdown-item polysource-saved-views__item flex-grow-1
                               {{ current is not null and current.id == view.id ? 'active' : '' }}"
                        href="?view={{ view.id|url_encode }}"
                        data-view-id="{{ view.id }}">
@@ -51,6 +52,24 @@
                             </small>
                         {%- endif -%}
                     </a>
+                    {# Delete trigger — only owners can delete (the voter
+                       enforces it server-side too). The form POSTs to
+                       polysource_saved_view_delete; route is host-defined
+                       (the demo wires it via SavedViewController). The
+                       form is a sibling of the apply-link, not nested in
+                       it (a <form> inside an <a> is invalid HTML). #}
+                    {%- if is_owner -%}
+                        <form method="post"
+                              action="{{ path('polysource_saved_view_delete', {id: view.id}) }}"
+                              class="polysource-saved-views__delete-form me-2"
+                              onsubmit="return confirm({{ 'polysource.saved_views.delete.confirm'|trans({'%name%': view.name}, 'PolysourceFilter')|json_encode }});">
+                            <button type="submit"
+                                    class="btn btn-sm btn-link text-danger polysource-saved-views__delete"
+                                    aria-label="{{ 'polysource.saved_views.delete.label'|trans({'%name%': view.name}, 'PolysourceFilter') }}">
+                                ×
+                            </button>
+                        </form>
+                    {%- endif -%}
                 </li>
             {%- endfor -%}
         {%- endif -%}

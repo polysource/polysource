@@ -32,3 +32,7 @@ polysource:
             scope: 'Visibility'
             cancel: 'Cancel'
             save: 'Save view'
+
+        delete:
+            label: 'Delete saved view "%name%"'
+            confirm: 'Delete the saved view "%name%"? This cannot be undone.'

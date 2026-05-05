@@ -1,9 +1,16 @@
 {# Chips bar — one chip per active FilterCriterion.
 
-   Click X removes the criterion (Stimulus handler:
-   `polysource--filter-chips#removeChip`). When more than 7 chips are
-   active, the rest are collapsed under a "+N more" toggle (Stimulus
-   handler `expandOverflow`).
+   The X is a regular <a href> linking to the same path with the
+   given filter property dropped from the query. Works without
+   JavaScript — the form server-renders the new state on the next
+   request. Hosts that have the `polysource--filter-chips` Stimulus
+   controller wired get progressive enhancement (intercept the
+   click, no full page reload, update the chips bar in place); the
+   data-* attributes are still emitted for that.
+
+   When more than 7 chips are active, the rest are collapsed under
+   a "+N more" toggle (Stimulus `expandOverflow`); without JS the
+   overflow is just visible-from-the-start.
 
    Vars exposed by FilterTagsExtension::renderTags():
    - chips:         list<{criterion, definition, label}>
@@ -14,20 +21,33 @@
 {%- set visible_chips = chips|slice(0, max_visible) -%}
 {%- set overflow_chips = chips|slice(max_visible) -%}
 
+{# Build the current GET state so the "remove" links can drop the
+   right property and keep everything else (page, sort, view-id, …)
+   intact. #}
+{%- set current_query = app.request is defined ? app.request.query.all : {} -%}
+{%- set current_path = app.request is defined ? app.request.pathInfo : '/' -%}
+
 <div class="polysource-filter-chips d-flex flex-wrap gap-1"
      data-controller="polysource--filter-chips"
      data-polysource--filter-chips-collection-id-value="{{ collection_id }}">
 
     {%- for chip in visible_chips -%}
+        {%- set filter_query = current_query.filter|default({}) -%}
+        {%- set new_filter = filter_query|filter((_, property) => property != chip.criterion.property) -%}
+        {%- set new_query = current_query|merge({filter: new_filter}) -%}
+        {%- if new_filter|length == 0 -%}
+            {%- set new_query = new_query|filter((_, key) => key != 'filter') -%}
+        {%- endif -%}
+        {%- set remove_url = current_path ~ (new_query|length > 0 ? '?' ~ new_query|url_encode : '') -%}
         <span class="badge text-bg-secondary polysource-filter-chip d-inline-flex align-items-center gap-1"
               data-polysource--filter-chips-target="chip"
               data-property="{{ chip.criterion.property }}">
             <span class="polysource-filter-chip-label">{{ chip.label }}</span>
-            <button type="button"
-                    class="btn-close btn-close-white polysource-filter-chip-remove"
-                    aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
-                    data-action="polysource--filter-chips#removeChip"
-                    data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></button>
+            <a href="{{ remove_url }}"
+               class="btn-close btn-close-white polysource-filter-chip-remove"
+               aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
+               data-action="polysource--filter-chips#removeChip"
+               data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></a>
         </span>
     {%- endfor -%}
 
@@ -38,18 +58,25 @@
                 data-polysource--filter-chips-target="overflowToggle">
             {{ 'polysource.filter.chips.more'|trans({'%count%': overflow_chips|length}, 'PolysourceFilter') }}
         </button>
-        <span class="polysource-filter-chips-overflow d-none d-flex flex-wrap gap-1"
+        <span class="polysource-filter-chips-overflow d-flex flex-wrap gap-1"
               data-polysource--filter-chips-target="overflow">
             {%- for chip in overflow_chips -%}
+                {%- set filter_query = current_query.filter|default({}) -%}
+                {%- set new_filter = filter_query|filter((_, property) => property != chip.criterion.property) -%}
+                {%- set new_query = current_query|merge({filter: new_filter}) -%}
+                {%- if new_filter|length == 0 -%}
+                    {%- set new_query = new_query|filter((_, key) => key != 'filter') -%}
+                {%- endif -%}
+                {%- set remove_url = current_path ~ (new_query|length > 0 ? '?' ~ new_query|url_encode : '') -%}
                 <span class="badge text-bg-secondary polysource-filter-chip d-inline-flex align-items-center gap-1"
                       data-polysource--filter-chips-target="chip"
                       data-property="{{ chip.criterion.property }}">
                     <span class="polysource-filter-chip-label">{{ chip.label }}</span>
-                    <button type="button"
-                            class="btn-close btn-close-white polysource-filter-chip-remove"
-                            aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
-                            data-action="polysource--filter-chips#removeChip"
-                            data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></button>
+                    <a href="{{ remove_url }}"
+                       class="btn-close btn-close-white polysource-filter-chip-remove"
+                       aria-label="{{ 'polysource.filter.chip.remove'|trans({}, 'PolysourceFilter') }}"
+                       data-action="polysource--filter-chips#removeChip"
+                       data-polysource--filter-chips-property-param="{{ chip.criterion.property }}"></a>
                 </span>
             {%- endfor -%}
         </span>

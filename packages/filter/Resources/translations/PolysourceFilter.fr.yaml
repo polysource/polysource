@@ -32,3 +32,7 @@ polysource:
             scope: 'Visibilité'
             cancel: 'Annuler'
             save: 'Sauvegarder'
+
+        delete:
+            label: 'Supprimer la vue "%name%"'
+            confirm: 'Supprimer la vue "%name%" ? Action irréversible.'
