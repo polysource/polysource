@@ -1,0 +1,49 @@
+{
+    "name": "polysource/adapter-http",
+    "description": "Polysource — HTTP REST API adapter: list, browse, write external API resources through the admin (with cursor or page-based pagination strategies).",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "polysource",
+        "http",
+        "rest",
+        "api",
+        "adapter",
+        "symfony"
+    ],
+    "homepage": "https://github.com/polysource/polysource",
+    "support": {
+        "issues": "https://github.com/polysource/polysource/issues",
+        "source": "https://github.com/polysource/polysource"
+    },
+    "require": {
+        "php": ">=8.1",
+        "polysource/core": "0.1.x-dev",
+        "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/http-client": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5 || ^11.5",
+        "polysource/symfony-bundle": "0.1.x-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Adapter\\Http\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Polysource\\Adapter\\Http\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}

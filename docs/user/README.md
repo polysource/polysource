@@ -20,6 +20,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Admin a Doctrine entity (cohabitation case) | [adapters/doctrine.md](./adapters/doctrine.md) |
 | Admin Redis hash collections (feature flags, config) | [adapters/redis.md](./adapters/redis.md) |
 | Admin files on S3 / local / Azure / GCS via Flysystem | [adapters/flysystem.md](./adapters/flysystem.md) |
+| Admin external REST APIs (Stripe, GitHub, internal microservices) | [adapters/http.md](./adapters/http.md) |
 | Add a GDPR Art. 30 / HIPAA audit trail | [audit/](./audit/) |
 | Wire Symfony Workflow into your admin (auto transitions + state chip) | [workflow-bridge/](./workflow-bridge/) |
 | Compose admin dashboards with KPI / list / chart widgets | [widgets/](./widgets/) |
