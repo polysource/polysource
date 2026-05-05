@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle;
 
+use Polysource\Bundle\DependencyInjection\Compiler\PluginCompilerPass;
 use Polysource\Bundle\DependencyInjection\PolysourceExtension;
+use Polysource\Core\Plugin\AdminPluginInterface;
+use Polysource\Core\Plugin\Attribute\AsPlugin;
+use Polysource\Core\Plugin\HasPluginMetadata;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -13,9 +18,21 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  *
  * Auto-registered via Symfony Flex thanks to the `symfony-bundle` composer type.
  * Users may also register it manually in `config/bundles.php`.
+ *
+ * Implements {@see AdminPluginInterface} per ADR-018 — every Polysource
+ * package that ships as a Symfony bundle is itself a plugin.
  */
-final class PolysourceBundle extends Bundle
+#[AsPlugin(name: 'polysource/symfony-bundle', version: '0.1.0-alpha.1')]
+final class PolysourceBundle extends Bundle implements AdminPluginInterface
 {
+    use HasPluginMetadata;
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+        $container->addCompilerPass(new PluginCompilerPass());
+    }
+
     public function getContainerExtension(): ExtensionInterface
     {
         if (!$this->extension instanceof ExtensionInterface) {

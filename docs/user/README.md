@@ -35,7 +35,8 @@ docs/user/
 │   ├── data-source.md         ← read/write contracts (3 + 3 methods)
 │   ├── field.md               ← how columns get rendered
 │   ├── action.md              ← inline / bulk / global actions
-│   └── permission.md          ← Symfony Security integration
+│   ├── permission.md          ← Symfony Security integration
+│   └── plugin.md              ← AdminPluginInterface + #[AsPlugin] (ADR-018)
 ├── adapters/
 │   └── messenger.md           ← reference for polysource/adapter-messenger
 ├── filter/                    ← standalone polysource/filter primitive

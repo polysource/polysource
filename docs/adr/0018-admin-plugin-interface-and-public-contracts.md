@@ -69,36 +69,32 @@ Un plugin est, runtime-side, un bundle Symfony qui implémente
 fournies par les services tagged, pas par le plugin lui-même.
 
 ```php
-namespace Polysource\Plugin;
+namespace Polysource\Core\Plugin;
 
 interface AdminPluginInterface
 {
     /**
-     * Globally-unique plugin identifier.
+     * Globally-unique plugin identifier (Composer package name).
      *
-     * Convention: matches the Composer package name (e.g.
-     * "polysource/adapter-messenger", "acme/admin-comments").
+     * Method named `getPluginName()` rather than `getName()` because
+     * `Symfony\Component\HttpKernel\Bundle\Bundle::getName()` is final
+     * (returns the bundle's PHP class basename — different concept).
      */
-    public function getName(): string;
+    public function getPluginName(): string;
 
     /**
      * Plugin version (semver string, e.g. "0.1.0", "1.2.3-beta.1").
-     *
-     * Convention: matches the Composer package version. Derive
-     * via Composer's InstalledVersions when possible.
      */
-    public function getVersion(): string;
-
-    /**
-     * Optional bootstrap hook called once at container compilation.
-     * Default: no-op.
-     */
-    public function boot(): void;
+    public function getPluginVersion(): string;
 }
 ```
 
-Three methods, no return-type complexity. Adds no PHP-extension dep, no
-external requirements.
+Two methods, no return-type complexity. No PHP-extension dep, no external
+requirement. **Bootstrap lifecycle** is handled by Symfony's existing
+`Bundle::boot()` hook — duplicating it on the plugin interface created a
+trait-vs-final-method conflict (Symfony's `Bundle::boot()` collides with
+a trait-defined `boot()`) and added no value over the existing bundle
+lifecycle. Plugins that need init logic override `Bundle::boot()` directly.
 
 ### 3. `#[AsPlugin]` attribute pour la DX
 

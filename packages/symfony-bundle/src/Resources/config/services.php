@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use Polysource\Bundle\ArgumentResolver\AdminContextResolver;
+use Polysource\Bundle\Command\PluginListCommand;
 use Polysource\Bundle\Context\AdminContextProvider;
 use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
 use Polysource\Bundle\EventListener\PolysourceViewListener;
+use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
@@ -123,5 +125,23 @@ return static function (ContainerConfigurator $container): void {
             service(LoggerInterface::class)->nullOnInvalid(),
         ])
         ->tag('kernel.event_subscriber')
+    ;
+
+    // ─── Plugin discovery (ADR-018) ────────────────────────────────
+    // PluginRegistry is patched at compile time by PluginCompilerPass
+    // which collects every service tagged `polysource.plugin` (and
+    // auto-tags any service whose class implements AdminPluginInterface).
+    // Public so a command / debug tooling can pull it from the
+    // container.
+    $services
+        ->set(PluginRegistry::class)
+        ->args([tagged_iterator('polysource.plugin')])
+        ->public()
+    ;
+
+    $services
+        ->set(PluginListCommand::class)
+        ->args([service(PluginRegistry::class)])
+        ->tag('console.command')
     ;
 };

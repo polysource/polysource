@@ -5,14 +5,23 @@ declare(strict_types=1);
 namespace Polysource\Adapter\Messenger;
 
 use Polysource\Adapter\Messenger\DependencyInjection\PolysourceMessengerExtension;
+use Polysource\Core\Plugin\AdminPluginInterface;
+use Polysource\Core\Plugin\Attribute\AsPlugin;
+use Polysource\Core\Plugin\HasPluginMetadata;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
  * Symfony bundle for the Polysource Messenger adapter.
+ *
+ * Implements {@see AdminPluginInterface} per ADR-018 — discoverable via
+ * `polysource:plugins:list`.
  */
-final class PolysourceMessengerBundle extends Bundle
+#[AsPlugin(name: 'polysource/adapter-messenger', version: '0.1.0-alpha.1')]
+final class PolysourceMessengerBundle extends Bundle implements AdminPluginInterface
 {
+    use HasPluginMetadata;
+
     public function getContainerExtension(): ExtensionInterface
     {
         if (!$this->extension instanceof ExtensionInterface) {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge;
 
+use Polysource\Core\Plugin\AdminPluginInterface;
+use Polysource\Core\Plugin\Attribute\AsPlugin;
+use Polysource\Core\Plugin\HasPluginMetadata;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\PolysourceEasyAdminFilterBridgeExtension;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -18,9 +21,15 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * `FilterFactory` consumes to mutate filter DTOs (formType, formTypeOptions)
  * after the built-in filter classes have produced them. No EasyAdmin code
  * is modified — see ADR-012.
+ *
+ * Implements {@see AdminPluginInterface} per ADR-018 — discoverable
+ * via `polysource:plugins:list`.
  */
-final class PolysourceEasyAdminFilterBridgeBundle extends Bundle
+#[AsPlugin(name: 'polysource/easyadmin-filter-bridge', version: '0.1.0-alpha.1')]
+final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements AdminPluginInterface
 {
+    use HasPluginMetadata;
+
     public function getContainerExtension(): ExtensionInterface
     {
         if (!$this->extension instanceof ExtensionInterface) {
