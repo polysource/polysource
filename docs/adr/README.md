@@ -25,6 +25,7 @@
 | [ADR-015](./0015-multi-version-compatibility-baseline.md) | Multi-version baseline PHP 8.1+ / Symfony 5.4+ / EA 4.24+ | Accepté |
 | [ADR-016](./0016-bridge-contracts-shared-with-polysource-filter.md) | `ChipFormatterInterface` dans le tronc commun | Accepté |
 | [ADR-017](./0017-cherry-picking-from-filament-study.md) | Cherry-picking depuis l'étude Filament-for-Symfony | Accepté |
+| [ADR-018](./0018-admin-plugin-interface-and-public-contracts.md) | `AdminPluginInterface` + versioning des contrats publics | Accepté |
 
 ## Convention
 
