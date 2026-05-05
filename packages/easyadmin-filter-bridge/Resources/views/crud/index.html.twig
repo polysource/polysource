@@ -112,6 +112,10 @@
             color: var(--bs-secondary-color, #6c757d);
             cursor: pointer;
             transition: background 0.15s, color 0.15s;
+            /* Reset <a> defaults — the X is now an anchor so the
+               server-driven fallback works on EA 4 + Sf 5.4 stacks
+               that can't load the Stimulus controller. */
+            text-decoration: none;
         }
         .ea-filter-chip__remove:hover,
         .ea-filter-chip__remove:focus {

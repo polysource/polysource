@@ -18,7 +18,28 @@
    Visual contract: produces ONE element of the chips bar. Hosts
    wanting structural changes (chip groups, different markup) override
    `_chips_bar.html.twig` instead.
+
+   Remove behaviour: the X is an `<a href>` server-driven link that
+   drops the chip's `filters[<property>]` slice from the current
+   request URL. Works without JavaScript on every host (matters for
+   EA 4 + Sf 5.4 stacks where AssetMapper isn't installed and the
+   Stimulus controller can't load). The Stimulus `data-*` attributes
+   stay in place for hosts that DO have the controller wired —
+   they get progressive enhancement (intercept the click, update the
+   chips bar in-place, no full page reload).
 #}
+{# Build the "remove this filter" URL by dropping the chip's property
+   from the EA-shape filters slice (`?filters[X][value]=…`). The
+   `filters` key itself is removed when the slice becomes empty so
+   users land on a clean URL after removing the last chip. #}
+{%- set _query = app.request.query.all -%}
+{%- set _path = app.request.pathInfo -%}
+{%- set _new_filters = _query.filters|default({})|filter((_, p) => p != property) -%}
+{%- set _new_query = _query|merge({filters: _new_filters}) -%}
+{%- if _new_filters|length == 0 -%}
+    {%- set _new_query = _new_query|filter((_, key) => key != 'filters') -%}
+{%- endif -%}
+{%- set _remove_url = _path ~ (_new_query|length > 0 ? '?' ~ _new_query|url_encode : '') -%}
 <span class="ea-filter-chip"
       data-polysource--filter-chips-target="chip"
       data-property="{{ property }}">
@@ -43,13 +64,13 @@
             {{ polysource_chip_value(property, value) }}
         {%- endif -%}
     </span>
-    <button type="button"
-            class="ea-filter-chip__remove"
-            aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
-            data-action="click->polysource--filter-chips#removeChip"
-            data-polysource--filter-chips-property-param="{{ property }}">
+    <a href="{{ _remove_url }}"
+       class="ea-filter-chip__remove"
+       aria-label="{{ 'polysource.filter.chips.remove'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-action="click->polysource--filter-chips#removeChip"
+       data-polysource--filter-chips-property-param="{{ property }}">
         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
             <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-    </button>
+    </a>
 </span>
