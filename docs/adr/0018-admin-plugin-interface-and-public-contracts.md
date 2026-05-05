@@ -158,13 +158,13 @@ définit son propre contrat dans son propre ADR. Le pattern est uniforme :
 
 | Capability | Tag DI | Interface contributeur | ADR |
 |---|---|---|---|
-| Saved views | `polysource.saved_view_scope` | `SavedViewScopeInterface` | ADR-020 (Phase 11) |
-| Widgets | `polysource.widget` | `WidgetInterface` | ADR-021 (Phase 12) |
-| Bulk actions | `polysource.bulk_action` | `BulkActionInterface` | ADR-022 (Phase 13) |
-| Workflow | `polysource.workflow_resource` | `WorkflowAwareResource` | ADR-023 (Phase 14) |
-| Search providers | `polysource.search_provider` | `SearchProviderInterface` | ADR-024 (Phase 15) |
-| Cmd palette commands | `polysource.command` | `PaletteCommandInterface` | ADR-024 (Phase 15) |
-| Audit handlers | `polysource.audit_handler` | `AuditHandlerInterface` | ADR-025 (Phase 16) |
+| Saved views | `polysource.saved_view_scope` | `SavedViewScopeInterface` | [ADR-019](./0019-saved-views-architecture.md) (Phase 11) |
+| Widgets | `polysource.widget` | `WidgetInterface` | ADR-020 (Phase 12) |
+| Bulk actions | `polysource.bulk_action` | `BulkActionInterface` | ADR-021 (Phase 13) |
+| Workflow | `polysource.workflow_resource` | `WorkflowAwareResource` | ADR-022 (Phase 14) |
+| Search providers | `polysource.search_provider` | `SearchProviderInterface` | ADR-023 (Phase 15) |
+| Cmd palette commands | `polysource.command` | `PaletteCommandInterface` | ADR-023 (Phase 15) |
+| Audit handlers | `polysource.audit_handler` | `AuditHandlerInterface` | ADR-024 (Phase 16) |
 
 Cette ADR-018 ne spécifie aucune de ces interfaces — elle pose le pattern.
 Chaque ADR de capability suit le même format (interface + tag + registry +

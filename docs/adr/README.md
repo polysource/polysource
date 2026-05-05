@@ -26,6 +26,7 @@
 | [ADR-016](./0016-bridge-contracts-shared-with-polysource-filter.md) | `ChipFormatterInterface` dans le tronc commun | Accepté |
 | [ADR-017](./0017-cherry-picking-from-filament-study.md) | Cherry-picking depuis l'étude Filament-for-Symfony | Accepté |
 | [ADR-018](./0018-admin-plugin-interface-and-public-contracts.md) | `AdminPluginInterface` + versioning des contrats publics | Accepté |
+| [ADR-019](./0019-saved-views-architecture.md) | Architecture des saved views (Phase 11) | Accepté |
 
 ## Convention
 

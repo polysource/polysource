@@ -175,11 +175,14 @@ filtre une fois pour toutes.
 
 1. Cette ADR-017 (signée, ce commit).
 2. Avant Phase 10 : ADR-018 spécifie `AdminPluginInterface` + lifecycle +
-   versioning des contrats publics.
-3. Phase 10-15 enchaînent dans l'ordre §4 ci-dessus.
-4. Avant Phase 16 : ADR-019 spécifie la couche audit non-Doctrine (storage,
-   model, intégration voters).
-5. À mi-parcours (~Phase 13), refléter ADR-017 dans la roadmap publique +
+   versioning des contrats publics. **Acté.**
+3. Avant Phase 11 : [ADR-019](./0019-saved-views-architecture.md) spécifie
+   l'architecture des saved views. **Acté.**
+4. Phase 10-15 enchaînent dans l'ordre §4 ci-dessus. ADR-020-024 à acter
+   au début de chaque phase suivante.
+5. Avant Phase 16 : ADR-024 spécifie la couche audit non-Doctrine
+   (storage, model, intégration voters).
+6. À mi-parcours (~Phase 13), refléter ADR-017 dans la roadmap publique +
    `whats-new.md` du bridge pour informer l'audience que la direction est
    verrouillée.
 
