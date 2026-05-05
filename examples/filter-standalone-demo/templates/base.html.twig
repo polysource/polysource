@@ -15,6 +15,12 @@
     </style>
 </head>
 <body>
+    {% if app.user %}
+        <div class="d-flex justify-content-end mb-2">
+            <span class="text-muted me-2">Signed in as <strong>{{ app.user.userIdentifier }}</strong></span>
+            <a href="{{ path('logout') }}" class="btn btn-sm btn-outline-secondary">Sign out</a>
+        </div>
+    {% endif %}
     {% block body %}{% endblock %}
     <hr style="margin-top: 4rem;">
     <p class="stack text-center">

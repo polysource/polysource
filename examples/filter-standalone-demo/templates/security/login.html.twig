@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign in — polysource/filter standalone demo{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <h1 class="mb-3">Sign in</h1>
+            <p class="lead">
+                Two demo accounts are seeded — both have the password
+                equal to the username.
+            </p>
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ path('login') }}" class="mb-4">
+                <div class="mb-3">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="_username"
+                           value="{{ last_username }}"
+                           class="form-control" autofocus required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="_password"
+                           class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Sign in</button>
+            </form>
+
+            <div class="card bg-light">
+                <div class="card-body small">
+                    <strong>Demo credentials</strong>
+                    <ul class="mb-0">
+                        <li><code>alice</code> / <code>alice</code> — owner of seed views</li>
+                        <li><code>bob</code> / <code>bob</code> — second user, sees only public views</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

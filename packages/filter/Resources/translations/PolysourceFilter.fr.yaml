@@ -1,0 +1,34 @@
+polysource:
+    filter:
+        open: 'Filtres'
+        cancel: 'Annuler'
+        apply: 'Appliquer'
+
+        modal:
+            title: 'Filtres'
+
+        chip:
+            remove: 'Retirer ce filtre'
+
+        chips:
+            more: '+%count% de plus'
+
+    saved_views:
+        dropdown:
+            label: 'Vues sauvegardées'
+            empty: 'Aucune vue sauvegardée'
+            save_current: 'Sauvegarder la vue actuelle…'
+            clear: 'Effacer la vue actuelle'
+
+        scope:
+            private: 'Privée'
+            team: 'Équipe'
+            public: 'Publique'
+
+        modal:
+            title: 'Sauvegarder la vue actuelle'
+            close: 'Fermer'
+            name: 'Nom de la vue'
+            scope: 'Visibilité'
+            cancel: 'Annuler'
+            save: 'Sauvegarder'

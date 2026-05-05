@@ -12,3 +12,23 @@ polysource:
 
         chips:
             more: '+%count% more'
+
+    saved_views:
+        dropdown:
+            label: 'Saved views'
+            empty: 'No saved views yet'
+            save_current: 'Save current as view…'
+            clear: 'Clear current view'
+
+        scope:
+            private: 'Private'
+            team: 'Team'
+            public: 'Public'
+
+        modal:
+            title: 'Save current view'
+            close: 'Close'
+            name: 'View name'
+            scope: 'Visibility'
+            cancel: 'Cancel'
+            save: 'Save view'

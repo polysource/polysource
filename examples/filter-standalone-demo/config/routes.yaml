@@ -8,3 +8,11 @@ products:
 saved_views:
     resource: ../src/Controller/SavedViewController.php
     type: attribute
+
+# Login / logout — picked up via #[Route] attributes on the
+# SecurityController class. /logout is intercepted by the firewall
+# before the controller, but the route declaration is needed so
+# Twig's path('logout') resolves.
+security:
+    resource: ../src/Controller/SecurityController.php
+    type: attribute

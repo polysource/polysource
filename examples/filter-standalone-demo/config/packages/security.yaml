@@ -21,5 +21,14 @@ security:
         main:
             lazy: true
             provider: in_memory
-            http_basic:
-                realm: 'Polysource standalone filter demo (alice / alice)'
+            form_login:
+                login_path: login
+                check_path: login
+                default_target_path: products
+            logout:
+                path: logout
+                target: login
+
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: ROLE_USER }
