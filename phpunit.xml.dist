@@ -23,6 +23,7 @@
             <directory>packages/symfony-bundle/tests/Unit</directory>
             <directory>packages/adapter-doctrine/tests/Unit</directory>
             <directory>packages/adapter-messenger/tests/Unit</directory>
+            <directory>packages/adapter-redis/tests/Unit</directory>
             <directory>packages/audit/tests/Unit</directory>
             <directory>packages/bulk-async/tests/Unit</directory>
             <directory>packages/easyadmin-filter-bridge/tests/Unit</directory>
@@ -46,6 +47,7 @@
             <directory>packages/symfony-bundle/src</directory>
             <directory>packages/adapter-doctrine/src</directory>
             <directory>packages/adapter-messenger/src</directory>
+            <directory>packages/adapter-redis/src</directory>
             <directory>packages/audit/src</directory>
             <directory>packages/bulk-async/src</directory>
             <directory>packages/easyadmin-filter-bridge/src</directory>

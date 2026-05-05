@@ -18,6 +18,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |
 | Admin a Doctrine entity (cohabitation case) | [adapters/doctrine.md](./adapters/doctrine.md) |
+| Admin Redis hash collections (feature flags, config) | [adapters/redis.md](./adapters/redis.md) |
 | Add a GDPR Art. 30 / HIPAA audit trail | [audit/](./audit/) |
 | Wire Symfony Workflow into your admin (auto transitions + state chip) | [workflow-bridge/](./workflow-bridge/) |
 | Compose admin dashboards with KPI / list / chart widgets | [widgets/](./widgets/) |
