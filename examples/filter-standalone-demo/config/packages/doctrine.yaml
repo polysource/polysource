@@ -1,0 +1,25 @@
+doctrine:
+    dbal:
+        driver: pdo_sqlite
+        path: '%kernel.project_dir%/var/data.db'
+
+    orm:
+        auto_generate_proxy_classes: true
+        # Doctrine 3.x defaults to lazy ghosts; we're on PHP 8.1+ where
+        # native lazy isn't available before 8.4. Disable lazy ghosts
+        # so the demo runs on the floor — it's a tiny app, no perf hit.
+        report_fields_where_declared: true
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        controller_resolver:
+            auto_mapping: false
+        mappings:
+            # Map the saved-views entity from the bundled package so
+            # Doctrine creates the polysource_saved_views table from
+            # SavedViewRecord's attributes.
+            PolysourceFilterSavedView:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/vendor/polysource/filter/src/SavedView/Storage/Doctrine'
+                prefix: 'Polysource\Filter\SavedView\Storage\Doctrine'
+                alias: PolysourceFilterSavedView

@@ -9,7 +9,9 @@ use Polysource\Demo\FilterStandalone\Filter\ProductFilters;
 use Polysource\Demo\FilterStandalone\Repository\InMemoryProductRepository;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\SavedView\SavedViewService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -34,11 +36,25 @@ final class ProductController extends AbstractController
     public function __construct(
         private readonly InMemoryProductRepository $repository,
         private readonly ProductFilterApplier $applier,
+        private readonly SavedViewService $savedViews,
     ) {
     }
 
-    public function list(Request $request): Response
+    public function list(Request $request): Response|RedirectResponse
     {
+        // If `?view=<id>` is present, load the saved view and replay
+        // its filters as URL params — gives us shareable links AND
+        // hydrates the form inputs naturally on the next request.
+        $viewId = (string) $request->query->get('view', '');
+        if ('' !== $viewId) {
+            $view = $this->savedViews->load($viewId);
+            if (null !== $view) {
+                return new RedirectResponse(
+                    $request->getPathInfo() . '?' . $this->serializeFilters($view->filters),
+                );
+            }
+        }
+
         /** @var array<string, mixed> $raw */
         $raw = $request->query->all('filter');
         $collection = $this->buildCollection($raw);
@@ -51,6 +67,37 @@ final class ProductController extends AbstractController
             'definitions' => ProductFilters::all(),
             'filterValues' => $raw,
         ]);
+    }
+
+    /**
+     * Serialises a FilterCollection back into the `?filter[name]=...`
+     * URL shape the controller already understands. Round-trips
+     * cleanly with $request->query->all('filter').
+     */
+    private function serializeFilters(FilterCollection $collection): string
+    {
+        $payload = ['filter' => []];
+        foreach ($collection as $criterion) {
+            switch ($criterion->property) {
+                case 'category':
+                    $payload['filter']['category'] = array_values($criterion->values);
+                    break;
+                case 'price':
+                    $payload['filter']['price'] = [
+                        'min' => (string) ($criterion->values[0] ?? ''),
+                        'max' => (string) ($criterion->values[1] ?? ''),
+                    ];
+                    break;
+                case 'releasedAt':
+                    $payload['filter']['releasedAt'] = (string) ($criterion->values[0] ?? '');
+                    break;
+                case 'isAvailable':
+                    $payload['filter']['isAvailable'] = (string) ($criterion->values[0] ?? '');
+                    break;
+            }
+        }
+
+        return http_build_query($payload);
     }
 
     /**

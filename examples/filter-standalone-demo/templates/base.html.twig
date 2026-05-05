@@ -20,7 +20,11 @@
     <p class="stack text-center">
         polysource/filter standalone demo — PHP {{ constant('PHP_VERSION') }} ·
         Symfony {{ constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }} ·
-        no admin framework, no ORM
+        SQLite-backed saved views (no other admin framework)
     </p>
+    {# Bootstrap 5 JS bundle — required for the saved-views modal
+       (data-bs-toggle="modal" / data-bs-target) and the dropdown
+       toggle to work in the browser. #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -173,7 +173,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // DI-compilation crash for hosts that haven't wired storage
         // yet.
         $hasStorage = false;
-        if (class_exists(\Doctrine\ORM\EntityManagerInterface::class)) {
+        if (interface_exists(\Doctrine\ORM\EntityManagerInterface::class)) {
             $container
                 ->register(\Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class)
                 ->setAutowired(true)

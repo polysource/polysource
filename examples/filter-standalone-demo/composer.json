@@ -5,13 +5,18 @@
     "license": "MIT",
     "require": {
         "php": ">=8.1",
+        "doctrine/dbal": "^3.10 || ^4.4",
+        "doctrine/doctrine-bundle": "^2.18",
+        "doctrine/orm": "^2.20 || ^3.6",
         "polysource/filter": "0.1.x-dev",
         "symfony/console": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dotenv": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/runtime": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
     "config": {
@@ -29,6 +34,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "repositories": [
+        { "type": "path", "url": "../../packages/core" },
         { "type": "path", "url": "../../packages/filter" }
     ],
     "extra": {

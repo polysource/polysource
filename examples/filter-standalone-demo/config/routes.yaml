@@ -2,3 +2,9 @@ products:
     path: /
     controller: Polysource\Demo\FilterStandalone\Controller\ProductController::list
     methods: [GET]
+
+# Saved-view endpoints — picked up via #[Route] attributes on the
+# SavedViewController class.
+saved_views:
+    resource: ../src/Controller/SavedViewController.php
+    type: attribute

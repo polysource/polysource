@@ -94,8 +94,34 @@ final class PipelineCompilerPassTest extends TestCase
     private function makeBaseContainer(): ContainerBuilder
     {
         $container = new ContainerBuilder();
-        // Stub the upstream Symfony services that FilterService autowires.
+
+        // Stub the upstream Symfony services that FilterService and
+        // the SavedView stack (registered when Doctrine ORM is in the
+        // dev deps, cf. ADR-019 §4) autowire. The SavedView stack
+        // would otherwise fail container compilation in this bare
+        // test setup that doesn't load FrameworkBundle / SecurityBundle.
         $container->register(\Symfony\Component\HttpFoundation\RequestStack::class)->setPublic(true);
+        $container->setDefinition(
+            \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface::class,
+            (new \Symfony\Component\DependencyInjection\Definition(
+                \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage::class,
+            ))->setPublic(true),
+        );
+        $container->setDefinition(
+            \Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface::class,
+            (new \Symfony\Component\DependencyInjection\Definition(
+                Stub\AlwaysGrantAuthorizationChecker::class,
+            ))->setPublic(true),
+        );
+        if (interface_exists(\Doctrine\ORM\EntityManagerInterface::class)) {
+            // Synthetic — only needed for the autowire pass to succeed.
+            // Tests that actually exercise SavedView use the dedicated
+            // SavedViewEndToEndTest which wires a real EM.
+            $container->register(\Doctrine\ORM\EntityManagerInterface::class)
+                ->setSynthetic(true)
+                ->setPublic(true)
+            ;
+        }
 
         (new PolysourceFilterExtension())->load([], $container);
         $container->addCompilerPass(new PipelineCompilerPass());

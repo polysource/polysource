@@ -11,13 +11,27 @@
         Symfony's <code>autoconfigure</code>.
     </p>
 
-    {% if collection.count > 0 %}
-        <div class="mb-3">
-            <strong>Active filters:</strong>
-            {{ filter_tags(collection, definitions) }}
-            <a href="{{ path('products') }}" class="btn btn-sm btn-link">Clear all</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            {% if collection.count > 0 %}
+                <strong>Active filters:</strong>
+                {{ filter_tags(collection, definitions) }}
+                <a href="{{ path('products') }}" class="btn btn-sm btn-link">Clear all</a>
+            {% endif %}
         </div>
-    {% endif %}
+        <div>
+            {# Saved-views dropdown (ADR-019). Renders Bootstrap 5
+               dropdown + a "Save current as view" trigger that opens
+               the modal POSTing to /saved-views. #}
+            {{ saved_views_dropdown('products') }}
+        </div>
+    </div>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'success' ? 'success' : 'warning' }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
 
     <form method="GET" action="{{ path('products') }}" class="filter-form">
         <div class="row g-3">

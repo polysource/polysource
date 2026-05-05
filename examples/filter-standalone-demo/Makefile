@@ -22,14 +22,15 @@ build: ## Build the PHP 8.1 container image
 	$(DOCKER_COMPOSE) build
 
 .PHONY: install
-install: build ## Install Composer dependencies
+install: build ## Install Composer dependencies + create the SQLite saved-views schema
 	$(PHP_RUN) sh -c 'mkdir -p var && composer install --no-interaction --no-progress'
+	$(PHP_RUN) sh -c 'rm -f var/data.db && php bin/console doctrine:schema:create --no-interaction'
 
 .PHONY: serve
 serve: ## Start the dev server on http://localhost:8082
 	$(DOCKER_COMPOSE) up
 
 .PHONY: clean
-clean: ## Drop containers + cache
+clean: ## Drop containers + cache + saved-views database
 	$(DOCKER_COMPOSE) down -v
-	rm -rf var/cache var/log
+	rm -rf var/cache var/log var/data.db
