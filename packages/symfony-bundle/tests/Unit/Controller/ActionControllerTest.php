@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\Controller\ActionController;
+use Polysource\Bundle\Event\ActionAboutToExecuteEvent;
+use Polysource\Bundle\Event\ActionExecutedEvent;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Polysource\Bundle\Tests\Fixture\FakeResource;
 use Polysource\Core\Action\ActionResult;
@@ -17,6 +19,7 @@ use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Resource\AbstractResource;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -26,6 +29,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManager;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\UriSafeTokenGenerator;
 use Symfony\Component\Security\Csrf\TokenStorage\TokenStorageInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 #[CoversClass(ActionController::class)]
 final class ActionControllerTest extends TestCase
@@ -134,6 +139,7 @@ final class ActionControllerTest extends TestCase
     private function buildControllerWithToken(
         ?AbstractResource $resource = null,
         int $maxBulkIds = 500,
+        ?EventDispatcherInterface $dispatcher = null,
     ): array {
         $manager = $this->csrfManager();
         $controller = new ActionController(
@@ -141,10 +147,111 @@ final class ActionControllerTest extends TestCase
             $manager,
             new \Polysource\Bundle\Controller\ControllerSupport(new \Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission()),
             $maxBulkIds,
+            null,
+            $dispatcher,
         );
         $token = $manager->getToken(ActionController::CSRF_TOKEN_ID)->getValue();
 
         return [$controller, $token];
+    }
+
+    #[Test]
+    public function inlineActionDispatchesAboutToExecuteAndExecutedEventsOnSuccess(): void
+    {
+        $action = new RecordingInlineAction();
+        $resource = new ActionableResource('flags', [$action], records: [
+            new DataRecord('1', ['name' => 'flag-a']),
+        ]);
+        $dispatcher = new RecordingDispatcher();
+
+        [$controller, $token] = $this->buildControllerWithToken($resource, dispatcher: $dispatcher);
+        $context = $this->buildContext(
+            resource: $resource,
+            action: 'retry',
+            recordId: '1',
+            token: $token,
+        );
+
+        ($controller)($context);
+
+        self::assertCount(2, $dispatcher->events);
+        $about = $dispatcher->events[0];
+        $executed = $dispatcher->events[1];
+        self::assertInstanceOf(ActionAboutToExecuteEvent::class, $about);
+        self::assertInstanceOf(ActionExecutedEvent::class, $executed);
+
+        self::assertSame('retry', $about->action->getName());
+        self::assertSame('flags', $about->resource->getName());
+        self::assertSame(['1'], $about->recordIds);
+
+        self::assertSame(['1'], $executed->recordIds);
+        self::assertTrue($executed->result->success);
+        self::assertNull($executed->exception);
+        self::assertGreaterThanOrEqual(0, $executed->durationMs);
+    }
+
+    #[Test]
+    public function inlineActionEmitsExecutedEventWithExceptionWhenActionThrows(): void
+    {
+        $action = new ThrowingInlineAction(new RuntimeException('payment gateway 502'));
+        $resource = new ActionableResource('orders', [$action], records: [
+            new DataRecord('42', []),
+        ]);
+        $dispatcher = new RecordingDispatcher();
+
+        [$controller, $token] = $this->buildControllerWithToken($resource, dispatcher: $dispatcher);
+        $context = $this->buildContext(
+            resource: $resource,
+            action: 'retry',
+            recordId: '42',
+            token: $token,
+        );
+
+        ($controller)($context);
+
+        self::assertCount(2, $dispatcher->events);
+        $executed = $dispatcher->events[1];
+        self::assertInstanceOf(ActionExecutedEvent::class, $executed);
+        // safelyRun synthesises a graceful failure so the user-facing
+        // flash stays clean. The original Throwable is preserved on
+        // the event so the audit subscriber can stamp it.
+        self::assertFalse($executed->result->success);
+        self::assertInstanceOf(RuntimeException::class, $executed->exception);
+        self::assertSame('payment gateway 502', $executed->exception->getMessage());
+    }
+
+    #[Test]
+    public function bulkActionDispatchesEventsWithFullRecordIdList(): void
+    {
+        $action = new RecordingBulkAction();
+        $resource = new ActionableResource('flags', [$action], records: [
+            new DataRecord('1', []),
+            new DataRecord('2', []),
+        ]);
+        $dispatcher = new RecordingDispatcher();
+
+        [$controller, $token] = $this->buildControllerWithToken($resource, maxBulkIds: 5, dispatcher: $dispatcher);
+        $context = $this->buildContext(
+            resource: $resource,
+            action: 'retry-all',
+            recordId: null,
+            token: $token,
+            postData: ['ids' => ['1', '1', '2', '2']],
+            attributes: ['action' => 'retry-all'],
+            maxBulkIds: 5,
+        );
+
+        $controller->bulk($context);
+
+        self::assertCount(2, $dispatcher->events);
+        $about = $dispatcher->events[0];
+        $executed = $dispatcher->events[1];
+        self::assertInstanceOf(ActionAboutToExecuteEvent::class, $about);
+        self::assertInstanceOf(ActionExecutedEvent::class, $executed);
+        // Deduplicated by ActionController before reaching safelyRun.
+        self::assertSame(['1', '2'], $about->recordIds);
+        self::assertSame(['1', '2'], $executed->recordIds);
+        self::assertTrue($executed->result->success);
     }
 
     private function urlGenerator(): PolysourceUrlGenerator
@@ -328,6 +435,61 @@ final class InMemoryUrlGenerator implements UrlGeneratorInterface
     public function getContext(): \Symfony\Component\Routing\RequestContext
     {
         return $this->context ??= new \Symfony\Component\Routing\RequestContext();
+    }
+}
+
+final class ThrowingInlineAction implements InlineActionInterface
+{
+    public function __construct(private readonly Throwable $error)
+    {
+    }
+
+    public function getName(): string
+    {
+        return 'retry';
+    }
+
+    public function getLabel(): string
+    {
+        return 'Retry';
+    }
+
+    public function getIcon(): ?string
+    {
+        return null;
+    }
+
+    public function getPermission(): ?string
+    {
+        return null;
+    }
+
+    public function isDisplayed(array $context = []): bool
+    {
+        return true;
+    }
+
+    public function execute(DataRecord $record): ActionResult
+    {
+        throw $this->error;
+    }
+}
+
+/**
+ * In-memory dispatcher — records every dispatched event so tests
+ * can introspect the order, the count, and each event's payload.
+ * Implements only the contract method we need (`dispatch`).
+ */
+final class RecordingDispatcher implements EventDispatcherInterface
+{
+    /** @var list<object> */
+    public array $events = [];
+
+    public function dispatch(object $event, ?string $eventName = null): object
+    {
+        $this->events[] = $event;
+
+        return $event;
     }
 }
 

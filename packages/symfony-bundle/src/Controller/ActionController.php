@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
+use Polysource\Bundle\Event\ActionAboutToExecuteEvent;
+use Polysource\Bundle\Event\ActionExecutedEvent;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\ActionResult;
@@ -23,6 +25,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 /**
@@ -48,12 +51,21 @@ final class ActionController
 
     private LoggerInterface $logger;
 
+    /**
+     * @param EventDispatcherInterface|null $dispatcher Optional — when wired, the controller
+     *                                                  emits {@see ActionAboutToExecuteEvent} and
+     *                                                  {@see ActionExecutedEvent} around each
+     *                                                  action's callable invocation. Hosts that
+     *                                                  don't need observation (no audit, no
+     *                                                  Mercure broadcast) can omit it.
+     */
     public function __construct(
         private readonly PolysourceUrlGenerator $urlGenerator,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly ControllerSupport $support,
         private readonly int $maxBulkIds = 500,
         ?LoggerInterface $logger = null,
+        private readonly ?EventDispatcherInterface $dispatcher = null,
     ) {
         $this->logger = $logger ?? new NullLogger();
     }
@@ -79,7 +91,13 @@ final class ActionController
             throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
 
-        $result = $this->safelyRun(static fn (): ActionResult => $action->execute($record), $action);
+        $result = $this->safelyRun(
+            static fn (): ActionResult => $action->execute($record),
+            $action,
+            $context->resource,
+            [$context->recordId],
+            $context->request,
+        );
         self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
@@ -123,7 +141,13 @@ final class ActionController
             }
         }
 
-        $result = $this->safelyRun(static fn (): ActionResult => $action->executeBatch($records), $action);
+        $result = $this->safelyRun(
+            static fn (): ActionResult => $action->executeBatch($records),
+            $action,
+            $context->resource,
+            $stringIds,
+            $context->request,
+        );
         self::pushFlash($context->request, $result);
 
         return new RedirectResponse($this->urlGenerator->index($context->resource->getName()));
@@ -135,21 +159,63 @@ final class ActionController
      * operators can investigate without the user-facing flash leaking
      * stack-trace text.
      *
+     * Wraps the callable invocation in a pair of dispatched events
+     * ({@see ActionAboutToExecuteEvent} before, {@see ActionExecutedEvent}
+     * after — always, regardless of success / graceful failure /
+     * exception). When no dispatcher was injected the events become
+     * cheap no-ops.
+     *
+     * `durationMs` is wall-clock around the callable invocation
+     * (microtime delta, rounded down to ms). It excludes the upstream
+     * CSRF / permission / record-loading work the controller did
+     * before reaching this method.
+     *
      * @param callable():ActionResult $callable
+     * @param list<string>            $recordIds
      */
-    private function safelyRun(callable $callable, ActionInterface $action): ActionResult
-    {
+    private function safelyRun(
+        callable $callable,
+        ActionInterface $action,
+        ResourceInterface $resource,
+        array $recordIds,
+        Request $request,
+    ): ActionResult {
+        $this->dispatcher?->dispatch(new ActionAboutToExecuteEvent(
+            action: $action,
+            resource: $resource,
+            recordIds: $recordIds,
+            request: $request,
+        ));
+
+        $startedAt = microtime(true);
+        $exception = null;
+
         try {
-            return $callable();
+            $result = $callable();
         } catch (Throwable $e) {
+            $exception = $e;
             $this->logger->error('Polysource: action threw unexpectedly.', [
                 'action_name' => $action->getName(),
                 'exception_class' => $e::class,
                 'exception_message' => $e->getMessage(),
             ]);
 
-            return ActionResult::failure(\sprintf('Action "%s" failed unexpectedly. Operators have been notified.', $action->getName()));
+            $result = ActionResult::failure(\sprintf('Action "%s" failed unexpectedly. Operators have been notified.', $action->getName()));
         }
+
+        $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+        $this->dispatcher?->dispatch(new ActionExecutedEvent(
+            action: $action,
+            resource: $resource,
+            recordIds: $recordIds,
+            request: $request,
+            result: $result,
+            durationMs: $durationMs,
+            exception: $exception,
+        ));
+
+        return $result;
     }
 
     private static function pushFlash(Request $request, ActionResult $result): void
