@@ -73,13 +73,42 @@ make up
 
 ## Known v4-specific quirks
 
-- The `NumericFilter` `quick_ranges` URL shape is the EA 5 pattern;
-  EA 4's submit handler may use a different encoding. Visual click
-  -through works (the JS controllers are identical), but server-
-  rendered URL replays on EA 4 need a follow-up audit.
 - The dashboard uses `#[AdminDashboard]` attribute discovery in
   EA 5; EA 4 needs the explicit `#[Route('/admin', name: 'admin')]`
   shown above.
+
+## NumericFilter quick_ranges audit (2026-05-05)
+
+Initial concern: the bridge's `quick_ranges` Stimulus controller may
+emit the wrong URL shape on EA 4. **Audit result: no incompatibility.**
+
+The bridge's `polysource--filter` Stimulus controller selects inputs
+via name-suffix matching:
+
+```js
+this.element.querySelector('select[name$="[comparison]"]')
+this.element.querySelector('input[name$="[value]"]')
+this.element.querySelector('input[name$="[value2]"]')
+```
+
+EA 4 and EA 5 both render numeric filters as:
+
+```
+<select name="filters[price][comparison]">…</select>
+<input  name="filters[price][value]"  type="number">
+<input  name="filters[price][value2]" type="number">
+```
+
+(Both call `ComparisonFilterType::buildForm()` which adds `comparison`
++ `value` children, then `NumericFilterType::buildForm()` adds
+`value2`.) So the `name$=` selectors match identically; the click sets
+the values; EA's own form submits `filters[price][value]=50&filters[price][value2]=200&filters[price][comparison]=between`,
+which both EA majors decode the same way (`FilterDataDto`'s shape is
+unchanged between v4 and v5).
+
+URL replays (a user copy-pasting `?filters[price]…`) work on both
+majors for the same reason — the URL is just a serialisation of the
+identical FilterDataDto.
 
 ## Stack comparison vs `easyadmin-bridge-demo/`
 

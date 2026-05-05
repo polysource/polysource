@@ -100,7 +100,7 @@ demo-logs: ## Tail demo container logs
 	@$(MAKE) -C examples/messenger-demo logs
 
 .PHONY: demo-bridge
-demo-bridge: ## Start the EasyAdmin filter bridge demo on http://localhost:8081
+demo-bridge: ## Start the EasyAdmin v5 filter bridge demo on http://localhost:8081 (PHP 8.4 + Sf 7.4 + EA 5)
 	@$(MAKE) -C examples/easyadmin-bridge-demo up
 
 .PHONY: demo-bridge-down
@@ -110,6 +110,27 @@ demo-bridge-down: ## Stop the bridge demo container
 .PHONY: demo-bridge-clean
 demo-bridge-clean: ## Wipe the bridge demo vendor + database
 	@$(MAKE) -C examples/easyadmin-bridge-demo clean
+
+.PHONY: demo-bridge-v4
+demo-bridge-v4: ## Start the EasyAdmin v4 filter bridge demo on http://localhost:8083 (PHP 8.1 + Sf 6.4 + EA 4.29 — proves the floor)
+	@$(MAKE) -C examples/easyadmin-bridge-demo-v4 up
+
+.PHONY: demo-bridge-v4-down
+demo-bridge-v4-down: ## Stop the v4 bridge demo container
+	@$(MAKE) -C examples/easyadmin-bridge-demo-v4 down
+
+.PHONY: demo-bridge-v4-clean
+demo-bridge-v4-clean: ## Wipe the v4 bridge demo vendor + database
+	@$(MAKE) -C examples/easyadmin-bridge-demo-v4 clean
+
+.PHONY: demo-filter
+demo-filter: ## Start the standalone polysource/filter demo on http://localhost:8082 (vanilla Symfony, no EasyAdmin)
+	@$(MAKE) -C examples/filter-standalone-demo install
+	@$(MAKE) -C examples/filter-standalone-demo serve
+
+.PHONY: demo-filter-down
+demo-filter-down: ## Stop the standalone filter demo container
+	@$(MAKE) -C examples/filter-standalone-demo clean
 
 .PHONY: demo-clean
 demo-clean: ## Wipe demo vendor + database (rebuild on next `make demo`)

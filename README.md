@@ -6,11 +6,26 @@
 
 ---
 
-## Status — design phase
+## Status — pre-v0.1.0
 
-🚧 **No code yet.** This repository currently contains only the strategic and architectural analysis that will guide the build. See [`docs/`](./docs/README.md) for the full study and [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md) for the implementation plan.
+Phases 1 through 9.7 are shipped on `main` (core + symfony-bundle + twig-theme +
+adapter-messenger + filter + easyadmin-filter-bridge + 4 runnable demos). The
+public API is stable but not tagged — see
+[`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md) for the
+phase status, and the [ADRs](./docs/adr/) for the choices that landed since.
 
-The first line of code will land **after** the development plan is reviewed.
+## Run the demos
+
+| Demo | Stack | Port | Audience |
+|---|---|---|---|
+| `make demo` | PHP 8.4 + Sf 7.4 + Doctrine | `:8080` | Messenger failed-messages dashboard (the v0.1 flagship) |
+| `make demo-bridge` | PHP 8.4 + Sf 7.4 + EA 5 | `:8081` | EasyAdmin v5 hosts adopting the bridge |
+| `make demo-bridge-v4` | PHP 8.1 + Sf 6.4 LTS + EA 4.29 | `:8083` | EA v4 hosts that haven't migrated — proves the floor of the multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md)) |
+| `make demo-filter` | Vanilla Sf 6.4 + PHP 8.1, **no EasyAdmin** | `:8082` | Sonata users, API Platform back-offices, hand-rolled admin DIY — uses the standalone `polysource/filter` primitive |
+
+Login on the EA demos: `admin` / `admin`. Each demo is a self-contained
+Docker image; first `make demo*` triggers a one-time build. See each demo's
+`README.md` for the per-demo walkthrough.
 
 ## Why Polysource
 

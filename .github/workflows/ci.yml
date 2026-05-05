@@ -79,15 +79,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ADR-015 (multi-version baseline): 5 explicit combos hit the
-        # realistic profiles of EA-using Symfony apps in 2026.
-        # Cartesian-product matrices generate impossible combos
-        # (e.g. PHP 8.1 × Symfony 7.4) so we list each row by hand.
-        #   1. Legacy stack: PHP 8.1 + Sf 5.4 LTS + EA 4.x
-        #   2. Mainstream:   PHP 8.2 + Sf 6.4 LTS + EA 4.x
-        #   3. Bridge xfer:  PHP 8.2 + Sf 6.4 LTS + EA 5.x
-        #   4. Modern:       PHP 8.3 + Sf 7.4 LTS + EA 5.x
-        #   5. Bleeding:     PHP 8.4 + Sf 7.4 LTS + EA 5.x (dev local)
+        # ADR-015 amendement 2026-05-05: the bridge advertises every
+        # Symfony minor since 5.4 (`^5.4 || ^6.0 || ^7.0 || ^8.0`), not
+        # just LTS. To materially prove the wider promise we add 1
+        # explicit non-LTS row (PHP 8.3 × Sf 7.2 × EA 5.x) on top of
+        # the 5 baseline LTS combos. Cartesian-product matrices
+        # generate impossible combos (e.g. PHP 8.1 × Sf 7.4) so each
+        # row is listed by hand.
+        #   1. Legacy stack:   PHP 8.1 + Sf 5.4 LTS   + EA 4.x
+        #   2. Mainstream:     PHP 8.2 + Sf 6.4 LTS   + EA 4.x
+        #   3. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
+        #   4. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
+        #   5. Modern:         PHP 8.3 + Sf 7.4 LTS   + EA 5.x
+        #   6. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
         include:
           - php: '8.1'
             symfony: '5.4.*'
@@ -97,6 +101,9 @@ jobs:
             easyadmin: '^4.24'
           - php: '8.2'
             symfony: '6.4.*'
+            easyadmin: '^5.0'
+          - php: '8.3'
+            symfony: '7.2.*'
             easyadmin: '^5.0'
           - php: '8.3'
             symfony: '7.4.*'

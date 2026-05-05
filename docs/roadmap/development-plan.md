@@ -18,10 +18,15 @@
 ## 0. Hypothèses de travail
 
 - **1 développeur senior à temps plein** (ou équivalent ~25 h/semaine)
-- **Stack v0.1** : **PHP 8.1+** + **Symfony 5.4 \|\| 6.4 \|\| 7.4 LTS**, Twig 3 — baseline élargi pour audience max (cf. [ADR-015](../adr/0015-multi-version-compatibility-baseline.md), supersedes ADR-007)
-- **Bridge EasyAdmin** : EA **4.24+ \|\| 5.0+** (capture audience EA v4)
-- **Doctrine ORM** (côté bridge) : **2.20+ \|\| 3.6+**
-- **CI matrix** : 5 jobs explicites (cf. ADR-015 §Stratégie de tests)
+- **Stack v0.1** : **PHP `>=8.1`** + **Symfony `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0`** (toutes les versions ≥ 5.4, pas seulement les LTS), Twig 3 — baseline aligné sur EasyAdmin 4.29 pour audience max (cf. [ADR-015](../adr/0015-multi-version-compatibility-baseline.md) amendement 2026-05-05, supersedes ADR-007)
+- **Bridge EasyAdmin** : EA **`^4.24 \|\| ^5.0`** (capture audience EA v4)
+- **Doctrine ORM** (côté bridge) : **`^2.20 \|\| ^3.6`**
+- **CI matrix** : 6 jobs explicites — 5 LTS combos + 1 non-LTS (Sf 7.2) pour valider la promesse "every minor since 5.4" (cf. ADR-015 §Stratégie de tests)
+- **Démos runnable** (`make demo*` depuis la racine) :
+  - `make demo` → Messenger failed-messages (Phase 8, port 8080)
+  - `make demo-bridge` → EA v5 + bridge (Phase 9.7, port 8081, PHP 8.4 + Sf 7.4 + EA 5)
+  - `make demo-bridge-v4` → EA v4 + bridge (port 8083, PHP 8.1 + Sf 6.4 + EA 4.29 — **prouve le floor du baseline ADR-015**)
+  - `make demo-filter` → `polysource/filter` standalone (port 8082, vanilla Symfony sans EasyAdmin — **vitrine du tronc commun pour audience non-EA**)
 - **Environnement de dev** : Docker Compose + Makefile + DDEV optionnel (cf. [ADR-008](../adr/0008-development-environment.md))
 - **Pas de DX builders fluides en v0.1** (Filament-style arrive en v0.3+)
 - **Pas de bridge EasyAdmin en v0.1** (v0.3)
