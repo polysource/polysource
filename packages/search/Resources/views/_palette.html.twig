@@ -1,0 +1,44 @@
+{# polysource/search — Cmd+K palette overlay (empty shell).
+   The Stimulus controller `polysource--search--cmdk` mounts here,
+   listens for Cmd+K / Ctrl+K / "/" globally, opens the dialog,
+   debounces the input, and fetches GET /admin/search?q=.
+#}
+<div class="polysource-search-palette"
+     data-controller="polysource--search--cmdk"
+     data-polysource--search--cmdk-endpoint-value="/admin/search"
+     data-polysource--search--cmdk-debounce-value="150">
+
+    <div class="polysource-search-palette-overlay"
+         data-polysource--search--cmdk-target="overlay"
+         data-action="click->polysource--search--cmdk#close"
+         hidden></div>
+
+    <div class="polysource-search-palette-dialog"
+         role="dialog"
+         aria-label="Search"
+         data-polysource--search--cmdk-target="dialog"
+         hidden>
+
+        <input type="search"
+               class="polysource-search-palette-input"
+               placeholder="Search resources… (Cmd+K)"
+               data-polysource--search--cmdk-target="input"
+               data-action="input->polysource--search--cmdk#queryChanged
+                            keydown->polysource--search--cmdk#keydown"
+               autocomplete="off"
+               spellcheck="false">
+
+        <ul class="polysource-search-palette-results"
+            role="listbox"
+            data-polysource--search--cmdk-target="results"></ul>
+
+        <div class="polysource-search-palette-empty text-muted small"
+             data-polysource--search--cmdk-target="empty">
+            Type to search across all resources.
+        </div>
+
+        <div class="polysource-search-palette-hint text-muted small">
+            <kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>↵</kbd> open · <kbd>Esc</kbd> close
+        </div>
+    </div>
+</div>

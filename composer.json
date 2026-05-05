@@ -35,6 +35,7 @@
         "polysource/audit": "0.1.x-dev",
         "polysource/easyadmin-filter-bridge": "0.1.x-dev",
         "polysource/filter": "0.1.x-dev",
+        "polysource/search": "0.1.x-dev",
         "polysource/widgets": "0.1.x-dev",
         "polysource/workflow-bridge": "0.1.x-dev",
         "symfony/browser-kit": "^6.4 || ^7.0 || ^8.0",
@@ -71,6 +72,7 @@
             "Polysource\\Adapter\\Messenger\\Tests\\": "packages/adapter-messenger/tests/",
             "Polysource\\Audit\\Tests\\": "packages/audit/tests/",
             "Polysource\\EasyAdminFilterBridge\\Tests\\": "packages/easyadmin-filter-bridge/tests/",
+            "Polysource\\Search\\Tests\\": "packages/search/tests/",
             "Polysource\\Widgets\\Tests\\": "packages/widgets/tests/",
             "Polysource\\WorkflowBridge\\Tests\\": "packages/workflow-bridge/tests/"
         }
