@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Audit\EventListener\ActionAuditSubscriber;
 use Polysource\Audit\Logger\AggregateAuditLogger;
 use Polysource\Audit\Logger\AuditLoggerInterface;
+use Polysource\Audit\Logger\DoctrineAuditLogger;
 use Polysource\Audit\Logger\NullAuditLogger;
 use Polysource\Audit\Model\AuditActorInterface;
 use Polysource\Audit\Model\SymfonySecurityAuditActor;
@@ -31,11 +33,18 @@ return static function (ContainerConfigurator $container): void {
      * aggregator so subscribers / hosts inject "the audit logger"
      * without knowing it's actually a fan-out.
      * --------------------------------------------------------------- */
-    $services->set(NullAuditLogger::class)
-        // Ship NullAuditLogger as the safe default. Hosts that want
-        // real logging override the polysource.audit_logger tag with
-        // their own service (DoctrineAuditLogger lands in batch D).
-        ->tag('polysource.audit_logger');
+    /* Doctrine-backed default sink — only registered when Doctrine ORM is
+       available. Apps without Doctrine fall back to NullAuditLogger below.
+       The check uses interface_exists (NOT class_exists) — EntityManagerInterface
+       is, well, an interface; class_exists returns false for interfaces. */
+    if (interface_exists(EntityManagerInterface::class)) {
+        $services->set(DoctrineAuditLogger::class)
+            ->arg('$em', service(EntityManagerInterface::class))
+            ->tag('polysource.audit_logger');
+    } else {
+        $services->set(NullAuditLogger::class)
+            ->tag('polysource.audit_logger');
+    }
 
     $services->set(AggregateAuditLogger::class)
         ->arg('$loggers', tagged_iterator('polysource.audit_logger'))
