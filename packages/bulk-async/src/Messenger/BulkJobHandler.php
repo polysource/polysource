@@ -7,6 +7,7 @@ namespace Polysource\BulkAsync\Messenger;
 use DateTimeImmutable;
 use DateTimeZone;
 use Polysource\BulkAsync\Audit\BulkActionView;
+use Polysource\BulkAsync\Event\BulkJobProgressEvent;
 use Polysource\BulkAsync\Job\BulkJob;
 use Polysource\BulkAsync\Job\BulkJobStatus;
 use Polysource\BulkAsync\Job\BulkJobStorageInterface;
@@ -100,6 +101,7 @@ final class BulkJobHandler
 
         $job = $job->withStatus(BulkJobStatus::Running)->withStartedAt($this->now());
         $this->storage->save($job);
+        $this->dispatchProgress($job);
 
         $job = $this->processRecords($job, $resource, $action);
         $this->dispatchAuditEvent($job, $resource, $action);
@@ -153,6 +155,7 @@ final class BulkJobHandler
             if ($shouldFlush) {
                 $job = $job->withProgress($processed, $failed);
                 $this->storage->save($job);
+                $this->dispatchProgress($job);
                 $sinceFlushCount = 0;
                 $lastFlushAtMs = $this->nowMs();
             }
@@ -169,8 +172,14 @@ final class BulkJobHandler
         }
 
         $this->storage->save($job);
+        $this->dispatchProgress($job);
 
         return $job;
+    }
+
+    private function dispatchProgress(BulkJob $job): void
+    {
+        $this->dispatcher?->dispatch(new BulkJobProgressEvent($job));
     }
 
     private function loadRecord(DataSourceInterface $dataSource, string $recordId): ?DataRecord
