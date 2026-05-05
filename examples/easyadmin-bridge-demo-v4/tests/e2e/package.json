@@ -1,0 +1,13 @@
+{
+    "name": "polysource-easyadmin-bridge-demo-e2e",
+    "description": "End-to-end Playwright tests for the EasyAdmin filter bridge demo — drives a real browser through the filter modal interactions.",
+    "private": true,
+    "scripts": {
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "install-browsers": "playwright install chromium"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.48.0"
+    }
+}

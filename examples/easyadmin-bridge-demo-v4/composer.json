@@ -1,0 +1,49 @@
+{
+    "name": "polysource/easyadmin-bridge-demo-v4",
+    "description": "Polysource — runnable demo: EasyAdmin v4 + polysource/easyadmin-filter-bridge. Pinned on PHP 8.1 + Symfony 6.4 LTS + EA 4.29 to prove the bridge captures the v4 audience without forcing them to upgrade Symfony or EA.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "doctrine/dbal": "^3.10|^4.4",
+        "doctrine/doctrine-bundle": "^2.18",
+        "doctrine/orm": "^2.20|^3.6",
+        "easycorp/easyadmin-bundle": "^4.24",
+        "polysource/easyadmin-filter-bridge": "0.1.x-dev",
+        "symfony/asset-mapper": "^6.3 || ^7.0 || ^8.0",
+        "symfony/console": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/dotenv": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/runtime": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/stimulus-bundle": "^2.27",
+        "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/ux-twig-component": "^2.32",
+        "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Demo\\EasyAdminBridge\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        { "type": "path", "url": "../../packages/easyadmin-filter-bridge" },
+        { "type": "path", "url": "../../packages/filter" }
+    ],
+    "extra": {
+        "runtime": {
+            "use_putenv": true
+        }
+    }
+}
