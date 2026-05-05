@@ -1,0 +1,21 @@
+{# polysource/widgets — list widget. #}
+<div class="card polysource-widget polysource-widget-list h-100" id="widget-{{ widget.id }}">
+    <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted">{{ widget.title }}</h6>
+        {%- if rows is empty -%}
+            <p class="text-muted small mb-0">No items.</p>
+        {%- else -%}
+            <ul class="list-unstyled mb-0">
+                {%- for row in rows -%}
+                    <li class="d-flex align-items-center mb-2">
+                        {%- if row.href -%}
+                            <a href="{{ row.href }}" class="text-decoration-none">{{ row.label }}</a>
+                        {%- else -%}
+                            <span>{{ row.label }}</span>
+                        {%- endif -%}
+                    </li>
+                {%- endfor -%}
+            </ul>
+        {%- endif -%}
+    </div>
+</div>

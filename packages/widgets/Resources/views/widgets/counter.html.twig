@@ -1,0 +1,19 @@
+{# polysource/widgets — counter widget. #}
+<div class="card polysource-widget polysource-widget-counter h-100" id="widget-{{ widget.id }}">
+    <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">{{ widget.title }}</h6>
+        <div class="d-flex align-items-baseline">
+            <span class="display-5 fw-bold text-{{ palette }}">{{ value }}</span>
+            {%- if unit -%}
+                <span class="ms-2 text-muted">{{ unit }}</span>
+            {%- endif -%}
+            {%- if trend == 'up' -%}
+                <span class="ms-auto text-success" aria-label="trending up">▲</span>
+            {%- elseif trend == 'down' -%}
+                <span class="ms-auto text-danger" aria-label="trending down">▼</span>
+            {%- elseif trend == 'flat' -%}
+                <span class="ms-auto text-muted" aria-label="flat">▶</span>
+            {%- endif -%}
+        </div>
+    </div>
+</div>

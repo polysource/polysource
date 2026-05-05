@@ -1,0 +1,18 @@
+{# polysource/widgets — dashboard layout.
+   Renders all rows of widgets in a Bootstrap 5 grid.
+   Hosts override at app level via:
+     templates/bundles/PolysourceWidgetsBundle/dashboard.html.twig
+#}
+<div class="polysource-dashboard" data-dashboard="{{ dashboard.name }}">
+    <h1 class="polysource-dashboard-title mb-4">{{ dashboard.title }}</h1>
+
+    {%- for row in dashboard.rows -%}
+        <div class="row mb-4">
+            {%- for widget in row -%}
+                <div class="col-md-{{ widget.columnSpan }}">
+                    {{ render_widget(widget) }}
+                </div>
+            {%- endfor -%}
+        </div>
+    {%- endfor -%}
+</div>

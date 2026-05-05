@@ -1,0 +1,23 @@
+{# polysource/widgets — chart widget (textual fallback). #}
+<div class="card polysource-widget polysource-widget-chart h-100" id="widget-{{ widget.id }}">
+    <div class="card-body">
+        <h6 class="card-subtitle mb-3 text-muted">{{ widget.title }}</h6>
+        {%- if points is empty -%}
+            <p class="text-muted small mb-0">No data.</p>
+        {%- else -%}
+            <table class="table table-sm mb-0" data-chart-type="{{ type }}">
+                <thead>
+                    <tr><th>Period</th><th class="text-end">Value</th></tr>
+                </thead>
+                <tbody>
+                    {%- for point in points -%}
+                        <tr>
+                            <td>{{ point.label }}</td>
+                            <td class="text-end font-monospace">{{ point.value }}</td>
+                        </tr>
+                    {%- endfor -%}
+                </tbody>
+            </table>
+        {%- endif -%}
+    </div>
+</div>
