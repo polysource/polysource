@@ -4,6 +4,20 @@ doctrine:
         # SQLite — no separate database container required.
         driver: pdo_sqlite
 
+    orm:
+        auto_generate_proxy_classes: true
+        # Map the polysource/audit AuditEntryRecord so audit entries
+        # land in the `polysource_audit_log` SQLite table on schema
+        # create. Hosts with their own entities just add another
+        # mapping here.
+        mappings:
+            PolysourceAudit:
+                is_bundle: false
+                type: attribute
+                dir: '%kernel.project_dir%/vendor/polysource/audit/src/Storage/Doctrine'
+                prefix: 'Polysource\Audit\Storage\Doctrine'
+                alias: PolysourceAudit
+
 doctrine_migrations:
     migrations_paths:
         # No host migrations — Symfony Messenger creates its own

@@ -11,4 +11,5 @@ return [
     Symfony\Bundle\MonologBundle\MonologBundle::class => ['all' => true],
     Polysource\Bundle\PolysourceBundle::class => ['all' => true],
     Polysource\Adapter\Messenger\PolysourceMessengerBundle::class => ['all' => true],
+    Polysource\Audit\PolysourceAuditBundle::class => ['all' => true],
 ];

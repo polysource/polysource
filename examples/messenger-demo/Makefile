@@ -27,9 +27,9 @@ build: ## Build the PHP container image
 	$(DOCKER_COMPOSE) build
 
 .PHONY: install
-install: build ## Install Composer dependencies + create the SQLite database
+install: build ## Install Composer dependencies + create the SQLite database (incl. polysource_audit_log table)
 	$(PHP_RUN) sh -c 'mkdir -p var && composer install --no-interaction --no-progress'
-	$(PHP_RUN) sh -c 'rm -f var/data.db && php bin/console messenger:setup-transports --no-interaction'
+	$(PHP_RUN) sh -c 'rm -f var/data.db && php bin/console messenger:setup-transports --no-interaction && php bin/console doctrine:schema:create --no-interaction'
 
 .PHONY: seed
 seed: ## Push 5 sample envelopes onto the failed transport
