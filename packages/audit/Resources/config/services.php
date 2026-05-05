@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Doctrine\ORM\EntityManagerInterface;
+use Polysource\Audit\DataSource\AuditLogDataSource;
 use Polysource\Audit\EventListener\ActionAuditSubscriber;
 use Polysource\Audit\Logger\AggregateAuditLogger;
 use Polysource\Audit\Logger\AuditLoggerInterface;
@@ -10,6 +11,7 @@ use Polysource\Audit\Logger\DoctrineAuditLogger;
 use Polysource\Audit\Logger\NullAuditLogger;
 use Polysource\Audit\Model\AuditActorInterface;
 use Polysource\Audit\Model\SymfonySecurityAuditActor;
+use Polysource\Audit\Resource\AuditLogResource;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -41,6 +43,16 @@ return static function (ContainerConfigurator $container): void {
         $services->set(DoctrineAuditLogger::class)
             ->arg('$em', service(EntityManagerInterface::class))
             ->tag('polysource.audit_logger');
+
+        /* The browsable AuditLogResource (cf. ADR-020 §7) — read side
+           of the audit pipeline. Auto-tagged via #[AsResource] (ADR-005)
+           so PolysourceBundle's resource registry picks it up. */
+        $services->set(AuditLogDataSource::class)
+            ->arg('$em', service(EntityManagerInterface::class));
+
+        $services->set(AuditLogResource::class)
+            ->arg('$dataSource', service(AuditLogDataSource::class))
+            ->arg('$actions', tagged_iterator('polysource.audit.action'));
     } else {
         $services->set(NullAuditLogger::class)
             ->tag('polysource.audit_logger');
