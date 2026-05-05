@@ -926,6 +926,16 @@ existante et **enrichit le système de filtres natif sans forker**.
 > publie **6 packages** (au lieu de 4 prévus initialement) et fait
 > **2 annonces distinctes** ciblant 2 audiences.
 
+> **Mise à jour 2026-05-05** ([ADR-017](../adr/0017-cherry-picking-from-filament-study.md)) :
+> la suite Phase 11+ est **resequencée** autour des 7 features que l'on
+> récupère de l'étude `symfony-admin-framework-analysis.md`, dans l'ordre :
+> 11 plugin architecture formelle (foundation) · 12 saved views · 13
+> dashboard widget framework · 14 bulk async + Mercure progress · 15
+> Symfony Workflow integration · 16 global search + command palette · 17
+> audit non-Doctrine actions. Estimation grossière 3-5 mois total post-v0.1.0.
+> Voir ADR-017 §4 pour la justification du sequencing et la liste des
+> features explicitement rejetées.
+
 ### Objectif
 
 Tagger v0.1.0, publier les 6 packages sur Packagist, écrire les annonces.

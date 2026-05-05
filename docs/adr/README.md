@@ -19,6 +19,12 @@
 | [ADR-009](./0009-ai-assistant-context.md) | Système de contexte projet persistant (the project context file) | Accepté |
 | [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
 | [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (vivant) |
+| [ADR-012](./0012-dual-product-positioning.md) | Dual-product positioning (bridge EA + admin standalone) | Accepté |
+| [ADR-013](./0013-filter-package-architecture.md) | `polysource/filter` architecture (tronc commun) | Accepté |
+| [ADR-014](./0014-datasource-lifecycle-deferred.md) | DataSource lifecycle 3 phases — différé v0.3+ | Accepté (différé) |
+| [ADR-015](./0015-multi-version-compatibility-baseline.md) | Multi-version baseline PHP 8.1+ / Symfony 5.4+ / EA 4.24+ | Accepté |
+| [ADR-016](./0016-bridge-contracts-shared-with-polysource-filter.md) | `ChipFormatterInterface` dans le tronc commun | Accepté |
+| [ADR-017](./0017-cherry-picking-from-filament-study.md) | Cherry-picking depuis l'étude Filament-for-Symfony | Accepté |
 
 ## Convention
 
