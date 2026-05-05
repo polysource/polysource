@@ -264,6 +264,21 @@
 {% endblock %}
 
 {% block main %}
+    {# Saved-views dropdown — only renders when SavedViewService is
+       wired (the polysource/filter DI extension registers it
+       conditionally on Doctrine ORM availability, cf. ADR-019 §4).
+       We use the EA entity FQCN as the resourceName so saved views
+       are automatically scoped per CrudController without host-side
+       config. The polysource_saved_views_available() helper checks
+       at render time whether the saved_views_dropdown() Twig
+       function is registered — hosts without Doctrine see no
+       dropdown rather than a crash. #}
+    {% if ea is defined and ea.crud is not null and polysource_saved_views_available() %}
+        <div class="ea-filter-saved-views-bar">
+            {{ saved_views_dropdown(ea.crud.entityFqcn) }}
+        </div>
+    {% endif %}
+
     {% set applied_filters = ea.request.query.all['filters']|default([]) %}
     {{ include('@EasyAdmin/crud/_chips_bar.html.twig', {
         applied_filters: applied_filters,

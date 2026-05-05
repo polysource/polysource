@@ -17,6 +17,7 @@ you need a filter form that survives a page reload.
 | File | What's in it |
 |---|---|
 | [getting-started.md](./getting-started.md) | Install, declare a filter collection, render it in a Twig template, persist across requests. End-to-end runnable snippets. |
+| [saved-views.md](./saved-views.md) | Render the saved-views dropdown (private / team / public scopes), wire the apply / save / delete routes, customise team resolution, generate shareable filter permalinks via `FilterService::buildUrl()`. |
 
 ## Status
 

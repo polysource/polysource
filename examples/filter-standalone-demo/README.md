@@ -22,8 +22,12 @@ primitive boots without upgrading Symfony or PHP first.
 ```bash
 make install
 make serve
-# open http://localhost:8082
+# open http://localhost:8082 — login page
+# alice / alice  (or)  bob / bob
 ```
+
+`make install` also creates the SQLite database at `var/data.db`
+that backs the saved-views feature.
 
 The page lists 12 products with 4 filters:
 - multi-select category (operator `in`)
@@ -33,7 +37,29 @@ The page lists 12 products with 4 filters:
 
 Apply any combination — the URL updates, the chips bar appears
 above the list, the rendered count adjusts. Click "Clear all" or
-"Reset" to start over.
+"Reset" to start over. Click the X on a chip to drop one filter
+without losing the others.
+
+### Saved views (ADR-019)
+
+Once you have a non-trivial filter applied, click **Saved views →
+Save current as view…** in the top-right dropdown. Pick a name and
+a visibility scope (private / team / public). The view is
+persisted in `var/data.db` via the bundled
+`DoctrineSavedViewStorage`.
+
+Try it with two users to see the visibility rules in action:
+1. Sign in as **alice** → save a `Private` view → sign out
+2. Sign in as **bob** → confirm alice's private view is hidden but
+   any `Public` view she saved is visible (with `(by alice)` next
+   to the name)
+3. Owners see a × delete button next to each of their views
+
+The dropdown's apply link is `?view=<id>`. The
+`ProductController::list()` reads it, hydrates the
+`FilterCollection`, and replays the filter URL — giving you a
+shareable permalink **and** server-rendered form inputs on next
+request.
 
 ## What the demo wires up
 
@@ -45,6 +71,14 @@ Polysource side:
   Symfony's `autoconfigure: true`
 - `filter_tags()` Twig function — used in `templates/product/list.html.twig`
   to render the chips bar
+- `SavedViewService` + `DoctrineSavedViewStorage` — gated on
+  Doctrine ORM availability per ADR-019 §4
+- `saved_views_dropdown(resourceName)` Twig function — Bootstrap 5
+  dropdown with apply / save / delete actions
+- `FilterService::buildUrl(path, collection, extraQuery, formName)` —
+  PHP helper for generating shareable filter permalinks (not used
+  by this demo's HTML form, which has its own URL shape, but
+  available for hosts that want canonical share links)
 
 Host side:
 - `src/Entity/Product.php` — plain POPO, no Doctrine
@@ -55,7 +89,13 @@ Host side:
 - `src/Filter/ProductFilterApplier.php` — translates each
   `FilterCriterion` into a PHP `array_filter()` predicate
 - `src/Controller/ProductController.php` — single GET route, builds
-  the `FilterCollection` from URL query parameters
+  the `FilterCollection` from URL query parameters and replays
+  saved views via `?view=<id>`
+- `src/Controller/SavedViewController.php` — POST endpoints for
+  create / delete (both go through the Symfony voter)
+- `src/Controller/SecurityController.php` — minimal form_login +
+  /logout pair so you can switch users to test the saved-view
+  visibility rules
 
 ## What this demo does NOT show (yet)
 
@@ -70,5 +110,6 @@ Host side:
 Polysource's audience target is wider than EasyAdmin users. Anyone
 running a Symfony admin (Sonata, API Platform back-office,
 hand-rolled CRUD) can install `polysource/filter` and gain a
-declarative filter API + chips bar without touching their existing
-admin framework. This demo is the proof.
+declarative filter API + chips bar **and** a saved-views
+dropdown without touching their existing admin framework. This
+demo is the proof.

@@ -202,6 +202,180 @@ final class FilterServiceTest extends TestCase
         self::assertSame([], $loaded->criteria[2]->values);
     }
 
+    /* ---------- buildUrl() — URL-shareable filter state -------- */
+
+    public function testBuildUrlReturnsBarePathForEmptyCollection(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('users.list');
+
+        self::assertSame('/admin/users', $service->buildUrl('/admin/users', $collection));
+    }
+
+    /**
+     * Helper — narrows `parse_url()` + `parse_str()` for PHPStan.
+     *
+     * `parse_url()` returns `false` only on truly malformed URIs;
+     * the test inputs here are always well-formed. We assert the
+     * array shape so PHPStan sees the offset accesses as safe.
+     *
+     * Return shape is `array<int|string, array<mixed>|string>` —
+     * the natural type of `parse_str()`'s output. Tests cast or
+     * narrow at the call site when they need a specific shape.
+     *
+     * @return array<int|string, array<mixed>|string>
+     */
+    private function parseQuery(string $url): array
+    {
+        $parts = parse_url($url);
+        self::assertIsArray($parts);
+        $rawQuery = $parts['query'] ?? '';
+        self::assertIsString($rawQuery);
+        $parsed = [];
+        parse_str($rawQuery, $parsed);
+
+        return $parsed;
+    }
+
+    public function testBuildUrlEncodesSingleCriterionInDefaultFormName(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('users.list', [
+            new FilterCriterion('status', '=', ['active']),
+        ]);
+
+        $url = $service->buildUrl('/admin/users', $collection);
+
+        $parts = parse_url($url);
+        self::assertIsArray($parts);
+        self::assertSame('/admin/users', $parts['path'] ?? '');
+        self::assertSame(
+            ['filter' => ['status' => ['operator' => '=', 'values' => ['active']]]],
+            $this->parseQuery($url),
+        );
+    }
+
+    public function testBuildUrlEncodesBetweenWithMultipleValues(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('orders.list', [
+            new FilterCriterion('createdAt', 'between', ['2026-01-01', '2026-12-31']),
+        ]);
+
+        $url = $service->buildUrl('/admin/orders', $collection);
+
+        self::assertSame(
+            ['filter' => ['createdAt' => ['operator' => 'between', 'values' => ['2026-01-01', '2026-12-31']]]],
+            $this->parseQuery($url),
+        );
+    }
+
+    public function testBuildUrlEncodesMultipleCriteriaPreservingOrder(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('orders.list', [
+            new FilterCriterion('status', '=', ['paid']),
+            new FilterCriterion('total', '>=', [100]),
+        ]);
+
+        $url = $service->buildUrl('/admin/orders', $collection);
+
+        // `parse_str()` returns strings (query strings are stringly-typed
+        // by the HTTP spec). The integer `100` round-trips as the string
+        // `'100'` — hosts that need typed values cast inside the mapper.
+        self::assertSame(
+            [
+                'filter' => [
+                    'status' => ['operator' => '=', 'values' => ['paid']],
+                    'total' => ['operator' => '>=', 'values' => ['100']],
+                ],
+            ],
+            $this->parseQuery($url),
+        );
+    }
+
+    public function testBuildUrlMergesExtraQueryParams(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('users.list', [
+            new FilterCriterion('status', '=', ['active']),
+        ]);
+
+        $url = $service->buildUrl('/admin/users', $collection, ['page' => 2, 'sort' => 'createdAt:desc']);
+
+        $parsed = $this->parseQuery($url);
+        self::assertSame('2', $parsed['page']);
+        self::assertSame('createdAt:desc', $parsed['sort']);
+        self::assertSame(['status' => ['operator' => '=', 'values' => ['active']]], $parsed['filter']);
+    }
+
+    public function testBuildUrlAcceptsCustomFormName(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('users.list', [
+            new FilterCriterion('status', '=', ['active']),
+        ]);
+
+        $url = $service->buildUrl('/admin/users', $collection, formName: 'filters');
+
+        $parsed = $this->parseQuery($url);
+        self::assertArrayNotHasKey('filter', $parsed);
+        self::assertSame(['status' => ['operator' => '=', 'values' => ['active']]], $parsed['filters']);
+    }
+
+    public function testBuildUrlEscapesSpecialCharacters(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('search', [
+            new FilterCriterion('q', 'like', ['hello world & %wild%']),
+        ]);
+
+        $url = $service->buildUrl('/admin/search', $collection);
+
+        // Round-trip through parse_str — special chars must survive.
+        $parsed = $this->parseQuery($url);
+        self::assertIsArray($parsed['filter']);
+        self::assertIsArray($parsed['filter']['q']);
+        self::assertIsArray($parsed['filter']['q']['values']);
+        self::assertSame('hello world & %wild%', $parsed['filter']['q']['values'][0]);
+    }
+
+    public function testBuildUrlPreservesExistingQueryStringOnPath(): void
+    {
+        $service = $this->makeService(null);
+        $collection = new FilterCollection('users.list', [
+            new FilterCriterion('status', '=', ['active']),
+        ]);
+
+        // A path that already contains a query string — `?page=1` was set by the
+        // caller (e.g. UrlGeneratorInterface::generate() with route defaults).
+        // buildUrl() must merge with it rather than overwriting.
+        $url = $service->buildUrl('/admin/users?page=1', $collection);
+
+        $parts = parse_url($url);
+        self::assertIsArray($parts);
+        self::assertSame('/admin/users', $parts['path'] ?? '');
+        $parsed = $this->parseQuery($url);
+        self::assertSame('1', $parsed['page']);
+        self::assertArrayHasKey('filter', $parsed);
+    }
+
+    public function testBuildUrlRejectsEmptyPath(): void
+    {
+        $service = $this->makeService(null);
+
+        $this->expectException(InvalidArgumentException::class);
+        $service->buildUrl('', new FilterCollection('users.list'));
+    }
+
+    public function testBuildUrlRejectsEmptyFormName(): void
+    {
+        $service = $this->makeService(null);
+
+        $this->expectException(InvalidArgumentException::class);
+        $service->buildUrl('/admin/users', new FilterCollection('users.list'), formName: '');
+    }
+
     public function testClearAfterSaveDropsPayload(): void
     {
         $session = new InMemorySession();

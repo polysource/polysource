@@ -100,6 +100,95 @@ final class FilterService
     }
 
     /**
+     * Build a URL that lands on `$path` with the given filter
+     * `$collection` pre-applied. URL-shareable filter state — useful
+     * for dashboard tile deep links, email reports, "open in admin"
+     * permalinks, copy-link buttons next to a saved view.
+     *
+     * Encoding shape (mirrors the form data layer that
+     * `FilterCollectionType` reads back from the request):
+     *
+     *   $path?<formName>[<property>][operator]=<op>
+     *        &<formName>[<property>][values][0]=<v1>
+     *        &<formName>[<property>][values][1]=<v2>
+     *
+     * The default `formName` is `filter` — matches the vanilla
+     * `tags/chips.html.twig` template and the `FilterCollectionType`
+     * default. Hosts using a different form name (EA's `filters`,
+     * a host-specific `myFilter`) pass it explicitly so chip-remove
+     * links and `buildUrl()` agree.
+     *
+     * Empty collection → returns `$path` unchanged (no trailing `?`).
+     *
+     * `$extraQuery` is merged into the final query string. Useful
+     * for preserving pagination/sort cursor when generating the URL.
+     * Existing query strings already on `$path` are preserved too —
+     * the helper performs a structural merge (see test
+     * `testBuildUrlPreservesExistingQueryStringOnPath`).
+     *
+     * @param array<string, mixed> $extraQuery merged on top of the encoded filter state
+     */
+    public function buildUrl(
+        string $path,
+        FilterCollection $collection,
+        array $extraQuery = [],
+        string $formName = 'filter',
+    ): string {
+        if ('' === $path) {
+            throw new InvalidArgumentException('FilterService::buildUrl() path cannot be empty.');
+        }
+        if ('' === $formName) {
+            throw new InvalidArgumentException('FilterService::buildUrl() formName cannot be empty.');
+        }
+
+        // Split any pre-existing query string off the path so we can
+        // merge structurally rather than concatenating with `?` /
+        // `&` (which would double-encode nested keys on a path like
+        // `/admin/users?page=1`).
+        $existingQuery = [];
+        $cleanPath = $path;
+        $qPos = strpos($path, '?');
+        if (false !== $qPos) {
+            $cleanPath = substr($path, 0, $qPos);
+            parse_str(substr($path, $qPos + 1), $existingQuery);
+        }
+
+        $filterPayload = $this->encodeForUrl($collection);
+
+        $query = $existingQuery;
+        if ([] !== $filterPayload) {
+            $query[$formName] = $filterPayload;
+        }
+        // Shallow merge — extraQuery typically carries paging/sort,
+        // not filter overrides. Hosts wanting to surgically override
+        // a single criterion's operator can compose a new
+        // FilterCollection rather than passing nested extraQuery.
+        $query = array_merge($query, $extraQuery);
+
+        if ([] === $query) {
+            return $cleanPath;
+        }
+
+        return $cleanPath . '?' . http_build_query($query);
+    }
+
+    /**
+     * @return array<string, array{operator: string, values: list<mixed>}>
+     */
+    private function encodeForUrl(FilterCollection $collection): array
+    {
+        $payload = [];
+        foreach ($collection as $criterion) {
+            $payload[$criterion->property] = [
+                'operator' => $criterion->operator,
+                'values' => $criterion->values,
+            ];
+        }
+
+        return $payload;
+    }
+
+    /**
      * Wipes the slot associated with the given `id`. No-op when the
      * slot doesn't exist or when no session is available.
      */
