@@ -32,6 +32,7 @@
         "phpstan/extension-installer": "^1.4",
         "friendsofphp/php-cs-fixer": "^3.65",
         "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
+        "polysource/audit": "0.1.x-dev",
         "polysource/easyadmin-filter-bridge": "0.1.x-dev",
         "polysource/filter": "0.1.x-dev",
         "symfony/browser-kit": "^6.4 || ^7.0 || ^8.0",
@@ -66,6 +67,7 @@
             "Polysource\\Core\\Tests\\": "packages/core/tests/",
             "Polysource\\Bundle\\Tests\\": "packages/symfony-bundle/tests/",
             "Polysource\\Adapter\\Messenger\\Tests\\": "packages/adapter-messenger/tests/",
+            "Polysource\\Audit\\Tests\\": "packages/audit/tests/",
             "Polysource\\EasyAdminFilterBridge\\Tests\\": "packages/easyadmin-filter-bridge/tests/"
         }
     }

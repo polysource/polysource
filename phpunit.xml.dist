@@ -22,6 +22,7 @@
             <directory>packages/core/tests/Unit</directory>
             <directory>packages/symfony-bundle/tests/Unit</directory>
             <directory>packages/adapter-messenger/tests/Unit</directory>
+            <directory>packages/audit/tests/Unit</directory>
             <directory>packages/easyadmin-filter-bridge/tests/Unit</directory>
             <directory>packages/filter/tests/Unit</directory>
         </testsuite>
@@ -37,6 +38,7 @@
             <directory>packages/core/src</directory>
             <directory>packages/symfony-bundle/src</directory>
             <directory>packages/adapter-messenger/src</directory>
+            <directory>packages/audit/src</directory>
             <directory>packages/easyadmin-filter-bridge/src</directory>
             <directory>packages/filter/src</directory>
         </include>
