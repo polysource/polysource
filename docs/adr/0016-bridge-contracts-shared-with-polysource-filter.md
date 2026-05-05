@@ -135,7 +135,9 @@ if ($formatter instanceof ChipFormatterInterface) {
 
 ### 4. Mapper / Renderer / Formatter (pipeline complète) — v0.2+
 
-Pour cohérence avec le pattern interne, on prévoit (sans implémenter en v0.1) :
+Pour cohérence avec le pipeline mapper/formatter/renderer déjà introduit
+côté `Pipeline\*Interface`, on prévoit la symétrie complète côté bridge
+(sans implémenter en v0.1) :
 
 ```php
 namespace Polysource\Filter\Bridge\Contract;

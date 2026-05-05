@@ -14,7 +14,10 @@ use InvalidArgumentException;
  * value* — what the user actually picked. The two never get
  * confused.
  *
- * Codified: each definition carries TWO faces.
+ * Each definition carries TWO faces — a form-side spec and a
+ * datasource-side spec — so that the renderer (which controls the
+ * UI) and the applier (which controls the query) can both read what
+ * they need from a single declaration:
  *
  * - `formSpec` — consumed by the renderer (what FormType to use, what
  *   options to pass to it, label, placeholder, etc.).
