@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}polysource/filter standalone demo{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <style>
+        body { padding: 2rem 3rem; max-width: 1200px; margin: 0 auto; }
+        h1 { font-weight: 700; margin-bottom: 0.25rem; }
+        .lead { color: #6c757d; margin-bottom: 2rem; }
+        .filter-form { background: #f8f9fa; border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .filter-form label { font-weight: 600; font-size: 0.9rem; }
+        .stack { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+    {% block body %}{% endblock %}
+    <hr style="margin-top: 4rem;">
+    <p class="stack text-center">
+        polysource/filter standalone demo — PHP {{ constant('PHP_VERSION') }} ·
+        Symfony {{ constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }} ·
+        no admin framework, no ORM
+    </p>
+</body>
+</html>

@@ -1,0 +1,4 @@
+products:
+    path: /
+    controller: Polysource\Demo\FilterStandalone\Controller\ProductController::list
+    methods: [GET]

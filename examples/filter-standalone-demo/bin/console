@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+use Polysource\Demo\FilterStandalone\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+require_once dirname(__DIR__) . '/vendor/autoload_runtime.php';
+
+return static function (array $context): Application {
+    $kernel = new Kernel($context['APP_ENV'] ?? 'dev', (bool) ($context['APP_DEBUG'] ?? true));
+
+    return new Application($kernel);
+};

@@ -1,0 +1,39 @@
+{
+    "name": "polysource/filter-standalone-demo",
+    "description": "Polysource — runnable demo: polysource/filter primitive on a vanilla Symfony app (no EasyAdmin, no Sonata). Pinned on the floor of the multi-version baseline (PHP 8.1 + Sf 5.4) per ADR-015, to prove the primitive runs anywhere.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "polysource/filter": "0.1.x-dev",
+        "symfony/console": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/dotenv": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/runtime": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+        "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Polysource\\Demo\\FilterStandalone\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        { "type": "path", "url": "../../packages/filter" }
+    ],
+    "extra": {
+        "runtime": {
+            "use_putenv": true
+        }
+    }
+}

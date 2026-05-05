@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Products — polysource/filter standalone demo{% endblock %}
+
+{% block body %}
+    <h1>Products</h1>
+    <p class="lead">
+        A vanilla Symfony app showing <code>polysource/filter</code>
+        without EasyAdmin, Sonata, or API Platform — just a controller,
+        a Twig template, and 4 filter formatters auto-tagged via
+        Symfony's <code>autoconfigure</code>.
+    </p>
+
+    {% if collection.count > 0 %}
+        <div class="mb-3">
+            <strong>Active filters:</strong>
+            {{ filter_tags(collection, definitions) }}
+            <a href="{{ path('products') }}" class="btn btn-sm btn-link">Clear all</a>
+        </div>
+    {% endif %}
+
+    <form method="GET" action="{{ path('products') }}" class="filter-form">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                {% set selected = filterValues.category|default([]) %}
+                {% for choice in ['Tech', 'Books', 'Apparel', 'Home'] %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               name="filter[category][]" value="{{ choice }}"
+                               id="cat-{{ loop.index }}"
+                               {% if choice in selected %}checked{% endif %}>
+                        <label class="form-check-label" for="cat-{{ loop.index }}">{{ choice }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Price (€)</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" name="filter[price][min]"
+                           placeholder="min" value="{{ filterValues.price.min|default('') }}">
+                    <input type="number" class="form-control" name="filter[price][max]"
+                           placeholder="max" value="{{ filterValues.price.max|default('') }}">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label" for="released-at">Released after</label>
+                <input type="date" class="form-control" id="released-at"
+                       name="filter[releasedAt]"
+                       value="{{ filterValues.releasedAt|default('') }}">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label" for="availability">Availability</label>
+                <select class="form-select" id="availability" name="filter[isAvailable]">
+                    <option value="">Any</option>
+                    <option value="1" {% if filterValues.isAvailable|default('') == '1' %}selected{% endif %}>In stock</option>
+                    <option value="0" {% if filterValues.isAvailable|default('') == '0' %}selected{% endif %}>Out of stock</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Apply filters</button>
+            <a href="{{ path('products') }}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>#</th><th>Name</th><th>Category</th>
+                <th class="text-end">Price</th><th>Released</th><th>Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.id }}</td>
+                    <td>{{ product.name }}</td>
+                    <td><span class="badge text-bg-light">{{ product.category }}</span></td>
+                    <td class="text-end">{{ product.price|number_format(0, '.', ' ') }} €</td>
+                    <td>{{ product.releasedAt|date('Y-m-d') }}</td>
+                    <td>
+                        {% if product.isAvailable %}
+                            <span class="text-success">✓ In stock</span>
+                        {% else %}
+                            <span class="text-muted">— Out</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No products match your filters.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="text-muted">
+        <small>{{ products|length }} product{{ products|length != 1 ? 's' : '' }} match.</small>
+    </p>
+{% endblock %}

@@ -12,6 +12,7 @@ use Polysource\Filter\Pipeline\Registry\FormatterRegistry;
 use Polysource\Filter\Pipeline\Registry\MapperRegistry;
 use Polysource\Filter\Pipeline\Registry\RendererRegistry;
 use Polysource\Filter\Service\FilterService;
+use Polysource\Filter\Twig\Extension\FilterTagsExtension;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -60,7 +61,19 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
 
         // 1) Register `assets/` as a public AssetMapper path so the
         //    `.js` controller files are servable.
-        if (\array_key_exists('FrameworkBundle', $bundles)) {
+        //
+        //    AssetMapper ships since Symfony 6.3. On Sf 5.4, and on
+        //    Sf 6.x apps that haven't installed `symfony/asset-mapper`,
+        //    this prepend crashes container compilation with
+        //    "AssetMapper support cannot be enabled as the AssetMapper
+        //    component is not installed". Hosts on those stacks use
+        //    Webpack Encore (or no JS pipeline at all, like our
+        //    standalone demo) — we no-op there. Hosts that do have
+        //    AssetMapper continue to receive the prepend.
+        if (
+            \array_key_exists('FrameworkBundle', $bundles)
+            && class_exists(\Symfony\Component\AssetMapper\AssetMapper::class)
+        ) {
             $container->prependExtensionConfig('framework', [
                 'asset_mapper' => [
                     'paths' => [
@@ -126,6 +139,27 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             ->setAutoconfigured(true)
             ->setPublic(true)
         ;
+
+        // FilterTagsExtension — Twig function `filter_tags()`. Register
+        // it explicitly + tag `twig.extension` because the bundle ships
+        // its Twig extension (host apps can't autowire foreign-bundle
+        // services, and we don't ship a services.xml).
+        //
+        // Guarded on TwigBundle presence so non-Twig hosts (rare, but
+        // possible: a console-only app, a unit test kernel) don't get
+        // an unused service that fails to autowire `Twig\Environment`.
+        // The `kernel.bundles` param check uses `hasParameter()` first
+        // because some test container builders don't seed it.
+        $bundles = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+            $container
+                ->register(FilterTagsExtension::class)
+                ->setAutowired(true)
+                ->addTag('twig.extension')
+            ;
+        }
     }
 
     public function getAlias(): string

@@ -1,0 +1,22 @@
+services:
+  php:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    volumes:
+      - ../..:/repo:cached
+      - composer-cache:/home/demo/.composer
+    working_dir: /repo/examples/filter-standalone-demo
+    environment:
+      COMPOSER_MEMORY_LIMIT: -1
+      APP_ENV: dev
+      APP_DEBUG: '1'
+    ports:
+      - "8082:8000"
+    command: ["php", "-S", "0.0.0.0:8000", "-t", "public", "public/index.php"]
+
+volumes:
+  composer-cache:
+    driver: local
