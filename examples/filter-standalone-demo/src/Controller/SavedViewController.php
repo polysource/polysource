@@ -6,6 +6,7 @@ namespace Polysource\Demo\FilterStandalone\Controller;
 
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\SavedView\Exception\SavedViewDuplicateNameException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
@@ -57,6 +58,17 @@ final class SavedViewController extends AbstractController
         $filterRaw = (array) ($parsed['filter'] ?? []);
         $criteria = $this->buildCriteria($filterRaw);
 
+        // Refuse to persist a "saved view" with no filter applied —
+        // it would just be the unfiltered list with a label, and the
+        // dropdown would already display it as the implicit default.
+        // (The model itself stays permissive — sort/columns-only views
+        //  may make sense in other hosts. This is a demo-side rule.)
+        if ([] === $criteria) {
+            $this->addFlash('warning', 'Apply at least one filter before saving a view.');
+
+            return $this->redirectToRoute('products');
+        }
+
         $view = new SavedView(
             id: Uuid::v7()->toRfc4122(),
             name: $name,
@@ -66,7 +78,16 @@ final class SavedViewController extends AbstractController
             filters: new FilterCollection($resource, $criteria),
         );
 
-        $this->service->save($view);
+        try {
+            $this->service->save($view);
+        } catch (SavedViewDuplicateNameException $e) {
+            $this->addFlash('warning', \sprintf(
+                'You already have a saved view named "%s". Pick another name.',
+                $e->name,
+            ));
+
+            return $this->redirectToRoute('products');
+        }
         $this->addFlash('success', \sprintf('View "%s" saved.', $name));
 
         return $this->redirectToRoute('products', ['view' => $view->id]);

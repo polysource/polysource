@@ -82,6 +82,10 @@ final class SavedViewService
      * already exists; create-time check delegates to the storage
      * (saving a new view is implicitly allowed for any authenticated
      * user — they'll be the owner).
+     *
+     * @throws Exception\SavedViewDuplicateNameException
+     *         when the (ownerId, resourceName, name) triple already
+     *         exists on a different view (different id)
      */
     public function save(SavedView $view): SavedView
     {
@@ -97,9 +101,32 @@ final class SavedViewService
             throw new RuntimeException(\sprintf('Not authorized to change scope of saved view "%s".', $view->id));
         }
 
+        // Uniqueness check: a user can't have two views with the same
+        // name on the same resource. Skipped when we're updating the
+        // same id (that's the same view being saved with potentially
+        // mutated data).
+        $this->assertUniqueName($view, $existing);
+
         $this->storage->save($view);
 
         return $view;
+    }
+
+    private function assertUniqueName(SavedView $candidate, ?SavedView $existing): void
+    {
+        // Walk the storage owner-scoped slice; cheap on the in-memory
+        // impl, single SQL roundtrip on Doctrine.
+        foreach ($this->storage->listVisible($candidate->resourceName, $candidate->ownerId) as $other) {
+            if ($other->ownerId !== $candidate->ownerId) {
+                continue; // not our view; PUBLIC views from others don't count
+            }
+            if ($other->id === $candidate->id) {
+                continue; // self
+            }
+            if ($other->name === $candidate->name) {
+                throw new Exception\SavedViewDuplicateNameException(name: $candidate->name, resourceName: $candidate->resourceName, ownerId: $candidate->ownerId);
+            }
+        }
     }
 
     public function load(string $id): ?SavedView

@@ -42,6 +42,13 @@
                             <span class="badge text-bg-light polysource-saved-views__scope">
                                 {{ ('polysource.saved_views.scope.' ~ view.scope.value)|trans({}, 'PolysourceFilter') }}
                             </span>
+                            {# Owner attribution — disambiguates which user shared a
+                               team/public view when several users have views with
+                               the same name on the same resource. Hosts can hide
+                               this by overriding the template. #}
+                            <small class="text-muted polysource-saved-views__owner">
+                                · {{ view.ownerId }}
+                            </small>
                         {%- endif -%}
                     </a>
                 </li>

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\SavedView\Exception\SavedViewDuplicateNameException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
@@ -203,6 +204,97 @@ final class SavedViewServiceTest extends TestCase
 
         $service->delete('never-existed');
         $this->expectNotToPerformAssertions();
+    }
+
+    #[Test]
+    public function saveRejectsDuplicateNameForSameOwnerAndResource(): void
+    {
+        $storage = new InMemorySavedViewStorage();
+        $storage->save($this->makeView('a', ownerId: 'alice'));
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $this->grantAllChecker(),
+            tokenStorage: $this->tokenStorageFor('alice'),
+        );
+
+        // makeView() defaults the name to "View {id}" — same owner, same
+        // resource, different id, but try to give it the same name as
+        // view 'a'.
+        $duplicate = new SavedView(
+            id: 'b',
+            name: 'View a', // collides with id=a's auto-name
+            resourceName: 'products',
+            ownerId: 'alice',
+            scope: SavedViewScope::PRIVATE,
+            filters: new FilterCollection('products', [
+                new FilterCriterion('isActive', 'eq', ['1']),
+            ]),
+        );
+
+        $this->expectException(SavedViewDuplicateNameException::class);
+        $this->expectExceptionMessage('saved view named "View a" already exists for user "alice"');
+        $service->save($duplicate);
+    }
+
+    #[Test]
+    public function saveAllowsSameNameForDifferentOwners(): void
+    {
+        $storage = new InMemorySavedViewStorage();
+        $storage->save($this->makeView('a', ownerId: 'alice'));
+
+        // Bob wants to save a view with the same name as alice's.
+        // Two separate users => two separate buckets => OK.
+        $bobView = new SavedView(
+            id: 'b',
+            name: 'View a',
+            resourceName: 'products',
+            ownerId: 'bob',
+            scope: SavedViewScope::PRIVATE,
+            filters: new FilterCollection('products', [
+                new FilterCriterion('isActive', 'eq', ['1']),
+            ]),
+        );
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $this->grantAllChecker(),
+            tokenStorage: $this->tokenStorageFor('bob'),
+        );
+
+        $service->save($bobView);
+        self::assertNotNull($storage->find('b'));
+    }
+
+    #[Test]
+    public function saveAllowsRenameOfTheSameView(): void
+    {
+        // The duplicate-name check must NOT fire when the same view
+        // is being saved (same id) with potentially renamed data.
+        $storage = new InMemorySavedViewStorage();
+        $storage->save($this->makeView('a', ownerId: 'alice'));
+
+        $renamed = new SavedView(
+            id: 'a', // same id
+            name: 'Brand new name',
+            resourceName: 'products',
+            ownerId: 'alice',
+            scope: SavedViewScope::PRIVATE,
+            filters: new FilterCollection('products', [
+                new FilterCriterion('isActive', 'eq', ['1']),
+            ]),
+        );
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $this->grantAllChecker(),
+            tokenStorage: $this->tokenStorageFor('alice'),
+        );
+
+        $service->save($renamed);
+        $persisted = $storage->find('a');
+        self::assertNotNull($persisted);
+        self::assertSame('Brand new name', $persisted->name);
     }
 
     #[Test]
