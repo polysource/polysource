@@ -1,0 +1,20 @@
+bulk_async:
+    resource:
+        label: Tâches en lot
+    status:
+        pending: En attente
+        running: En cours
+        completed: Terminé
+        failed: Échoué
+        cancelled: Annulé
+    action:
+        cancel:
+            label: Annuler
+            success: Tâche annulée. Le worker s'arrêtera au prochain tick.
+            already_terminal: 'La tâche est déjà %status% — rien à annuler.'
+            missing: 'La tâche "%id%" n''existe plus.'
+    progress:
+        records: '%processed% / %total% enregistrements'
+        failed: '%count% échec(s)'
+        eta_seconds: '~%seconds%s restant'
+        eta_minutes: '~%minutes%m restant'

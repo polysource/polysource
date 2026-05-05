@@ -1,0 +1,20 @@
+bulk_async:
+    resource:
+        label: Bulk jobs
+    status:
+        pending: Pending
+        running: Running
+        completed: Completed
+        failed: Failed
+        cancelled: Cancelled
+    action:
+        cancel:
+            label: Cancel
+            success: Bulk job cancelled. The worker will stop on its next tick.
+            already_terminal: 'Bulk job already %status% — nothing to cancel.'
+            missing: 'Bulk job "%id%" no longer exists.'
+    progress:
+        records: '%processed% / %total% records'
+        failed: '%count% failed'
+        eta_seconds: '~%seconds%s left'
+        eta_minutes: '~%minutes%m left'

@@ -1,0 +1,55 @@
+{# polysource/bulk-async — bulk job progress card (ADR-024 §9).
+
+    Stimulus values:
+      - `urlValue`         polling endpoint (always populated)
+      - `mercureUrlValue`  Mercure topic URL (optional — when present, EventSource takes over)
+      - `intervalValue`    polling interval ms (default 2000)
+      - `payloadValue`     server-rendered initial state — avoids the first poll's flicker
+
+    The card is self-contained Bootstrap 5 markup. Hosts wanting a
+    custom layout pass the `payload` array to their own template via
+    `polysource_bulk_progress_payload(job)`.
+#}
+{%- set status = payload.status -%}
+{%- set progress_pct = (payload.progress * 100) | round(1) -%}
+{%- set is_terminal = status in ['completed', 'failed', 'cancelled'] -%}
+<div class="card polysource-bulk-progress"
+     id="bulk-job-{{ job.id }}"
+     data-controller="polysource-bulk-progress"
+     data-polysource-bulk-progress-url-value="{{ progress_url }}"
+     data-polysource-bulk-progress-payload-value="{{ payload | json_encode | e('html_attr') }}"
+     {% if mercure_topic %}data-polysource-bulk-progress-mercure-url-value="{{ mercure_topic }}"{% endif %}
+     data-polysource-bulk-progress-interval-value="2000">
+    <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-{% if status == 'completed' %}success{% elseif status == 'failed' %}danger{% elseif status == 'cancelled' %}secondary{% elseif status == 'running' %}primary{% else %}warning{% endif %}"
+                  data-polysource-bulk-progress-target="status">
+                {{ status | upper }}
+            </span>
+            <small class="ms-2 text-muted" data-polysource-bulk-progress-target="counts">
+                {{ payload.processed }} / {{ payload.total }} records
+                {% if payload.failed > 0 %}· <span class="text-danger">{{ payload.failed }} failed</span>{% endif %}
+            </small>
+            <small class="ms-auto text-muted" data-polysource-bulk-progress-target="eta">
+                {% if not is_terminal %}…{% endif %}
+            </small>
+        </div>
+        <div class="progress" role="progressbar"
+             aria-label="Bulk job progress"
+             aria-valuenow="{{ progress_pct }}"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             style="height: 8px;">
+            <div class="progress-bar
+                        {% if status == 'failed' %}bg-danger{% elseif status == 'cancelled' %}bg-secondary{% endif %}
+                        {% if not is_terminal %}progress-bar-striped progress-bar-animated{% endif %}"
+                 data-polysource-bulk-progress-target="bar"
+                 style="width: {{ progress_pct }}%;"></div>
+        </div>
+        {% if payload.errorMessage %}
+            <div class="alert alert-danger mt-2 mb-0 small" data-polysource-bulk-progress-target="error">
+                {{ payload.errorMessage }}
+            </div>
+        {% endif %}
+    </div>
+</div>
