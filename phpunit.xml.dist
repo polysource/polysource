@@ -25,6 +25,7 @@
             <directory>packages/audit/tests/Unit</directory>
             <directory>packages/easyadmin-filter-bridge/tests/Unit</directory>
             <directory>packages/filter/tests/Unit</directory>
+            <directory>packages/workflow-bridge/tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
             <directory>packages/symfony-bundle/tests/Functional</directory>
@@ -42,6 +43,7 @@
             <directory>packages/audit/src</directory>
             <directory>packages/easyadmin-filter-bridge/src</directory>
             <directory>packages/filter/src</directory>
+            <directory>packages/workflow-bridge/src</directory>
         </include>
     </source>
 </phpunit>
