@@ -1,0 +1,75 @@
+{# polysource/filter — saved-views dropdown.
+
+   Vars exposed by SavedViewExtension::renderDropdown():
+   - resource_name (string)            current resource scope
+   - views (list<SavedView>)           visible views for the user
+   - current (?SavedView)              the active default view, if any
+
+   Markup is Bootstrap 5; hosts override at the app level via the
+   @PolysourceFilter Twig namespace if they need a different look.
+
+   Apply / save / delete are URL-driven: the dropdown items are plain
+   <a href> setting `?view=<id>`; the save modal is a Symfony Form
+   POSTing to a host-controlled endpoint. No JS framework required.
+#}
+<div class="polysource-saved-views dropdown" data-resource="{{ resource_name }}">
+    <button type="button"
+            class="btn btn-outline-secondary dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+        {%- if current is not null -%}
+            <span class="polysource-saved-views__current">{{ current.name }}</span>
+        {%- else -%}
+            {{- 'polysource.saved_views.dropdown.label'|trans({}, 'PolysourceFilter') -}}
+        {%- endif -%}
+    </button>
+    <ul class="dropdown-menu polysource-saved-views__menu">
+        {%- if views is empty -%}
+            <li>
+                <span class="dropdown-item-text text-muted">
+                    {{ 'polysource.saved_views.dropdown.empty'|trans({}, 'PolysourceFilter') }}
+                </span>
+            </li>
+        {%- else -%}
+            {%- for view in views -%}
+                <li>
+                    <a class="dropdown-item polysource-saved-views__item
+                              {{ current is not null and current.id == view.id ? 'active' : '' }}"
+                       href="?view={{ view.id|url_encode }}"
+                       data-view-id="{{ view.id }}">
+                        <span class="polysource-saved-views__item-name">{{ view.name }}</span>
+                        {%- if view.scope.value != 'private' -%}
+                            <span class="badge text-bg-light polysource-saved-views__scope">
+                                {{ ('polysource.saved_views.scope.' ~ view.scope.value)|trans({}, 'PolysourceFilter') }}
+                            </span>
+                        {%- endif -%}
+                    </a>
+                </li>
+            {%- endfor -%}
+        {%- endif -%}
+
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <button type="button"
+                    class="dropdown-item polysource-saved-views__save"
+                    data-bs-toggle="modal"
+                    data-bs-target="#polysource-save-view-modal-{{ resource_name|escape('html_attr') }}">
+                {{ 'polysource.saved_views.dropdown.save_current'|trans({}, 'PolysourceFilter') }}
+            </button>
+        </li>
+        {%- if current is not null -%}
+            <li>
+                <a class="dropdown-item polysource-saved-views__clear text-danger" href="?">
+                    {{ 'polysource.saved_views.dropdown.clear'|trans({}, 'PolysourceFilter') }}
+                </a>
+            </li>
+        {%- endif -%}
+    </ul>
+</div>
+
+{# The save modal — included once per dropdown render. The host's
+   form action / CSRF / fields live in save_modal.html.twig and can
+   be overridden independently. #}
+{{ include('@PolysourceFilter/saved_view/save_modal.html.twig', {
+    resource_name: resource_name,
+}) }}

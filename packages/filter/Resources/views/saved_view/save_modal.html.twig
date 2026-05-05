@@ -1,0 +1,84 @@
+{# polysource/filter — "Save current as view" modal.
+
+   This is a SHELL — the host wires the actual form action by
+   overriding this template. We ship a minimal example so the
+   dropdown's "Save…" trigger works visually out-of-the-box.
+
+   Vars:
+   - resource_name (string)
+
+   Hosts that want full control:
+   1. Implement a controller action that receives the form POST with
+      view name + scope + filter state from the URL (the form below
+      relays them via hidden inputs).
+   2. Override this template at the app level
+      (`templates/bundles/PolysourceFilterBundle/saved_view/save_modal.html.twig`)
+      to point the form at their controller.
+
+   No CSRF token in the default template — hosts add it to fit
+   their security setup.
+#}
+<div class="modal fade polysource-save-view-modal"
+     id="polysource-save-view-modal-{{ resource_name|escape('html_attr') }}"
+     tabindex="-1"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post"
+                  action="{{ path('polysource_saved_view_create', {resource: resource_name}) is defined
+                              ? path('polysource_saved_view_create', {resource: resource_name})
+                              : '#' }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        {{ 'polysource.saved_views.modal.title'|trans({}, 'PolysourceFilter') }}
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="{{ 'polysource.saved_views.modal.close'|trans({}, 'PolysourceFilter') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="polysource-save-view-name-{{ resource_name|escape('html_attr') }}">
+                            {{ 'polysource.saved_views.modal.name'|trans({}, 'PolysourceFilter') }}
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="polysource-save-view-name-{{ resource_name|escape('html_attr') }}"
+                               name="name"
+                               required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="polysource-save-view-scope-{{ resource_name|escape('html_attr') }}">
+                            {{ 'polysource.saved_views.modal.scope'|trans({}, 'PolysourceFilter') }}
+                        </label>
+                        <select class="form-select"
+                                id="polysource-save-view-scope-{{ resource_name|escape('html_attr') }}"
+                                name="scope">
+                            <option value="private" selected>
+                                {{ 'polysource.saved_views.scope.private'|trans({}, 'PolysourceFilter') }}
+                            </option>
+                            <option value="team">
+                                {{ 'polysource.saved_views.scope.team'|trans({}, 'PolysourceFilter') }}
+                            </option>
+                            <option value="public">
+                                {{ 'polysource.saved_views.scope.public'|trans({}, 'PolysourceFilter') }}
+                            </option>
+                        </select>
+                    </div>
+                    {# Pass the current filter URL to the controller so it can
+                       decode the FilterCollection from query parameters. #}
+                    <input type="hidden" name="filter_querystring" value="{{ app.request.queryString|default('')|escape('html_attr') }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {{ 'polysource.saved_views.modal.cancel'|trans({}, 'PolysourceFilter') }}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        {{ 'polysource.saved_views.modal.save'|trans({}, 'PolysourceFilter') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

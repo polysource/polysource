@@ -160,6 +160,55 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->addTag('twig.extension')
             ;
         }
+
+        // SavedView wiring (cf. ADR-019).
+        //
+        // DoctrineSavedViewStorage is the default storage — gated by
+        // `class_exists(EntityManagerInterface)`. Hosts without
+        // Doctrine wire their own SavedViewStorageInterface service
+        // manually (see docs/user/filter/saved-views.md).
+        //
+        // SavedViewService + SavedViewExtension + SavedViewVoter are
+        // only registered when a storage alias exists, to avoid a
+        // DI-compilation crash for hosts that haven't wired storage
+        // yet.
+        $hasStorage = false;
+        if (class_exists(\Doctrine\ORM\EntityManagerInterface::class)) {
+            $container
+                ->register(\Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\SavedView\Storage\SavedViewStorageInterface::class,
+                \Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class,
+            );
+            $hasStorage = true;
+        }
+
+        if ($hasStorage) {
+            $container
+                ->register(\Polysource\Filter\SavedView\SavedViewService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+
+            $container
+                ->register(\Polysource\Filter\SavedView\Security\SavedViewVoter::class)
+                ->setAutowired(true)
+                ->addTag('security.voter')
+            ;
+
+            // SavedViewExtension — Twig function `saved_views_dropdown()`.
+            // Requires both Twig (for the function) and the SavedView
+            // service stack (for the data).
+            if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+                $container
+                    ->register(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
+                    ->setAutowired(true)
+                    ->addTag('twig.extension')
+                ;
+            }
+        }
     }
 
     public function getAlias(): string
