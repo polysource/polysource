@@ -17,6 +17,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Get a working dashboard in 5 minutes | [getting-started.md](./getting-started.md) |
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |
+| Add a GDPR Art. 30 / HIPAA audit trail | [audit/](./audit/) |
 | Build filter UIs (standalone primitive) | [filter/](./filter/) |
 | Enrich an EasyAdmin v5 app's filters (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
 | Honest per-filter matrix vs upstream EA | [easyadmin-filter-bridge/whats-new.md](./easyadmin-filter-bridge/whats-new.md) |
