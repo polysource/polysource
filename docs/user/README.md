@@ -21,6 +21,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Wire Symfony Workflow into your admin (auto transitions + state chip) | [workflow-bridge/](./workflow-bridge/) |
 | Compose admin dashboards with KPI / list / chart widgets | [widgets/](./widgets/) |
 | Add a Cmd+K command palette for cross-resource search | [search/](./search/) |
+| Run bulk actions asynchronously with live progress + cancel | [bulk-async/](./bulk-async/) |
 | Build filter UIs (standalone primitive) | [filter/](./filter/) |
 | Enrich an EasyAdmin v5 app's filters (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
 | Honest per-filter matrix vs upstream EA | [easyadmin-filter-bridge/whats-new.md](./easyadmin-filter-bridge/whats-new.md) |
