@@ -58,6 +58,36 @@ le code, on ne faisait que les exclure du composer.json), gain audience non
 nul (un host sur Sf 6.2 ou 7.1 peut désormais installer sans patch). PHP `^8.1`
 devient `>=8.1` pour la même raison : EA 4.29 utilise `>=`, on aligne.
 
+**Amendement 2026-05-05 (2/2) — matrice par package.** L'amendement
+précédent supposait que tous les packages pouvaient supporter Sf 5.4.
+Le premier run CI a révélé que `polysource/symfony-bundle` utilise
+`Symfony\Component\HttpKernel\Controller\ValueResolverInterface` et
+`Symfony\Bundle\SecurityBundle\Security` — **deux APIs introduites en
+Sf 6.2** (et obligatoires en Sf 6.4 LTS). Le bundle ne peut donc pas
+tourner sur Sf 5.4 sans shim. Plutôt qu'un polyfill cross-major, on
+reconnaît la réalité par-package :
+
+| Package | Sf min | Audience |
+|---|---|---|
+| `polysource/core` | aucune dep Sf | universel |
+| `polysource/twig-theme` | pas de PHP | universel |
+| `polysource/symfony-bundle` | `^6.4 \|\| ^7.0 \|\| ^8.0` | admin engine — hosts modernes |
+| `polysource/adapter-messenger` | `^6.4 \|\| ^7.0 \|\| ^8.0` | dépend de symfony-bundle |
+| `polysource/filter` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | tronc commun audience-capture |
+| `polysource/easyadmin-filter-bridge` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | bridge audience EA v4 |
+
+Le **bridge** et le **filter primitive** restent ouverts à Sf 5.4 — ils
+n'utilisent aucune API 6.2+. Un host sur Sf 5.4 + EA 4.29 + PHP 8.1 peut
+installer le bridge (validé par `composer install` du démo
+`easyadmin-bridge-demo-v4`).
+
+**CI matrix** : la matrice teste le monorepo entier (`vendor/bin/phpunit`
+qui inclut les tests de symfony-bundle), donc le floor effectif de la
+matrice est Sf 6.4 LTS. Sf 5.4 pour filter + bridge est composer-
+validé (le `composer.json` advertise `^5.4`) mais pas test-gated par
+cette matrice. Une matrice par-package serait possible mais ajoute du
+noise CI pour un gain marginal v0.1.
+
 ### Audience couverte
 
 Combinaisons réelles supportées (CI matrix prioritaire, 5 jobs) :

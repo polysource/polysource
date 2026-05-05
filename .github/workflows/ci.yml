@@ -79,14 +79,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ADR-015 amendement 2026-05-05: the bridge advertises every
-        # Symfony minor since 5.4 (`^5.4 || ^6.0 || ^7.0 || ^8.0`), not
-        # just LTS. To materially prove the wider promise we add 1
-        # explicit non-LTS row (PHP 8.3 × Sf 7.2 × EA 5.x) on top of
-        # the 5 baseline LTS combos. Cartesian-product matrices
-        # generate impossible combos (e.g. PHP 8.1 × Sf 7.4) so each
-        # row is listed by hand.
-        #   1. Legacy stack:   PHP 8.1 + Sf 5.4 LTS   + EA 4.x
+        # ADR-015 amendement 2026-05-05: per-package matrix.
+        #
+        # `polysource/symfony-bundle` and `polysource/adapter-messenger`
+        # use Sf 6.2+ APIs (`ValueResolverInterface`, renamed
+        # `SecurityBundle\Security`) so they require `^6.4 || ^7.0 || ^8.0`.
+        # `polysource/filter` and `polysource/easyadmin-filter-bridge`
+        # advertise the wider `^5.4 || ^6.0 || ^7.0 || ^8.0` because
+        # they don't use 6.2+ APIs — but the monorepo-wide test job below
+        # tests the WHOLE suite (incl. symfony-bundle), so its floor is
+        # Sf 6.4. Sf 5.4 compat for filter+bridge is composer-validated
+        # (the bridge advertises `^5.4`) but not test-gated by this matrix.
+        #
+        # Each row is listed by hand; cartesian-product matrices generate
+        # impossible combos (e.g. PHP 8.1 × Sf 7.4 — Sf 7 needs 8.2+).
+        #   1. Legacy floor:   PHP 8.1 + Sf 6.4 LTS   + EA 4.x
         #   2. Mainstream:     PHP 8.2 + Sf 6.4 LTS   + EA 4.x
         #   3. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
         #   4. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
@@ -94,7 +101,7 @@ jobs:
         #   6. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
         include:
           - php: '8.1'
-            symfony: '5.4.*'
+            symfony: '6.4.*'
             easyadmin: '^4.24'
           - php: '8.2'
             symfony: '6.4.*'

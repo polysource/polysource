@@ -41,6 +41,12 @@ EA 4 can install the bridge. Composer's resolver picks the right combination
 automatically — a host on PHP 8.1 + Sf 5.4 will get EA 4 (EA 5 itself
 requires PHP 8.2+); a host on PHP 8.4 + Sf 7.4 will get EA 5.
 
+**Note on Sf 5.4** — only the bridge + the standalone `polysource/filter`
+primitive support Sf 5.4. `polysource/symfony-bundle` (the standalone
+admin engine, unrelated to the bridge) requires Sf 6.4+ because it
+uses `ValueResolverInterface` (Sf 6.2+). The bridge audience is unaffected:
+the bridge doesn't depend on `symfony-bundle`.
+
 The bridge is gated by CI on 5 explicit combos covering the realistic
 profiles of EA-using Symfony apps in 2026 (cf.
 [ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)):
