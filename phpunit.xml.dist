@@ -24,6 +24,7 @@
             <directory>packages/adapter-doctrine/tests/Unit</directory>
             <directory>packages/adapter-flysystem/tests/Unit</directory>
             <directory>packages/adapter-http/tests/Unit</directory>
+            <directory>packages/adapter-meilisearch/tests/Unit</directory>
             <directory>packages/adapter-messenger/tests/Unit</directory>
             <directory>packages/adapter-redis/tests/Unit</directory>
             <directory>packages/audit/tests/Unit</directory>
@@ -50,6 +51,7 @@
             <directory>packages/adapter-doctrine/src</directory>
             <directory>packages/adapter-flysystem/src</directory>
             <directory>packages/adapter-http/src</directory>
+            <directory>packages/adapter-meilisearch/src</directory>
             <directory>packages/adapter-messenger/src</directory>
             <directory>packages/adapter-redis/src</directory>
             <directory>packages/audit/src</directory>
