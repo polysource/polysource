@@ -13,7 +13,7 @@ what Doctrine-ORM-centric solutions don't cover.
 
 | If you want to… | Read |
 |---|---|
-| Install Polysource in a Symfony 7.4 app | [installation.md](./installation.md) |
+| Install Polysource in a Symfony 5.4+ app (any minor since 5.4) | [installation.md](./installation.md) |
 | Get a working dashboard in 5 minutes | [getting-started.md](./getting-started.md) |
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |

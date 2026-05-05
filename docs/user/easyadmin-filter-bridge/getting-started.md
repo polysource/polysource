@@ -28,12 +28,18 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 
 | Component | Required |
 |---|---|
-| PHP | 8.1+ |
-| Symfony | 5.4 LTS \|\| 6.4 LTS \|\| 7.4 LTS |
-| EasyAdmin | 4.24+ \|\| 5.0+ |
-| Doctrine ORM | 2.20+ \|\| 3.6+ |
-| Twig | 3.x |
+| PHP | `>=8.1` (any 8.1+, 9.x forward-compat) |
+| Symfony | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` (every minor since 5.4, LTS + non-LTS) |
+| EasyAdmin | `^4.24 \|\| ^5.0` |
+| Doctrine ORM | `^2.20 \|\| ^3.6` |
+| Twig | `^3.0` |
 | Bootstrap | 5 (the chips bar markup uses Bootstrap 5 classes) |
+
+The bridge advertises **the same constraints as `easycorp/easyadmin-bundle` 4.29**
+(`php: >=8.1`, `symfony/*: ^5.4|^6.0|^7.0|^8.0`) so any host that can install
+EA 4 can install the bridge. Composer's resolver picks the right combination
+automatically — a host on PHP 8.1 + Sf 5.4 will get EA 4 (EA 5 itself
+requires PHP 8.2+); a host on PHP 8.4 + Sf 7.4 will get EA 5.
 
 The bridge is gated by CI on 5 explicit combos covering the realistic
 profiles of EA-using Symfony apps in 2026 (cf.

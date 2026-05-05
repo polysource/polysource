@@ -38,8 +38,8 @@ filters, 3 modes UI), **le moment est venu de revoir le baseline**.
 
 | Composant | Contrainte |
 |---|---|
-| **PHP** | `^8.1` |
-| **Symfony** | `^5.4 \|\| ^6.4 \|\| ^7.4` (les 3 LTS actives) |
+| **PHP** | `>=8.1` (matches EA 4.29 convention; accepts PHP 9.x forward) |
+| **Symfony** | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` (toutes les versions ≥ 5.4, pas seulement les LTS) |
 | **EasyAdmin** | `^4.24 \|\| ^5.0` (couvre v4 audience) |
 | **Doctrine ORM** | `^2.20 \|\| ^3.6` (les 2 majors actives) |
 
@@ -47,6 +47,16 @@ PHP 8.1 est le sweet spot : on garde `readonly properties`, `enum`, first-class
 callable syntax `func(...)`, `never` return type — soit l'essentiel des
 features modernes 8.x sans pousser jusqu'à 8.2+ (qui fermerait Symfony 5.4 ×
 PHP 8.1 du marché).
+
+**Amendement 2026-05-05 — alignement sur EA 4.29.** Le baseline initial était
+strict LTS (`^5.4 || ^6.4 || ^7.4`). Après audit de la politique
+`easycorp/easyadmin-bundle` 4.29 (`php: >=8.1`, `symfony/form: ^5.4|^6.0|^7.0|^8.0`)
+on élargit pour matcher exactement leur couverture — soit toutes les versions
+de Symfony à partir de 5.4 (LTS + non-LTS) et forward-compat pour Symfony 8.x
+quand il sortira. Coût pratique nul (les non-LTS étaient déjà supportées par
+le code, on ne faisait que les exclure du composer.json), gain audience non
+nul (un host sur Sf 6.2 ou 7.1 peut désormais installer sans patch). PHP `^8.1`
+devient `>=8.1` pour la même raison : EA 4.29 utilise `>=`, on aligne.
 
 ### Audience couverte
 
