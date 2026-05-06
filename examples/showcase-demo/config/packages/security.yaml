@@ -6,21 +6,13 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
-        # Phase A — in-memory provider with the bcrypt-cost-4 hash of
-        # "shopco" hard-coded. Phase B replaces this with the App\Entity\User
-        # provider once the entity ships and Foundry seeds users.
+        # Phase B — entity provider backed by App\Entity\User. The 3 demo
+        # accounts (admin/ops/viewer @ shop.co) are seeded via Foundry's
+        # DefaultUsersStory; password = "shopco" for all of them.
         showcase_users:
-            memory:
-                users:
-                    "admin@shop.co":
-                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
-                        roles: ['ROLE_ADMIN']
-                    "ops@shop.co":
-                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
-                        roles: ['ROLE_OPS']
-                    "viewer@shop.co":
-                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
-                        roles: ['ROLE_VIEWER']
+            entity:
+                class: App\Entity\User
+                property: email
 
     role_hierarchy:
         # ROLE_ADMIN inherits ROLE_OPS which inherits ROLE_VIEWER. The
