@@ -72,3 +72,13 @@ services:
         factory: ['Symfony\Component\HttpClient\HttpClient', 'createForBaseUri']
         arguments:
             $baseUri: '%env(PAYMENT_SERVICE_URL)%/admin'
+
+    # -------------------------------------------------------------------
+    # Phase F — Polysource widgets dashboard. Factory service tagged
+    # `polysource.widgets.dashboard` so DashboardRegistry picks it up.
+    # The provider builds the Dashboard from live DB state.
+    # -------------------------------------------------------------------
+    app.dashboard.home:
+        class: Polysource\Widgets\Dashboard\Dashboard
+        factory: ['@App\Polysource\Widget\ShopcoDashboardProvider', '__invoke']
+        tags: ['polysource.widgets.dashboard']

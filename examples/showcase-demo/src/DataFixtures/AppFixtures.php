@@ -11,6 +11,7 @@ use App\Story\CustomersStory;
 use App\Story\DefaultUsersStory;
 use App\Story\LoginAttemptsStory;
 use App\Story\OrdersStory;
+use App\Story\SavedViewsStory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -29,5 +30,6 @@ final class AppFixtures extends Fixture
         LoginAttemptsStory::load();
         AuditEntriesStory::load();
         BulkJobsStory::load();
+        SavedViewsStory::load();
     }
 }
