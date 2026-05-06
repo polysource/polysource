@@ -100,8 +100,14 @@ cs-fix: ## Apply PSR-12 + Symfony rules
 	$(PHP_EXEC) php vendor/bin/php-cs-fixer fix
 
 .PHONY: screenshots
-screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/ (Phase I+)
-	$(PHP_EXEC) php bin/console showcase:screenshots
+screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/
+	$(DOCKER_COMPOSE) --profile e2e up -d chrome
+	@echo "▶ waiting for Selenium grid…"
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		curl -s http://localhost:4444/wd/hub/status | grep -q '"ready":true' && break; \
+		sleep 2; \
+	done
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:showcase:screenshots
 
 .PHONY: clean
 clean: down ## Stop + remove vendor/, var/, build artefacts

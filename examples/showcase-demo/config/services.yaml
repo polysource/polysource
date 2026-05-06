@@ -82,3 +82,8 @@ services:
         class: Polysource\Widgets\Dashboard\Dashboard
         factory: ['@App\Polysource\Widget\ShopcoDashboardProvider', '__invoke']
         tags: ['polysource.widgets.dashboard']
+
+    # Phase I — screenshots command needs the project_dir scalar.
+    App\Command\ShowcaseScreenshotsCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'

@@ -15,8 +15,7 @@
 </nav>
 
 <div class="container">
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <h1 class="mb-0">{{ 'ShopCo dashboard' }}</h1>
+    <div class="d-flex align-items-center justify-content-end mb-3">
         <div class="d-flex gap-2">
             <a class="btn btn-outline-primary btn-sm" href="/admin/polysource/failed-messages">Failed messages</a>
             <a class="btn btn-outline-primary btn-sm" href="/admin/polysource/bulk-jobs">Bulk jobs</a>
@@ -24,6 +23,8 @@
         </div>
     </div>
 
+    {# render_dashboard outputs its own h1 from Dashboard::title.
+       We keep the toolbar above it instead of doubling the heading. #}
     {{ render_dashboard('home') }}
 </div>
 {% endblock %}
