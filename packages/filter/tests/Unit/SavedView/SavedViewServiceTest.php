@@ -298,8 +298,41 @@ final class SavedViewServiceTest extends TestCase
     }
 
     #[Test]
-    public function defaultForReturnsSessionRememberedView(): void
+    public function defaultForReturnsViewWhenUrlCarriesMatchingViewId(): void
     {
+        // Apply round-trip: `?view=<id>` is the source of truth for
+        // the single-hop window between the user's click and the
+        // host's apply listener redirect.
+        $storage = new InMemorySavedViewStorage();
+        $storage->save($this->makeView('a', ownerId: 'alice'));
+
+        $session = new Session(new MockArraySessionStorage());
+        $session->start();
+        $session->set('polysource.filter.saved_view.last.products', 'a');
+        $requestStack = new RequestStack();
+        $request = new \Symfony\Component\HttpFoundation\Request(['view' => 'a']);
+        $request->setSession($session);
+        $requestStack->push($request);
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $this->grantAllChecker(),
+            tokenStorage: $this->tokenStorageFor('alice'),
+            requestStack: $requestStack,
+        );
+
+        $default = $service->defaultFor('products');
+        self::assertNotNull($default);
+        self::assertSame('a', $default->id);
+    }
+
+    #[Test]
+    public function defaultForReturnsNullOnCleanUrlEvenWithSessionEntry(): void
+    {
+        // New contract: clean URL (no `?view=`, no `?filter[...]=...`)
+        // returns null even when the session stores a last-used
+        // entry. Avoids the "dropdown highlights view ≠ rendered
+        // table" lie. The session entry stays for a fast re-pick.
         $storage = new InMemorySavedViewStorage();
         $storage->save($this->makeView('a', ownerId: 'alice'));
 
@@ -318,9 +351,7 @@ final class SavedViewServiceTest extends TestCase
             requestStack: $requestStack,
         );
 
-        $default = $service->defaultFor('products');
-        self::assertNotNull($default);
-        self::assertSame('a', $default->id);
+        self::assertNull($service->defaultFor('products'));
     }
 
     #[Test]

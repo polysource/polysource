@@ -161,43 +161,50 @@ final class SavedViewService
     }
 
     /**
-     * Returns the view to apply on first visit. First match wins:
+     * Returns the view considered "currently applied" for the
+     * resource. The dropdown uses this to mark one entry as active.
      *
-     *   1. session "last used view" for this resource — UNLESS the
-     *      current request carries user-applied filter params with
-     *      no matching `?view=` (the user dismissed the saved view
-     *      by editing filters; we shouldn't keep it highlighted)
-     *   2. any visible view with isDefault=true matching a role the
-     *      current user has (Symfony role hierarchy is consulted via
-     *      `is_granted`)
-     *   3. null — host falls back to vanilla default
+     * Resolution rules:
+     *   - URL has `?view=<id>` → that view (the apply round-trip
+     *     hands the matching `<id>` over before the host's apply
+     *     listener redirects to filters; we keep it highlighted
+     *     during that single hop).
+     *   - URL has `?filter[...]=...` (Polysource) or
+     *     `?filters[...]=...` (EA) → null + forget session entry.
+     *     The user is on user-applied filters; pretending the saved
+     *     view is still active would be a lie.
+     *   - URL is clean (no view, no filter) → null. The session's
+     *     `last-used` is preserved (the user may re-pick from the
+     *     dropdown to re-apply) but NOT shown as `current` because
+     *     the table is not actually filtered. Showing the view as
+     *     active here used to confuse users — dropdown said "Late
+     *     deliveries" but the table showed every order.
+     *   - Role default with `isDefault=true` matching the user's
+     *     role still fires unconditionally (it's an admin-decided
+     *     default, not user history).
      */
     public function defaultFor(string $resourceName): ?SavedView
     {
-        // Detect "user is on a custom filter URL". When the URL
-        // contains `?filter[...]=...` (Polysource shape) or
-        // `?filters[...]=...` (EasyAdmin shape) WITHOUT a `?view=`
-        // param, the user has manually edited filters and the
-        // session-remembered view should NOT be marked active —
-        // otherwise the dropdown lies (highlighted view ≠ rendered
-        // table). Also forget the stored last-used so the lie
-        // doesn't persist across navigations.
+        $request = $this->requestStack?->getCurrentRequest();
+        $viewId = null !== $request ? (string) $request->query->get('view', '') : '';
+
+        // 1. Apply round-trip: `?view=<id>` is the SOURCE OF TRUTH.
+        if ('' !== $viewId) {
+            $view = $this->load($viewId);
+            if (null !== $view) {
+                return $view;
+            }
+        }
+
+        // 2. User-applied custom filters: dismiss any session view.
         if ($this->hasUserAppliedFilters()) {
             $this->forgetLastUsed($resourceName);
 
             return null;
         }
 
-        // 1. session-remembered last-used
-        $lastId = $this->readLastUsed($resourceName);
-        if (null !== $lastId) {
-            $view = $this->load($lastId);
-            if (null !== $view) {
-                return $view;
-            }
-        }
-
-        // 2. role default
+        // 3. Role default (admin-configured). Independent of session
+        //    history — reflects an org policy.
         foreach ($this->listVisible($resourceName) as $view) {
             if (!$view->isDefault || null === $view->roleAsDefault) {
                 continue;
@@ -207,7 +214,10 @@ final class SavedViewService
             }
         }
 
-        // 3. nothing
+        // 4. Otherwise null. The session-stored last-used is
+        //    preserved (so a future click on the dropdown can
+        //    recover it quickly) but not displayed as `current`,
+        //    because the rendered table doesn't reflect it.
         return null;
     }
 
@@ -299,20 +309,4 @@ final class SavedViewService
         $session->remove(self::SESSION_KEY_PREFIX . $resourceName);
     }
 
-    private function readLastUsed(string $resourceName): ?string
-    {
-        if (null === $this->requestStack) {
-            return null;
-        }
-
-        try {
-            $session = $this->requestStack->getSession();
-        } catch (\Symfony\Component\HttpFoundation\Exception\SessionNotFoundException) {
-            return null;
-        }
-
-        $value = $session->get(self::SESSION_KEY_PREFIX . $resourceName);
-
-        return \is_string($value) && '' !== $value ? $value : null;
-    }
 }

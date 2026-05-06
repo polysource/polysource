@@ -103,7 +103,11 @@ final class SavedViewExtensionTest extends TestCase
             );
             $session->start();
             $session->set('polysource.filter.saved_view.last.products', $current->id);
-            $request = new \Symfony\Component\HttpFoundation\Request();
+            // The new defaultFor() contract only treats a saved view
+            // as `current` when the request URL carries `?view=<id>`
+            // (apply round-trip). Simulate that hop here so the
+            // dropdown render matches what a real apply produces.
+            $request = new \Symfony\Component\HttpFoundation\Request(['view' => $current->id]);
             $request->setSession($session);
             $requestStack->push($request);
         }

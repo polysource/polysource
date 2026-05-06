@@ -61,11 +61,19 @@ final class ClearSavedViewListener implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        if ('1' !== (string) $request->query->get('clear-view', '')) {
+        $marker = (string) $request->query->get('clear-view', '');
+        if ('' === $marker) {
             return;
         }
 
-        $resourceName = $request->attributes->get('resourceName');
+        // The marker carries the resource name to clear (URL-decoded
+        // by Symfony when reading $request->query). Polysource pages
+        // pass their slug ("audit-log"); EA pages pass the entity
+        // FQCN ("App\\Entity\\Product"). The session entry is keyed
+        // per resource — both forms are valid and unambiguous.
+        $resourceName = '1' === $marker
+            ? (\is_string($request->attributes->get('resourceName')) ? $request->attributes->get('resourceName') : null)
+            : $marker;
         if (\is_string($resourceName) && '' !== $resourceName) {
             $this->service->forgetLastUsed($resourceName);
         }

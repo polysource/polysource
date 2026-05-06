@@ -85,17 +85,23 @@
         </li>
         {%- if current is not null -%}
             <li>
-                {# `?clear-view=1` is consumed server-side by
-                 # SavedViewService: it resets the
-                 # session-remembered last-used view AND drops every
-                 # filter param so the user lands on a fully clean
-                 # URL. A bare `href="?"` would only strip the
-                 # query string — the session entry would survive,
-                 # so on the next page render `defaultFor()` would
-                 # resurrect the view as `current` and the user
-                 # would think Clear did nothing. #}
+                {# `?clear-view=<resource_name>` is consumed server-side
+                 # by `ClearSavedViewListener`: it resets the
+                 # session-remembered last-used view for THIS
+                 # resource AND drops every filter param so the user
+                 # lands on a fully clean URL. A bare `href="?"`
+                 # would only strip the query string — the session
+                 # entry would survive, so on the next page render
+                 # `defaultFor()` would resurrect the view as
+                 # `current` and the user would think Clear did
+                 # nothing. We embed the resource name in the marker
+                 # because EA routes don't expose a `resourceName`
+                 # request attribute the listener could read (the
+                 # bridge identifies the resource by entity FQCN
+                 # query param). Embedding it makes the listener
+                 # work uniformly on Polysource AND EA pages. #}
                 <a class="dropdown-item polysource-saved-views__clear text-danger"
-                   href="?clear-view=1">
+                   href="?clear-view={{ resource_name|url_encode }}">
                     {{ 'polysource.saved_views.dropdown.clear'|trans({}, 'PolysourceFilter') }}
                 </a>
             </li>

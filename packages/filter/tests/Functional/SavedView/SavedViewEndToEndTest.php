@@ -161,26 +161,41 @@ final class SavedViewEndToEndTest extends TestCase
     }
 
     #[Test]
-    public function defaultForRespectsSessionLastUsed(): void
+    public function defaultForReturnsNullOnCleanUrlEvenWithSessionEntry(): void
     {
+        // The previous contract auto-returned the
+        // session-remembered view on every defaultFor() call —
+        // including on a "clean URL" with no `?view=` and no
+        // `?filter[...]=...`. That made the dropdown lie: it
+        // highlighted the saved view as `current`, but the
+        // rendered table was unfiltered.
+        //
+        // The new contract: `current` only fires when (a) the URL
+        // carries the matching `?view=<id>` (apply round-trip), or
+        // (b) a role-default view applies. Clean URL = null. The
+        // session entry is preserved (so re-applying via the
+        // dropdown stays one click) but it no longer leaks into
+        // the displayed `current` state.
         $alice = $this->makeView('view-default', 'Daily dashboard', SavedViewScope::PRIVATE);
         $this->service->save($alice);
 
-        // First call: no session memory → default falls through to null.
-        $initialDefault = $this->service->defaultFor('products');
-        self::assertNull($initialDefault);
+        // No session, clean URL → null.
+        self::assertNull($this->service->defaultFor('products'));
 
-        // Loading sets the last-used session marker.
+        // Loading sets the session marker.
         $this->service->load('view-default');
 
-        // Now defaultFor() returns the same view from the session.
-        $defaulted = $this->service->defaultFor('products');
-        self::assertNotNull($defaulted);
-        self::assertSame('view-default', $defaulted->id);
-
-        // Twig render marks it as the current view.
+        // Clean URL still: dropdown does not lie about current.
+        self::assertNull($this->service->defaultFor('products'));
+        // The bundled dropdown.html.twig flips the trigger label to
+        // the i18n placeholder when `current` is null AND skips
+        // emitting the `active` class on every menu row. Assert
+        // both: no `<span class="polysource-saved-views__current">`
+        // (only rendered when current is not null) AND no `active`
+        // marker on Daily dashboard.
         $output = $this->twigExtension->renderDropdown('products');
-        self::assertStringContainsString('Daily dashboard', $output);
+        self::assertStringNotContainsString('polysource-saved-views__current', $output);
+        self::assertStringNotContainsString('polysource-saved-views__item active', $output);
     }
 
     private function makeView(
