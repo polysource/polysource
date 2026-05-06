@@ -10,6 +10,7 @@ use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
 use Polysource\Bundle\EventListener\PolysourceViewListener;
+use Polysource\Bundle\EventListener\SavedViewApplyListener;
 use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
@@ -133,6 +134,21 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('kernel.event_subscriber')
     ;
+
+    // Saved-view `?view=<id>` apply listener — wired with a
+    // graceful-degradation reference to SavedViewService. Hosts that
+    // don't pull polysource/filter still get the listener registered,
+    // but it short-circuits at runtime when the dependency is null.
+    // This avoids a runtime DI error when the bundle is in the
+    // container but polysource/filter isn't (e.g. plugin smoke
+    // tests, lean installs).
+    if (class_exists(Polysource\Filter\SavedView\SavedViewService::class)) {
+        $services
+            ->set(SavedViewApplyListener::class)
+            ->args([service(Polysource\Filter\SavedView\SavedViewService::class)->nullOnInvalid()])
+            ->tag('kernel.event_subscriber')
+        ;
+    }
 
     // ─── Plugin discovery (ADR-018) ────────────────────────────────
     // PluginRegistry is patched at compile time by PluginCompilerPass
