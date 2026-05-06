@@ -47,10 +47,13 @@
 | 7 | Tests unitaires + fonctionnels | 1 sem | CI verte, coverage `core` ≥ 90 % | ✅ |
 | 8 | App de démo Docker | 0,5 sem | `make demo` qui marche | ✅ |
 | 9 | Documentation utilisateur | 0,5 sem | guide « 5 minutes » prêt | ✅ |
-| **9.5** | **`polysource/filter`** — extraction primitive filtre | **2-3 sem** | **package autonome avec session + form types abstraits** | ⏳ |
-| **9.7** | **`polysource/easyadmin-filter-bridge`** — Produit 2 | **2-3 sem** | **drop-in dans une app EasyAdmin** | ⏳ |
-| 10 | Préparation release v0.1.0 (dual product) | 0,5 sem | tags, Packagist, 2 annonces | ⏳ |
-| **Total v0.1** | | **~12-14 semaines** | v0.1.0 publiée (dual product) |
+| **9.5** | **`polysource/filter`** — extraction primitive filtre | **2-3 sem** | **package autonome avec session + form types abstraits** | ✅ |
+| **9.7** | **`polysource/easyadmin-filter-bridge`** — Produit 2 | **2-3 sem** | **drop-in dans une app EasyAdmin** | ✅ |
+| 11-16 | Capabilities transverses (plugins, audit, workflow, widgets, search, bulk-async) | ~5 sem | 5 nouveaux packages opt-in | ✅ |
+| 17-22 | 5 adapters prévus (Doctrine, Redis, Flysystem, HTTP, Meilisearch) + cookbook | ~3 sem | 5 adapters + build-your-own-adapter walkthrough | ✅ |
+| **23** | **Showcase demo ShopCo SaaS** (cf. [ADR-025](../adr/0025-showcase-demo.md)) | **~3-4 sem** | **`examples/showcase-demo/` exploitant les 15 packages + screenshots** | ⏳ |
+| 10 | Préparation release v0.1.0 (dual product, hero = showcase) | 0,5 sem | tags, Packagist, 2 annonces | ⏳ |
+| **Total v0.1** | | **~22-24 semaines** | v0.1.0 publiée (dual product, hero showcase) |
 
 ## Phase 0 — Setup repo, Docker et ADR (0,5 semaine)
 
@@ -1008,6 +1011,177 @@ Tagger v0.1.0, publier les 6 packages sur Packagist, écrire les annonces.
 5. Tag + push
 6. Vérif Packagist
 7. Publication annonces
+
+## Phase 23 — Showcase demo "ShopCo SaaS" + hero du launch v0.1.0 (~3-4 semaines)
+
+> Phase **ajoutée par [ADR-025](../adr/0025-showcase-demo.md)**
+> (validée par le product owner le 2026-05-06).
+>
+> **Décision contre-intuitive** : la Phase 10 (release v0.1.0) est
+> repoussée pour faire passer la showcase d'abord. Le tag v0.1.0 ne
+> sort qu'**après** que `examples/showcase-demo/` est mergé et stable.
+
+### Objectif
+
+Construire une application Symfony unique, réaliste, déployable en
+`make showcase`, qui exploite **les 15 packages** du monorepo dans
+un scénario métier cohérent (ShopCo, e-commerce B2C). Cette démo
+devient le hero du launch v0.1.0 et la source unique de vérité pour
+les screenshots de la doc utilisateur (style EasyAdmin).
+
+### Stack — état de l'art 2026 (cf. ADR-025 §3)
+
+PHP **8.4** · Symfony **7.4 LTS** · EasyAdmin **5.x** · Doctrine ORM **3.x** ·
+Foundry **2.x** static factories · AssetMapper · Symfony UX (Stimulus +
+Turbo + Twig Components) · PostgreSQL **17** · Redis **7** · Meilisearch
+**1.x** · MinIO · Mercure Hub · Mailpit · WireMock · Symfony Panther
+(E2E + screenshots) · PCOV.
+
+### Domaine métier — ShopCo SaaS
+
+E-commerce B2C avec : catalogue produits, customers, commandes
+(state machine), refunds, audit log, bulk jobs. Fixtures Foundry :
+~200 produits, 500 customers, 1000 commandes, 50 failed emails,
+30 fichiers MinIO, 20 audit entries, 5 bulk jobs. 3 utilisateurs :
+`admin@shop.co`, `ops@shop.co`, `viewer@shop.co`.
+
+### Découpage en sous-phases
+
+| # | Sous-phase | Livrable | Durée |
+|---|---|---|---|
+| **A** | Bootstrap app + auth + Docker (8 services) + Makefile (`make showcase`, `down`, `reset`, `screenshots`) | Sf 7.4 + form_login + 3 rôles + docker-compose.yml démarre OK | 2 j |
+| **B** | Domaine métier + 9 entités Doctrine + 9 Foundry factories + 4 Stories (catalog, customers, orders-with-states, failed-emails) | `bin/console doctrine:fixtures:load` peuple 1700+ rows | 2 j |
+| **C** | EasyAdmin + 4 CRUDs (Product, Customer, Order, Refund) + `polysource/easyadmin-filter-bridge` câblé + 7 enhanced filters + 4 nouveaux filtres custom | Filtres EA améliorés visibles sur les 4 CRUDs | 2 j |
+| **D** | Polysource standalone wiring : `symfony-bundle` + `adapter-messenger` (failed transport peuplé) + `adapter-doctrine` (sessions/tokens read-only) | 2 ressources standalone browsables | 1,5 j |
+| **E** | 4 adapters non-Doctrine : `adapter-redis` (cache produits/panier), `adapter-flysystem` (MinIO photos+factures), `adapter-http` (3 microservices WireMock), `adapter-meilisearch` (index produits + sync via Messenger) | 4 ressources standalone fonctionnelles | 3 j |
+| **F** | Capabilities transverses : `audit` (table peuplée par les actions seedées) + `workflow-bridge` (OrderWorkflow câblé + chips + transitions) + `widgets` (3 Counter + 2 List + 1 Chart sur la home) + `search` (Cmd+K cross-resources) + `bulk-async` (retry 5k emails + reindex Meilisearch live progress) | Toutes les capabilities visibles dans la home | 4 j |
+| **G** | Permissions 3 voters + 3 saved views par défaut + AssetMapper polish + Twig Components home | Parcours fonctionnel par rôle (admin/ops/viewer) | 2 j |
+| **H** | Suite E2E Panther : `tests/Showcase/` couvrant 1 test par capability + smoke "toutes pages 200 OK" | CI verte sur la showcase | 2 j |
+| **I** | Pipeline screenshots : `bin/console showcase:screenshots` (Panther scripted journey) → 30-40 PNG dans `docs/user/screenshots/` + cible `make screenshots` | Screenshots commit-checked en CI | 2 j |
+| **J** | Réécriture `docs/user/` style EA avec screenshots embedded + `examples/showcase-demo/README.md` (tour guidé) + GIF home + 2 annonces v0.1.0 (audience EA + audience non-Doctrine) | Doc utilisateur prête pour le launch | 3 j |
+
+**Total : ~22 jours-homme.**
+
+### Fichiers clés
+
+```
+examples/showcase-demo/
+├── docker-compose.yml          # 8 services (php-fpm, postgres, redis, meilisearch, minio, mercure, mailpit, wiremock)
+├── Dockerfile                  # PHP 8.4 + extensions
+├── Makefile                    # showcase, down, reset, screenshots, test
+├── README.md                   # tour guidé avec screenshots
+├── compose.override.yaml.dist
+├── .env
+├── composer.json               # Sf 7.4, EA 5, Foundry 2, Panther
+├── importmap.php               # AssetMapper
+├── config/
+│   ├── packages/
+│   │   ├── easyadmin.yaml
+│   │   ├── polysource.yaml
+│   │   ├── polysource_filter.yaml
+│   │   ├── polysource_audit.yaml
+│   │   ├── polysource_widgets.yaml
+│   │   ├── polysource_search.yaml
+│   │   ├── polysource_bulk_async.yaml
+│   │   ├── polysource_workflow_bridge.yaml
+│   │   ├── polysource_easyadmin_filter_bridge.yaml
+│   │   ├── messenger.yaml
+│   │   ├── workflow.yaml
+│   │   ├── security.yaml
+│   │   ├── mercure.yaml
+│   │   └── doctrine.yaml
+│   └── routes/polysource.yaml
+├── src/
+│   ├── Entity/                 # 9 entités
+│   ├── Factory/                # 9 Foundry PersistentProxyObjectFactory
+│   ├── Story/                  # 4 Stories
+│   ├── Controller/Admin/       # 4 EA CRUDs + 1 Dashboard
+│   ├── Polysource/
+│   │   ├── Resource/           # 8 standalone resources
+│   │   ├── Action/             # actions custom
+│   │   ├── Widget/             # 6 widgets
+│   │   ├── SearchProvider/     # providers custom
+│   │   └── BulkAction/         # 2 bulk async use-cases
+│   ├── Workflow/               # OrderStateMachine
+│   ├── Security/               # PolysourceVoter custom 3 rôles
+│   └── Command/
+│       └── Showcase/ScreenshotsCommand.php
+├── assets/
+│   ├── app.js
+│   ├── controllers/            # Stimulus controllers
+│   └── styles/app.css
+├── fixtures/
+│   ├── files/                  # PDFs, images de prod
+│   └── microservices/          # WireMock stubs JSON
+├── tests/Showcase/
+│   ├── HomePageTest.php
+│   ├── EasyAdminFiltersTest.php
+│   ├── BulkRetryFlowTest.php
+│   ├── WorkflowTransitionTest.php
+│   ├── AuditExportTest.php
+│   └── PermissionsByRoleTest.php
+└── var/                        # gitignored
+```
+
+### Garde-fous (cf. ADR-025 §5)
+
+- **Une feature = un cas métier ShopCo.** Pas de page démo
+  décontextualisée.
+- **Aucune feature qui n'existe pas dans Polysource.** Si la
+  showcase a besoin de quelque chose en plus, on l'ajoute upstream
+  ou on coupe.
+- **Une seule app, un seul docker-compose.** WireMock excepté pour
+  `adapter-http`.
+- **Tests E2E Panther en CI dès Phase 23-A.** Régression = blocage
+  merge.
+- **Pipeline screenshots commit-checked** : la doc ne dérive pas du
+  code.
+- **Fixtures Foundry 2.x exclusivement.** Pas de SQL inline.
+
+### Critères d'acceptation
+
+- [ ] `make showcase` boot l'application en < 60 s sur un poste vierge.
+- [ ] Les 15 packages sont câblés et démontrables dans la showcase.
+- [ ] La home affiche 6 widgets fonctionnels avec données fixtures.
+- [ ] Login `admin@shop.co` → accès complet ; `ops@shop.co` → ops
+      seulement ; `viewer@shop.co` → lecture seule (parcours
+      différents prouvés par tests Panther).
+- [ ] Cmd+K (ou `/`) ouvre la palette et trouve un produit / une
+      commande / un job en < 250 ms.
+- [ ] Bulk action "retry all failed emails" dispatche un job async,
+      progress live via Mercure, fallback polling fonctionnel.
+- [ ] OrderWorkflow : transitions visibles dans EA + dans la
+      ressource standalone Polysource, avec audit trace.
+- [ ] Export CSV audit (RGPD Art. 30) téléchargeable, RFC 4180
+      conforme.
+- [ ] `make screenshots` régénère 30-40 PNG dans
+      `docs/user/screenshots/` sans intervention.
+- [ ] `docs/user/` réécrit avec screenshots embedded.
+- [ ] CI verte sur le scope showcase (composer validate, PHPStan,
+      cs-fixer, Panther E2E).
+
+### Ordre d'implémentation
+
+A → B → C → D → E → F → G → H → I → J (séquentiel, merge direct sur
+`main` par sous-phase).
+
+### Risques
+
+- **Risque #1 : explosion du scope par feature creep**
+  ("et un widget de plus", "et une page de stats"). Mitigation :
+  garde-fous §6 ADR-025, refus systématique de toute demande qui
+  n'a pas un cas métier ShopCo clair.
+- **Risque #2 : containers lents au boot.** Mitigation :
+  healthchecks, image PHP-FPM pré-buildée GHCR.
+- **Risque #3 : Panther flaky sur certains scénarios** (animations,
+  Stimulus async). Mitigation : retry strategies, isolation des
+  tests instables en marqueur `@flaky`.
+- **Risque #4 : Foundry 2 API changes pendant le développement.**
+  Mitigation : pin la version exacte dans `composer.lock` du
+  showcase, MAJ explicite si breaking.
+- **Risque #5 : la showcase devient un cauchemar à maintenir
+  post-launch.** Mitigation : tests E2E + screenshots CI = filet
+  de sécurité.
 
 ## 11. Structure technique cible
 

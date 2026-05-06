@@ -27,6 +27,12 @@
 | [ADR-017](./0017-cherry-picking-from-filament-study.md) | Cherry-picking depuis l'étude Filament-for-Symfony | Accepté |
 | [ADR-018](./0018-admin-plugin-interface-and-public-contracts.md) | `AdminPluginInterface` + versioning des contrats publics | Accepté |
 | [ADR-019](./0019-saved-views-architecture.md) | Architecture des saved views (Phase 11) | Accepté |
+| [ADR-020](./0020-audit-non-doctrine-actions.md) | Audit non-Doctrine actions (Phase 12) | Accepté |
+| [ADR-021](./0021-symfony-workflow-bridge.md) | Symfony Workflow bridge (Phase 13) | Accepté |
+| [ADR-022](./0022-dashboard-widgets.md) | Dashboard widgets (Phase 14) | Accepté |
+| [ADR-023](./0023-global-search-cmdk.md) | Global search + Cmd+K (Phase 15) | Accepté |
+| [ADR-024](./0024-bulk-async-mercure.md) | Bulk async + Mercure (Phase 16) | Accepté |
+| [ADR-025](./0025-showcase-demo.md) | Showcase demo "ShopCo SaaS" + hero du launch v0.1.0 (Phase 23) | Accepté |
 
 ## Convention
 
