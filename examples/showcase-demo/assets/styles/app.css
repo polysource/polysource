@@ -17,6 +17,28 @@ body:not(.ea) {
     color: var(--shopco-fg);
 }
 
+/* Bootstrap 5 sets `a { text-decoration: underline }` as a default
+ * (Reboot styles), and the host's bootstrap.min.css is loaded AFTER
+ * EA's bundle in <head>, so on EA-themed pages every sidebar /
+ * navbar / breadcrumb / chip link picks up an underline that
+ * doesn't match EA's clean look. EA itself doesn't reset
+ * text-decoration explicitly because it ships its own Bootstrap
+ * variant without that rule. We re-establish EA's intent on
+ * EA-themed pages (`.ea`) — including the Polysource pages that
+ * adopt the EA chrome via the polysource_layout override. */
+body.ea a {
+    text-decoration: none;
+}
+body.ea a:hover {
+    text-decoration: underline;
+}
+/* But preserve underlined chips and explicit `text-decoration-*`
+ * Bootstrap utilities — those are intentional. */
+body.ea .ea-filter-chip__remove,
+body.ea a.text-decoration-underline {
+    text-decoration: underline;
+}
+
 .shopco-navbar {
     background: linear-gradient(90deg, var(--shopco-brand) 0%, #6366f1 100%);
     color: #fff;
