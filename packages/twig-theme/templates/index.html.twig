@@ -18,6 +18,11 @@
                 {{ saved_views_dropdown(resource.name) }}
             {% endif %}
 
+            {# The Filters button + modal markup live in this partial.
+             # Rendered here so the trigger sits next to saved-views
+             # and bulk actions, like EA's filter button. #}
+            {% include '@Polysource/_filters_form.html.twig' ignore missing %}
+
             {% if bulk_actions is defined and bulk_actions|length > 0 %}
                 <div class="d-flex gap-2 flex-wrap" data-polysource-bulk-toolbar>
                     {% for action in bulk_actions %}
@@ -38,7 +43,6 @@
         </div>
     </header>
 
-    {% include '@Polysource/_filters_form.html.twig' ignore missing %}
     {% include '@Polysource/_filter_chips.html.twig' ignore missing %}
 
     <div class="card shadow-sm">
