@@ -32,6 +32,11 @@ final class PolysourcePermissionVoter extends Voter
         'POLYSOURCE_BULK_JOB_VIEW' => 'ROLE_VIEWER',
         'POLYSOURCE_LOGIN_ATTEMPTS_VIEW' => 'ROLE_VIEWER',
         'POLYSOURCE_FAILED_MESSAGE' => 'ROLE_VIEWER',
+        // Phase E adapters.
+        'POLYSOURCE_CACHE_VIEW' => 'ROLE_VIEWER',
+        'POLYSOURCE_S3_VIEW' => 'ROLE_VIEWER',
+        'POLYSOURCE_MICROSERVICES_VIEW' => 'ROLE_VIEWER',
+        'POLYSOURCE_SEARCH_INDEX_VIEW' => 'ROLE_VIEWER',
         // Edit / mutate — ops and above.
         'POLYSOURCE_RESOURCE_EDIT' => 'ROLE_OPS',
         'POLYSOURCE_BULK_JOB_CANCEL' => 'ROLE_OPS',

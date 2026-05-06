@@ -35,8 +35,10 @@ db: ## Reset and migrate the database (dev)
 	$(PHP_EXEC) php bin/console messenger:setup-transports --no-interaction
 
 .PHONY: fixtures
-fixtures: ## Load Foundry fixtures (Phase B+)
-	$(PHP_EXEC) php bin/console doctrine:fixtures:load --no-interaction --append || true
+fixtures: ## Load Foundry fixtures + seed messenger/redis/minio/meilisearch
+	$(PHP_EXEC) php -d memory_limit=2G bin/console doctrine:fixtures:load --no-interaction
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
 
 .PHONY: assets
 assets: ## Compile AssetMapper public/ files

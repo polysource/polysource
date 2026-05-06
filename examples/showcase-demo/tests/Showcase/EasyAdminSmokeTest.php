@@ -67,6 +67,11 @@ final class EasyAdminSmokeTest extends WebTestCase
         yield 'login attempts' => ['/admin/polysource/login-attempts'];
         yield 'audit log' => ['/admin/polysource/audit-log'];
         yield 'bulk jobs' => ['/admin/polysource/bulk-jobs'];
+        // Phase E adapter-backed resources.
+        yield 'cache keys' => ['/admin/polysource/cache-keys'];
+        yield 's3 files' => ['/admin/polysource/s3-files'];
+        yield 'microservices' => ['/admin/polysource/microservices'];
+        yield 'search index' => ['/admin/polysource/search-index'];
     }
 
     /**

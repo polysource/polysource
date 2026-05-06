@@ -1,0 +1,18 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/admin/microservices/(payments|shipping|notifications)"
+    },
+    "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+            "id": "{{request.pathSegments.[2]}}",
+            "name": "{{request.pathSegments.[2]}} (detail)",
+            "status": "healthy",
+            "uptime": "99.95%",
+            "queueDepth": 0
+        },
+        "transformers": ["response-template"]
+    }
+}

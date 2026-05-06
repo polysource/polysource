@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc2b3a0f330d545c26c90ec90e3c8909",
+    "content-hash": "66e76fee1b6f5b87a48640a82cc8c05e",
     "packages": [
         {
             "name": "async-aws/core",
@@ -142,6 +142,67 @@
                 }
             ],
             "time": "2026-04-29T10:05:33+00:00"
+        },
+        {
+            "name": "async-aws/simple-s3",
+            "version": "3.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/async-aws/simple-s3.git",
+                "reference": "e51f78df03e3cb91d389962c7b71d61e1b825a37"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/async-aws/simple-s3/zipball/e51f78df03e3cb91d389962c7b71d61e1b825a37",
+                "reference": "e51f78df03e3cb91d389962c7b71d61e1b825a37",
+                "shasum": ""
+            },
+            "require": {
+                "async-aws/s3": "^3.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^11.5.42",
+                "symfony/error-handler": "^7.3.2 || ^8.0",
+                "symfony/phpunit-bridge": "^7.3.2 || ^8.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AsyncAws\\SimpleS3\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A simple S3 client that are easy to work with. ",
+            "keywords": [
+                "amazon",
+                "async-aws",
+                "aws",
+                "s3",
+                "sdk"
+            ],
+            "support": {
+                "source": "https://github.com/async-aws/simple-s3/tree/3.0.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/jderusse",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nyholm",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-02-16T10:24:54+00:00"
         },
         {
             "name": "composer/semver",

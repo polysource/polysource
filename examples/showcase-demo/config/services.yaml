@@ -12,3 +12,63 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    # -------------------------------------------------------------------
+    # Phase E — service factories for the 4 non-Doctrine adapters.
+    # -------------------------------------------------------------------
+
+    # Redis (Predis client + adapter-redis hash client wrapper).
+    Predis\Client:
+        arguments:
+            $parameters: '%env(REDIS_URL)%'
+
+    Predis\ClientInterface:
+        alias: Predis\Client
+
+    Polysource\Adapter\Redis\Client\RedisHashClientInterface:
+        class: Polysource\Adapter\Redis\Client\PredisRedisHashClient
+        arguments: ['@Predis\Client']
+
+    # Meilisearch — host client + the single ShopCo products index.
+    Meilisearch\Client:
+        arguments:
+            $url: '%env(MEILISEARCH_URL)%'
+            $apiKey: '%env(MEILISEARCH_API_KEY)%'
+
+    app.meilisearch.products_index:
+        class: Meilisearch\Endpoints\Indexes
+        factory: ['@Meilisearch\Client', 'index']
+        arguments: ['shopco-products']
+
+    Polysource\Adapter\Meilisearch\Client\MeilisearchIndexInterface:
+        class: Polysource\Adapter\Meilisearch\Client\MeilisearchPhpIndexClient
+        arguments: ['@app.meilisearch.products_index']
+
+    # Flysystem on MinIO via AsyncAws (state-of-the-art S3 client 2026).
+    AsyncAws\SimpleS3\SimpleS3Client:
+        arguments:
+            $configuration:
+                endpoint: '%env(S3_ENDPOINT)%'
+                accessKeyId: '%env(S3_ACCESS_KEY)%'
+                accessKeySecret: '%env(S3_SECRET_KEY)%'
+                region: '%env(S3_REGION)%'
+                pathStyleEndpoint: true
+
+    League\Flysystem\AsyncAwsS3\AsyncAwsS3Adapter:
+        arguments:
+            $client: '@AsyncAws\SimpleS3\SimpleS3Client'
+            $bucket: '%env(S3_BUCKET)%'
+
+    League\Flysystem\Filesystem:
+        arguments:
+            $adapter: '@League\Flysystem\AsyncAwsS3\AsyncAwsS3Adapter'
+
+    League\Flysystem\FilesystemOperator:
+        alias: League\Flysystem\Filesystem
+
+    # HTTP client scoped to WireMock for the microservices probe.
+    app.http_client.microservices:
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: ['Symfony\Component\HttpClient\HttpClient', 'createForBaseUri']
+        arguments:
+            $baseUri: '%env(PAYMENT_SERVICE_URL)%/admin'

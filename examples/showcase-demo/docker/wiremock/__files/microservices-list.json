@@ -1,0 +1,32 @@
+{
+    "data": [
+        {
+            "id": "payments",
+            "name": "Payment Gateway",
+            "status": "healthy",
+            "uptime": "99.97%",
+            "queueDepth": 0,
+            "lastIncident": "2026-04-12T03:11:00Z",
+            "endpoint": "https://payment-gateway.shopco.io"
+        },
+        {
+            "id": "shipping",
+            "name": "Shipping API",
+            "status": "healthy",
+            "uptime": "99.99%",
+            "queueDepth": 12,
+            "lastIncident": "2026-03-04T15:42:00Z",
+            "endpoint": "https://shipping.shopco.io"
+        },
+        {
+            "id": "notifications",
+            "name": "Notifications worker",
+            "status": "degraded",
+            "uptime": "98.50%",
+            "queueDepth": 4203,
+            "lastIncident": "2026-05-06T09:20:00Z",
+            "endpoint": "https://notifications.shopco.io"
+        }
+    ],
+    "meta": { "total": 3, "page": 1, "size": 20 }
+}

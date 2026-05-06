@@ -1,0 +1,11 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPath": "/admin/microservices"
+    },
+    "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "bodyFileName": "microservices-list.json"
+    }
+}
