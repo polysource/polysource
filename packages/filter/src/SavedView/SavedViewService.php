@@ -284,7 +284,7 @@ final class SavedViewService
         $session->set(self::SESSION_KEY_PREFIX . $view->resourceName, $view->id);
     }
 
-    private function forgetLastUsed(string $resourceName): void
+    public function forgetLastUsed(string $resourceName): void
     {
         if (null === $this->requestStack) {
             return;

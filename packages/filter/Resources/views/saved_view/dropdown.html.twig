@@ -85,7 +85,17 @@
         </li>
         {%- if current is not null -%}
             <li>
-                <a class="dropdown-item polysource-saved-views__clear text-danger" href="?">
+                {# `?clear-view=1` is consumed server-side by
+                 # SavedViewService: it resets the
+                 # session-remembered last-used view AND drops every
+                 # filter param so the user lands on a fully clean
+                 # URL. A bare `href="?"` would only strip the
+                 # query string — the session entry would survive,
+                 # so on the next page render `defaultFor()` would
+                 # resurrect the view as `current` and the user
+                 # would think Clear did nothing. #}
+                <a class="dropdown-item polysource-saved-views__clear text-danger"
+                   href="?clear-view=1">
                     {{ 'polysource.saved_views.dropdown.clear'|trans({}, 'PolysourceFilter') }}
                 </a>
             </li>

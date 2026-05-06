@@ -208,6 +208,18 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                     ->addTag('twig.extension')
                 ;
             }
+
+            // ClearSavedViewListener — consumes `?clear-view=1` to wipe
+            // the session-remembered last-used view + redirect to a
+            // clean URL. Without it the dropdown's "Clear current
+            // view" item only strips the URL query, leaving the
+            // session entry dangling so `defaultFor()` resurrects
+            // the view as `current` on the next render.
+            $container
+                ->register(\Polysource\Filter\SavedView\EventListener\ClearSavedViewListener::class)
+                ->setAutowired(true)
+                ->addTag('kernel.event_subscriber')
+            ;
         }
     }
 
