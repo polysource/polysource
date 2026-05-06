@@ -15,6 +15,7 @@ use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
 use Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission;
+use Polysource\Bundle\Twig\PolysourceFilterExtension;
 use Polysource\Core\Permission\PermissionInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -116,6 +117,12 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->public()
         ->tag('controller.service_arguments')
+    ;
+
+    $services
+        ->set(PolysourceFilterExtension::class)
+        ->args([service(UrlGeneratorInterface::class)])
+        ->tag('twig.extension')
     ;
 
     $services

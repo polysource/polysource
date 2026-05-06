@@ -1,0 +1,70 @@
+{# Collapsible filter panel rendered above the index table. Iterates
+ # over the resource's declared filters and renders a text input per
+ # filter (operator selection deferred until v0.2 — declaring a filter
+ # with `like` in supportedOperators auto-uses `like`, otherwise `eq`).
+ # The form submits via GET to the index route, which the resolver
+ # decodes back into FilterCriteria. #}
+{% set filter_defs = [] %}
+{% for f in resource.configureFilters %}
+    {% set filter_defs = filter_defs|merge([{
+        'property': f.property,
+        'label': f.label,
+        'operators': f.supportedOperators,
+    }]) %}
+{% endfor %}
+
+{% if filter_defs|length > 0 %}
+    <div class="card mb-3 border-0 shadow-sm" data-polysource-filters-panel>
+        <div class="card-header bg-body-tertiary d-flex align-items-center gap-2 py-2">
+            <button class="btn btn-sm btn-link text-decoration-none p-0"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#polysource-filters-body"
+                    aria-expanded="false"
+                    aria-controls="polysource-filters-body">
+                <i class="fa fa-filter"></i> Filters
+                <span class="badge text-bg-secondary ms-1">{{ filter_defs|length }}</span>
+            </button>
+            {% set chip_count = polysource_active_filters(context)|length %}
+            {% if chip_count > 0 %}
+                <span class="text-body-secondary small">{{ chip_count }} active</span>
+            {% endif %}
+        </div>
+        <div id="polysource-filters-body"
+             class="collapse {{ chip_count is defined and chip_count > 0 ? 'show' }}">
+            <div class="card-body py-3">
+                <form method="GET" class="row g-3 align-items-end">
+                    {% for def in filter_defs %}
+                        {% set current = context.query.filters[def.property]|default(null) %}
+                        {% set current_value = current is null ? '' : (current.value is iterable ? current.value|join(', ') : current.value) %}
+                        {% set operator = 'like' in def.operators ? 'like' : (def.operators|first|default('eq')) %}
+                        <div class="col-md-3">
+                            <label for="filter-{{ def.property }}" class="form-label small text-body-secondary">
+                                {{ def.label }}
+                            </label>
+                            <input type="text"
+                                   id="filter-{{ def.property }}"
+                                   name="filter[{{ def.property }}][value]"
+                                   value="{{ current_value }}"
+                                   placeholder="{{ operator }} …"
+                                   class="form-control form-control-sm"
+                                   data-polysource-filter-input="{{ def.property }}">
+                            <input type="hidden"
+                                   name="filter[{{ def.property }}][op]"
+                                   value="{{ operator }}">
+                        </div>
+                    {% endfor %}
+                    <div class="col-md-12 d-flex gap-2 justify-content-end">
+                        <a href="{{ polysource_clear_filters_url(context) }}"
+                           class="btn btn-sm btn-link text-decoration-none">
+                            Reset
+                        </a>
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fa fa-magnifying-glass"></i> Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}

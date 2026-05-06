@@ -113,13 +113,14 @@ final class AdminContextResolver implements ValueResolverInterface
 
         $filters = $request->query->all('filter');
         foreach ($filters as $name => $value) {
-            if (!\is_string($name) || !\is_scalar($value)) {
+            if (!\is_string($name)) {
                 continue;
             }
-            $query = $query->withFilter(
-                $name,
-                new FilterCriterion($name, 'eq', $value),
-            );
+            $criterion = self::decodeCriterion($name, $value);
+            if (null === $criterion) {
+                continue;
+            }
+            $query = $query->withFilter($name, $criterion);
         }
 
         $sort = $request->query->all('sort');
@@ -150,5 +151,66 @@ final class AdminContextResolver implements ValueResolverInterface
         ));
 
         return $query;
+    }
+
+    /**
+     * Decode the inbound URL-encoded criterion. Two shapes are accepted:
+     *   `?filter[name]=value`                                        → eq, scalar
+     *   `?filter[name][op]=like&filter[name][value]=foo`             → operator, scalar
+     *   `?filter[name][op]=in&filter[name][values][]=a&...[]=b`      → operator, list
+     *   `?filter[name][op]=between&filter[name][min]=...&[max]=...`  → between, [min, max]
+     *
+     * Empty / whitespace-only values produce no criterion (so an
+     * applied-then-cleared filter doesn't leak into adapter queries).
+     */
+    private static function decodeCriterion(string $name, mixed $value): ?FilterCriterion
+    {
+        if (\is_scalar($value)) {
+            $scalar = (string) $value;
+            if ('' === trim($scalar)) {
+                return null;
+            }
+
+            return new FilterCriterion($name, 'eq', $scalar);
+        }
+
+        if (!\is_array($value)) {
+            return null;
+        }
+
+        $operator = \is_string($value['op'] ?? null) ? $value['op'] : 'eq';
+
+        if (isset($value['values']) && \is_array($value['values'])) {
+            $list = array_values(array_filter(
+                array_map(static fn ($v): string => \is_scalar($v) ? trim((string) $v) : '', $value['values']),
+                static fn (string $v): bool => '' !== $v,
+            ));
+            if ([] === $list) {
+                return null;
+            }
+
+            return new FilterCriterion($name, $operator, $list);
+        }
+
+        if (isset($value['min']) || isset($value['max'])) {
+            $min = \is_scalar($value['min'] ?? null) ? (string) $value['min'] : '';
+            $max = \is_scalar($value['max'] ?? null) ? (string) $value['max'] : '';
+            if ('' === $min && '' === $max) {
+                return null;
+            }
+
+            return new FilterCriterion($name, 'between', [$min, $max]);
+        }
+
+        if (isset($value['value']) && \is_scalar($value['value'])) {
+            $scalar = trim((string) $value['value']);
+            if ('' === $scalar) {
+                return null;
+            }
+
+            return new FilterCriterion($name, $operator, $scalar);
+        }
+
+        return null;
     }
 }

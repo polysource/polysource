@@ -13,24 +13,33 @@
             </small>
         </div>
 
-        {% if bulk_actions is defined and bulk_actions|length > 0 %}
-            <div class="d-flex gap-2 flex-wrap" data-polysource-bulk-toolbar>
-                {% for action in bulk_actions %}
-                    <form method="POST"
-                          action="{{ path(route_prefix ~ '_bulk_action', {resourceName: resource.name, action: action.name}) }}"
-                          onsubmit="return confirm('Run “{{ action.label|e('js') }}” on every record? This cannot be undone.');"
-                          class="d-inline-block">
-                        <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
-                        <button type="submit"
-                                class="btn btn-sm btn-outline-{{ action.name == 'purge' ? 'danger' : 'primary' }}"
-                                data-polysource-action="bulk-{{ action.name }}">
-                            {{ action.label }}
-                        </button>
-                    </form>
-                {% endfor %}
-            </div>
-        {% endif %}
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            {% if polysource_saved_views_supported() %}
+                {{ saved_views_dropdown(resource.name) }}
+            {% endif %}
+
+            {% if bulk_actions is defined and bulk_actions|length > 0 %}
+                <div class="d-flex gap-2 flex-wrap" data-polysource-bulk-toolbar>
+                    {% for action in bulk_actions %}
+                        <form method="POST"
+                              action="{{ path(route_prefix ~ '_bulk_action', {resourceName: resource.name, action: action.name}) }}"
+                              onsubmit="return confirm('Run “{{ action.label|e('js') }}” on every record? This cannot be undone.');"
+                              class="d-inline-block">
+                            <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-{{ action.name == 'purge' ? 'danger' : 'primary' }}"
+                                    data-polysource-action="bulk-{{ action.name }}">
+                                {{ action.label }}
+                            </button>
+                        </form>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
     </header>
+
+    {% include '@Polysource/_filters_form.html.twig' ignore missing %}
+    {% include '@Polysource/_filter_chips.html.twig' ignore missing %}
 
     <div class="card shadow-sm">
         <div class="table-responsive">
