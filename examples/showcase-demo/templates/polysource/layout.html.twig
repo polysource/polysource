@@ -23,12 +23,17 @@
     <meta name="robots" content="noindex,nofollow">
     <title>{% block title %}{{ resource.label|default('Admin') }} — ShopCo{% endblock %}</title>
 
-    {# EA's compiled stylesheet — gives us the sidebar, topbar, table,
-     # form, and dropdown looks for free. Versioned via EA's manifest. #}
+    {# EA's compiled stylesheet + the host AssetMapper importmap so
+     # Bootstrap, Stimulus and the polysource/filter modal-layout
+     # controller all boot here too — otherwise dropdowns/modals on
+     # Polysource pages would silently fail. #}
     <link rel="stylesheet" href="{{ asset('app.css', 'easyadmin.assets.package') }}">
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
           crossorigin="anonymous">
+
+    {{ importmap('app') }}
+
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="ea ea-index"
@@ -39,11 +44,15 @@
       data-ea-icon-set="fontAwesome"
       data-ea-icon-prefix="">
 
-    {# EA's page-layout.js wires the responsive sidebar toggle, the
-     # search box collapse, and the dropdown menus. Loading it from
-     # the same asset package keeps the markup behaving exactly like
-     # an EA page. #}
+    {# EA's bundled JS — page-layout (sidebar/responsive),
+     # page-color-scheme (dark/light toggle), and the main `app.js`
+     # which wires the interactive parts (modals, dropdowns,
+     # tooltips, action confirmations). Loading them all from the
+     # same asset package keeps Polysource pages behaving exactly
+     # like an EA page. #}
     <script src="{{ asset('page-layout.js', 'easyadmin.assets.package') }}"></script>
+    <script src="{{ asset('page-color-scheme.js', 'easyadmin.assets.package') }}"></script>
+    <script src="{{ asset('app.js', 'easyadmin.assets.package') }}"></script>
 
     <div class="wrapper">
         <aside class="sidebar">

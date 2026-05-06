@@ -1,0 +1,18 @@
+{# EA layout override — opt out of Turbo on EA pages.
+ #
+ # EA bundles its `app.js` as a `<script>` in `<head>` and binds
+ # `DOMContentLoaded` to instantiate `new App()` (which calls
+ # `#createFilters()`, removes `class="disabled"` on the Filters
+ # button, and binds the click→fetch→modal handler). Turbo replaces
+ # `<body>` on navigation without re-firing `DOMContentLoaded`, so
+ # the filters button stays disabled and clicking opens an empty
+ # modal because no fetch handler is bound.
+ #
+ # Until EA ships a `turbo:load` hook, we make EA pages do full
+ # reloads: `data-turbo="false"` on `<body>` tells Turbo to skip
+ # interception. The non-EA pages (Polysource resources) still get
+ # the SPA-like Turbo experience.
+ #}
+{% extends '@!EasyAdmin/layout.html.twig' %}
+
+{% block body_attr %}data-turbo="false"{% endblock %}
