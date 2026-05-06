@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
@@ -36,6 +37,16 @@ final class DashboardController extends AbstractDashboardController
             ->setTitle('<span class="fw-semibold">ShopCo</span> <span class="text-muted">admin</span>')
             ->setFaviconPath('favicon.ico')
             ->setLocales(['en' => 'English']);
+    }
+
+    public function configureAssets(): Assets
+    {
+        // Pull the host's `app` AssetMapper entry into EA's pages.
+        // Without this EA only loads its own bundled assets and the
+        // host's stimulus_bootstrap (which registers the polysource
+        // filter modal layout controller) never runs — the filter
+        // tabs would stay flat on EA CRUD pages.
+        return Assets::new()->addAssetMapperEntry('app');
     }
 
     public function configureMenuItems(): iterable

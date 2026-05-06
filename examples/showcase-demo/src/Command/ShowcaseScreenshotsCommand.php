@@ -64,6 +64,9 @@ final class ShowcaseScreenshotsCommand extends Command
         ['slug' => '12-polysource-s3-files', 'path' => '/admin/polysource/s3-files', 'wait' => 'h1'],
         ['slug' => '13-polysource-microservices', 'path' => '/admin/polysource/microservices', 'wait' => 'h1'],
         ['slug' => '14-polysource-search-index', 'path' => '/admin/polysource/search-index', 'wait' => 'h1'],
+        // Feature deep-dives — captured AFTER an interaction.
+        ['slug' => '15-saved-views-dropdown-open', 'path' => '/admin/order', 'wait' => '.polysource-saved-views', 'click' => '.polysource-saved-views .dropdown-toggle'],
+        ['slug' => '16-filters-modal-tabs', 'path' => '/admin/order', 'wait' => '[data-bs-target="#modal-filters"]', 'click' => '[data-bs-target="#modal-filters"]', 'waitAfterClick' => '#modal-filters .nav-tabs'],
     ];
 
     public function __construct(
@@ -186,7 +189,7 @@ final class ShowcaseScreenshotsCommand extends Command
     }
 
     /**
-     * @param array{slug: string, path: string, wait?: string, auth?: bool, label?: string} $page
+     * @param array{slug: string, path: string, wait?: string, auth?: bool, label?: string, click?: string} $page
      */
     private function capture(Client $client, string $outputDir, array $page, SymfonyStyle $io): void
     {
@@ -202,6 +205,37 @@ final class ShowcaseScreenshotsCommand extends Command
                 // Fall through — capture whatever rendered (the page
                 // might be empty by design, e.g. a polysource resource
                 // with no rows). The PNG will document the empty state.
+            }
+        }
+
+        // Optional: click an element after the page settles (used to
+        // open the saved-views dropdown / filter modal so the screenshot
+        // captures the feature *in action*).
+        if (isset($page['click'])) {
+            try {
+                $element = $client->findElement(WebDriverBy::cssSelector($page['click']));
+                $element->click();
+
+                if (isset($page['waitAfterClick'])) {
+                    try {
+                        $client->wait(8)->until(
+                            WebDriverExpectedCondition::presenceOfElementLocated(
+                                WebDriverBy::cssSelector($page['waitAfterClick']),
+                            ),
+                        );
+                    } catch (\Facebook\WebDriver\Exception\TimeoutException) {
+                        usleep(2_000_000);
+                        // Diagnostic: dump what's in the modal-body so
+                        // we know if the controller ran at all.
+                        // No diagnostic — usage was for debugging the
+                        // stimulus_bootstrap loading on EA pages, fixed
+                        // by Dashboard::configureAssets().
+                    }
+                } else {
+                    usleep(2_500_000);
+                }
+            } catch (\Facebook\WebDriver\Exception\NoSuchElementException) {
+                // Element absent — capture the page as-is.
             }
         }
 

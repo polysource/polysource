@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
+use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
 use Polysource\EasyAdminFilterBridge\Filter\BetweenDateFilter;
 use Polysource\EasyAdminFilterBridge\Filter\NotNullFilter;
 
@@ -116,16 +117,25 @@ final class OrderCrudController extends AbstractCrudController
 
     public function configureFilters(Filters $filters): Filters
     {
+        // Polysource::tab(...) and Polysource::group(...) are markers
+        // recognised by the bridge's _filters_modal.html.twig — the
+        // filter modal renders them as Bootstrap nav-tabs + accordions
+        // so dozens of filters stay legible.
         return $filters
+            ->add(Polysource::tab('Identification'))
             ->add(TextFilter::new('reference'))
-            // ChoiceFilter with multi → bridge enhances to Select2 chips.
             ->add(ChoiceFilter::new('status')->setChoices(self::STATUS_CHOICES)->canSelectMultiple())
+
+            ->add(Polysource::tab('Dates'))
+            ->add(Polysource::group('Created'))
             ->add(DateTimeFilter::new('createdAt', 'Order date'))
-            ->add(NumericFilter::new('totalCents', 'Total (cents)'))
-            // Custom bridge filters — each on a different property so EA's
-            // one-filter-per-property rule is honored.
+            ->add(Polysource::group('Paid'))
             ->add(BetweenDateFilter::new('paidAt', 'Paid between (range picker)'))
-            // Find unshipped orders: shippedAt IS NULL when filter is "no".
+
+            ->add(Polysource::tab('Money'))
+            ->add(NumericFilter::new('totalCents', 'Total (cents)'))
+
+            ->add(Polysource::tab('Lifecycle'))
             ->add(NotNullFilter::new('shippedAt', 'Has shipped'))
             ->add(NotNullFilter::new('refundedAt', 'Has refunded'));
     }
