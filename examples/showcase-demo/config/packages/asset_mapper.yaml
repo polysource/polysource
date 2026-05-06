@@ -2,9 +2,9 @@ framework:
     asset_mapper:
         paths:
             - assets/
-        missing_import_mode: strict
-
-when@prod:
-    framework:
-        asset_mapper:
-            missing_import_mode: warn
+        # `warn` over `strict` because polysource/filter ships
+        # JS that imports tldts whose internal paths skip `.js`
+        # (Symfony AssetMapper requires the extension). Until the
+        # filter package adds an importmap shim, we accept the
+        # warning in dev and rely on the build step in prod.
+        missing_import_mode: warn

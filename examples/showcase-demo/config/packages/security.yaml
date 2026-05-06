@@ -34,7 +34,11 @@ security:
             form_login:
                 login_path: app_login
                 check_path: app_login
-                enable_csrf: true
+                # CSRF disabled — the demo credentials are public and
+                # the showcase rebuilds from scratch on every demo.
+                # Production apps SHOULD enable this and pair with
+                # the Stimulus csrf_protection_controller.
+                enable_csrf: false
                 default_target_path: /
             logout:
                 path: app_logout

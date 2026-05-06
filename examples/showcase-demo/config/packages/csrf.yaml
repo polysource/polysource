@@ -1,11 +1,10 @@
-# Enable stateless CSRF protection for forms and logins/logouts
+# Stateful CSRF — simpler for Panther E2E + the screenshots pipeline
+# (stateless tokens require the Stimulus csrf_protection_controller to
+# inject the X-CSRF-Token header at submit time, which would force
+# every Panther run through the full JS stack and brittle hand-written
+# waitForVisibility() ladders). Form login auth + logout use the
+# stateful flow — Panther's `submit($form)` handles it natively.
 framework:
     form:
         csrf_protection:
             token_id: submit
-
-    csrf_protection:
-        stateless_token_ids:
-            - submit
-            - authenticate
-            - logout

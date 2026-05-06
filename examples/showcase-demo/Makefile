@@ -78,8 +78,18 @@ shell: ## Open a shell in the PHP container
 	$(DOCKER_COMPOSE) exec php sh
 
 .PHONY: test
-test: ## Run PHPUnit + Panther tests
-	$(PHP_EXEC) php vendor/bin/phpunit
+test: ## Run fast PHPUnit suite (no Panther)
+	$(PHP_EXEC) php -d memory_limit=2G vendor/bin/phpunit --exclude-group=panther
+
+.PHONY: panther
+panther: ## Boot Selenium Chromium + run @group panther E2E tests
+	$(DOCKER_COMPOSE) --profile e2e up -d chrome
+	@echo "▶ waiting for Selenium grid…"
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		curl -s http://localhost:4444/wd/hub/status | grep -q '"ready":true' && break; \
+		sleep 2; \
+	done
+	$(PHP_EXEC) php -d memory_limit=2G vendor/bin/phpunit --group=panther
 
 .PHONY: phpstan
 phpstan: ## Static analysis on showcase code

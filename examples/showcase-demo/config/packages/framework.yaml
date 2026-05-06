@@ -4,7 +4,12 @@ framework:
     php_errors:
         log: true
     session:
-        handler_id: null
+        # Redis-backed session — shared between dev (live nginx app)
+        # and test (Panther's KernelBrowser-minted sessions transplanted
+        # via WebDriver addCookie). With native file sessions the two
+        # environments would write to different var/cache/{env}/sessions
+        # paths and the Phase I screenshot pipeline couldn't auth.
+        handler_id: 'Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler'
         cookie_secure: auto
         cookie_samesite: lax
         storage_factory_id: session.storage.factory.native
@@ -13,8 +18,13 @@ framework:
     trusted_proxies: '127.0.0.1,REMOTE_ADDR'
     trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix']
 
+services:
+    # Phase H — Predis-backed session handler. Reuses the Predis client
+    # we already wired in services.yaml for adapter-redis.
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler:
+        arguments:
+            - '@Predis\Client'
+
 when@test:
     framework:
         test: true
-        session:
-            storage_factory_id: session.storage.factory.mock_file

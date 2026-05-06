@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {# Turbo prefetches every visible link by default — would silently
+       hit /logout after the home page renders and kill the session.
+       Disable globally for the showcase. #}
+    <meta name="turbo-prefetch" content="false">
     <title>{% block title %}ShopCo — Polysource Showcase{% endblock %}</title>
     {% block stylesheets %}{% endblock %}
     {% block javascripts %}

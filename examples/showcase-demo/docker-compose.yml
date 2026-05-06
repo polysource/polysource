@@ -153,6 +153,20 @@ services:
         ports:
             - '8089:8080'
 
+    # Selenium standalone Chromium for Panther E2E + screenshots pipeline
+    # (Phase H/I). VNC viewer exposed on :7900 (passwordless) so devs can
+    # watch tests run live during debugging.
+    chrome:
+        image: selenium/standalone-chromium:128.0
+        shm_size: 2gb
+        environment:
+            SE_NODE_MAX_SESSIONS: 2
+            SE_NODE_OVERRIDE_MAX_SESSIONS: true
+        ports:
+            - '4444:4444'
+            - '7900:7900'
+        profiles: ['e2e']
+
 # Symfony Flex injected `database` (doctrine-bundle) and a duplicate
 # `mercure` block (mercure-bundle) on first install. The showcase already
 # defines those services above (postgres + mercure with the showcase-grade
