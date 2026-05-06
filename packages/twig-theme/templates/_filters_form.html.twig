@@ -29,58 +29,82 @@
         Filters{% if chip_count > 0 %} <span class="action-filters-button-count">({{ chip_count }})</span>{% endif %}
     </button>
 
-    {# Modal — Bootstrap 5. Form wraps the entire modal-content so
-     # the Apply button at the bottom submits the inputs above. #}
-    <div class="modal fade" id="polysource-filters-modal" tabindex="-1" aria-labelledby="polysource-filters-modal-label" aria-hidden="true" data-polysource-filters-modal>
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    {# Modal — mirrors EA's `_filters_modal.html.twig` HTML structure
+     # (`#modal-filters` → `.modal-dialog` → `.modal-content` →
+     # `.modal-header` with Clear/title/Apply, then a form whose
+     # children are `.filter-field.px-3` rows with `.filter-heading`
+     # + collapsible `.filter-content`). EA's bundled CSS targets
+     # those exact class names, so reusing the same structure makes
+     # our modal render visually indistinguishable from EA's. #}
+    <div class="modal fade" id="polysource-filters-modal" tabindex="-1" aria-hidden="true" data-polysource-filters-modal>
+        <div class="modal-dialog">
             <div class="modal-content">
-                <form method="GET" data-polysource-filters-form>
-                    <div class="modal-header">
-                        <a href="{{ polysource_clear_filters_url(context) }}"
-                           class="btn btn-link btn-sm text-decoration-none"
-                           data-polysource-filters-clear>
-                            <i class="fa fa-xmark"></i> Clear
-                        </a>
-                        <h5 class="modal-title flex-grow-1 text-center mb-0" id="polysource-filters-modal-label">
-                            <i class="fa fa-filter"></i> Filters
-                        </h5>
-                        <button type="submit" class="btn btn-primary btn-sm" data-polysource-filters-apply>
-                            <i class="fa fa-check"></i> Apply
-                        </button>
-                    </div>
-                    <div class="modal-body">
+                <div class="modal-header justify-content-between">
+                    <a href="{{ polysource_clear_filters_url(context) }}"
+                       class="btn btn-secondary btn-sm"
+                       id="polysource-modal-clear-button">
+                        <i class="fa fa-xmark"></i> Clear
+                    </a>
+                    <h5 class="modal-title">
+                        <i class="fa fa-filter"></i> Filters
+                    </h5>
+                    <button type="submit"
+                            form="polysource-filters-form"
+                            class="btn btn-primary btn-sm"
+                            id="polysource-modal-apply-button">
+                        <i class="fa fa-check"></i> Apply
+                    </button>
+                </div>
+                <div class="modal-body p-0">
+                    <form id="polysource-filters-form"
+                          method="GET"
+                          data-polysource-filters-form
+                          data-ea-filters-form-id="polysource-filters-form">
                         {% for def in filter_defs %}
                             {% set current = context.query.filters[def.property]|default(null) %}
                             {% set current_value = current is null ? '' : (current.value is iterable ? current.value|join(', ') : current.value) %}
                             {% set is_active = current is not null %}
                             {% set operator = 'like' in def.operators ? 'like' : (def.operators|first|default('eq')) %}
+                            {% set field_id = 'polysource-filter-' ~ def.property %}
 
-                            <div class="filter-field mb-3 pb-3 border-bottom" data-filter-property="{{ def.property }}">
-                                <label class="form-check d-flex align-items-center gap-2 mb-2">
-                                    <input type="checkbox"
-                                           class="form-check-input filter-checkbox"
-                                           name="filter[{{ def.property }}][_enabled]"
-                                           value="1"
-                                           {% if is_active %}checked{% endif %}
-                                           data-polysource-filter-checkbox>
-                                    <strong>{{ def.label }}</strong>
-                                </label>
-                                <div class="d-flex gap-2 align-items-center" data-polysource-filter-inputs>
-                                    <select name="filter[{{ def.property }}][op]" class="form-select form-select-sm" style="max-width: 8rem">
-                                        {% for op in def.operators %}
-                                            <option value="{{ op }}" {{ op == operator ? 'selected' }}>{{ op }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <input type="text"
-                                           name="filter[{{ def.property }}][value]"
-                                           value="{{ current_value }}"
-                                           class="form-control form-control-sm"
-                                           placeholder="value">
+                            <div class="col-12">
+                                <div class="filter-field px-3" data-filter-property="{{ def.property }}">
+                                    <div class="filter-heading" id="{{ field_id }}-heading">
+                                        <input type="checkbox"
+                                               class="filter-checkbox"
+                                               name="filter[{{ def.property }}][_enabled]"
+                                               value="1"
+                                               {% if is_active %}checked{% endif %}>
+                                        <a data-bs-toggle="collapse"
+                                           href="#{{ field_id }}-content"
+                                           aria-expanded="{{ is_active ? 'true' : 'false' }}"
+                                           aria-controls="{{ field_id }}-content">
+                                            {{ def.label }}
+                                        </a>
+                                    </div>
+                                    <div id="{{ field_id }}-content"
+                                         class="filter-content collapse {{ is_active ? 'show' }}"
+                                         aria-labelledby="{{ field_id }}-heading">
+                                        <div class="form-widget">
+                                            <div class="form-widget-compound d-flex gap-2 align-items-center pb-3">
+                                                <select name="filter[{{ def.property }}][op]" class="form-select" style="max-width: 12rem">
+                                                    {% for op in def.operators %}
+                                                        <option value="{{ op }}" {{ op == operator ? 'selected' }}>{{ op }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <input type="text"
+                                                       name="filter[{{ def.property }}][value]"
+                                                       value="{{ current_value }}"
+                                                       class="form-control"
+                                                       placeholder="value">
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

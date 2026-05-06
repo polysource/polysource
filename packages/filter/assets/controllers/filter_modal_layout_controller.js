@@ -112,6 +112,42 @@ export default class extends Controller {
         otherNodes.forEach((n) => form.appendChild(n));
 
         form.dataset.polysourceLayoutApplied = '1';
+
+        // Our reshuffle (form.innerHTML = '' + re-append) detaches +
+        // re-attaches every .filter-field, which silently breaks
+        // EA's already-initialized Tom Select widgets (the ones that
+        // wrap `<select data-ea-widget="ea-autocomplete">` into the
+        // chip-style dropdown). Without this kick, the user sees a
+        // raw native `<select multiple>` listbox showing every option
+        // inline — exactly the regression reported on the showcase.
+        //
+        // EA's app.js listens for `ea.collection.item-added` and calls
+        // `#createAutoCompleteFields()` in the handler — that method
+        // skips elements already marked `tomselected` (idempotent) and
+        // upgrades any orphaned ones. Dispatching the event is the
+        // cheapest documented way to re-bind Tom Select after we
+        // modified the DOM.
+        document.dispatchEvent(new CustomEvent('ea.collection.item-added'));
+
+        // EA also binds an auto-check `change` listener on the form
+        // (cf. `#createFilterToggles`) so any value change auto-ticks
+        // the field's `.filter-checkbox`. Our `form.innerHTML = ''`
+        // can race with that init when the modal is reopened on the
+        // same page (EA's `.then` re-binds, but the new fields go
+        // through us again). Re-bind ourselves with the same logic;
+        // idempotent via a data flag.
+        if (form.dataset.polysourceAutocheckBound !== '1') {
+            form.dataset.polysourceAutocheckBound = '1';
+            form.addEventListener('change', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) return;
+                if (target.classList.contains('filter-checkbox')) return;
+                const field = target.closest('.filter-field');
+                if (!field) return;
+                const checkbox = field.querySelector('.filter-checkbox');
+                if (checkbox && !checkbox.checked) checkbox.checked = true;
+            });
+        }
     }
 
     buildGroupAccordion(group, byProperty) {
