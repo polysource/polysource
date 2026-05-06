@@ -23,3 +23,11 @@ polysource_search:
 polysource_bulk_async:
     resource: '../vendor/polysource/bulk-async/src/Controller/'
     type: attribute
+
+# Bridge ships SavedViewController (POST create/delete) + the ?view=
+# apply subscriber. Mounting via the attribute loader exposes:
+#   POST /admin/saved-views                → polysource_saved_view_create
+#   POST /admin/saved-views/{id}/delete    → polysource_saved_view_delete
+polysource_easyadmin_filter_bridge:
+    resource: '../vendor/polysource/easyadmin-filter-bridge/src/Controller/'
+    type: attribute

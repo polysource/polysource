@@ -65,6 +65,20 @@ final class BridgeAutoConfigurationTest extends TestCase
             ->addTag('form.type')
         ;
 
+        // Stub the polysource/filter SavedView dependencies so the
+        // bridge's auto-registered SavedViewController + apply
+        // subscriber can autowire. Real apps get these from the
+        // PolysourceFilterBundle.
+        $this->container->register(\Polysource\Filter\SavedView\SavedViewService::class)
+            ->setSynthetic(true)
+            ->setPublic(true);
+        $this->container->register(\Symfony\Bundle\SecurityBundle\Security::class)
+            ->setSynthetic(true)
+            ->setPublic(true);
+        $this->container->register(\Symfony\Component\HttpFoundation\RequestStack::class)
+            ->setSynthetic(true)
+            ->setPublic(true);
+
         // Now load our extension — this is the code under test.
         (new PolysourceEasyAdminFilterBridgeExtension())->load([], $this->container);
 

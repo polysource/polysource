@@ -106,6 +106,10 @@ final class SavedViewEndToEndTest extends TestCase
         $twig->addExtension(new TranslationStubExtension());
 
         $this->twigExtension = new SavedViewExtension($this->service, $twig);
+        // Register on the env so the bundled save_modal.html.twig (used by
+        // renderDropdown) can call `polysource_route_exists` exposed by
+        // the extension itself.
+        $twig->addExtension($this->twigExtension);
     }
 
     #[Test]

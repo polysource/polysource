@@ -30,12 +30,15 @@ final class SavedViewExtensionTest extends TestCase
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        self::assertCount(1, $functions);
+        self::assertCount(2, $functions);
 
-        $function = $functions[0];
-        self::assertSame('saved_views_dropdown', $function->getName());
+        $names = array_map(static fn ($f) => $f->getName(), $functions);
+        self::assertContains('saved_views_dropdown', $names);
+        self::assertContains('polysource_route_exists', $names);
 
-        $safe = $function->getSafe(new \Twig\Node\Node());
+        $matched = array_values(array_filter($functions, static fn ($f) => $f->getName() === 'saved_views_dropdown'));
+        self::assertNotEmpty($matched, 'saved_views_dropdown function must be exposed');
+        $safe = $matched[0]->getSafe(new \Twig\Node\Node());
         self::assertNotNull($safe, 'TwigFunction should declare an is_safe spec');
         self::assertContains('html', $safe);
     }

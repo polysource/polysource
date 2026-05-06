@@ -1,11 +1,16 @@
 {# polysource/filter — "Save current as view" modal.
 
-   This is a SHELL — the host wires the actual form action by
-   overriding this template. We ship a minimal example so the
-   dropdown's "Save…" trigger works visually out-of-the-box.
-
    Vars:
    - resource_name (string)
+
+   The form action is conditional on the route being wired. Hosts
+   register `polysource_saved_view_create` (POST) on their own
+   controller; until then the form's action stays `#` so the modal
+   renders without crashing on `path()`.
+
+   `polysource_route_exists()` is a Twig function exposed by the
+   bundle's SavedViewExtension — it probes the Symfony router so
+   the template can degrade gracefully without a hard 500.
 
    Hosts that want full control:
    1. Implement a controller action that receives the form POST with
@@ -18,16 +23,17 @@
    No CSRF token in the default template — hosts add it to fit
    their security setup.
 #}
+{%- set _create_route = 'polysource_saved_view_create' -%}
+{%- set _form_action = polysource_route_exists(_create_route)
+    ? path(_create_route, {resource: resource_name})
+    : '#' -%}
 <div class="modal fade polysource-save-view-modal"
      id="polysource-save-view-modal-{{ resource_name|escape('html_attr') }}"
      tabindex="-1"
      aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post"
-                  action="{{ path('polysource_saved_view_create', {resource: resource_name}) is defined
-                              ? path('polysource_saved_view_create', {resource: resource_name})
-                              : '#' }}">
+            <form method="post" action="{{ _form_action }}">
                 <div class="modal-header">
                     <h5 class="modal-title">
                         {{ 'polysource.saved_views.modal.title'|trans({}, 'PolysourceFilter') }}
@@ -74,7 +80,8 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{ 'polysource.saved_views.modal.cancel'|trans({}, 'PolysourceFilter') }}
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary"
+                            {% if _form_action == '#' %}disabled title="Host has not wired polysource_saved_view_create route"{% endif %}>
                         {{ 'polysource.saved_views.modal.save'|trans({}, 'PolysourceFilter') }}
                     </button>
                 </div>
