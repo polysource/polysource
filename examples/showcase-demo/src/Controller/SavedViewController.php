@@ -53,7 +53,11 @@ final class SavedViewController extends AbstractController
         }
 
         parse_str($filterQs, $parsed);
-        $filterRaw = (array) ($parsed['filter'] ?? []);
+        // EA emits `filters[<property>][comparison]=…&filters[<property>][value]=…`
+        // (plural + nested). Earlier code expected `filter[<property>]=<value>`
+        // (singular, flat) and silently dropped every criterion → user-facing
+        // "Apply at least one filter" warning even with filters applied.
+        $filterRaw = (array) ($parsed['filters'] ?? $parsed['filter'] ?? []);
         $criteria = $this->buildCriteria($filterRaw);
 
         if ($criteria === []) {
@@ -98,7 +102,14 @@ final class SavedViewController extends AbstractController
     }
 
     /**
-     * Generic decoder for filter querystrings produced by the EA filter bridge.
+     * Decoder for EA filter URLs.
+     *
+     * EA shape:
+     *   filters[<property>][comparison]=<op>
+     *   filters[<property>][value]=<scalar>
+     *   filters[<property>][value][]=<v1>&filters[<property>][value][]=<v2>
+     *   filters[<property>][value][min/max] / [from/to]   (between)
+     *   filters[<property>][value2]=<scalar>              (NumericFilter range)
      *
      * @param array<string, mixed> $raw
      *
@@ -108,18 +119,25 @@ final class SavedViewController extends AbstractController
     {
         $criteria = [];
 
-        foreach ($raw as $field => $value) {
-            if ($value === '' || $value === null) {
+        foreach ($raw as $field => $config) {
+            if (!\is_array($config)) {
+                // Bare scalar (host-defined non-EA shape). Treat as eq.
+                if ($config === '' || $config === null) {
+                    continue;
+                }
+                $criteria[] = new FilterCriterion((string) $field, 'eq', [(string) $config]);
                 continue;
             }
 
-            if (\is_array($value)) {
-                if ($value === array_values($value)) {
-                    // Indexed list → "in" filter.
-                    $criteria[] = new FilterCriterion((string) $field, 'in', array_map('strval', $value));
-                    continue;
-                }
+            $value = $config['value'] ?? null;
+            $comparison = (string) ($config['comparison'] ?? '');
 
+            if ($value === '' || $value === null || (\is_array($value) && $value === [])) {
+                continue;
+            }
+
+            // between (date range / numeric range)
+            if (\is_array($value) && (isset($value['min']) || isset($value['max']) || isset($value['from']) || isset($value['to']))) {
                 $min = (string) ($value['min'] ?? $value['from'] ?? '');
                 $max = (string) ($value['max'] ?? $value['to'] ?? '');
                 if ($min !== '' || $max !== '') {
@@ -128,9 +146,40 @@ final class SavedViewController extends AbstractController
                 continue;
             }
 
-            $criteria[] = new FilterCriterion((string) $field, 'eq', [(string) $value]);
+            // Indexed list → in (multi-select choice).
+            if (\is_array($value) && $value === array_values($value)) {
+                $criteria[] = new FilterCriterion(
+                    (string) $field,
+                    self::mapComparison($comparison, 'in'),
+                    array_map('strval', $value),
+                );
+                continue;
+            }
+
+            // Scalar value with comparison operator.
+            $criteria[] = new FilterCriterion(
+                (string) $field,
+                self::mapComparison($comparison, 'eq'),
+                [(string) $value],
+            );
         }
 
         return $criteria;
+    }
+
+    private static function mapComparison(string $comparison, string $default): string
+    {
+        return match ($comparison) {
+            '=' => 'eq',
+            '!=', '<>' => 'neq',
+            '>' => 'gt',
+            '>=' => 'gte',
+            '<' => 'lt',
+            '<=' => 'lte',
+            'like', 'like*', '*like', 'not like' => 'like',
+            'in', 'not in' => 'in',
+            '' => $default,
+            default => $comparison,
+        };
     }
 }
