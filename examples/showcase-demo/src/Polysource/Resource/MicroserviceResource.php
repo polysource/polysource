@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Polysource\Resource;
 
 use App\Polysource\Field\Field;
+use App\Polysource\Filter\GenericFilter;
 use Polysource\Adapter\Http\DataSource\HttpDataSource;
 use Polysource\Adapter\Http\Pagination\PageNumberPaginationStrategy;
 use Polysource\Adapter\Http\Resource\HttpResource;
@@ -56,5 +57,17 @@ final class MicroserviceResource extends HttpResource
             yield Field::new('endpoint', 'Endpoint')->asText();
             yield Field::new('lastIncident', 'Last incident')->asText();
         }
+    }
+
+    public function configureFilters(): iterable
+    {
+        // HttpDataSource forwards each FilterCriterion as a query
+        // parameter on the upstream listing endpoint
+        // (`?status=healthy&name=...`). The mocked WireMock backend
+        // ignores params it doesn't know — filters render in the
+        // modal regardless.
+        yield GenericFilter::text('name', 'Service name');
+        yield GenericFilter::exact('status', 'Status');
+        yield GenericFilter::numeric('queueDepth', 'Queue depth');
     }
 }

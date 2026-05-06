@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Polysource\Resource;
 
 use App\Polysource\Field\Field;
+use App\Polysource\Filter\GenericFilter;
 use Polysource\Adapter\Meilisearch\Client\MeilisearchIndexInterface;
 use Polysource\Adapter\Meilisearch\DataSource\MeilisearchDataSource;
 use Polysource\Adapter\Meilisearch\Resource\MeilisearchIndexResource;
@@ -48,5 +49,19 @@ final class ProductIndexResource extends MeilisearchIndexResource
             yield Field::new('currency', 'Currency')->asText();
             yield Field::new('createdAt', 'Created at')->asText();
         }
+    }
+
+    public function configureFilters(): iterable
+    {
+        // MeilisearchDataSource maps these criteria to the
+        // index's filter expression (status="active",
+        // priceCents>=1000, etc). The properties below MUST match
+        // the index's `filterableAttributes` config or Meilisearch
+        // rejects the search.
+        yield GenericFilter::text('name', 'Name');
+        yield GenericFilter::exact('category', 'Category');
+        yield GenericFilter::exact('status', 'Status');
+        yield GenericFilter::numeric('priceCents', 'Price (cents)');
+        yield GenericFilter::numeric('stock', 'Stock');
     }
 }

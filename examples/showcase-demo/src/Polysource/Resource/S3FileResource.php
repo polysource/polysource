@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Polysource\Resource;
 
 use App\Polysource\Field\Field;
+use App\Polysource\Filter\GenericFilter;
 use League\Flysystem\FilesystemOperator;
 use Polysource\Adapter\Flysystem\DataSource\FlysystemDataSource;
 use Polysource\Adapter\Flysystem\Resource\FlysystemResource;
@@ -43,5 +44,16 @@ final class S3FileResource extends FlysystemResource
             yield Field::new('path', 'Path')->asText();
             yield Field::new('absolutePath', 'Absolute path')->asText();
         }
+    }
+
+    public function configureFilters(): iterable
+    {
+        // FlysystemDataSource exposes path/extension/mimeType/sizeBytes
+        // on every listing. Filters apply client-side (the listing
+        // is paginated server-side first, then filtered).
+        yield GenericFilter::text('fileName', 'File name');
+        yield GenericFilter::exact('extension', 'Extension');
+        yield GenericFilter::text('mimeType', 'MIME type');
+        yield GenericFilter::numeric('sizeBytes', 'Size (bytes)');
     }
 }

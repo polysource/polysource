@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Polysource\Resource;
 
 use App\Polysource\Field\Field;
+use App\Polysource\Filter\GenericFilter;
 use Polysource\Adapter\Redis\Client\RedisHashClientInterface;
 use Polysource\Adapter\Redis\DataSource\RedisHashDataSource;
 use Polysource\Adapter\Redis\Resource\RedisHashResource;
@@ -46,5 +47,18 @@ final class CacheKeyResource extends RedisHashResource
         yield Field::new('totalCents', 'Total (¢)')->asText();
         yield Field::new('cachedAt', 'Cached at')->asText();
         yield Field::new('updatedAt', 'Updated at')->asText();
+    }
+
+    public function configureFilters(): iterable
+    {
+        // The Redis adapter exposes the hash key + a few standard
+        // hash fields. Filters submitted from the modal arrive as
+        // FilterCriterion in the DataQuery; the data source applies
+        // a client-side `LIKE` on the matching hash field value
+        // (cf. RedisHashDataSource::matchesCriterion).
+        yield GenericFilter::text('id', 'Key ID');
+        yield GenericFilter::text('name', 'Product name');
+        yield GenericFilter::numeric('priceCents', 'Price (cents)');
+        yield GenericFilter::numeric('stock', 'Stock');
     }
 }
