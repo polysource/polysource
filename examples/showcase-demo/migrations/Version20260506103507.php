@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20260506093802 extends AbstractMigration
+final class Version20260506103507 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -35,6 +35,11 @@ final class Version20260506093802 extends AbstractMigration
         $this->addSql('CREATE INDEX idx_shopco_customer_country ON shopco_customer (country)');
         $this->addSql('CREATE INDEX idx_shopco_customer_created_at ON shopco_customer (created_at)');
         $this->addSql('CREATE UNIQUE INDEX uniq_shopco_customer_email ON shopco_customer (email)');
+        $this->addSql('CREATE TABLE shopco_login_attempt (id UUID NOT NULL, email VARCHAR(180) NOT NULL, ip VARCHAR(45) NOT NULL, user_agent VARCHAR(400) DEFAULT NULL, status VARCHAR(20) NOT NULL, occurred_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE INDEX idx_shopco_login_attempt_status ON shopco_login_attempt (status)');
+        $this->addSql('CREATE INDEX idx_shopco_login_attempt_email ON shopco_login_attempt (email)');
+        $this->addSql('CREATE INDEX idx_shopco_login_attempt_ip ON shopco_login_attempt (ip)');
+        $this->addSql('CREATE INDEX idx_shopco_login_attempt_occurred_at ON shopco_login_attempt (occurred_at)');
         $this->addSql('CREATE TABLE shopco_order (id UUID NOT NULL, reference VARCHAR(16) NOT NULL, status VARCHAR(16) NOT NULL, total_cents INT NOT NULL, currency VARCHAR(3) NOT NULL, shipping_address VARCHAR(240) DEFAULT NULL, payment_transaction_id VARCHAR(60) DEFAULT NULL, tracking_number VARCHAR(40) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, paid_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, shipped_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, delivered_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, cancelled_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, refunded_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, customer_id UUID NOT NULL, PRIMARY KEY (id))');
         $this->addSql('CREATE INDEX idx_shopco_order_status ON shopco_order (status)');
         $this->addSql('CREATE INDEX idx_shopco_order_created_at ON shopco_order (created_at)');
@@ -73,6 +78,7 @@ final class Version20260506093802 extends AbstractMigration
         $this->addSql('DROP TABLE polysource_bulk_jobs');
         $this->addSql('DROP TABLE polysource_saved_views');
         $this->addSql('DROP TABLE shopco_customer');
+        $this->addSql('DROP TABLE shopco_login_attempt');
         $this->addSql('DROP TABLE shopco_order');
         $this->addSql('DROP TABLE shopco_order_item');
         $this->addSql('DROP TABLE shopco_product');

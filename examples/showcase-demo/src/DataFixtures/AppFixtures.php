@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Story\CatalogStory;
 use App\Story\CustomersStory;
 use App\Story\DefaultUsersStory;
+use App\Story\LoginAttemptsStory;
 use App\Story\OrdersStory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -23,5 +24,6 @@ final class AppFixtures extends Fixture
         CatalogStory::load();
         CustomersStory::load();
         OrdersStory::load();
+        LoginAttemptsStory::load();
     }
 }

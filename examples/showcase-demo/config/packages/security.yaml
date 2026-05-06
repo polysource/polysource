@@ -15,11 +15,13 @@ security:
                 property: email
 
     role_hierarchy:
-        # ROLE_ADMIN inherits ROLE_OPS which inherits ROLE_VIEWER. The
-        # Polysource permission attributes (POLYSOURCE_RESOURCE_VIEW, etc.)
-        # are mapped to roles by the PolysourceVoter shipped in Phase G.
-        ROLE_ADMIN: [ROLE_OPS]
-        ROLE_OPS: [ROLE_VIEWER]
+        # ROLE_ADMIN inherits ROLE_OPS inherits ROLE_VIEWER. Custom
+        # POLYSOURCE_* permission attributes are mapped to roles by
+        # App\Security\PolysourcePermissionVoter (Phase D). Phase G
+        # replaces the flat mapping with a domain-aware voter that
+        # scopes per resource and per action.
+        ROLE_OPS: ROLE_VIEWER
+        ROLE_ADMIN: ROLE_OPS
 
     firewalls:
         dev:

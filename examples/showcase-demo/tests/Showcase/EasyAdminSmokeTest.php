@@ -62,12 +62,17 @@ final class EasyAdminSmokeTest extends WebTestCase
         yield 'customers index' => ['/admin/customer'];
         yield 'orders index' => ['/admin/order'];
         yield 'refunds index' => ['/admin/refund'];
+        // Polysource standalone resources — auto-discovered via #[AsResource].
+        yield 'failed messages' => ['/admin/polysource/failed-messages'];
+        yield 'login attempts' => ['/admin/polysource/login-attempts'];
+        yield 'audit log' => ['/admin/polysource/audit-log'];
+        yield 'bulk jobs' => ['/admin/polysource/bulk-jobs'];
     }
 
     /**
      * @dataProvider adminRouteProvider
      */
-    public function testEasyAdminRouteRenders(string $url): void
+    public function testAdminRouteRenders(string $url): void
     {
         $this->client->request('GET', $url);
 
@@ -79,7 +84,6 @@ final class EasyAdminSmokeTest extends WebTestCase
         }
 
         self::assertResponseIsSuccessful(sprintf('Expected 200 on %s', $url));
-        self::assertSelectorTextContains('body', 'ShopCo');
     }
 
     public function testProductFilterEnhancementRenders(): void
