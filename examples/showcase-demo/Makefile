@@ -46,12 +46,21 @@ assets: ## Compile AssetMapper public/ files
 	$(PHP_EXEC) php bin/console asset-map:compile
 
 .PHONY: up
-up: install ## Boot the showcase: up the stack, install deps, init db, fixtures, serve on :8084
+up: install ## Boot the showcase: up the stack, install deps, migrate DB, load fixtures, serve on :8084
 	$(DOCKER_COMPOSE) up -d
 	@echo ""
 	@echo "▶ Waiting for services to become healthy..."
 	@$(DOCKER_COMPOSE) ps
-	$(MAKE) db || echo "(db init skipped — Phase A bootstrap, no entities yet)"
+	@# DB schema is recreated only when the volume is empty (e.g. after
+	@# `make showcase-reset`). Skip silently if the schema is already there.
+	@if $(PHP_EXEC) php bin/console doctrine:query:sql "SELECT 1 FROM shopco_user LIMIT 1" --no-interaction >/dev/null 2>&1; then \
+		echo "▶ DB already initialized — skipping db + fixtures (use \`make showcase-reset\` to wipe)"; \
+	else \
+		echo "▶ Initializing database..."; \
+		$(MAKE) db; \
+		echo "▶ Loading fixtures (1700 rows + 50 failed messages + 30 cache keys + 15 S3 files + 200 Meilisearch docs)..."; \
+		$(MAKE) fixtures; \
+	fi
 	@echo ""
 	@echo "▶ Polysource Showcase ready: http://localhost:8084/"
 	@echo "  Login: admin@shop.co / shopco  (or ops@shop.co / viewer@shop.co)"
