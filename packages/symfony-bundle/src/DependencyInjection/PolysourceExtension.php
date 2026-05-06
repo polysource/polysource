@@ -32,12 +32,32 @@ final class PolysourceExtension extends Extension implements PrependExtensionInt
         }
 
         $themePath = self::locateTwigThemeTemplates();
-        if (null === $themePath) {
-            return;
+        if (null !== $themePath) {
+            $container->prependExtensionConfig('twig', [
+                'paths' => [$themePath => 'Polysource'],
+            ]);
         }
 
+        // Resolve the layout template from user config (if set) and
+        // expose it as a Twig global so the bundled index/detail
+        // templates can do `{% extends polysource_layout %}`. Hosts
+        // override the chrome (e.g. wrap pages in EA's sidebar) via
+        // `polysource.layout_template: @Acme/admin/layout.html.twig`
+        // — one config line, no need to copy every template.
+        $userConfigs = $container->getExtensionConfig('polysource');
+        $layoutTemplate = '@Polysource/layout.html.twig';
+        foreach ($userConfigs as $userConfig) {
+            if (\is_array($userConfig) && isset($userConfig['layout_template']) && \is_string($userConfig['layout_template']) && '' !== $userConfig['layout_template']) {
+                $layoutTemplate = $userConfig['layout_template'];
+            }
+        }
+        // Escape leading `@` so Symfony DI doesn't read it as a service
+        // reference (Twig globals are processed as DI parameter values
+        // and `@Foo/bar` would otherwise resolve to a service called
+        // `Foo/bar`). Double-`@` is the canonical literal escape.
+        $literal = str_starts_with($layoutTemplate, '@') ? '@' . $layoutTemplate : $layoutTemplate;
         $container->prependExtensionConfig('twig', [
-            'paths' => [$themePath => 'Polysource'],
+            'globals' => ['polysource_layout' => $literal],
         ]);
     }
 
@@ -68,6 +88,10 @@ final class PolysourceExtension extends Extension implements PrependExtensionInt
         $maxBulkIds = $config['max_bulk_ids'] ?? 500;
         \assert(\is_int($maxBulkIds));
         $container->setParameter('polysource.max_bulk_ids', $maxBulkIds);
+
+        $layoutTemplate = $config['layout_template'] ?? '@Polysource/layout.html.twig';
+        \assert(\is_string($layoutTemplate));
+        $container->setParameter('polysource.layout_template', $layoutTemplate);
 
         $container->registerForAutoconfiguration(DataSourceInterface::class)
             ->addTag('polysource.data_source')

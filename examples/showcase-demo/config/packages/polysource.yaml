@@ -2,3 +2,10 @@ polysource:
     url_prefix: /admin/polysource
     max_page_size: 100
     max_bulk_ids: 1000
+    # Wrap Polysource pages in our EA-aligned chrome (sidebar + topbar).
+    # The override lives at templates/polysource/layout.html.twig so the
+    # user keeps the EA visual context when navigating to a Polysource
+    # resource. The Kernel compiler pass already inserts that directory
+    # at the head of the @Polysource namespace, so referencing the
+    # canonical name here resolves to the host override.
+    layout_template: '@Polysource/layout.html.twig'

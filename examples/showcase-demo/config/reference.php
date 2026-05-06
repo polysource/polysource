@@ -1572,6 +1572,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     url_prefix?: scalar|Param|null, // URL prefix under which all Polysource routes are mounted. // Default: "/admin"
  *     max_page_size?: int|Param, // Maximum number of records per page accepted from the request. Caps `pageSize` query param. // Default: 200
  *     max_bulk_ids?: int|Param, // Maximum number of record identifiers accepted in a single bulk-action request. // Default: 500
+ *     layout_template?: scalar|Param|null, // Twig template that Polysource pages extend. Override to wrap the index/detail pages in a host-specific chrome (e.g. an EasyAdmin sidebar). // Default: "@Polysource/layout.html.twig"
  * }
  * @psalm-type PolysourceMessengerConfig = array{
  *     failed_transport_name?: scalar|Param|null, // Name of the Messenger transport that stores failed messages. // Default: "failed"

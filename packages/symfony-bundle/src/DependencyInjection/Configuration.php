@@ -39,6 +39,11 @@ final class Configuration implements ConfigurationInterface
                     ->min(1)
                     ->info('Maximum number of record identifiers accepted in a single bulk-action request.')
                 ->end()
+                ->scalarNode('layout_template')
+                    ->defaultValue('@Polysource/layout.html.twig')
+                    ->cannotBeEmpty()
+                    ->info('Twig template that Polysource pages extend. Override to wrap the index/detail pages in a host-specific chrome (e.g. an EasyAdmin sidebar).')
+                ->end()
             ->end()
         ;
 
