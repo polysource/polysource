@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Polysource\Resource;
 
+use App\Polysource\Field\Field;
 use League\Flysystem\FilesystemOperator;
 use Polysource\Adapter\Flysystem\DataSource\FlysystemDataSource;
 use Polysource\Adapter\Flysystem\Resource\FlysystemResource;
@@ -29,5 +30,18 @@ final class S3FileResource extends FlysystemResource
             label: 'S3 files',
             permission: 'POLYSOURCE_S3_VIEW',
         );
+    }
+
+    public function configureFields(string $page): iterable
+    {
+        yield Field::new('fileName', 'File name')->asText();
+        yield Field::new('extension', 'Type')->asText();
+        yield Field::new('mimeType', 'MIME type')->asText();
+        yield Field::new('sizeBytes', 'Size (bytes)')->asText();
+
+        if ($page === 'detail') {
+            yield Field::new('path', 'Path')->asText();
+            yield Field::new('absolutePath', 'Absolute path')->asText();
+        }
     }
 }

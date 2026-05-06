@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Polysource\Resource;
 
+use App\Polysource\Field\Field;
 use Polysource\Adapter\Http\DataSource\HttpDataSource;
 use Polysource\Adapter\Http\Pagination\PageNumberPaginationStrategy;
 use Polysource\Adapter\Http\Resource\HttpResource;
@@ -29,7 +30,7 @@ final class MicroserviceResource extends HttpResource
         parent::__construct(
             dataSource: new HttpDataSource(
                 client: $client,
-                baseUri: '/microservices',
+                baseUri: '/admin/microservices',
                 pagination: new PageNumberPaginationStrategy(
                     pageQueryParam: 'page',
                     perPageQueryParam: 'size',
@@ -41,5 +42,19 @@ final class MicroserviceResource extends HttpResource
             label: 'Microservices',
             permission: 'POLYSOURCE_MICROSERVICES_VIEW',
         );
+    }
+
+    public function configureFields(string $page): iterable
+    {
+        yield Field::new('id', 'ID')->asId();
+        yield Field::new('name', 'Service')->asText();
+        yield Field::new('status', 'Status')->asText();
+        yield Field::new('uptime', 'Uptime')->asText();
+        yield Field::new('queueDepth', 'Queue depth')->asText();
+
+        if ($page === 'detail') {
+            yield Field::new('endpoint', 'Endpoint')->asText();
+            yield Field::new('lastIncident', 'Last incident')->asText();
+        }
     }
 }

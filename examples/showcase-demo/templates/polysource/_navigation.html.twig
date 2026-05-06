@@ -1,0 +1,24 @@
+<nav class="navbar bg-dark navbar-dark border-bottom shadow-sm" data-polysource-nav>
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/" class="btn btn-sm btn-outline-light" title="Back to home">
+                <i class="fa fa-arrow-left"></i> Home
+            </a>
+            <a href="/admin" class="btn btn-sm btn-outline-light" title="Open EasyAdmin">
+                <i class="fa fa-table-columns"></i> EA admin
+            </a>
+            <span class="navbar-brand mb-0 h1 ms-3">Polysource</span>
+            {% if resource is defined and resource %}
+                <span class="navbar-text small text-body-secondary">
+                    /admin/polysource/{{ resource.name }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% if app.user is defined and app.user is not null %}
+                <span class="navbar-text small">{{ app.user.userIdentifier }}</span>
+                <a href="/logout" class="btn btn-sm btn-outline-light"><i class="fa fa-arrow-right-from-bracket"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</nav>

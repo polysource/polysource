@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Refund;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -45,17 +48,44 @@ final class RefundCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Refunds')
             ->setSearchFields(['order.reference', 'note'])
             ->setDefaultSort(['createdAt' => 'DESC'])
-            ->setPaginatorPageSize(25);
+            ->setPaginatorPageSize(25)
+            ->showEntityActionsInlined();
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $a) => $a->setIcon('fa fa-pen'))
+            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $a) => $a->setIcon('fa fa-trash'))
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
     }
 
     public function configureFields(string $pageName): iterable
     {
+        if ($pageName === Crud::PAGE_INDEX) {
+            yield AssociationField::new('order');
+            yield MoneyField::new('amountCents', 'Amount')->setCurrency('EUR')->setStoredAsCents();
+            yield ChoiceField::new('reason')->setChoices(self::REASON_CHOICES);
+            yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES)->renderAsBadges([
+                Refund::STATUS_PENDING => 'warning',
+                Refund::STATUS_PROCESSED => 'success',
+                Refund::STATUS_REJECTED => 'danger',
+            ]);
+            yield DateTimeField::new('createdAt');
+
+            return;
+        }
+
+        yield FormField::addPanel('Refund')->setIcon('fa fa-rotate-left');
         yield IdField::new('id')->hideOnForm();
         yield AssociationField::new('order');
         yield MoneyField::new('amountCents', 'Amount')->setCurrency('EUR')->setStoredAsCents();
         yield ChoiceField::new('reason')->setChoices(self::REASON_CHOICES);
         yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES);
-        yield TextareaField::new('note')->hideOnIndex();
+        yield TextareaField::new('note');
+
+        yield FormField::addPanel('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
         yield DateTimeField::new('createdAt')->hideOnForm();
         yield DateTimeField::new('processedAt')->hideOnForm();
     }
@@ -65,7 +95,6 @@ final class RefundCrudController extends AbstractCrudController
         return $filters
             ->add(ChoiceFilter::new('status')->setChoices(self::STATUS_CHOICES)->canSelectMultiple())
             ->add(ChoiceFilter::new('reason')->setChoices(self::REASON_CHOICES)->canSelectMultiple())
-            ->add(DateTimeFilter::new('createdAt', 'Filed at'))
-            ;
+            ->add(DateTimeFilter::new('createdAt', 'Filed at'));
     }
 }

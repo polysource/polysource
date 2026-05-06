@@ -1,6 +1,10 @@
 twig:
     file_name_pattern: '*.twig'
     default_path: '%kernel.project_dir%/templates'
+    # Override path for @Polysource is registered via a Kernel::build()
+    # compiler pass that calls $loader->prependPath(...). Symfony
+    # processes host `twig.paths` AFTER bundle prepend, so a plain
+    # config entry here would lose every lookup.
     globals:
         showcase_phase: 'A — bootstrap'
 

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Product;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
@@ -26,6 +28,23 @@ use Polysource\EasyAdminFilterBridge\Filter\InFilter;
 
 final class ProductCrudController extends AbstractCrudController
 {
+    private const STATUS_CHOICES = [
+        'Active' => Product::STATUS_ACTIVE,
+        'Draft' => Product::STATUS_DRAFT,
+        'Archived' => Product::STATUS_ARCHIVED,
+    ];
+
+    private const CATEGORY_CHOICES = [
+        'Apparel' => 'apparel',
+        'Home & Garden' => 'home-garden',
+        'Electronics' => 'electronics',
+        'Beauty' => 'beauty',
+        'Sports' => 'sports',
+        'Books' => 'books',
+        'Kitchen' => 'kitchen',
+        'Kids' => 'kids',
+    ];
+
     public static function getEntityFqcn(): string
     {
         return Product::class;
@@ -38,56 +57,69 @@ final class ProductCrudController extends AbstractCrudController
             ->setEntityLabelInPlural('Products')
             ->setSearchFields(['name', 'sku', 'slug', 'category'])
             ->setDefaultSort(['createdAt' => 'DESC'])
-            ->setPaginatorPageSize(25);
+            ->setPaginatorPageSize(25)
+            ->showEntityActionsInlined();
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions
+            ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $a) => $a->setIcon('fa fa-pen'))
+            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $a) => $a->setIcon('fa fa-trash'))
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
     }
 
     public function configureFields(string $pageName): iterable
     {
+        if ($pageName === Crud::PAGE_INDEX) {
+            yield TextField::new('sku', 'SKU');
+            yield TextField::new('name');
+            yield MoneyField::new('priceCents', 'Price')->setCurrency('EUR')->setStoredAsCents();
+            yield IntegerField::new('stock');
+            yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES)->renderAsBadges([
+                Product::STATUS_ACTIVE => 'success',
+                Product::STATUS_DRAFT => 'secondary',
+                Product::STATUS_ARCHIVED => 'dark',
+            ]);
+            yield ChoiceField::new('category')->setChoices(self::CATEGORY_CHOICES);
+            yield DateTimeField::new('createdAt');
+
+            return;
+        }
+
+        yield FormField::addPanel('Identification')->setIcon('fa fa-tag');
         yield IdField::new('id')->hideOnForm();
         yield TextField::new('sku', 'SKU');
         yield TextField::new('name');
-        yield SlugField::new('slug')->setTargetFieldName('name')->hideOnIndex();
-        yield TextareaField::new('description')->hideOnIndex();
-        yield MoneyField::new('priceCents', 'Price')
-            ->setCurrency('EUR')
-            ->setStoredAsCents();
+        yield SlugField::new('slug')->setTargetFieldName('name');
+
+        yield FormField::addPanel('Description')->setIcon('fa fa-pen-to-square');
+        yield TextareaField::new('description')->setNumOfRows(8);
+
+        yield FormField::addPanel('Pricing & stock')->setIcon('fa fa-tags');
+        yield MoneyField::new('priceCents', 'Price')->setCurrency('EUR')->setStoredAsCents();
         yield IntegerField::new('stock');
-        yield ChoiceField::new('status')->setChoices([
-            'Active' => Product::STATUS_ACTIVE,
-            'Draft' => Product::STATUS_DRAFT,
-            'Archived' => Product::STATUS_ARCHIVED,
-        ]);
-        yield ChoiceField::new('category')->setChoices(array_combine(
-            ['Apparel', 'Home & Garden', 'Electronics', 'Beauty', 'Sports', 'Books', 'Kitchen', 'Kids'],
-            ['apparel', 'home-garden', 'electronics', 'beauty', 'sports', 'books', 'kitchen', 'kids'],
-        ));
+
+        yield FormField::addPanel('Classification')->setIcon('fa fa-layer-group');
+        yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES);
+        yield ChoiceField::new('category')->setChoices(self::CATEGORY_CHOICES);
+
+        yield FormField::addPanel('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
         yield DateTimeField::new('createdAt')->hideOnForm();
-        yield DateTimeField::new('updatedAt')->hideOnForm()->hideOnIndex();
+        yield DateTimeField::new('updatedAt')->hideOnForm();
     }
 
     public function configureFilters(Filters $filters): Filters
     {
         return $filters
-            // Standard EA filters get auto-enhanced by the
-            // polysource/easyadmin-filter-bridge: ChoiceFilter becomes
-            // a Select2-style multi-select, DateTimeFilter gains presets,
-            // NumericFilter gains a between mode.
             ->add(TextFilter::new('name'))
-            ->add(ChoiceFilter::new('status')->setChoices([
-                'Active' => Product::STATUS_ACTIVE,
-                'Draft' => Product::STATUS_DRAFT,
-                'Archived' => Product::STATUS_ARCHIVED,
-            ])->canSelectMultiple())
-            ->add(ChoiceFilter::new('category')->setChoices(array_combine(
-                ['Apparel', 'Home & Garden', 'Electronics', 'Beauty', 'Sports', 'Books', 'Kitchen', 'Kids'],
-                ['apparel', 'home-garden', 'electronics', 'beauty', 'sports', 'books', 'kitchen', 'kids'],
-            ))->canSelectMultiple())
+            ->add(ChoiceFilter::new('status')->setChoices(self::STATUS_CHOICES)->canSelectMultiple())
+            ->add(ChoiceFilter::new('category')->setChoices(self::CATEGORY_CHOICES)->canSelectMultiple())
             ->add(NumericFilter::new('priceCents', 'Price (cents)'))
             ->add(NumericFilter::new('stock'))
             ->add(DateTimeFilter::new('createdAt'))
-            // Custom filters from the bridge — direct opt-in.
             ->add(FullTextSearchFilter::new('description', 'Full-text in description'))
-            ->add(InFilter::new('sku', 'SKU is one of'))
-            ;
+            ->add(InFilter::new('sku', 'SKU is one of'));
     }
 }

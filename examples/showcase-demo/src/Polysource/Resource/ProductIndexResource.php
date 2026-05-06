@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Polysource\Resource;
 
+use App\Polysource\Field\Field;
 use Polysource\Adapter\Meilisearch\Client\MeilisearchIndexInterface;
 use Polysource\Adapter\Meilisearch\DataSource\MeilisearchDataSource;
 use Polysource\Adapter\Meilisearch\Resource\MeilisearchIndexResource;
@@ -29,5 +30,23 @@ final class ProductIndexResource extends MeilisearchIndexResource
             label: 'Search index',
             permission: 'POLYSOURCE_SEARCH_INDEX_VIEW',
         );
+    }
+
+    public function configureFields(string $page): iterable
+    {
+        yield Field::new('sku', 'SKU')->asText();
+        yield Field::new('name', 'Name')->asText();
+        yield Field::new('priceCents', 'Price (¢)')->asText();
+        yield Field::new('stock', 'Stock')->asText();
+        yield Field::new('status', 'Status')->asText();
+        yield Field::new('category', 'Category')->asText();
+
+        if ($page === 'detail') {
+            yield Field::new('id', 'Document ID')->asId();
+            yield Field::new('slug', 'Slug')->asText();
+            yield Field::new('description', 'Description')->asText();
+            yield Field::new('currency', 'Currency')->asText();
+            yield Field::new('createdAt', 'Created at')->asText();
+        }
     }
 }

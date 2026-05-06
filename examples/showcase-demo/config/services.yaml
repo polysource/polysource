@@ -73,12 +73,16 @@ services:
     League\Flysystem\FilesystemOperator:
         alias: League\Flysystem\Filesystem
 
-    # HTTP client scoped to WireMock for the microservices probe.
+    # HTTP client scoped to WireMock root — the trailing slash matters:
+    # the HttpDataSource passes paths starting with `/admin/...` and
+    # Symfony's scoped client treats absolute paths as relative to the
+    # SCHEME+HOST of the base URI (path-component dropped). Trailing
+    # slash keeps the base host parsed correctly.
     app.http_client.microservices:
         class: Symfony\Contracts\HttpClient\HttpClientInterface
         factory: ['Symfony\Component\HttpClient\HttpClient', 'createForBaseUri']
         arguments:
-            $baseUri: '%env(PAYMENT_SERVICE_URL)%/admin'
+            $baseUri: '%env(PAYMENT_SERVICE_URL)%/'
 
     # -------------------------------------------------------------------
     # Phase F — Polysource widgets dashboard. Factory service tagged
