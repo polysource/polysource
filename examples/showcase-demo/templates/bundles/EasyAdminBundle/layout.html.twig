@@ -16,3 +16,16 @@
 {% extends '@!EasyAdmin/layout.html.twig' %}
 
 {% block body_attr %}data-turbo="false"{% endblock %}
+
+{# EA's bundled CSS is rendered first (block head_stylesheets) and
+ # then `addAssetMapperEntry('app')` injects the host importmap CSS
+ # via block head_javascript / importmap — including standalone
+ # Bootstrap 5, whose Reboot overrides EA's tighter resets
+ # (underlined links, plain modal/dropdown chrome, button look).
+ # We re-include EA's app.css in the LAST head block
+ # (configured_head_contents) so it lands after the importmap CSS
+ # links and the cascade flips: EA wins. #}
+{% block configured_head_contents %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('app.css', ea.assets.defaultAssetPackageName) }}">
+{% endblock %}

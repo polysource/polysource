@@ -23,16 +23,17 @@
     <meta name="robots" content="noindex,nofollow">
     <title>{% block title %}{{ resource.label|default('Admin') }} — ShopCo{% endblock %}</title>
 
-    {# EA's compiled stylesheet + the host AssetMapper importmap so
-     # Bootstrap, Stimulus and the polysource/filter modal-layout
-     # controller all boot here too — otherwise dropdowns/modals on
-     # Polysource pages would silently fail. #}
-    <link rel="stylesheet" href="{{ asset('app.css', 'easyadmin.assets.package') }}">
+    {# Order matters: the host's importmap (Bootstrap CSS first, etc.)
+     # comes BEFORE EA's app.css so EA wins the cascade on its tighter
+     # resets (links not underlined, modal/dropdown styling intact).
+     # Putting EA after the importmap also keeps the FontAwesome link
+     # next to it for visual cohesion. #}
+    {{ importmap('app') }}
+
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
           crossorigin="anonymous">
-
-    {{ importmap('app') }}
+    <link rel="stylesheet" href="{{ asset('app.css', 'easyadmin.assets.package') }}">
 
     {% block stylesheets %}{% endblock %}
 </head>
