@@ -112,39 +112,6 @@ export default class extends Controller {
         otherNodes.forEach((n) => form.appendChild(n));
 
         form.dataset.polysourceLayoutApplied = '1';
-
-        this.bindAutoCheck(form);
-    }
-
-    /**
-     * EA's filter form gates each filter behind a checkbox: the
-     * filter is only included in the URL query if its
-     * `.filter-checkbox` is checked. Users routinely fill the value
-     * input and click Apply — and nothing happens, because they
-     * forgot to tick the box. Auto-tick it on any value change so
-     * the form behaves the way users expect.
-     *
-     * Idempotent: scoped to fields not already bound (data flag).
-     *
-     * @param {HTMLFormElement} form
-     */
-    bindAutoCheck(form) {
-        form.querySelectorAll('.filter-field[data-filter-property]').forEach((field) => {
-            if (field.dataset.polysourceAutocheckBound === '1') return;
-            const checkbox = field.querySelector('.filter-checkbox');
-            if (!checkbox) return;
-            const valueInputs = field.querySelectorAll(
-                'input:not(.filter-checkbox), select, textarea',
-            );
-            const handler = () => {
-                if (!checkbox.checked) checkbox.checked = true;
-            };
-            valueInputs.forEach((el) => {
-                el.addEventListener('change', handler);
-                el.addEventListener('input', handler);
-            });
-            field.dataset.polysourceAutocheckBound = '1';
-        });
     }
 
     buildGroupAccordion(group, byProperty) {
