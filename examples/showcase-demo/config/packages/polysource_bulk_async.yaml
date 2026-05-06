@@ -1,0 +1,3 @@
+polysource_bulk_async:
+    # Job storage = Doctrine. polysource_bulk_jobs table created by the
+    # bundle's migration in Phase B.

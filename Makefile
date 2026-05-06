@@ -132,6 +132,26 @@ demo-filter: ## Start the standalone polysource/filter demo on http://localhost:
 demo-filter-down: ## Stop the standalone filter demo container
 	@$(MAKE) -C examples/filter-standalone-demo clean
 
+.PHONY: showcase
+showcase: ## [HERO v0.1.0] Boot the ShopCo SaaS showcase on http://localhost:8084 (15 packages, 8 services — cf. ADR-025)
+	@$(MAKE) -C examples/showcase-demo up
+
+.PHONY: showcase-down
+showcase-down: ## Stop the showcase stack (preserves volumes)
+	@$(MAKE) -C examples/showcase-demo down
+
+.PHONY: showcase-reset
+showcase-reset: ## Stop the showcase stack and wipe ALL volumes (data loss)
+	@$(MAKE) -C examples/showcase-demo reset
+
+.PHONY: showcase-logs
+showcase-logs: ## Tail logs from all showcase services
+	@$(MAKE) -C examples/showcase-demo logs
+
+.PHONY: showcase-screenshots
+showcase-screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/ (Phase I+)
+	@$(MAKE) -C examples/showcase-demo screenshots
+
 .PHONY: demo-clean
 demo-clean: ## Wipe demo vendor + database (rebuild on next `make demo`)
 	@$(MAKE) -C examples/messenger-demo clean

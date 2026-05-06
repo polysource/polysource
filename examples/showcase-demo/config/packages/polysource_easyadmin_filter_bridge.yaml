@@ -1,0 +1,3 @@
+polysource_easyadmin_filter_bridge:
+    # Auto-tagged FilterConfigurators kick in for every CRUD controller
+    # without per-CRUD configuration.

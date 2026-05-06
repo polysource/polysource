@@ -1,0 +1,4 @@
+polysource:
+    url_prefix: /admin/polysource
+    max_page_size: 100
+    max_bulk_ids: 1000

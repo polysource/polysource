@@ -1,0 +1,15 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPath": "/notifications/health"
+    },
+    "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+            "status": "healthy",
+            "queueDepth": 0,
+            "workers": 4
+        }
+    }
+}

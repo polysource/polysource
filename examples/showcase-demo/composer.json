@@ -1,0 +1,139 @@
+{
+    "name": "polysource/showcase-demo",
+    "description": "Polysource Admin — ShopCo SaaS showcase exercising all 15 packages (hero of v0.1.0 launch). See ADR-025.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.4",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "doctrine/dbal": "^4.2",
+        "doctrine/doctrine-bundle": "^2.13",
+        "doctrine/doctrine-migrations-bundle": "^3.4",
+        "doctrine/orm": "^3.3",
+        "easycorp/easyadmin-bundle": "^5.0",
+        "league/flysystem-async-aws-s3": "^3.29",
+        "meilisearch/meilisearch-php": "^1.13",
+        "nyholm/psr7": "^1.8",
+        "php-http/discovery": "^1.20",
+        "polysource/adapter-doctrine": "0.1.x-dev",
+        "polysource/adapter-flysystem": "0.1.x-dev",
+        "polysource/adapter-http": "0.1.x-dev",
+        "polysource/adapter-meilisearch": "0.1.x-dev",
+        "polysource/adapter-messenger": "0.1.x-dev",
+        "polysource/adapter-redis": "0.1.x-dev",
+        "polysource/audit": "0.1.x-dev",
+        "polysource/bulk-async": "0.1.x-dev",
+        "polysource/core": "0.1.x-dev",
+        "polysource/easyadmin-filter-bridge": "0.1.x-dev",
+        "polysource/filter": "0.1.x-dev",
+        "polysource/search": "0.1.x-dev",
+        "polysource/symfony-bundle": "0.1.x-dev",
+        "polysource/twig-theme": "0.1.x-dev",
+        "polysource/widgets": "0.1.x-dev",
+        "polysource/workflow-bridge": "0.1.x-dev",
+        "predis/predis": "^2.3",
+        "symfony/asset": "^7.4",
+        "symfony/asset-mapper": "^7.4",
+        "symfony/console": "^7.4",
+        "symfony/doctrine-messenger": "^7.4",
+        "symfony/dotenv": "^7.4",
+        "symfony/expression-language": "^7.4",
+        "symfony/flex": "^2.5",
+        "symfony/form": "^7.4",
+        "symfony/framework-bundle": "^7.4",
+        "symfony/http-client": "^7.4",
+        "symfony/intl": "^7.4",
+        "symfony/mailer": "^7.4",
+        "symfony/mercure-bundle": "^0.3",
+        "symfony/messenger": "^7.4",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/runtime": "^7.4",
+        "symfony/security-bundle": "^7.4",
+        "symfony/stimulus-bundle": "^2.22",
+        "symfony/string": "^7.4",
+        "symfony/translation": "^7.4",
+        "symfony/twig-bundle": "^7.4",
+        "symfony/uid": "^7.4",
+        "symfony/ux-icons": "^2.22",
+        "symfony/ux-turbo": "^2.22",
+        "symfony/ux-twig-component": "^2.22",
+        "symfony/validator": "^7.4",
+        "symfony/workflow": "^7.4",
+        "symfony/yaml": "^7.4",
+        "twig/extra-bundle": "^3.18",
+        "twig/intl-extra": "^3.18",
+        "twig/twig": "^3.18"
+    },
+    "require-dev": {
+        "dama/doctrine-test-bundle": "^8.2",
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "^7.4",
+        "symfony/css-selector": "^7.4",
+        "symfony/maker-bundle": "^1.62",
+        "symfony/panther": "^2.2",
+        "symfony/phpunit-bridge": "^7.4",
+        "symfony/web-profiler-bundle": "^7.4",
+        "zenstruck/foundry": "^2.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        { "type": "path", "url": "../../packages/core" },
+        { "type": "path", "url": "../../packages/symfony-bundle" },
+        { "type": "path", "url": "../../packages/twig-theme" },
+        { "type": "path", "url": "../../packages/filter" },
+        { "type": "path", "url": "../../packages/easyadmin-filter-bridge" },
+        { "type": "path", "url": "../../packages/adapter-messenger" },
+        { "type": "path", "url": "../../packages/adapter-doctrine" },
+        { "type": "path", "url": "../../packages/adapter-redis" },
+        { "type": "path", "url": "../../packages/adapter-flysystem" },
+        { "type": "path", "url": "../../packages/adapter-http" },
+        { "type": "path", "url": "../../packages/adapter-meilisearch" },
+        { "type": "path", "url": "../../packages/audit" },
+        { "type": "path", "url": "../../packages/workflow-bridge" },
+        { "type": "path", "url": "../../packages/widgets" },
+        { "type": "path", "url": "../../packages/search" },
+        { "type": "path", "url": "../../packages/bulk-async" }
+    ],
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.4.*"
+        },
+        "runtime": {
+            "use_putenv": true
+        }
+    }
+}

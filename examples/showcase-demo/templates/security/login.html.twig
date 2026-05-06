@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign in · ShopCo{% endblock %}
+
+{% block body %}
+<div class="container py-5" style="max-width: 480px;">
+    <div class="text-center mb-4">
+        <h1 class="h3 mb-1">ShopCo Showcase</h1>
+        <p class="text-muted mb-0">Polysource v0.1.0 hero demo</p>
+    </div>
+
+    <div class="shopco-card p-4">
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}">
+            <input type="hidden" name="_csrf_token"
+                value="{{ csrf_token('authenticate') }}">
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Email</label>
+                <input type="email"
+                    id="username"
+                    name="_username"
+                    value="{{ last_username }}"
+                    class="form-control"
+                    autocomplete="email"
+                    required autofocus>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password"
+                    id="password"
+                    name="_password"
+                    class="form-control"
+                    autocomplete="current-password"
+                    required>
+            </div>
+
+            <button class="btn btn-primary w-100" type="submit">Sign in</button>
+        </form>
+    </div>
+
+    <div class="mt-4 small text-muted">
+        <strong>Demo accounts</strong> (password: <code>shopco</code>)
+        <ul class="mt-2 mb-0">
+            <li><code>admin@shop.co</code> — full access</li>
+            <li><code>ops@shop.co</code> — operations (retries, transitions)</li>
+            <li><code>viewer@shop.co</code> — read-only</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

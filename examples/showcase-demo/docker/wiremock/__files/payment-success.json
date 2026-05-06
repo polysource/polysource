@@ -1,0 +1,7 @@
+{
+    "status": "succeeded",
+    "transactionId": "tx_demo_001",
+    "amount": 4999,
+    "currency": "EUR",
+    "processedAt": "2026-05-06T10:00:00Z"
+}

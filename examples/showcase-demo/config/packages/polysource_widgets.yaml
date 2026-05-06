@@ -1,0 +1,3 @@
+polysource_widgets:
+    # Showcase dashboards declared programmatically in src/Polysource/Widget/
+    # via DashboardRegistry — no YAML wiring needed.

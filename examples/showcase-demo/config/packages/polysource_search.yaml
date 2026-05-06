@@ -1,0 +1,4 @@
+polysource_search:
+    # ResourceSearchProvider auto-wraps every Polysource resource. Custom
+    # providers (cross-EA + standalone) declared in src/Polysource/SearchProvider/
+    # in Phase F.

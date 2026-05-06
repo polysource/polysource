@@ -1,0 +1,3 @@
+polysource_audit:
+    # Default storage = Doctrine. polysource_audit_log table is created
+    # by the bundle's migration in Phase B.

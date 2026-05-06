@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ShopCo — Dashboard{% endblock %}
+
+{% block body %}
+<nav class="shopco-navbar p-3 mb-4">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand fw-semibold" href="{{ path('app_home') }}">ShopCo</a>
+        <div class="d-flex align-items-center gap-3">
+            <span class="small">{{ app.user.userIdentifier }}</span>
+            <a class="btn btn-sm btn-outline-light" href="{{ path('app_logout') }}">Sign out</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <h1 class="mb-0">Welcome to ShopCo Showcase</h1>
+        <span class="shopco-phase-badge">Phase {{ showcase_phase }}</span>
+    </div>
+
+    <div class="shopco-card p-4 mb-4">
+        <h2 class="h5 mb-3">Bootstrap status</h2>
+        <p class="mb-3">Symfony 7.4 LTS, PHP 8.4, Postgres 17, Redis 7,
+            Meilisearch, MinIO, Mercure, Mailpit and WireMock are all
+            wired. The 15 Polysource packages are loaded as bundles
+            but their resources land in subsequent sub-phases.</p>
+
+        <ul class="list-unstyled mb-0">
+            <li>✅ <strong>A — Bootstrap</strong> — current</li>
+            <li class="text-muted">⏳ B — Domain entities + Foundry</li>
+            <li class="text-muted">⏳ C — EasyAdmin CRUDs + filter-bridge</li>
+            <li class="text-muted">⏳ D — Polysource standalone wiring</li>
+            <li class="text-muted">⏳ E — 4 non-Doctrine adapters</li>
+            <li class="text-muted">⏳ F — Audit · Workflow · Widgets · Search · Bulk-async</li>
+            <li class="text-muted">⏳ G — Permissions · Saved views · Polish</li>
+            <li class="text-muted">⏳ H — Panther E2E suite</li>
+            <li class="text-muted">⏳ I — Screenshots pipeline</li>
+            <li class="text-muted">⏳ J — Doc EA-style + launch announcements</li>
+        </ul>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="shopco-card p-3 h-100">
+                <h3 class="h6 text-muted text-uppercase">Service URLs</h3>
+                <ul class="list-unstyled small mb-0">
+                    <li>Mailpit · <a href="http://localhost:8025/" target="_blank">localhost:8025</a></li>
+                    <li>MinIO console · <a href="http://localhost:9101/" target="_blank">localhost:9101</a></li>
+                    <li>Meilisearch · <a href="http://localhost:7702/" target="_blank">localhost:7702</a></li>
+                    <li>WireMock admin · <a href="http://localhost:8089/__admin/" target="_blank">localhost:8089/__admin/</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="shopco-card p-3 h-100">
+                <h3 class="h6 text-muted text-uppercase">Logged in as</h3>
+                <p class="mb-1"><strong>{{ app.user.userIdentifier }}</strong></p>
+                <p class="small text-muted mb-0">
+                    Roles: {{ app.user.roles|join(', ') }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

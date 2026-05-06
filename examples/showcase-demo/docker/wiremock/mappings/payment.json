@@ -1,0 +1,11 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/payments/.*"
+    },
+    "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "bodyFileName": "payment-success.json"
+    }
+}

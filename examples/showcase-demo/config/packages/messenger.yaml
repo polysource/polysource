@@ -1,0 +1,22 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: default
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+
+            failed:
+                dsn: '%env(MESSENGER_FAILED_DSN)%'
+                options:
+                    queue_name: failed
+
+        routing:
+            # Showcase-specific async messages will be added in Phase F
+            # (bulk-async use cases). For now everything stays sync.
+            Polysource\BulkAsync\Messenger\BulkJobMessage: async

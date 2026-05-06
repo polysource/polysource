@@ -1,0 +1,14 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Polysource framework routes (admin/{resourceName}/...). Loaded by the
+# bundle's PolysourceRouteLoader at boot from tagged resources.
+polysource:
+    resource: .
+    type: polysource
+
+# EasyAdmin routes are mounted by EasyAdminBundle directly when its
+# Dashboard controller is registered (no extra wiring needed in 5.x).

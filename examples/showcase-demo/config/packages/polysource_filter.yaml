@@ -1,0 +1,4 @@
+polysource_filter:
+    # Defaults are fine for the showcase. Saved views storage uses
+    # Doctrine via the DoctrineSavedViewStorage that auto-wires when
+    # an EntityManager is present.

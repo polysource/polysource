@@ -1,0 +1,16 @@
+{
+    "request": {
+        "method": "GET",
+        "urlPathPattern": "/shipping/.*"
+    },
+    "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+            "status": "in_transit",
+            "carrier": "DHL",
+            "trackingNumber": "DEMO123456789",
+            "estimatedDelivery": "2026-05-10"
+        }
+    }
+}

@@ -1,0 +1,14 @@
+polysource_workflow_bridge:
+    # Order chip palette wired in Phase F. Until then the bundle is
+    # loaded but unused. Values are Bootstrap palette slugs (without the
+    # text-bg- prefix), per ADR-021.
+    palettes:
+        order:
+            cart:        secondary
+            paid:        info
+            preparing:   warning
+            shipped:     primary
+            delivered:   success
+            cancelled:   danger
+            refunded:    dark
+            '*':         light

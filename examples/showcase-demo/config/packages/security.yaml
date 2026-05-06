@@ -1,0 +1,65 @@
+# Phase A bootstrap — uses an in-memory user provider so the showcase
+# can boot before the User entity exists (Phase B). Switched to the
+# entity provider in Phase B, see ADR-025 §Plan d'implémentation.
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        # Phase A — in-memory provider with the bcrypt-cost-4 hash of
+        # "shopco" hard-coded. Phase B replaces this with the App\Entity\User
+        # provider once the entity ships and Foundry seeds users.
+        showcase_users:
+            memory:
+                users:
+                    "admin@shop.co":
+                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
+                        roles: ['ROLE_ADMIN']
+                    "ops@shop.co":
+                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
+                        roles: ['ROLE_OPS']
+                    "viewer@shop.co":
+                        password: '$2y$04$hk3GQ32qnfuLW56jpXx.tuiZPR35Jg3KgkmEBF5CIueR9yaY/eBpi'
+                        roles: ['ROLE_VIEWER']
+
+    role_hierarchy:
+        # ROLE_ADMIN inherits ROLE_OPS which inherits ROLE_VIEWER. The
+        # Polysource permission attributes (POLYSOURCE_RESOURCE_VIEW, etc.)
+        # are mapped to roles by the PolysourceVoter shipped in Phase G.
+        ROLE_ADMIN: [ROLE_OPS]
+        ROLE_OPS: [ROLE_VIEWER]
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js|assets)/
+            security: false
+
+        main:
+            lazy: true
+            provider: showcase_users
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                default_target_path: /
+            logout:
+                path: app_logout
+                target: app_login
+            entry_point: form_login
+
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: ROLE_VIEWER }
+
+    # Plain-text passwords are accepted in the in-memory provider for
+    # Phase A. Once the User entity ships in Phase B, hashing kicks in
+    # automatically via the password_hashers config above.
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

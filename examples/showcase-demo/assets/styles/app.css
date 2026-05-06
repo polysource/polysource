@@ -1,0 +1,39 @@
+/* Showcase polish — minimal palette overrides. Bootstrap 5 brings the rest. */
+:root {
+    --shopco-brand: #4f46e5;
+    --shopco-brand-soft: #eef2ff;
+    --shopco-bg: #f8fafc;
+    --shopco-fg: #0f172a;
+}
+
+body {
+    background-color: var(--shopco-bg);
+    color: var(--shopco-fg);
+}
+
+.shopco-navbar {
+    background: linear-gradient(90deg, var(--shopco-brand) 0%, #6366f1 100%);
+    color: #fff;
+}
+
+.shopco-navbar a,
+.shopco-navbar .navbar-brand {
+    color: #fff;
+}
+
+.shopco-card {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.75rem;
+}
+
+.shopco-phase-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--shopco-brand-soft);
+    color: var(--shopco-brand);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}

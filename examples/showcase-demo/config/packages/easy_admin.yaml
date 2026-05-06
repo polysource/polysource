@@ -1,0 +1,5 @@
+# EasyAdmin v5 picks defaults from each Dashboard class. The showcase
+# dashboard ships in Phase C — for Phase A there's no CRUD yet.
+easy_admin:
+    # Empty top-level keeps the bundle happy without forcing config
+    # before its dashboard exists.
