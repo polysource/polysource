@@ -12,6 +12,13 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            # The Shopco* resource subclasses are NOT autodiscovered —
+            # they get registered explicitly below as overrides for the
+            # bundle's service IDs. Without this exclude the subclass
+            # would be tagged polysource.resource (via #[AsResource]
+            # inheritance) AND the bundle would also register the
+            # parent → duplicate slug error at boot.
+            - '../src/Polysource/Resource/Shopco*'
 
     # -------------------------------------------------------------------
     # Phase E — service factories for the 4 non-Doctrine adapters.
@@ -87,3 +94,21 @@ services:
     App\Command\ShowcaseScreenshotsCommand:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    # -------------------------------------------------------------------
+    # Polysource resource overrides — replace the bundle's service class
+    # with our subclass so configureFields() returns real columns. The
+    # bundle's tag (`polysource.resource`) stays attached to the same
+    # service ID, so the route loader still mounts the resource.
+    # Required until polysource/core v0.2 ships concrete field types
+    # (cf. ADR-011). The Shopco* subclasses are excluded from the
+    # App\ autodiscovery scan above so they don't get double-tagged.
+    # -------------------------------------------------------------------
+    Polysource\Adapter\Messenger\Resource\FailedMessageResource:
+        class: App\Polysource\Resource\ShopcoFailedMessageResource
+
+    Polysource\Audit\Resource\AuditLogResource:
+        class: App\Polysource\Resource\ShopcoAuditLogResource
+
+    Polysource\BulkAsync\Resource\BulkJobResource:
+        class: App\Polysource\Resource\ShopcoBulkJobResource

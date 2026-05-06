@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Polysource\Resource;
 
 use App\Entity\LoginAttempt;
+use App\Polysource\Field\Field;
 use App\Polysource\Filter\LoginAttemptFilter;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Adapter\Doctrine\DataSource\DoctrineDataSource;
@@ -58,5 +59,18 @@ final class LoginAttemptResource extends DoctrineEntityResource
         yield LoginAttemptFilter::ip();
         yield LoginAttemptFilter::status();
         yield LoginAttemptFilter::occurredAt();
+    }
+
+    public function configureFields(string $page): iterable
+    {
+        yield Field::new('occurredAt', 'When')->asDateTime();
+        yield Field::new('email', 'Email')->asText();
+        yield Field::new('ip', 'IP')->asText();
+        yield Field::new('status', 'Status')->asText();
+
+        if ($page === 'detail') {
+            yield Field::new('id', 'ID')->asId();
+            yield Field::new('userAgent', 'User agent')->asText();
+        }
     }
 }
