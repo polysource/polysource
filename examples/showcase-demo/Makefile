@@ -62,12 +62,12 @@ up: install ## Boot the showcase: up the stack, install deps, init db, fixtures,
 	@echo ""
 
 .PHONY: down
-down: ## Stop the stack (preserves volumes)
-	$(DOCKER_COMPOSE) down
+down: ## Stop the stack (preserves volumes; includes the e2e profile so chrome shuts down too)
+	$(DOCKER_COMPOSE) --profile e2e down --remove-orphans
 
 .PHONY: reset
 reset: ## Stop the stack and wipe all volumes (data loss!)
-	$(DOCKER_COMPOSE) down --volumes --remove-orphans
+	$(DOCKER_COMPOSE) --profile e2e down --volumes --remove-orphans
 
 .PHONY: logs
 logs: ## Tail logs of all services
