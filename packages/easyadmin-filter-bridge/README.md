@@ -64,6 +64,74 @@ shipped Configurators auto-tag themselves via EasyAdmin's
 and EasyAdmin's `FilterFactory` picks them up to mutate filter DTOs
 right after they are created.
 
+### Frontend assets (filter modal tabs / chips / saved-views)
+
+The richer modal layout (tabs + accordions for dozens of filters) and
+the chips bar above the table are powered by Stimulus controllers
+shipped under `assets/controllers/`. EasyAdmin auto-loads them when
+the bundle is autoconfigured **only** if your host app uses
+[Symfony AssetMapper](https://symfony.com/doc/current/frontend/asset_mapper.html)
+or Webpack Encore + StimulusBundle.
+
+If the modal opens flat (no tabs, all filters stacked) or the chips
+do not appear, your host is most likely missing the AssetMapper
+wiring. Two-step fix:
+
+1. Make sure `symfony/asset-mapper` and `symfony/stimulus-bundle` are
+   installed and `framework.yaml` enables both.
+2. In your `assets/bootstrap.js` (or `app.js`), confirm the auto-load
+   line is present:
+
+```js
+import { startStimulusApp } from '@symfony/stimulus-bundle';
+
+const app = startStimulusApp();
+// no manual import needed — Stimulus auto-loads
+// vendor/polysource/easyadmin-filter-bridge/assets/controllers/*.js
+```
+
+3. Then make sure EasyAdmin pages include your importmap. EasyAdmin
+   uses its own bundled assets by default and ignores the host
+   importmap, so add it back via your Dashboard:
+
+```php
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
+
+final class DashboardController extends AbstractDashboardController
+{
+    public function configureAssets(): Assets
+    {
+        return Assets::new()->addAssetMapperEntry('app');
+    }
+}
+```
+
+Without this last step the Stimulus controllers ship in the bundle
+but never boot on EasyAdmin pages — the modal stays flat.
+
+### Saved views (POST routes)
+
+`polysource/filter` ships a saved-views feature (dropdown, save,
+load, delete). The bridge wires the create / delete routes for
+EasyAdmin out of the box — they live at:
+
+- `POST /admin/saved-views` (`polysource_saved_view_create`)
+- `POST /admin/saved-views/{id}/delete` (`polysource_saved_view_delete`)
+
+To enable them, add the bridge controller directory to your
+`config/routes.yaml`:
+
+```yaml
+polysource_easyadmin_filter_bridge:
+    resource: '../vendor/polysource/easyadmin-filter-bridge/src/Controller/'
+    type: attribute
+```
+
+A `BeforeCrudActionEvent` subscriber also expands `?view=<id>` into
+the EA `filters[...]=...` query and redirects to a clean URL — no
+host code needed.
+
 ## Quick start
 
 Take any existing EasyAdmin CRUD controller:
