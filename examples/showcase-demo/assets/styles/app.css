@@ -6,7 +6,13 @@
     --shopco-fg: #0f172a;
 }
 
-body {
+/* Scoped to non-EA pages: EA's own CSS (bundles/easyadmin/app.css)
+ * already styles `body.ea` and the .wrapper / .sidebar / .content
+ * tree. Without this guard, the showcase's bg overrides EA's
+ * (host CSS loads after EA's in <head>) and Polysource pages —
+ * which adopt the EA chrome via the polysource_layout override —
+ * lose their EA look as soon as the page re-paints. */
+body:not(.ea) {
     background-color: var(--shopco-bg);
     color: var(--shopco-fg);
 }

@@ -16,7 +16,7 @@
  # Activated via `polysource.layout_template:` in services.yaml.
  #}
 <!DOCTYPE html>
-<html lang="{{ app.request.locale|default('en') }}" data-turbo="false">
+<html lang="{{ app.request.locale|default('en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,6 +37,7 @@
     {% block stylesheets %}{% endblock %}
 </head>
 <body class="ea ea-index"
+      data-turbo="false"
       data-ea-content-width="normal"
       data-ea-sidebar-width="normal"
       data-ea-dark-scheme-is-enabled="false"
