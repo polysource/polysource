@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use App\Entity\Order;
+use App\Entity\Product;
+use App\Entity\Refund;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Filter\SavedView\Storage\Doctrine\SavedViewRecord;
-use Symfony\Component\Uid\Uuid;
 use Zenstruck\Foundry\Story;
 
 /**
@@ -29,49 +31,46 @@ final class SavedViewsStory extends Story
 
     public function build(): void
     {
+        // - resourceName MUST equal the entity FQCN — the EA bridge calls
+        //   saved_views_dropdown(ea.crud.entityFqcn) so the dropdown
+        //   filters by FQCN, not by slug.
+        // - filtersJson MUST be a flat list of {property,operator,values}
+        //   — DoctrineSavedViewStorage::deserializeFilters() rejects
+        //   any wrapper key.
         $this->save(
             id: 'sv-late-deliveries',
             name: 'Late deliveries',
-            resource: 'orders',
-            filters: [
-                'resource' => 'orders',
-                'criteria' => [
-                    ['property' => 'status', 'operator' => 'in', 'values' => ['paid', 'preparing']],
-                ],
+            resource: Order::class,
+            criteria: [
+                ['property' => 'status', 'operator' => 'in', 'values' => ['paid', 'preparing']],
             ],
         );
 
         $this->save(
             id: 'sv-high-value-pending-refunds',
             name: 'High-value pending refunds',
-            resource: 'refunds',
-            filters: [
-                'resource' => 'refunds',
-                'criteria' => [
-                    ['property' => 'status', 'operator' => 'eq', 'values' => ['pending']],
-                    ['property' => 'amountCents', 'operator' => 'gte', 'values' => ['5000']],
-                ],
+            resource: Refund::class,
+            criteria: [
+                ['property' => 'status', 'operator' => 'eq', 'values' => ['pending']],
+                ['property' => 'amountCents', 'operator' => 'gte', 'values' => ['5000']],
             ],
         );
 
         $this->save(
             id: 'sv-low-stock-active-products',
             name: 'Low-stock active products',
-            resource: 'products',
-            filters: [
-                'resource' => 'products',
-                'criteria' => [
-                    ['property' => 'status', 'operator' => 'eq', 'values' => ['active']],
-                    ['property' => 'stock', 'operator' => 'lt', 'values' => ['10']],
-                ],
+            resource: Product::class,
+            criteria: [
+                ['property' => 'status', 'operator' => 'eq', 'values' => ['active']],
+                ['property' => 'stock', 'operator' => 'lt', 'values' => ['10']],
             ],
         );
     }
 
     /**
-     * @param array{resource: string, criteria: list<array{property: string, operator: string, values: list<string>}>} $filters
+     * @param list<array{property: string, operator: string, values: list<string>}> $criteria
      */
-    private function save(string $id, string $name, string $resource, array $filters): void
+    private function save(string $id, string $name, string $resource, array $criteria): void
     {
         $record = new SavedViewRecord();
         $record->id = $id;
@@ -79,7 +78,7 @@ final class SavedViewsStory extends Story
         $record->resourceName = $resource;
         $record->ownerId = 'admin@shop.co';
         $record->scope = 'public';
-        $record->filtersJson = json_encode($filters, \JSON_THROW_ON_ERROR);
+        $record->filtersJson = json_encode($criteria, \JSON_THROW_ON_ERROR);
         $record->columnsJson = json_encode([], \JSON_THROW_ON_ERROR);
         $record->sortJson = json_encode([], \JSON_THROW_ON_ERROR);
         $record->isDefault = false;

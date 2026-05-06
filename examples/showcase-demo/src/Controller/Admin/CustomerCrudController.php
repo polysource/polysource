@@ -68,20 +68,20 @@ final class CustomerCrudController extends AbstractCrudController
             return;
         }
 
-        yield FormField::addPanel('Identity')->setIcon('fa fa-user');
+        yield FormField::addFieldset('Identity')->setIcon('fa fa-user');
         yield IdField::new('id')->hideOnForm();
         yield EmailField::new('email');
         yield TextField::new('firstName');
         yield TextField::new('lastName');
         yield TelephoneField::new('phone');
 
-        yield FormField::addPanel('Address')->setIcon('fa fa-map-pin');
+        yield FormField::addFieldset('Address')->setIcon('fa fa-map-pin');
         yield TextField::new('addressLine');
         yield TextField::new('city');
         yield TextField::new('postalCode');
         yield ChoiceField::new('country')->setChoices(self::COUNTRIES);
 
-        yield FormField::addPanel('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
+        yield FormField::addFieldset('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
         yield DateTimeField::new('createdAt')->hideOnForm();
     }
 

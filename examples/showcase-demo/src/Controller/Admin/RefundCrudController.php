@@ -77,7 +77,7 @@ final class RefundCrudController extends AbstractCrudController
             return;
         }
 
-        yield FormField::addPanel('Refund')->setIcon('fa fa-rotate-left');
+        yield FormField::addFieldset('Refund')->setIcon('fa fa-rotate-left');
         yield IdField::new('id')->hideOnForm();
         yield AssociationField::new('order');
         yield MoneyField::new('amountCents', 'Amount')->setCurrency('EUR')->setStoredAsCents();
@@ -85,7 +85,7 @@ final class RefundCrudController extends AbstractCrudController
         yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES);
         yield TextareaField::new('note');
 
-        yield FormField::addPanel('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
+        yield FormField::addFieldset('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
         yield DateTimeField::new('createdAt')->hideOnForm();
         yield DateTimeField::new('processedAt')->hideOnForm();
     }

@@ -88,24 +88,24 @@ final class ProductCrudController extends AbstractCrudController
             return;
         }
 
-        yield FormField::addPanel('Identification')->setIcon('fa fa-tag');
+        yield FormField::addFieldset('Identification')->setIcon('fa fa-tag');
         yield IdField::new('id')->hideOnForm();
         yield TextField::new('sku', 'SKU');
         yield TextField::new('name');
         yield SlugField::new('slug')->setTargetFieldName('name');
 
-        yield FormField::addPanel('Description')->setIcon('fa fa-pen-to-square');
+        yield FormField::addFieldset('Description')->setIcon('fa fa-pen-to-square');
         yield TextareaField::new('description')->setNumOfRows(8);
 
-        yield FormField::addPanel('Pricing & stock')->setIcon('fa fa-tags');
+        yield FormField::addFieldset('Pricing & stock')->setIcon('fa fa-tags');
         yield MoneyField::new('priceCents', 'Price')->setCurrency('EUR')->setStoredAsCents();
         yield IntegerField::new('stock');
 
-        yield FormField::addPanel('Classification')->setIcon('fa fa-layer-group');
+        yield FormField::addFieldset('Classification')->setIcon('fa fa-layer-group');
         yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES);
         yield ChoiceField::new('category')->setChoices(self::CATEGORY_CHOICES);
 
-        yield FormField::addPanel('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
+        yield FormField::addFieldset('Lifecycle')->setIcon('fa fa-clock-rotate-left')->collapsible();
         yield DateTimeField::new('createdAt')->hideOnForm();
         yield DateTimeField::new('updatedAt')->hideOnForm();
     }
