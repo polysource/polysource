@@ -163,7 +163,10 @@ final class SavedViewService
     /**
      * Returns the view to apply on first visit. First match wins:
      *
-     *   1. session "last used view" for this resource
+     *   1. session "last used view" for this resource — UNLESS the
+     *      current request carries user-applied filter params with
+     *      no matching `?view=` (the user dismissed the saved view
+     *      by editing filters; we shouldn't keep it highlighted)
      *   2. any visible view with isDefault=true matching a role the
      *      current user has (Symfony role hierarchy is consulted via
      *      `is_granted`)
@@ -171,6 +174,20 @@ final class SavedViewService
      */
     public function defaultFor(string $resourceName): ?SavedView
     {
+        // Detect "user is on a custom filter URL". When the URL
+        // contains `?filter[...]=...` (Polysource shape) or
+        // `?filters[...]=...` (EasyAdmin shape) WITHOUT a `?view=`
+        // param, the user has manually edited filters and the
+        // session-remembered view should NOT be marked active —
+        // otherwise the dropdown lies (highlighted view ≠ rendered
+        // table). Also forget the stored last-used so the lie
+        // doesn't persist across navigations.
+        if ($this->hasUserAppliedFilters()) {
+            $this->forgetLastUsed($resourceName);
+
+            return null;
+        }
+
         // 1. session-remembered last-used
         $lastId = $this->readLastUsed($resourceName);
         if (null !== $lastId) {
@@ -192,6 +209,28 @@ final class SavedViewService
 
         // 3. nothing
         return null;
+    }
+
+    private function hasUserAppliedFilters(): bool
+    {
+        // RequestStack is optional (CLI / tests boot the service
+        // without it); when absent, no request → no user-applied
+        // filters to detect.
+        if (null === $this->requestStack) {
+            return false;
+        }
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request) {
+            return false;
+        }
+        // Saved-view apply round-trip: when `?view=<id>` is present
+        // we assume the host's apply listener will redirect to the
+        // saved-view's filters — keep the view highlighted.
+        if ('' !== (string) $request->query->get('view', '')) {
+            return false;
+        }
+
+        return $request->query->has('filter') || $request->query->has('filters');
     }
 
     private function currentUserId(): ?string
