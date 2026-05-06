@@ -1,131 +1,210 @@
 {# Showcase override for @Polysource/layout.html.twig.
- # Matches the EA chrome (left sidebar + dark topbar) so the user
- # never feels they "left EasyAdmin" when navigating to a Polysource
- # resource. The sidebar is hardcoded here on purpose — the menu
- # composition is host-owned (cf. DashboardController::configureMenuItems
- # for the EA side), and a small one-place Twig partial is preferable
- # to a runtime bridge that would couple the two systems.
+ #
+ # Reuses EA's actual stylesheet and structural HTML (sidebar, main-
+ # header, content-wrapper, content-top) so a Polysource page looks
+ # indistinguishable from an EA page. The asset package
+ # `easyadmin.assets.package` is registered by `easycorp/easyadmin-bundle`
+ # and resolves to `/bundles/easyadmin/<file>` with proper hash
+ # versioning — no need for the `ea` AdminContext to be available.
+ #
+ # The sidebar items are hardcoded here on purpose: the EA menu lives
+ # in DashboardController::configureMenuItems() (PHP-side); a runtime
+ # bridge would couple the two systems for marginal value. Keep this
+ # in sync manually when you add a CRUD controller or Polysource
+ # resource.
  #
  # Activated via `polysource.layout_template:` in services.yaml.
  #}
 <!DOCTYPE html>
-<html lang="{{ app.request.locale|default('en') }}">
+<html lang="{{ app.request.locale|default('en') }}" data-turbo="false">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
     <title>{% block title %}{{ resource.label|default('Admin') }} — ShopCo{% endblock %}</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          crossorigin="anonymous">
+
+    {# EA's compiled stylesheet — gives us the sidebar, topbar, table,
+     # form, and dropdown looks for free. Versioned via EA's manifest. #}
+    <link rel="stylesheet" href="{{ asset('app.css', 'easyadmin.assets.package') }}">
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
           crossorigin="anonymous">
-    <style>
-        body { background: #f5f5f7; }
-        .ps-sidebar { width: 260px; min-height: 100vh; background: #1a1a1a; color: #d6d6d6; }
-        .ps-sidebar .brand { color: #fff; font-weight: 600; padding: 1rem 1.25rem; border-bottom: 1px solid #2a2a2a; }
-        .ps-sidebar .brand small { color: #999; font-weight: 400; }
-        .ps-sidebar .nav-section { color: #888; text-transform: uppercase; font-size: .75rem; letter-spacing: .05em; padding: 1rem 1.25rem .25rem; }
-        .ps-sidebar .nav-link { color: #d6d6d6; padding: .375rem 1.25rem; font-size: .9rem; border-left: 3px solid transparent; }
-        .ps-sidebar .nav-link:hover { background: #2a2a2a; color: #fff; }
-        .ps-sidebar .nav-link.active { background: #2a2a2a; color: #fff; border-left-color: #4593f7; }
-        .ps-sidebar .nav-link i { width: 1.4em; opacity: .85; }
-        .ps-topbar { background: #fff; border-bottom: 1px solid #e6e6e6; padding: .65rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
-        .ps-topbar .breadcrumb { margin: 0; font-size: .85rem; }
-        .ps-content { padding: 1.5rem; }
-    </style>
     {% block stylesheets %}{% endblock %}
 </head>
-<body>
-    <div class="d-flex">
-        <aside class="ps-sidebar">
-            <div class="brand">
-                <a href="/admin" class="text-decoration-none text-white">
-                    ShopCo <small>admin</small>
-                </a>
+<body class="ea ea-index"
+      data-ea-content-width="normal"
+      data-ea-sidebar-width="normal"
+      data-ea-dark-scheme-is-enabled="false"
+      data-ea-default-color-scheme="light"
+      data-ea-icon-set="fontAwesome"
+      data-ea-icon-prefix="">
+
+    {# EA's page-layout.js wires the responsive sidebar toggle, the
+     # search box collapse, and the dropdown menus. Loading it from
+     # the same asset package keeps the markup behaving exactly like
+     # an EA page. #}
+    <script src="{{ asset('page-layout.js', 'easyadmin.assets.package') }}"></script>
+
+    <div class="wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-wrapper">
+                <header class="main-header">
+                    <nav class="navbar" role="navigation">
+                        <div id="header-logo">
+                            <a class="logo" title="ShopCo admin" href="/admin">
+                                <span class="logo-custom">
+                                    <span class="fw-semibold">ShopCo</span>
+                                    <span class="text-muted">admin</span>
+                                </span>
+                            </a>
+                        </div>
+                    </nav>
+                </header>
+
+                <nav id="main-menu">
+                    {% set current = resource.name|default('') %}
+                    <ul class="menu">
+                        <li class="menu-item">
+                            <a href="/admin" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-house"></i></span>
+                                <span class="menu-item-label position-relative">Home</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-header">
+                            <span class="menu-header-contents">
+                                <span class="menu-item-label position-relative">Catalog</span>
+                            </span>
+                        </li>
+                        <li class="menu-item">
+                            <a href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CProductCrudController&crudAction=index" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-box"></i></span>
+                                <span class="menu-item-label position-relative">Products</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-header">
+                            <span class="menu-header-contents">
+                                <span class="menu-item-label position-relative">Sales</span>
+                            </span>
+                        </li>
+                        <li class="menu-item">
+                            <a href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5COrderCrudController&crudAction=index" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-shopping-cart"></i></span>
+                                <span class="menu-item-label position-relative">Orders</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CRefundCrudController&crudAction=index" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-rotate-left"></i></span>
+                                <span class="menu-item-label position-relative">Refunds</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CCustomerCrudController&crudAction=index" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-user"></i></span>
+                                <span class="menu-item-label position-relative">Customers</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-header">
+                            <span class="menu-header-contents">
+                                <span class="menu-item-label position-relative">Polysource Standalone</span>
+                            </span>
+                        </li>
+                        <li class="menu-item {{ current == 'failed-messages' ? 'active' }}">
+                            <a href="/admin/polysource/failed-messages" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-bug"></i></span>
+                                <span class="menu-item-label position-relative">Failed messages</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 'login-attempts' ? 'active' }}">
+                            <a href="/admin/polysource/login-attempts" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-key"></i></span>
+                                <span class="menu-item-label position-relative">Login attempts</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 'audit-log' ? 'active' }}">
+                            <a href="/admin/polysource/audit-log" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-clipboard-list"></i></span>
+                                <span class="menu-item-label position-relative">Audit log</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 'bulk-jobs' ? 'active' }}">
+                            <a href="/admin/polysource/bulk-jobs" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-tasks"></i></span>
+                                <span class="menu-item-label position-relative">Bulk jobs</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-header">
+                            <span class="menu-header-contents">
+                                <span class="menu-item-label position-relative">Adapter resources</span>
+                            </span>
+                        </li>
+                        <li class="menu-item {{ current == 'cache-keys' ? 'active' }}">
+                            <a href="/admin/polysource/cache-keys" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-bolt"></i></span>
+                                <span class="menu-item-label position-relative">Redis cache</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 's3-files' ? 'active' }}">
+                            <a href="/admin/polysource/s3-files" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-folder-open"></i></span>
+                                <span class="menu-item-label position-relative">S3 files</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 'microservices' ? 'active' }}">
+                            <a href="/admin/polysource/microservices" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-cubes"></i></span>
+                                <span class="menu-item-label position-relative">Microservices</span>
+                            </a>
+                        </li>
+                        <li class="menu-item {{ current == 'search-index' ? 'active' }}">
+                            <a href="/admin/polysource/search-index" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-magnifying-glass"></i></span>
+                                <span class="menu-item-label position-relative">Search index</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-item">
+                            <a href="/logout" class="menu-item-contents">
+                                <span class="icon menu-icon"><i class="fa fa-arrow-right-from-bracket"></i></span>
+                                <span class="menu-item-label position-relative">Sign out</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
-            <nav class="pt-2">
-                <a class="nav-link" href="/admin"><i class="fa fa-house"></i> Home</a>
-
-                <div class="nav-section">Catalog</div>
-                <a class="nav-link" href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CProductCrudController&crudAction=index">
-                    <i class="fa fa-box"></i> Products
-                </a>
-
-                <div class="nav-section">Sales</div>
-                <a class="nav-link" href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5COrderCrudController&crudAction=index">
-                    <i class="fa fa-shopping-cart"></i> Orders
-                </a>
-                <a class="nav-link" href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CRefundCrudController&crudAction=index">
-                    <i class="fa fa-rotate-left"></i> Refunds
-                </a>
-                <a class="nav-link" href="/admin?routeName=admin&crudControllerFqcn=App%5CController%5CAdmin%5CCustomerCrudController&crudAction=index">
-                    <i class="fa fa-user"></i> Customers
-                </a>
-
-                <div class="nav-section">Polysource Standalone</div>
-                {% set current = resource.name|default('') %}
-                <a class="nav-link {{ current == 'failed-messages' ? 'active' }}" href="/admin/polysource/failed-messages">
-                    <i class="fa fa-bug"></i> Failed messages
-                </a>
-                <a class="nav-link {{ current == 'login-attempts' ? 'active' }}" href="/admin/polysource/login-attempts">
-                    <i class="fa fa-key"></i> Login attempts
-                </a>
-                <a class="nav-link {{ current == 'audit-log' ? 'active' }}" href="/admin/polysource/audit-log">
-                    <i class="fa fa-clipboard-list"></i> Audit log
-                </a>
-                <a class="nav-link {{ current == 'bulk-jobs' ? 'active' }}" href="/admin/polysource/bulk-jobs">
-                    <i class="fa fa-tasks"></i> Bulk jobs
-                </a>
-
-                <div class="nav-section">Adapter resources</div>
-                <a class="nav-link {{ current == 'cache-keys' ? 'active' }}" href="/admin/polysource/cache-keys">
-                    <i class="fa fa-bolt"></i> Redis cache
-                </a>
-                <a class="nav-link {{ current == 's3-files' ? 'active' }}" href="/admin/polysource/s3-files">
-                    <i class="fa fa-folder-open"></i> S3 files
-                </a>
-                <a class="nav-link {{ current == 'microservices' ? 'active' }}" href="/admin/polysource/microservices">
-                    <i class="fa fa-cubes"></i> Microservices
-                </a>
-                <a class="nav-link {{ current == 'search-index' ? 'active' }}" href="/admin/polysource/search-index">
-                    <i class="fa fa-magnifying-glass"></i> Search index
-                </a>
-
-                <div class="nav-section">&nbsp;</div>
-                <a class="nav-link" href="/logout"><i class="fa fa-arrow-right-from-bracket"></i> Sign out</a>
-            </nav>
         </aside>
 
-        <div class="flex-grow-1 d-flex flex-column">
-            <div class="ps-topbar">
-                <nav aria-label="breadcrumb" class="me-auto">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/admin" class="text-decoration-none">Admin</a></li>
-                        <li class="breadcrumb-item active">Polysource</li>
-                        {% if resource is defined and resource %}
-                            <li class="breadcrumb-item active">{{ resource.label }}</li>
+        <section class="main-content">
+            <aside class="content-top">
+                <div class="content-search">
+                    <span class="text-body-secondary small">
+                        {% if app.user is defined and app.user is not null %}
+                            Signed in as <strong>{{ app.user.userIdentifier }}</strong>
                         {% endif %}
-                    </ol>
-                </nav>
-                {% if app.user is defined and app.user is not null %}
-                    <span class="text-body-secondary small">{{ app.user.userIdentifier }}</span>
-                {% endif %}
+                    </span>
+                </div>
+            </aside>
+
+            <div class="content-wrapper">
+                <article class="content">
+                    {% block flash_messages %}
+                        {% include '@Polysource/_flash.html.twig' ignore missing %}
+                    {% endblock %}
+
+                    {% block content_header %}{% endblock %}
+
+                    <section id="main" class="content-body">
+                        {% block content %}{% endblock %}
+                    </section>
+
+                    {% block content_footer %}{% endblock %}
+                </article>
             </div>
-
-            <main class="ps-content flex-grow-1">
-                {% block flash_messages %}
-                    {% include '@Polysource/_flash.html.twig' ignore missing %}
-                {% endblock %}
-
-                {% block content_header %}{% endblock %}
-
-                {% block content %}{% endblock %}
-
-                {% block content_footer %}{% endblock %}
-            </main>
-        </div>
+        </section>
     </div>
 
     {% block javascripts %}{% endblock %}
