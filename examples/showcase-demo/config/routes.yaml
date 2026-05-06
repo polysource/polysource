@@ -12,3 +12,14 @@ polysource:
 
 # EasyAdmin routes are mounted by EasyAdminBundle directly when its
 # Dashboard controller is registered (no extra wiring needed in 5.x).
+
+# Polysource Search — exposes /admin/search and /admin/bulk-jobs/{id}/progress
+# from controllers shipped inside the bundles. Symfony does not auto-scan
+# vendor controllers; we load them explicitly.
+polysource_search:
+    resource: '../vendor/polysource/search/src/Controller/'
+    type: attribute
+
+polysource_bulk_async:
+    resource: '../vendor/polysource/bulk-async/src/Controller/'
+    type: attribute

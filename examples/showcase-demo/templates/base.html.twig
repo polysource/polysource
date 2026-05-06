@@ -11,5 +11,11 @@
 </head>
 <body>
     {% block body %}{% endblock %}
+    {# Polysource Cmd+K search palette — Stimulus controller binds
+       Cmd+K / Ctrl+K / "/" hotkeys globally. Rendered only when
+       authenticated. #}
+    {% if app.user is defined and app.user is not null %}
+        {{ polysource_search_palette() }}
+    {% endif %}
 </body>
 </html>

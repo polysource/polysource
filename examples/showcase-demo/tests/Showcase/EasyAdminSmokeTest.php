@@ -57,6 +57,7 @@ final class EasyAdminSmokeTest extends WebTestCase
      */
     public static function adminRouteProvider(): iterable
     {
+        yield 'home (widgets dashboard)' => ['/'];
         yield 'dashboard' => ['/admin'];
         yield 'products index' => ['/admin/product'];
         yield 'customers index' => ['/admin/customer'];

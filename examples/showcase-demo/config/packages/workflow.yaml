@@ -1,2 +1,39 @@
 framework:
-    workflows: null
+    workflows:
+        order:
+            type: state_machine
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: method
+                property: status
+            supports:
+                - App\Entity\Order
+            initial_marking: cart
+            places:
+                - cart
+                - paid
+                - preparing
+                - shipped
+                - delivered
+                - cancelled
+                - refunded
+            transitions:
+                pay:
+                    from: cart
+                    to: paid
+                prepare:
+                    from: paid
+                    to: preparing
+                ship:
+                    from: preparing
+                    to: shipped
+                deliver:
+                    from: shipped
+                    to: delivered
+                cancel:
+                    from: [cart, paid, preparing]
+                    to: cancelled
+                refund:
+                    from: delivered
+                    to: refunded

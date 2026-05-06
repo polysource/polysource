@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Story\AuditEntriesStory;
+use App\Story\BulkJobsStory;
 use App\Story\CatalogStory;
 use App\Story\CustomersStory;
 use App\Story\DefaultUsersStory;
@@ -25,5 +27,7 @@ final class AppFixtures extends Fixture
         CustomersStory::load();
         OrdersStory::load();
         LoginAttemptsStory::load();
+        AuditEntriesStory::load();
+        BulkJobsStory::load();
     }
 }
