@@ -39,21 +39,51 @@ final class ShopcoDashboardProvider
 
     public function __invoke(): Dashboard
     {
+        // Defensive: this provider is invoked the moment the
+        // DashboardRegistry is built (during cache:warm), which can
+        // happen BEFORE migrations have run on a fresh
+        // `make showcase-reset && make showcase`. If any of the
+        // ShopCo tables is missing we fall back to a single placeholder
+        // counter so the page still renders + logs the cause.
+        try {
+            return new Dashboard(
+                name: 'home',
+                title: 'ShopCo dashboard',
+                rows: [
+                    [
+                        $this->ordersTodayCounter(),
+                        $this->pendingRefundsCounter(),
+                        $this->lowStockCounter(),
+                    ],
+                    [
+                        $this->ordersChart(),
+                        $this->topProductsList(),
+                    ],
+                    [
+                        $this->recentCustomersList(),
+                    ],
+                ],
+            );
+        } catch (\Doctrine\DBAL\Exception $e) {
+            return $this->placeholderDashboard($e->getMessage());
+        }
+    }
+
+    private function placeholderDashboard(string $reason): Dashboard
+    {
         return new Dashboard(
             name: 'home',
             title: 'ShopCo dashboard',
             rows: [
                 [
-                    $this->ordersTodayCounter(),
-                    $this->pendingRefundsCounter(),
-                    $this->lowStockCounter(),
-                ],
-                [
-                    $this->ordersChart(),
-                    $this->topProductsList(),
-                ],
-                [
-                    $this->recentCustomersList(),
+                    new CounterWidget(
+                        id: 'db-not-ready',
+                        title: 'Database not initialized',
+                        value: 0,
+                        unit: 'rows',
+                        palette: 'secondary',
+                        columnSpan: 12,
+                    ),
                 ],
             ],
         );
