@@ -21,44 +21,100 @@ Both run side-by-side, no clash.
 ### 1.1 — composer.json
 
 Add the bridge package. Until v0.1.0 hits Packagist, install from a
-local path repository pointing at the Polysource monorepo checkout:
+local path repository.
+
+**Real-world tip from the an existing client internal-app integration**: if your
+Symfony app runs inside Docker and the polysource checkout lives
+**outside** the container's mount, use a `vendor-local/`
+sub-directory of your project so the path repos resolve from
+inside the container too:
+
+```bash
+mkdir -p vendor-local/polysource
+for pkg in core filter twig-theme symfony-bundle easyadmin-filter-bridge; do
+    cp -R /path/to/polysource/packages/$pkg vendor-local/polysource/$pkg
+done
+```
+
+Then:
 
 ```json
 {
     "repositories": [
         {
             "type": "path",
-            "url": "/path/to/polysource/packages/easyadmin-filter-bridge",
+            "url": "vendor-local/polysource/core",
             "options": { "symlink": true }
         },
         {
             "type": "path",
-            "url": "/path/to/polysource/packages/filter",
+            "url": "vendor-local/polysource/filter",
+            "options": { "symlink": true }
+        },
+        {
+            "type": "path",
+            "url": "vendor-local/polysource/twig-theme",
+            "options": { "symlink": true }
+        },
+        {
+            "type": "path",
+            "url": "vendor-local/polysource/symfony-bundle",
+            "options": { "symlink": true }
+        },
+        {
+            "type": "path",
+            "url": "vendor-local/polysource/easyadmin-filter-bridge",
             "options": { "symlink": true }
         }
     ],
     "require": {
-        "polysource/easyadmin-filter-bridge": "dev-main",
-        "polysource/filter": "dev-main"
+        "polysource/core": "0.1.x-dev as 0.1.0",
+        "polysource/filter": "0.1.x-dev as 0.1.0",
+        "polysource/twig-theme": "0.1.x-dev as 0.1.0",
+        "polysource/symfony-bundle": "0.1.x-dev as 0.1.0",
+        "polysource/easyadmin-filter-bridge": "0.1.x-dev as 0.1.0"
     }
 }
 ```
 
+The `as 0.1.0` alias bypasses the `minimum-stability: stable`
+default — most production apps don't lower their stability floor
+to `dev` for one package.
+
 ```bash
-composer update polysource/easyadmin-filter-bridge polysource/filter
+composer update polysource/easyadmin-filter-bridge polysource/symfony-bundle polysource/twig-theme polysource/filter polysource/core -W
 ```
 
 ### 1.2 — Register the bundles
 
-`apps/backend/config/bundles.php`:
+If your project has a **single Kernel** (90% of Symfony apps) and
+Symfony Flex is installed, the bundles auto-register. Skip ahead.
+
+If you have a **multi-app Kernel** like internal-app (one Kernel
+serving multiple apps via `appId`), Flex auto-registers in the
+shared `config/bundles.php` — but then the bundles boot for every
+app, which is wrong if EasyAdmin only loads in the backend app.
+**Move the Polysource bundle declarations to the backend's own
+`bundles.php`**:
 
 ```php
+// apps/backend/config/bundles.php
+use Polysource\Bundle\PolysourceBundle;
+use Polysource\EasyAdminFilterBridge\PolysourceEasyAdminFilterBridgeBundle;
+use Polysource\Filter\PolysourceFilterBundle;
+
 return [
-    // ...existing bundles
-    Polysource\Filter\PolysourceFilterBundle::class => ['all' => true],
-    Polysource\EasyAdminFilterBridge\PolysourceEasyAdminFilterBridgeBundle::class => ['all' => true],
+    BackendBundle::class       => ['all' => true],
+    EasyAdminBundle::class     => ['all' => true],
+    // ...other backend-specific bundles
+    PolysourceFilterBundle::class                  => ['all' => true],
+    PolysourceEasyAdminFilterBridgeBundle::class   => ['all' => true],
+    PolysourceBundle::class                        => ['all' => true],
 ];
 ```
+
+And **remove** them from the shared `config/bundles.php` if Flex
+put them there.
 
 ### 1.3 — Hot-reload the page
 
