@@ -53,12 +53,18 @@ final class SavedViewExtension extends AbstractExtension
      */
     public function getFunctions(): array
     {
+        // NOTE: `saved_views_dropdown` is NOT registered here.
+        // Polysource's `symfony-bundle::PolysourceFilterExtension`
+        // owns that function name (so templates using it always
+        // parse, even when polysource/filter isn't installed) and
+        // delegates rendering to this extension's `renderDropdown()`
+        // when the host wires both bundles.
+        //
+        // Registering it here would collide with the symfony-bundle
+        // stub at Twig boot. The bundle wiring of polysource/filter
+        // injects this instance into PolysourceFilterExtension's
+        // optional `?savedViewExtension` constructor argument.
         return [
-            new TwigFunction(
-                'saved_views_dropdown',
-                $this->renderDropdown(...),
-                ['is_safe' => ['html']],
-            ),
             new TwigFunction(
                 'polysource_route_exists',
                 $this->routeExists(...),

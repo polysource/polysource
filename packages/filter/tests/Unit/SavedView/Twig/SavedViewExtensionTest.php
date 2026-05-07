@@ -25,23 +25,20 @@ use Twig\Loader\ArrayLoader;
 final class SavedViewExtensionTest extends TestCase
 {
     #[Test]
-    public function exposesSavedViewsDropdownTwigFunction(): void
+    public function exposesSavedViewProbeTwigFunctions(): void
     {
+        // Note: `saved_views_dropdown` is owned by polysource/symfony-bundle's
+        // PolysourceFilterExtension (always loaded so templates parse without
+        // polysource/filter installed). When both bundles are wired, the
+        // bundle's function delegates to this extension's renderDropdown().
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        self::assertCount(3, $functions);
+        self::assertCount(2, $functions);
 
         $names = array_map(static fn ($f) => $f->getName(), $functions);
-        self::assertContains('saved_views_dropdown', $names);
         self::assertContains('polysource_route_exists', $names);
         self::assertContains('polysource_team_scope_supported', $names);
-
-        $matched = array_values(array_filter($functions, static fn ($f) => $f->getName() === 'saved_views_dropdown'));
-        self::assertNotEmpty($matched, 'saved_views_dropdown function must be exposed');
-        $safe = $matched[0]->getSafe(new \Twig\Node\Node());
-        self::assertNotNull($safe, 'TwigFunction should declare an is_safe spec');
-        self::assertContains('html', $safe);
     }
 
     #[Test]

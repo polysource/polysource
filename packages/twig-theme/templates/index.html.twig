@@ -14,6 +14,11 @@
         </div>
 
         <div class="d-flex gap-2 flex-wrap align-items-center">
+            {# `saved_views_dropdown` is registered as a no-op stub
+             # by `PolysourceFilterExtension` so the template parses
+             # in apps that don't install polysource/filter. The
+             # filter package's `SavedViewExtension` overrides it
+             # with the real implementation at higher priority. #}
             {% if polysource_saved_views_supported() %}
                 {{ saved_views_dropdown(resource.name) }}
             {% endif %}

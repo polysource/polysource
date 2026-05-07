@@ -71,9 +71,19 @@ final class ControllerSupport
         $fields = [];
         foreach ($resource->configureFields($page) as $field) {
             $dto = $field->getAsDto();
-            if ($dto->isOnPage($page)) {
-                $fields[] = $dto;
+            if (!$dto->isOnPage($page)) {
+                continue;
             }
+            // Honour `Field::setPermission('X')` — when the user
+            // can't see X, the field is dropped from the list. This
+            // gates both the column header and the cell value
+            // because both render from the same FieldDto. Resources
+            // that need per-record gating should add the check in
+            // their data source / template.
+            if (null !== $dto->permission && !$this->permission->isGranted($dto->permission)) {
+                continue;
+            }
+            $fields[] = $dto;
         }
 
         return $fields;

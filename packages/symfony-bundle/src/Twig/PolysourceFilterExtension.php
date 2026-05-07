@@ -8,6 +8,7 @@ use Polysource\Bundle\Context\AdminContext;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -27,8 +28,17 @@ use Twig\TwigFunction;
  */
 final class PolysourceFilterExtension extends AbstractExtension
 {
+    /**
+     * @param object|null $savedViewExtension Optional polysource/filter
+     *                    SavedViewExtension instance — when present, the
+     *                    bundled `saved_views_dropdown()` Twig function
+     *                    delegates to it. Typed as `object` because the
+     *                    class lives in an optional dependency package
+     *                    that may not be installed.
+     */
     public function __construct(
         private readonly UrlGeneratorInterface $router,
+        private readonly ?object $savedViewExtension = null,
     ) {
     }
 
@@ -37,13 +47,44 @@ final class PolysourceFilterExtension extends AbstractExtension
      */
     public function getFunctions(): array
     {
-        return [
+        $functions = [
             new TwigFunction('polysource_active_filters', $this->activeFilters(...)),
             new TwigFunction('polysource_clear_filters_url', $this->clearFiltersUrl(...)),
             new TwigFunction('polysource_apply_filter_url', $this->applyFilterUrl(...)),
             new TwigFunction('polysource_remove_filter_url', $this->removeFilterUrl(...)),
             new TwigFunction('polysource_saved_views_supported', $this->savedViewsSupported(...)),
         ];
+
+        // `saved_views_dropdown` is exposed by THIS bundle (always
+        // loaded) so the bundled `index.html.twig` always parses.
+        // When polysource/filter is installed AND its
+        // `SavedViewExtension` was wired into our constructor, we
+        // delegate to it for the real dropdown HTML. Otherwise the
+        // function returns an empty string — a no-op fallback that
+        // keeps templates rendering without crashing.
+        $functions[] = new TwigFunction(
+            'saved_views_dropdown',
+            $this->renderSavedViewsDropdown(...),
+            ['is_safe' => ['html']],
+        );
+
+        return $functions;
+    }
+
+    public function renderSavedViewsDropdown(string $resourceName, string $template = ''): string
+    {
+        if (null === $this->savedViewExtension) {
+            return '';
+        }
+        if (!method_exists($this->savedViewExtension, 'renderDropdown')) {
+            return '';
+        }
+
+        $output = '' === $template
+            ? $this->savedViewExtension->renderDropdown($resourceName)
+            : $this->savedViewExtension->renderDropdown($resourceName, $template);
+
+        return \is_string($output) ? $output : '';
     }
 
     /**
