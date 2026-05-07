@@ -84,11 +84,36 @@
                     {% set value2 = null %}
                 {% endif %}
 
-                {# Humanise camelCase / snake_case → "Created at". #}
-                {% set label = property
-                    |replace({'_': ' '})
-                    |replace({'A':' A','B':' B','C':' C','D':' D','E':' E','F':' F','G':' G','H':' H','I':' I','J':' J','K':' K','L':' L','M':' M','N':' N','O':' O','P':' P','Q':' Q','R':' R','S':' S','T':' T','U':' U','V':' V','W':' W','X':' X','Y':' Y','Z':' Z'})
-                    |trim|capitalize %}
+                {# Resolve the chip label. Priority:
+                   1. The CrudController's configured filter label
+                      (translated if the host used trans-keys), so
+                      `FreewheelCreativeIsSentFilter::new('isSent', 'Envoyée')`
+                      shows "Envoyée" instead of the humanised
+                      "Is sent".
+                   2. Fallback to a humanised property name when
+                      no filter is registered for that slice
+                      (e.g. URL-injected legacy filter). #}
+                {% set label = null %}
+                {% if ea is defined and ea.crud is not null %}
+                    {% set declared = ea.crud.filtersConfig.getFilter(property) %}
+                    {% if declared is not null %}
+                        {# Fluent EA Filter — getAsDto() returns the
+                           FilterDto with the resolved label. #}
+                        {% if declared.getAsDto is defined %}
+                            {% set dto = declared.getAsDto() %}
+                            {% set label = dto.label|default(null) %}
+                        {% elseif declared.label is defined %}
+                            {% set label = declared.label %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if label is null or label is same as(false) or label == '' %}
+                    {# Humanise camelCase / snake_case → "Created at". #}
+                    {% set label = property
+                        |replace({'_': ' '})
+                        |replace({'A':' A','B':' B','C':' C','D':' D','E':' E','F':' F','G':' G','H':' H','I':' I','J':' J','K':' K','L':' L','M':' M','N':' N','O':' O','P':' P','Q':' Q','R':' R','S':' S','T':' T','U':' U','V':' V','W':' W','X':' X','Y':' Y','Z':' Z'})
+                        |trim|capitalize %}
+                {% endif %}
 
                 {{ include('@EasyAdmin/crud/_chip.html.twig', {
                     property: property,
