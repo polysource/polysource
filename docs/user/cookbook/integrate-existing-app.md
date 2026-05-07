@@ -1,15 +1,15 @@
 # Integrate Polysource into an existing Symfony app
 
-A real-world walkthrough on a production app: **an existing client's `internal-app`** (PHP
-8.4, Symfony 6.4, EasyAdmin 5). Two integrations:
+A walkthrough validated on a production Symfony app (PHP 8.4,
+Symfony 6.4, EasyAdmin 5, Doctrine ORM 2, Webpack Encore, Cognito
+auth, multi-app Kernel). Two integrations:
 
 1. **Enhance an existing EA CRUD with the filter bridge** — zero
-   refactor, drop-in package install. Target: a
-   `SampleResourceCrudController` with text + choice +
-   custom filters.
+   refactor, drop-in package install. Target: a CRUD with text +
+   choice + custom filter classes.
 2. **Replace a hand-rolled Redis listing with a Polysource resource** —
-   the `workers_queue` route reads from a Redis LIST (not hash) via a
-   custom `JobQueueManager`. We adapt it to `DataSourceInterface` in
+   a worker-queue dashboard reads from a Redis LIST (not hash) via
+   a custom queue manager. We adapt it to `DataSourceInterface` in
    ~50 lines and get a paginated, filterable admin table for free.
 
 Both run side-by-side, no clash.
@@ -23,11 +23,10 @@ Both run side-by-side, no clash.
 Add the bridge package. Until v0.1.0 hits Packagist, install from a
 local path repository.
 
-**Real-world tip from the an existing client internal-app integration**: if your
-Symfony app runs inside Docker and the polysource checkout lives
-**outside** the container's mount, use a `vendor-local/`
-sub-directory of your project so the path repos resolve from
-inside the container too:
+**Real-world tip**: if your Symfony app runs inside Docker and the
+polysource checkout lives **outside** the container's mount, use a
+`vendor-local/` sub-directory of your project so the path repos
+resolve from inside the container too:
 
 ```bash
 mkdir -p vendor-local/polysource
@@ -90,12 +89,12 @@ composer update polysource/easyadmin-filter-bridge polysource/symfony-bundle pol
 If your project has a **single Kernel** (90% of Symfony apps) and
 Symfony Flex is installed, the bundles auto-register. Skip ahead.
 
-If you have a **multi-app Kernel** like internal-app (one Kernel
-serving multiple apps via `appId`), Flex auto-registers in the
-shared `config/bundles.php` — but then the bundles boot for every
-app, which is wrong if EasyAdmin only loads in the backend app.
-**Move the Polysource bundle declarations to the backend's own
-`bundles.php`**:
+If you have a **multi-app Kernel** (one Kernel serving multiple
+apps via an `appId`, where each app has its own `bundles.php`),
+Flex auto-registers in the shared `config/bundles.php` — but then
+the bundles boot for every app, which is wrong if EasyAdmin only
+loads in the admin/backend app. **Move the Polysource bundle
+declarations to the EA-app's own `bundles.php`**:
 
 ```php
 // apps/backend/config/bundles.php
@@ -427,8 +426,8 @@ final class WorkersQueueResource extends AbstractResource
             dataSource: $dataSource,
             slug: 'workers-queue',
             label: 'Workers queue',
-            // Re-use internal-app's existing permission constant if
-            // the route is gated.
+            // Re-use the host app's existing permission constant
+            // if the legacy route is gated.
             permission: 'POLYSOURCE_WORKERS_QUEUE_VIEW',
         );
     }
@@ -612,9 +611,10 @@ client-side pagination of LIST which has to load everything).
 ### Channel/tenant URL prefix
 
 Some apps enforce a tenant prefix on every URL via a host
-middleware (e.g. internal-app's `/{channel}/...` pattern). The
-Polysource bundle's `url_prefix` only sets the part AFTER the
-mount; it doesn't know about your tenant prefix. If you see
+middleware (e.g. a `/{channel}/...` pattern that gates every
+incoming request). The Polysource bundle's `url_prefix` only sets
+the part AFTER the mount; it doesn't know about your tenant
+prefix. If you see
 `'admin' is not a valid channel` (or similar) when hitting
 `/admin/polysource/...`, prefix the import:
 
