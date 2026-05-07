@@ -77,9 +77,16 @@ docs/user/
 
 ## Status
 
-Polysource is **pre-v0.1.0** and not yet published on Packagist. The
-public API may change before the v0.1.0 tag. The documentation below
-matches the current state of the `main` branch.
+Polysource is **pre-v0.1.0** and not yet published on Packagist.
+Phases 1 → 22 shipped on `main` (16 packages). The public API is
+frozen for v0.1.0; tag + Packagist publish pending the final QA pass
+on the showcase. The documentation below matches the current state
+of `main`.
+
+**Quality bar (2026-05-08)**: 674 unit + functional tests / 1684
+assertions in the package matrix, plus 27 integration tests in the
+showcase. PHPStan max + cs-fixer clean. CI runs PHP 8.1/8.2/8.3/8.4 ×
+Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0.
 
 ## License
 

@@ -1,115 +1,118 @@
-# Polysource Admin
+# Polysource
 
-> Symfony admin panels for resources beyond Doctrine.
+> Two complementary tools for Symfony admin panels — sharing the same primitives, usable together or alone.
 
-**Polysource Admin** is a Symfony admin toolkit for resources that are not necessarily Doctrine entities: Messenger failed messages, feature flags, files, queues, external APIs, search indexes, webhooks and configuration resources.
+1. **`polysource/easyadmin-filter-bridge`** — a drop-in package that **enriches the filters of an existing EasyAdmin v5 app** (date presets, range pickers, multi-select, between, session persistence, chips bar, saved views) **without forking EasyAdmin**.
+2. **`polysource/admin`** — a standalone admin toolkit for resources that **don't live in a Doctrine ORM database**: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch documents, configurations, jobs, webhooks.
+
+Both products share the same underlying primitives (`polysource/core` + `polysource/filter`) and can run side-by-side in the same Symfony app.
 
 ---
 
 ## Status — pre-v0.1.0
 
-Phases 1 through 9.7 are shipped on `main` (core + symfony-bundle + twig-theme +
-adapter-messenger + filter + easyadmin-filter-bridge + 4 runnable demos). The
-public API is stable but not tagged — see
-[`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md) for the
-phase status, and the [ADRs](./docs/adr/) for the choices that landed since.
+Phases 1 → 22 shipped on `main` (16 packages). The public API is stable and frozen for v0.1.0; tag and Packagist publish pending the final QA pass on the showcase. License: MIT. See [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md) for phase status, and the [ADRs](./docs/adr/) for the choices that landed.
+
+**Multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md))**: PHP 8.1 → 8.4, Symfony 5.4 / 6.4 / 7.2 / 7.4 LTS, EasyAdmin 4.24+ / 5.0+, Doctrine ORM 2.20+ / 3.6+. CI runs the full matrix.
+
+## Packages
+
+| Package | What it does |
+|---|---|
+| `polysource/core` | 26 public types, zero Symfony dep — pure PHP 8.1+ contracts |
+| `polysource/filter` | Filter primitives (collection, criteria, session persistence, **saved views**) — usable standalone in any Symfony app |
+| `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin v5 — auto-swaps built-in filter form types, ships 4 custom filters (Between/In/NotNull/FullText), saved views dropdown |
+| `polysource/symfony-bundle` | Symfony bundle wiring for the admin: DI extension, route loader, controllers, view listener, CSRF, pagination caps |
+| `polysource/twig-theme` | Default Bootstrap 5 templates for index/detail/forms/fields |
+| `polysource/adapter-messenger` | Browse + retry / dismiss / retry-all / purge Messenger failed envelopes |
+| `polysource/adapter-doctrine` | Doctrine ORM cohabitation case (whitelist filter properties) |
+| `polysource/adapter-redis` | Browse + write Redis hashes (Predis), SCAN cursor pagination |
+| `polysource/adapter-flysystem` | Browse + write files on S3 / local / Azure / GCS via Flysystem |
+| `polysource/adapter-http` | Admin external REST APIs via Symfony HttpClient (page-number + cursor strategies) |
+| `polysource/adapter-meilisearch` | Browse + write Meilisearch indexes |
+| `polysource/audit` | GDPR Art. 30 audit trail for admin actions (Doctrine storage, CSV export, retention purge) |
+| `polysource/bulk-async` | Bulk actions over Messenger with live progress (Mercure) + cancel mid-flight |
+| `polysource/widgets` | Dashboard widgets (KPI counters, top-N lists, sparkline charts) |
+| `polysource/search` | Cross-resource search palette (Cmd+K) with fan-out aggregator |
+| `polysource/workflow-bridge` | Symfony Workflow integration (auto transition buttons, state chip) |
 
 ## Run the demos
 
-| Demo | Stack | Port | Audience |
-|---|---|---|---|
-| `make demo` | PHP 8.4 + Sf 7.4 + Doctrine | `:8080` | Messenger failed-messages dashboard (the v0.1 flagship) |
-| `make demo-bridge` | PHP 8.4 + Sf 7.4 + EA 5 | `:8081` | EasyAdmin v5 hosts adopting the bridge |
-| `make demo-bridge-v4` | PHP 8.1 + Sf 6.4 LTS + EA 4.29 | `:8083` | EA v4 hosts that haven't migrated — proves the floor of the multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md)) |
-| `make demo-filter` | Vanilla Sf 6.4 + PHP 8.1, **no EasyAdmin** | `:8082` | Sonata users, API Platform back-offices, hand-rolled admin DIY — uses the standalone `polysource/filter` primitive |
+| Demo | Stack | Audience |
+|---|---|---|
+| `make demo-showcase` | PHP 8.4 + Sf 7.4 LTS + EA 5 + Doctrine 3 + Foundry 2 + Postgres 17 + Redis + Mercure + Meilisearch + S3 (MinIO) | **Hero demo** — every capability live, end-to-end |
+| `make demo` | PHP 8.4 + Sf 7.4 + Doctrine | Messenger failed-messages dashboard |
+| `make demo-bridge` | PHP 8.4 + Sf 7.4 + EA 5 | EasyAdmin v5 hosts adopting the bridge |
+| `make demo-bridge-v4` | PHP 8.1 + Sf 6.4 LTS + EA 4.29 | EA v4 hosts (proves the floor of the multi-version baseline) |
+| `make demo-filter` | Vanilla Sf 6.4 + PHP 8.1, **no EasyAdmin** | Sonata users, API Platform back-offices, hand-rolled admin |
 
-Login on the EA demos: `admin` / `admin`. Each demo is a self-contained
-Docker image; first `make demo*` triggers a one-time build. See each demo's
-`README.md` for the per-demo walkthrough.
+Each demo is a self-contained Docker compose; first `make demo*` triggers a one-time build. See each demo's `README.md` for the per-demo walkthrough. EA demo login: `admin` / `admin`.
 
 ## Why Polysource
 
 Most Symfony admin engines (EasyAdmin, Sonata, etc.) are designed around Doctrine ORM entities. They're excellent for that — but they don't naturally cover:
 
-- **Messenger failed messages** (no built-in UI to retry/dismiss)
+- **Messenger failed messages** (no built-in UI to retry/dismiss/purge)
 - **Feature flags** stored in Redis or a custom store
-- **Files** on local filesystem or S3
+- **Files** on local filesystem, S3, Azure, GCS
 - **External REST APIs** that you operate but don't own the schema of
 - **Meilisearch / Elasticsearch documents**
 - **Background jobs**, **webhooks**, **YAML/JSON configuration**
 
-Polysource Admin is built **for those cases**.
+Polysource was built for those cases — and along the way, the `polysource/easyadmin-filter-bridge` was carved out to fix the parts of EasyAdmin's filter UX that bother Doctrine users too.
 
 ## What it is **not**
 
-- **Not a fork of EasyAdmin.** EasyAdmin is excellent for Doctrine CRUD; we don't try to replace it.
-- **Not a frontal competitor to EasyAdmin.** For Doctrine entities, you should keep using EasyAdmin. Polysource will offer an optional EasyAdmin bridge so the two can coexist.
-- **Not a Doctrine-first CRUD generator.** Doctrine is just one adapter among many.
-- **Not a no-code internal-tool builder** (use Retool/Appsmith for that).
+- **Not a fork of EasyAdmin.** EA is excellent for Doctrine CRUD; we don't try to replace it. The bridge enriches it without forking.
+- **Not a frontal competitor on Doctrine.** For pure Doctrine entities, keep using EasyAdmin. The `polysource/adapter-doctrine` exists for cohabitation, not replacement.
+- **Not a no-code internal-tool builder** (use Retool / Appsmith for that).
 - **Not a SaaS** — Polysource is a self-hosted Symfony bundle, MIT-licensed.
-
-## Initial target use cases
-
-The first release (v0.1) ships one real, visible use case:
-
-> A dashboard for **Messenger failed messages** with retry / retry-all / dismiss, in less than 5 minutes of setup.
-
-Subsequent releases will add adapters one at a time, each driven by a real user need:
-
-| Adapter | Target version | Use case |
-|---|---|---|
-| `polysource/adapter-messenger` | v0.1 | failed messages, queues |
-| `polysource/adapter-doctrine` | v0.2 | cohabit with EasyAdmin, simple Doctrine resources |
-| `polysource/adapter-flysystem` | v0.2 | local files, S3 |
-| `polysource/adapter-http` | v0.3 | external REST APIs |
-| `polysource/adapter-redis` | v0.3 | feature flags, Redis hashes |
-| `polysource/easyadmin-bridge` | v0.3 | bidirectional integration |
-| `polysource/adapter-meilisearch` | v1.0 | search indexes |
-| `polysource/adapter-config` | v1.0 | YAML / JSON config files |
-
-## Long-term vision
-
-Polysource provides a minimal, well-defined contract (`DataSourceInterface` with 3 methods, plus `WritableDataSourceInterface` for writes) inspired by Sylius Grid and React Admin. Adapters are independent Composer packages, registered via Symfony service tags. The UI is a Twig theme borrowed and adapted from EasyAdmin v5 (MIT-compatible).
-
-Filament-style fluent builders (`Form::schema([...])`, `Table::columns([...])`) are planned for the DX layer once the core contract is stable.
+- **Not a BI dashboard** (use Grafana / Metabase).
 
 ## Architecture summary
 
 ```
 polysource/
-├── core/                 contracts + value objects, no Symfony deps
-├── symfony-bundle/       wiring (DI, routing, ArgumentResolvers, Twig)
-├── twig-theme/           default UI templates
-├── adapter-messenger/    first adapter (failed messages)
-└── easyadmin-bridge/     coexistence with EasyAdmin
+├── core/                       contracts + value objects, no Symfony deps
+├── filter/                     filter primitives (standalone usable)
+├── easyadmin-filter-bridge/    drop-in for EasyAdmin v5
+├── symfony-bundle/             admin wiring (DI, routing, controllers, Twig)
+├── twig-theme/                 default UI templates
+├── adapter-{messenger,doctrine,redis,flysystem,http,meilisearch}/
+├── audit/                      GDPR / HIPAA action log
+├── bulk-async/                 async bulk + Mercure progress
+├── widgets/                    dashboard widgets
+├── search/                     Cmd+K palette
+└── workflow-bridge/            Symfony Workflow integration
 ```
 
 Read the full design in [`docs/architecture/target-architecture.md`](./docs/architecture/target-architecture.md).
 
 ## Documentation
 
-The strategy and architecture analysis live entirely in [`docs/`](./docs/README.md):
+- [User documentation](./docs/user/) — installation, getting-started, per-package guides, cookbook, API reference
+- [Showcase tour with screenshots](./docs/user/showcase-tour.md)
+- [EasyAdmin filter bridge — getting started](./docs/user/easyadmin-filter-bridge/getting-started.md)
+- [What's new vs upstream EasyAdmin (per-filter matrix)](./docs/user/easyadmin-filter-bridge/whats-new.md)
+- [Cookbook — integrate into an existing app](./docs/user/cookbook/integrate-existing-app.md)
+- [Cookbook — build your own adapter](./docs/user/cookbook/build-your-own-adapter.md)
+- [Strategy / vision](./docs/strategy/product-vision.md)
+- [Architecture decisions (ADR)](./docs/adr/) — 25 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
+- [Roadmap / development plan](./docs/roadmap/development-plan.md)
 
-- [Index](./docs/README.md)
-- [Architecture cible (signatures PHP, flux, adapters)](./docs/architecture/target-architecture.md)
-- [Plan de développement (Phases 0–10)](./docs/roadmap/development-plan.md)
-- [Vision produit](./docs/strategy/product-vision.md)
-- [Architecture Decision Records](./docs/adr/)
+## Quality bar
 
-## What's next
-
-1. Review and validate [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md).
-2. Once approved, scaffold `packages/core` (interfaces + value objects).
-3. Scaffold `packages/symfony-bundle` and `packages/twig-theme`.
-4. Build `packages/adapter-messenger` with retry/dismiss demo.
-5. Tag `v0.1.0` once the demo runs end-to-end.
+- **674 unit + functional tests / 1684 assertions** in the package matrix, plus 27 integration tests in the showcase
+- **PHPStan level max** across all packages
+- **PHP-CS-Fixer** PSR-12 + Symfony rules
+- **Core coverage gate ≥ 90%** (`polysource/core` sits at 99.17%)
+- **CI matrix** runs PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0
 
 ## Contributing
 
-This project is in design phase — no PRs against code yet (there is none). However, **feedback on the documentation is very welcome**:
-
-- Open an issue to discuss architecture choices, adapters you'd want, or DX concerns.
-- See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the development workflow once code lands.
+- Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the development workflow.
+- Strict scope per [ADR-012](./docs/adr/0012-dual-product-positioning.md) — feature requests outside the dual-product positioning are politely declined.
+- See [`docs/strategy/product-vision.md`](./docs/strategy/product-vision.md) §2 before opening a feature request.
 
 ## License
 

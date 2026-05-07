@@ -4,13 +4,16 @@ Thanks for your interest in Polysource Admin. This document explains how to cont
 
 ## Project status
 
-Polysource is currently in **design phase** — the strategic and architectural analysis lives in [`docs/`](./docs/README.md), and the implementation roadmap is in [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md).
+Polysource is **pre-v0.1.0** — Phases 1 → 22 shipped on `main` (16 packages: core, filter, easyadmin-filter-bridge, symfony-bundle, twig-theme, 6 adapters, audit, bulk-async, widgets, search, workflow-bridge). The public API is frozen for v0.1.0; tag and Packagist publish are in progress (Phase 10 + Phase 23 showcase QA).
 
-**No code has been written yet.** Until the development plan is validated and the first packages are scaffolded (`packages/core`, `packages/symfony-bundle`, `packages/twig-theme`, `packages/adapter-messenger`), the most useful contributions are:
+The strategic and architectural analysis lives in [`docs/`](./docs/README.md), and the implementation roadmap is in [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md).
 
-- **Reviewing the documentation** — open an issue if you spot inconsistencies, gaps, or design choices you disagree with.
-- **Sharing use cases** — what non-Doctrine resource would *you* want to administer? File an issue describing the source, the operations needed, and how you'd configure it.
-- **Pressure-testing the architecture** — challenge `DataSourceInterface` against your real-world cases.
+Useful contributions right now:
+
+- **Adoption feedback** — install Polysource (or just the EasyAdmin filter bridge) in your app and report what works, what doesn't, what surprised you.
+- **Docs review** — open an issue if you spot inconsistencies or gaps.
+- **New use cases** — what non-Doctrine resource would *you* want to administer? File an issue describing the source, operations, and configuration shape.
+- **Bug reports with a reproducer** — see "Reporting issues" below.
 
 ## Code of conduct
 
@@ -26,7 +29,7 @@ When opening an issue, please provide:
 - A minimal reproducible example if reporting a bug.
 - For architecture/design issues, the specific document section you're commenting on.
 
-## Development workflow (once code lands)
+## Development workflow
 
 The workflow is:
 
