@@ -82,6 +82,32 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ],
             ]);
         }
+
+        // 2) Register the SavedView Doctrine entity namespace so
+        //    hosts using DoctrineBundle don't have to add the
+        //    mapping by hand. Without this, the
+        //    `DoctrineSavedViewStorage` service tries to query
+        //    `Polysource\Filter\SavedView\Storage\Doctrine\SavedViewRecord`
+        //    via the EntityManager and Doctrine raises
+        //    "class … not found in the chain configured namespaces".
+        //
+        //    Gated on DoctrineBundle availability — saved views are
+        //    optional, hosts without Doctrine never reach this code.
+        if (\array_key_exists('DoctrineBundle', $bundles)) {
+            $container->prependExtensionConfig('doctrine', [
+                'orm' => [
+                    'mappings' => [
+                        'PolysourceFilterSavedView' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/SavedView/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\SavedView\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterSavedView',
+                        ],
+                    ],
+                ],
+            ]);
+        }
     }
 
     public function load(array $configs, ContainerBuilder $container): void
