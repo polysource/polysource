@@ -607,6 +607,99 @@ client-side pagination of LIST which has to load everything).
 
 ---
 
+## Common pitfalls (learned from real integrations)
+
+### Channel/tenant URL prefix
+
+Some apps enforce a tenant prefix on every URL via a host
+middleware (e.g. internal-app's `/{channel}/...` pattern). The
+Polysource bundle's `url_prefix` only sets the part AFTER the
+mount; it doesn't know about your tenant prefix. If you see
+`'admin' is not a valid channel` (or similar) when hitting
+`/admin/polysource/...`, prefix the import:
+
+```yaml
+polysource:
+    resource: .
+    type: polysource
+    prefix: /%channel%
+
+polysource_easyadmin_filter_bridge:
+    resource: '../../../../vendor/polysource/easyadmin-filter-bridge/src/Controller/'
+    type: attribute
+    prefix: /%channel%
+```
+
+`%channel%` is whatever the host parameter is called. The
+**route names stay unchanged**, so the dropdown's
+`path('polysource_saved_view_create', …)` still resolves — the
+`{channel}` segment is auto-filled from the request.
+
+### Doctrine ORM mapping for SavedViewRecord
+
+If you see:
+
+```
+The class 'Polysource\Filter\SavedView\Storage\Doctrine\SavedViewRecord'
+was not found in the chain configured namespaces …
+```
+
+You're on a `polysource/filter` < dev-main version that didn't
+auto-prepend the Doctrine mapping. Either bump to a newer dev tag
+or add the mapping manually:
+
+```yaml
+# config/packages/doctrine.yaml
+doctrine:
+    orm:
+        mappings:
+            PolysourceFilterSavedView:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/vendor-local/polysource/filter/src/SavedView/Storage/Doctrine'
+                prefix: 'Polysource\Filter\SavedView\Storage\Doctrine'
+                alias: PolysourceFilterSavedView
+```
+
+You also need to run a migration to create `polysource_saved_views`.
+Either generate one with `doctrine:migrations:diff` (filter the
+generated SQL down to just the `polysource_saved_views` table) or
+use the canonical SQL from `docs/user/filter/saved-views.md`.
+
+### Multi-app Kernel — bundles per app, not shared
+
+Symfony Flex auto-registers bundles in the SHARED `config/bundles.php`.
+On a multi-app Kernel where EasyAdmin only loads in the backend
+app (and not in job/privateapi/etc), the bridge bundle would also
+load there and fail because EasyAdmin classes are missing. Move
+the bundle declarations to the backend's per-app `bundles.php` and
+remove from shared.
+
+### Webpack Encore (no AssetMapper) — Stimulus controllers absent
+
+The bridge ships Stimulus controllers under
+`vendor/polysource/easyadmin-filter-bridge/assets/controllers/`.
+With AssetMapper they auto-load. With Webpack Encore they don't —
+your Encore config doesn't know about them. The data-controller
+attrs in the rendered HTML do nothing. Symptoms:
+
+- Filter modal tabs render flat (`Polysource::tab()` markers
+  ignored)
+- Date presets / quick ranges / clear button on enhanced filters
+  don't fire
+
+Fix: `npm install` the controllers as a node module pointing at
+the path, OR copy the controller files into your `assets/`
+directory and import them in `bootstrap.js`:
+
+```js
+import filterModalLayoutController from './polysource_filter_modal_layout_controller.js';
+app.register('polysource--filter-modal-layout', filterModalLayoutController);
+```
+
+The chips bar + saved-views dropdown work either way (server-
+rendered HTML, no JS dependency).
+
 ## Validation checklist
 
 After installing:
