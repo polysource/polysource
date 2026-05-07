@@ -185,6 +185,17 @@ final class SavedViewController
                 $value = $config['values'];
             }
 
+            // Polysource between shape: `?filter[X][op]=between&[min]=..&[max]=..`
+            // packs min/max as direct siblings of op (not nested in
+            // `value`). Promote into the EA-shaped `{min, max}`
+            // envelope so the next branch picks them up.
+            if ($value === null && (isset($config['min']) || isset($config['max']))) {
+                $value = [
+                    'min' => $config['min'] ?? '',
+                    'max' => $config['max'] ?? '',
+                ];
+            }
+
             if ($value === '' || $value === null || (\is_array($value) && $value === [])) {
                 continue;
             }
