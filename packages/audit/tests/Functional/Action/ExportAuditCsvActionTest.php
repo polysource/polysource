@@ -39,7 +39,13 @@ final class ExportAuditCsvActionTest extends TestCase
             paths: [\dirname(__DIR__, 3) . '/src/Storage/Doctrine'],
             isDevMode: true,
         );
-        $config->enableNativeLazyObjects(true);
+        // Doctrine ORM 3.x: opt into PHP 8.4 native lazy objects only on PHP 8.4+.
+        // The method itself is fine to call but requires 8.4 to actually enable proxies.
+        // On older PHPs Doctrine falls back to symfony/var-exporter ghosts; these test
+        // entities have no associations so no proxy is ever materialised either way.
+        if (\PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->em = new EntityManager($connection, $config);
 

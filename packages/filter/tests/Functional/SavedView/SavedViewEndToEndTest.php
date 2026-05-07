@@ -57,10 +57,14 @@ final class SavedViewEndToEndTest extends TestCase
             paths: [\dirname(__DIR__, 3) . '/src/SavedView/Storage/Doctrine'],
             isDevMode: true,
         );
-        // Doctrine 3.x defaults to lazy-ghost proxies that require
-        // either symfony/var-exporter or PHP 8.4 native objects. We're
-        // on PHP 8.4 in CI — opt into the native variant.
-        $config->enableNativeLazyObjects(true);
+        // Doctrine 3.x defaults to lazy-ghost proxies that require either
+        // symfony/var-exporter or PHP 8.4 native objects. The CI matrix
+        // spans PHP 8.1→8.4, so gate the native opt-in on 8.4+ — older
+        // PHPs fall back to symfony/var-exporter (always available via
+        // Symfony 6.2+), and this entity has no associations anyway.
+        if (\PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->entityManager = new EntityManager($connection, $config);
 

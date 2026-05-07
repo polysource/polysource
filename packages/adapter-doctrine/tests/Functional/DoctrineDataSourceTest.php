@@ -35,7 +35,10 @@ final class DoctrineDataSourceTest extends TestCase
             paths: [\dirname(__DIR__) . '/Fixture'],
             isDevMode: true,
         );
-        $config->enableNativeLazyObjects(true);
+        // Doctrine ORM 3.x native lazy objects gated on PHP 8.4 — see audit tests.
+        if (\PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->em = new EntityManager($connection, $config);
 

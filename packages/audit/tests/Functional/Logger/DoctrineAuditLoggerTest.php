@@ -37,8 +37,13 @@ final class DoctrineAuditLoggerTest extends TestCase
             isDevMode: true,
         );
         // Doctrine 3.x lazy-ghost proxies need PHP 8.4 native objects
-        // or symfony/var-exporter. Opt-in to the native variant.
-        $config->enableNativeLazyObjects(true);
+        // or symfony/var-exporter. Opt-in to the native variant only on PHP 8.4+
+        // — older PHPs fall back to symfony/var-exporter ghosts (which Symfony 6.2+
+        // ships transitively). Test entities have no associations so this is moot
+        // either way, but the call itself fails on PHP < 8.4 with ORM 3.x.
+        if (\PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $config);
         $this->em = new EntityManager($connection, $config);
 
