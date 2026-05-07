@@ -10,6 +10,7 @@ use Polysource\Filter\SavedView\Exception\SavedViewDuplicateNameException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
+use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,6 +48,7 @@ final class SavedViewController
     public function __construct(
         private readonly SavedViewService $service,
         private readonly Security $security,
+        private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
     }
 
@@ -80,13 +82,36 @@ final class SavedViewController
             return $this->redirectToReferrer($request);
         }
 
+        $scope = SavedViewScope::tryFrom($scopeRaw) ?? SavedViewScope::PRIVATE;
+        $teamId = null;
+
+        if (SavedViewScope::TEAM === $scope) {
+            // SavedView's invariant: TEAM scope requires a non-empty
+            // teamId. Resolve it via the optional team resolver. When
+            // the host hasn't wired one (or the resolver returns null
+            // for this user), the view falls back to PRIVATE so the
+            // save doesn't crash with InvalidArgumentException.
+            $teamId = null !== $this->teamResolver
+                ? $this->teamResolver->teamIdFor($user)
+                : null;
+            if (null === $teamId || '' === $teamId) {
+                $scope = SavedViewScope::PRIVATE;
+                $this->flash(
+                    $request,
+                    'warning',
+                    'Team scope unavailable (no team resolver wired or user has no team) — saved as private instead.',
+                );
+            }
+        }
+
         $view = new SavedView(
             id: Uuid::v7()->toRfc4122(),
             name: $name,
             resourceName: $resource,
             ownerId: $user->getUserIdentifier(),
-            scope: SavedViewScope::tryFrom($scopeRaw) ?? SavedViewScope::PRIVATE,
+            scope: $scope,
             filters: new FilterCollection($resource, $criteria),
+            teamId: $teamId,
         );
 
         try {

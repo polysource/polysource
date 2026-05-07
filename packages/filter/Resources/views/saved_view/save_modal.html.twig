@@ -64,9 +64,21 @@
                             <option value="private" selected>
                                 {{ 'polysource.saved_views.scope.private'|trans({}, 'PolysourceFilter') }}
                             </option>
-                            <option value="team">
-                                {{ 'polysource.saved_views.scope.team'|trans({}, 'PolysourceFilter') }}
-                            </option>
+                            {# Hide the TEAM option when no team
+                             # resolver is wired — picking it would
+                             # otherwise raise an
+                             # InvalidArgumentException from the
+                             # SavedView constructor (TEAM requires
+                             # a non-empty teamId). The bridge's
+                             # SavedViewController also falls back to
+                             # PRIVATE in that case as a safety net,
+                             # but hiding the option avoids a
+                             # surprising downgrade for the user. #}
+                            {% if polysource_team_scope_supported() %}
+                                <option value="team">
+                                    {{ 'polysource.saved_views.scope.team'|trans({}, 'PolysourceFilter') }}
+                                </option>
+                            {% endif %}
                             <option value="public">
                                 {{ 'polysource.saved_views.scope.public'|trans({}, 'PolysourceFilter') }}
                             </option>

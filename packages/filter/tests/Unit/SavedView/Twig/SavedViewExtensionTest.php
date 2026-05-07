@@ -30,11 +30,12 @@ final class SavedViewExtensionTest extends TestCase
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        self::assertCount(2, $functions);
+        self::assertCount(3, $functions);
 
         $names = array_map(static fn ($f) => $f->getName(), $functions);
         self::assertContains('saved_views_dropdown', $names);
         self::assertContains('polysource_route_exists', $names);
+        self::assertContains('polysource_team_scope_supported', $names);
 
         $matched = array_values(array_filter($functions, static fn ($f) => $f->getName() === 'saved_views_dropdown'));
         self::assertNotEmpty($matched, 'saved_views_dropdown function must be exposed');

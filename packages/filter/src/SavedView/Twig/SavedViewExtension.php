@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Filter\SavedView\Twig;
 
 use Polysource\Filter\SavedView\SavedViewService;
+use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\RouterInterface;
 use Throwable;
@@ -43,6 +44,7 @@ final class SavedViewExtension extends AbstractExtension
         private readonly SavedViewService $service,
         private readonly Environment $twig,
         private readonly ?RouterInterface $router = null,
+        private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
     }
 
@@ -61,7 +63,23 @@ final class SavedViewExtension extends AbstractExtension
                 'polysource_route_exists',
                 $this->routeExists(...),
             ),
+            new TwigFunction(
+                'polysource_team_scope_supported',
+                $this->teamScopeSupported(...),
+            ),
         ];
+    }
+
+    /**
+     * Probe whether the host has wired a team resolver. Used by the
+     * save-modal template to hide the TEAM scope option when no
+     * resolver is registered — picking it would otherwise raise an
+     * `InvalidArgumentException` from the SavedView constructor
+     * because TEAM scope requires a non-empty teamId.
+     */
+    public function teamScopeSupported(): bool
+    {
+        return null !== $this->teamResolver;
     }
 
     public function renderDropdown(
