@@ -308,5 +308,4 @@ final class SavedViewService
 
         $session->remove(self::SESSION_KEY_PREFIX . $resourceName);
     }
-
 }
