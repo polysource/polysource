@@ -104,6 +104,15 @@ final class ControllerSupport
             if (!$this->isActionAllowed($action)) {
                 continue;
             }
+            // Honour ActionInterface::isDisplayed() — hosts use it
+            // to hide actions conditionally (e.g. "Cancel" on a
+            // terminal job). The context array stays empty here
+            // because the index page collects per-resource (no
+            // record yet); per-record gating is the template's job
+            // (it has the DataRecord in scope).
+            if (!$action->isDisplayed()) {
+                continue;
+            }
             $view = [
                 'name' => $action->getName(),
                 'label' => $action->getLabel(),
