@@ -1,11 +1,27 @@
 # Polysource
 
-> Two complementary tools for Symfony admin panels — sharing the same primitives, usable together or alone.
+> **Admin anything from Symfony — and bring your own everything.**
+>
+> A Symfony admin engine built on **14+ public extension points** (1 to 5 methods each). Plug in your data source, your search backend, your audit sink, your dashboard tiles, your permission backend, your filter formatter — without forking a single line. The 16 bundled packages are themselves implementations of these contracts; yours sit next to them as equal citizens.
 
-1. **`polysource/easyadmin-filter-bridge`** — a drop-in package that **enriches the filters of an existing EasyAdmin v5 app** (date presets, range pickers, multi-select, between, session persistence, chips bar, saved views) **without forking EasyAdmin**.
-2. **`polysource/admin`** — a standalone admin toolkit for resources that **don't live in a Doctrine ORM database**: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch documents, configurations, jobs, webhooks.
+**What you get out of the box** that goes beyond the usual Doctrine-CRUD admin :
 
-Both products share the same underlying primitives (`polysource/core` + `polysource/filter`) and can run side-by-side in the same Symfony app.
+- 🔌 **6 adapters** ready: Doctrine, Messenger, Redis, S3 / Flysystem, HTTP REST, Meilisearch — each ~80-300 LOC and a model for the next one you'll write
+- 🔍 **Cmd+K cross-resource search palette** with a 3-method provider contract (Algolia / ES / your service in 30 min)
+- 📊 **Dashboard widgets** (KPI counters, top-N lists, sparkline charts) composable in code
+- 📝 **Saved views** — per-user / per-team / public, owner-aware voter, dropdown auto-wired
+- ⚡ **Async bulk actions** over Messenger with live Mercure progress + cancel mid-flight (retry 5 000 failed messages without timing out)
+- 🛡️ **GDPR Art. 30 / HIPAA audit trail** with a 1-method `AuditLoggerInterface` (pipe to Splunk, Datadog, your SIEM)
+- 🔄 **Symfony Workflow integration** — auto-generated transition buttons + state chip per resource
+- 🎯 **Field-level + action-level + resource-level permissions** through one `PermissionInterface` (Symfony default; swap for OPA / LDAP / custom)
+- 🎨 **Enhanced filter UX** — date presets, range pickers, multi-select, between, session persistence, chips bar — usable standalone OR dropped into an existing EasyAdmin v5 app **without forking**
+
+**Two products, same primitives, run side-by-side in the same app:**
+
+1. **`polysource/easyadmin-filter-bridge`** — drop next to your existing EasyAdmin v5 install, gain everything in the filter list above. Zero EA fork.
+2. **`polysource/admin`** — standalone admin for resources outside Doctrine ORM: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch indexes, configurations, jobs, webhooks.
+
+→ **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — every contract, every method count, every registration tag, with sample code.
 
 ---
 
@@ -50,16 +66,11 @@ Each demo is a self-contained Docker compose; first `make demo*` triggers a one-
 
 ## Why Polysource
 
-Most Symfony admin engines (EasyAdmin, Sonata, etc.) are designed around Doctrine ORM entities. They're excellent for that — but they don't naturally cover:
+Symfony's admin landscape is mature for one shape of resource: a Doctrine ORM entity with a CRUD lifecycle. Anything else — a queue, a feature flag, a file on S3, an upstream REST API, a search index, a config file — sits outside that shape, and the admin engines that do it well are scarce.
 
-- **Messenger failed messages** (no built-in UI to retry/dismiss/purge)
-- **Feature flags** stored in Redis or a custom store
-- **Files** on local filesystem, S3, Azure, GCS
-- **External REST APIs** that you operate but don't own the schema of
-- **Meilisearch / Elasticsearch documents**
-- **Background jobs**, **webhooks**, **YAML/JSON configuration**
+Polysource starts from the other end. The contract a resource has to satisfy is **3 read methods + 3 write methods**, no Doctrine inheritance, no entity manager required. Once it satisfies that, every capability the framework ships — filters, saved views, audit log, bulk async, search palette, dashboard widgets, workflow integration — applies uniformly across **whatever** the resource is.
 
-Polysource was built for those cases — and along the way, the `polysource/easyadmin-filter-bridge` was carved out to fix the parts of EasyAdmin's filter UX that bother Doctrine users too.
+That's why the same engine handles your products table AND your Messenger failed transport AND your Redis feature-flags AND your Meilisearch index in one admin, with one auth model, one audit trail, one progress tracker.
 
 ## What it is **not**
 
@@ -100,9 +111,9 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Architecture decisions (ADR)](./docs/adr/) — 25 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
 - [Roadmap / development plan](./docs/roadmap/development-plan.md)
 
-## Extend it — 14+ public extension points, zero forks
+## Bring your own everything — the contract reference
 
-Every visible feature is a thin shell over a contract you can re-implement.
+The opening pitch in one table. **Most contracts are 1-5 methods** — that's the design budget; past 5 we open an ADR (cf. [ADR-010](./docs/adr/0010-core-api-surface-criterion.md)).
 
 | You want to… | Implement | Methods | Time |
 |---|---|---|---|
@@ -112,11 +123,13 @@ Every visible feature is a thin shell over a contract you can re-implement.
 | Render a custom dashboard tile | `WidgetInterface` | **5** | 1 hour |
 | Persist saved views in Redis instead of Doctrine | `SavedViewStorageInterface` | **5** | 1 hour |
 | Replace the permission backend (LDAP / OPA / custom voter) | `PermissionInterface` | **1** | 15 min |
+| Custom HTTP pagination (Link headers, RFC 5988…) | `PaginationStrategyInterface` | **2** | 30 min |
+| Format a filter chip your way | `ChipFormatterInterface` | **1** | 10 min |
 | Ship a self-contained capability bundle | `AdminPluginInterface` + `#[AsPlugin]` | **3 metadata** | 1 hour |
 
-**Most contracts are 1-5 methods.** That's the design budget — past 5, we open an ADR (cf. [ADR-010](./docs/adr/0010-core-api-surface-criterion.md)).
+**No global registries, no XML, no magic.** Every extension is a Symfony service tag scanned by `tagged_iterator(...)`. Discoverable by reading `services.php`.
 
-→ **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — 14 extension points with sample code, registration pattern, and "anti-patterns we explicitly resist".
+→ **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — 14 extension points with sample code, registration pattern, and the anti-patterns we explicitly resist.
 
 → **Cookbook**: [build your own adapter](./docs/user/cookbook/build-your-own-adapter.md) — patterns we learned shipping the 6 bundled adapters.
 
