@@ -74,7 +74,7 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
             return;
         }
 
-        $newQuery = self::criteriaToEaQuery($view->filters);
+        $newQuery = $this->criteriaToEaQuery($view->filters, $crud->getFiltersConfig());
         if ($newQuery === []) {
             return;
         }
@@ -89,19 +89,39 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Translate a Polysource FilterCollection back to EA's URL shape:
-     *   filters[<property>][comparison]=<op>
-     *   filters[<property>][value]=<scalar>|<list>
+     * Translate a Polysource FilterCollection back to EA's URL shape.
+     * The shape DEPENDS on each filter's FormType:
      *
-     * @return array{}|array{filters: non-empty-array<string, array{comparison: string, value: mixed}>}
+     * - Filters whose FormType is `BooleanFilterType` (a Symfony
+     *   ChoiceType, no comparison/value envelope) → bare scalar:
+     *   `filters[<property>]=<scalar>`.
+     * - Every other FormType (ComparisonFilterType-derived: text,
+     *   numeric, datetime, choice with multiple, ...) → envelope:
+     *   `filters[<property>][comparison]=<op>&[value]=<v>`.
+     *
+     * Without this dispatch, replaying a saved BooleanFilter view
+     * would emit the envelope shape that the underlying ChoiceType
+     * doesn't understand → form binding silently drops the slice
+     * → no filter applied → table shows wrong rows even though the
+     * chips bar renders correctly (chips read the URL verbatim).
+     *
+     * @return array{}|array{filters: non-empty-array<string, mixed>}
      */
-    private static function criteriaToEaQuery(\Polysource\Filter\Model\FilterCollection $collection): array
-    {
+    private function criteriaToEaQuery(
+        \Polysource\Filter\Model\FilterCollection $collection,
+        \EasyCorp\Bundle\EasyAdminBundle\Dto\FilterConfigDto $filtersConfig,
+    ): array {
         $filters = [];
 
         foreach ($collection as $criterion) {
             $property = $criterion->property;
             $values = $criterion->values;
+
+            if ($this->filterUsesBareScalarShape($filtersConfig, $property)) {
+                $first = $values[0] ?? '';
+                $filters[$property] = \is_scalar($first) ? (string) $first : '';
+                continue;
+            }
 
             $entry = match ($criterion->operator) {
                 'eq' => ['comparison' => '=', 'value' => $values[0] ?? ''],
@@ -111,7 +131,7 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
                 'lt' => ['comparison' => '<', 'value' => $values[0] ?? ''],
                 'lte' => ['comparison' => '<=', 'value' => $values[0] ?? ''],
                 'like' => ['comparison' => 'like', 'value' => $values[0] ?? ''],
-                'in' => ['comparison' => 'in', 'value' => array_values($values)],
+                'in' => ['comparison' => '=', 'value' => array_values($values)],
                 'between' => [
                     'comparison' => 'between',
                     'value' => ['min' => $values[0] ?? '', 'max' => $values[1] ?? ''],
@@ -123,5 +143,39 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
         }
 
         return $filters !== [] ? ['filters' => $filters] : [];
+    }
+
+    /**
+     * Probe the FilterConfigDto for the FormType registered against
+     * the given property. Returns true when that FormType is
+     * `BooleanFilterType` (or any subclass) — those don't use the
+     * comparison/value envelope.
+     */
+    private function filterUsesBareScalarShape(
+        \EasyCorp\Bundle\EasyAdminBundle\Dto\FilterConfigDto $filtersConfig,
+        string $property,
+    ): bool {
+        $declared = $filtersConfig->getFilter($property);
+        if (null === $declared) {
+            return false;
+        }
+
+        // FilterInterface objects expose getFormType() via
+        // getAsDto(); strings (bare property name registered via
+        // `->add('foo')`) don't and resolve to nothing.
+        if (\is_string($declared)) {
+            return false;
+        }
+
+        $formType = $declared->getAsDto()->getFormType();
+        if (null === $formType) {
+            return false;
+        }
+
+        return is_a(
+            $formType,
+            \EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType::class,
+            allow_string: true,
+        );
     }
 }

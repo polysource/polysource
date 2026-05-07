@@ -202,10 +202,17 @@ final class SavedViewController
             }
 
             // Indexed list → in (multi-select choice).
+            // Force `in` regardless of the comparison operator
+            // EA may carry: EA's ChoiceFilter with canSelectMultiple
+            // submits as `?filters[X][comparison]==&[value][]=a&[value][]=b`.
+            // Translating `=` to `eq` would store an exact-equality
+            // criterion against a list, which the data sources can't
+            // honour. The semantic of "value IS one of these" is
+            // always `in` — fall through.
             if (\is_array($value) && $value === array_values($value)) {
                 $criteria[] = new FilterCriterion(
                     $field,
-                    self::mapComparison($comparison, 'in'),
+                    'in',
                     array_values(array_map(static fn ($v): string => \is_scalar($v) ? (string) $v : '', $value)),
                 );
                 continue;
