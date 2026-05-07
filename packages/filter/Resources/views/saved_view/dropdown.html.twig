@@ -33,10 +33,22 @@
         {%- else -%}
             {%- for view in views -%}
                 {%- set is_owner = app.user is defined and app.user is not null and app.user.userIdentifier == view.ownerId -%}
+                {# Preserve every query param the host needs (EA's
+                 # `routeName`, `crudControllerFqcn`, `crudAction`, …)
+                 # while replacing/dropping the filter slices and any
+                 # previous `view`. A bare `?view=X` link otherwise
+                 # truncates the entire query string, which on an EA
+                 # page strips the `crudControllerFqcn` selector and
+                 # the saved-view apply listener no longer knows
+                 # which CRUD to redirect to. #}
+                {%- set view_query = app.request is defined and app.request is not null
+                    ? app.request.query.all|default({})
+                    : {} -%}
+                {%- set view_query = view_query|filter((v, k) => k not in ['filter', 'filters', 'view'])|merge({'view': view.id}) -%}
                 <li class="d-flex align-items-center polysource-saved-views__row">
                     <a class="dropdown-item polysource-saved-views__item flex-grow-1
                               {{ current is not null and current.id == view.id ? 'active' : '' }}"
-                       href="?view={{ view.id|url_encode }}"
+                       href="{{ (app.request is defined and app.request is not null ? app.request.pathInfo : '') }}?{{ view_query|url_encode }}"
                        data-view-id="{{ view.id }}">
                         <span class="polysource-saved-views__item-name">{{ view.name }}</span>
                         {%- if view.scope.value != 'private' -%}
@@ -100,8 +112,16 @@
                  # bridge identifies the resource by entity FQCN
                  # query param). Embedding it makes the listener
                  # work uniformly on Polysource AND EA pages. #}
+                {# Preserve EA's CRUD-routing query params on the
+                 # clear link too — a bare `?clear-view=...` would
+                 # strip `crudControllerFqcn` & co on EA pages and
+                 # leave the redirect target ambiguous. #}
+                {%- set clear_query = app.request is defined and app.request is not null
+                    ? app.request.query.all|default({})
+                    : {} -%}
+                {%- set clear_query = clear_query|filter((v, k) => k not in ['filter', 'filters', 'view', 'clear-view'])|merge({'clear-view': resource_name}) -%}
                 <a class="dropdown-item polysource-saved-views__clear text-danger"
-                   href="?clear-view={{ resource_name|url_encode }}">
+                   href="{{ (app.request is defined and app.request is not null ? app.request.pathInfo : '') }}?{{ clear_query|url_encode }}">
                     {{ 'polysource.saved_views.dropdown.clear'|trans({}, 'PolysourceFilter') }}
                 </a>
             </li>
