@@ -13,6 +13,7 @@ what Doctrine-ORM-centric solutions don't cover.
 
 | If you want to… | Read |
 |---|---|
+| **🔌 Extend Polysource — 14+ extension points, zero forks** | [**extensibility.md**](./extensibility.md) |
 | **See Polysource in action with screenshots** | [showcase-tour.md](./showcase-tour.md) |
 | Install Polysource in a Symfony 5.4+ app (any minor since 5.4) | [installation.md](./installation.md) |
 | Get a working dashboard in 5 minutes | [getting-started.md](./getting-started.md) |

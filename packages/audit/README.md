@@ -36,6 +36,28 @@ return [
 
 Run the migration to create `polysource_audit_log`.
 
+## Extend it
+
+`AuditLoggerInterface` is **1 method** (`log(AuditEntry $entry)`). To pipe events to Splunk, Datadog, OpenSearch, or any SIEM:
+
+```php
+#[AutoconfigureTag('polysource.audit.logger')]
+final class SplunkAuditLogger implements AuditLoggerInterface
+{
+    public function log(AuditEntry $entry): void
+    {
+        $this->splunk->send([
+            'time' => $entry->occurredAt->format(\DateTimeInterface::ATOM),
+            'event' => $entry->actionName,
+            'actor' => $entry->actorId,
+            'outcome' => $entry->outcome->value,
+        ]);
+    }
+}
+```
+
+The `AggregateAuditLogger` fan-outs across every tagged logger with try/catch isolation — Splunk timing out doesn't break the Doctrine write. See [extensibility map](../../docs/user/extensibility.md#4-pipe-audit-log-to-your-siem).
+
 ## Documentation
 
 - [Audit walkthrough](../../docs/user/audit/)

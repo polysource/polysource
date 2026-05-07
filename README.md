@@ -100,6 +100,26 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Architecture decisions (ADR)](./docs/adr/) — 25 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
 - [Roadmap / development plan](./docs/roadmap/development-plan.md)
 
+## Extend it — 14+ public extension points, zero forks
+
+Every visible feature is a thin shell over a contract you can re-implement.
+
+| You want to… | Implement | Methods | Time |
+|---|---|---|---|
+| Admin a new data source (Stripe, your microservice, a queue) | `DataSourceInterface` | **3** read + 3 write | 1-2 hours |
+| Plug a custom backend into Cmd+K search | `SearchProviderInterface` | **3** | 30 min |
+| Pipe audit log to Splunk / Datadog / a SIEM | `AuditLoggerInterface` | **1** | 15 min |
+| Render a custom dashboard tile | `WidgetInterface` | **5** | 1 hour |
+| Persist saved views in Redis instead of Doctrine | `SavedViewStorageInterface` | **5** | 1 hour |
+| Replace the permission backend (LDAP / OPA / custom voter) | `PermissionInterface` | **1** | 15 min |
+| Ship a self-contained capability bundle | `AdminPluginInterface` + `#[AsPlugin]` | **3 metadata** | 1 hour |
+
+**Most contracts are 1-5 methods.** That's the design budget — past 5, we open an ADR (cf. [ADR-010](./docs/adr/0010-core-api-surface-criterion.md)).
+
+→ **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — 14 extension points with sample code, registration pattern, and "anti-patterns we explicitly resist".
+
+→ **Cookbook**: [build your own adapter](./docs/user/cookbook/build-your-own-adapter.md) — patterns we learned shipping the 6 bundled adapters.
+
 ## Quality bar
 
 - **674 unit + functional tests / 1684 assertions** in the package matrix, plus 27 integration tests in the showcase

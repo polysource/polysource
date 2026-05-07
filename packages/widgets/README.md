@@ -31,6 +31,22 @@ return [
 ];
 ```
 
+## Extend it
+
+`WidgetInterface` is **5 methods**. Drop in a custom tile in 1 hour:
+
+```php
+#[AutoconfigureTag('polysource.widgets.dashboard')]
+final class IncidentRotatorWidget extends AbstractWidget
+{
+    public function getName(): string { return 'incident_rotator'; }
+    public function getTemplate(): string { return '@App/widgets/incident_rotator.html.twig'; }
+    public function getData(): array { /* return what your template needs */ }
+}
+```
+
+See [extensibility map](../../docs/user/extensibility.md#5-custom-dashboard-widgets).
+
 ## Documentation
 
 - [Widgets walkthrough](../../docs/user/widgets/)

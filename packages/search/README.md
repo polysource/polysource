@@ -19,6 +19,25 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 
 See [ADR-023](../../docs/adr/0023-global-search-palette.md). Future bridges (`search-meilisearch`, `search-algolia`, `search-elasticsearch`) extend via `SearchProviderInterface`.
 
+## Extend it
+
+`SearchProviderInterface` is **3 methods** (`getId` / `getLabel` / `search`). To plug Algolia, Elasticsearch, your custom service into the Cmd+K palette:
+
+```php
+#[AutoconfigureTag('polysource.search.provider')]
+final class AlgoliaSearchProvider implements SearchProviderInterface
+{
+    public function getId(): string { return 'algolia:products'; }
+    public function getLabel(): string { return 'Products (Algolia)'; }
+    public function search(string $query, int $limit, float $deadline): array
+    {
+        // Respect the deadline; the aggregator enforces a 250ms global budget.
+    }
+}
+```
+
+Done. The aggregator fan-outs across every tagged provider. See [extensibility map](../../docs/user/extensibility.md#2-plug-into-the-cmdk-search-palette).
+
 ## Install
 
 ```bash

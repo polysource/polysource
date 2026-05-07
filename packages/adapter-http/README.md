@@ -28,6 +28,20 @@ return [
 ];
 ```
 
+## Extend it
+
+For an API that paginates in an unusual way (link headers, X-Pagination, RFC 5988…), implement `PaginationStrategyInterface` (2 methods):
+
+```php
+final class LinkHeaderPaginationStrategy implements PaginationStrategyInterface
+{
+    public function buildRequest(DataQuery $query): array { /* return query + headers */ }
+    public function parseResponse(ResponseInterface $response): DataPage { /* parse Link header */ }
+}
+```
+
+Inject into `HttpDataSource`. No fork needed. See [extensibility map](../../docs/user/extensibility.md#6-custom-http-pagination-strategy).
+
 ## Documentation
 
 - [Adapter HTTP guide](../../docs/user/adapters/http.md)

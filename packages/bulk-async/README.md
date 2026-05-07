@@ -41,6 +41,12 @@ return [
 
 Run the migration to create `polysource_bulk_jobs`.
 
+## Extend it
+
+`BulkJobStorageInterface` is **3 methods**. To persist jobs in Redis / Mongo / your service instead of Doctrine, implement it and alias the interface to your service in DI. The handler, the `ProgressController`, the Mercure broadcaster all keep working.
+
+See [extensibility map](../../docs/user/extensibility.md#11-14-the-rest-in-one-breath).
+
 ## Documentation
 
 - [Bulk-async walkthrough](../../docs/user/bulk-async/)

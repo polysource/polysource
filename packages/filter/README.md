@@ -37,6 +37,17 @@ return [
 ];
 ```
 
+## Extend it
+
+| Need | Implement |
+|---|---|
+| Persist saved views in Redis / Mongo / your HTTP service | `SavedViewStorageInterface` (5 methods) |
+| Resolve which "team" a user belongs to (for shared views) | `SavedViewTeamResolverInterface` (1 method) |
+| Format a chip your way ("3 statuses" instead of "paid, shipped, …") | `ChipFormatterInterface` (1 method, ADR-016) |
+| Take over the URL → criteria → form pipeline | `FilterMapperInterface` / `FilterFormatterInterface` / `FilterRendererInterface` |
+
+See the [full extensibility map](../../docs/user/extensibility.md).
+
 ## Documentation
 
 - [Filter walkthrough](../../docs/user/filter/)
