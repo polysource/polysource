@@ -116,7 +116,7 @@ Anti-inspirations :
 | Licence | **MIT** (compatible avec EasyAdmin pour réutilisation des templates Twig) |
 | Hébergement | GitHub `github.com/polysource/polysource`, monorepo avec composer split par package |
 | Versionning | SemVer strict. Avant v1.0, classes `@experimental` peuvent évoluer. Après v1.0, gel API. |
-| CI | GitHub Actions, matrix PHP 8.2/8.3/8.4 × Symfony 6.4/7.0/7.1 |
+| CI | GitHub Actions, matrix PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0 (cf. ADR-015) |
 | Coverage | `core` ≥ 90 % unit tests, intégration testcontainers par adapter |
 | Gouvernance | Solo-mainteneur première année, ouverture progressive à des co-mainteneurs par adapter |
 | Contribution | CONTRIBUTING.md formel, ADR publics pour décisions structurantes, issues étiquetées par adapter |
@@ -127,42 +127,47 @@ Anti-inspirations :
 
 Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque package a son propre `composer.json`, son propre `composer install`, et est publié indépendamment sur Packagist.
 
-### Packages v0.1 (sortie initiale, ~12-14 semaines après pivot ADR-012)
+### Packages v0.1 (16 packages livrés sur `main`, tag en cours)
 
-**Primitives partagées** (utilisables seules) :
+**Primitives partagées** (utilisables seules, zéro Symfony dans `core`) :
 
 - `polysource/core` — contracts + value objects, **zéro dépendance Symfony**
-- `polysource/filter` — `FilterCollection`, `FilterService` (session), form
-  types abstraits, Twig extension `filter_tags` (utilisable seul, sans
-  Polysource Admin ni EasyAdmin)
+- `polysource/filter` — `FilterCollection`, `FilterService` (session), saved
+  views, enhanced form types, Twig extension `filter_tags` (utilisable seul,
+  sans Polysource Admin ni EasyAdmin)
 
 **Produit 1 — `polysource/admin` standalone** :
 
 - `polysource/symfony-bundle` — wiring (DI, routing, ArgumentResolvers, Twig)
 - `polysource/twig-theme` — templates Twig par défaut (copiés et adaptés depuis EasyAdmin v5, MIT)
-- `polysource/adapter-messenger` — adapter showcase (failed messages + queue)
+- 6 adapters : `polysource/adapter-{messenger,doctrine,redis,flysystem,http,meilisearch}`
 
 **Produit 2 — Bridge EasyAdmin** :
 
 - `polysource/easyadmin-filter-bridge` — `FilterConfiguratorInterface`
-  auto-tagués, enhanced form types, EventSubscriber session, override Twig
-  de `crud/filters.html.twig`. Ne touche pas au code d'EasyAdmin.
+  auto-tagués, enhanced form types, 4 custom filters (Between/In/NotNull/FullText),
+  EventSubscribers (session, saved-view apply), override Twig. Ne touche pas
+  au code d'EasyAdmin.
 
-### Packages v0.2 (3 mois après v0.1)
+**Capabilités transverses (opt-in, packages séparés)** :
 
-- `polysource/adapter-doctrine` — adapter Doctrine pour `polysource/admin`
-  (cohabitation avec EasyAdmin sur des cas légers)
-- `polysource/adapter-flysystem` — fichiers locaux et S3 via league/flysystem
+- `polysource/audit` — log GDPR Art. 30 / HIPAA des actions admin (Doctrine
+  storage, CSV export, retention purge)
+- `polysource/bulk-async` — bulk actions over Messenger avec progression
+  live (Mercure) + cancel mid-flight
+- `polysource/widgets` — widgets dashboard (KPI counters, top-N lists,
+  sparkline charts)
+- `polysource/search` — palette Cmd+K cross-resource avec aggregator fan-out
+- `polysource/workflow-bridge` — intégration Symfony Workflow (transition
+  buttons auto, state chip)
 
-### Packages v0.3 (6 mois après v0.1)
+### Packages post-v0.1 (à demande utilisateur réel uniquement)
 
-- `polysource/adapter-http` — APIs REST externes via Symfony HttpClient
-- `polysource/adapter-redis` — feature flags, hashes Redis
-
-### Packages v1.0 (12 mois, scope strict)
-
-- `polysource/adapter-meilisearch` — index Meilisearch
-- `polysource/adapter-config` — fichiers YAML/JSON
+- `polysource/adapter-config` — fichiers YAML/JSON (déjà couvert partiellement
+  par `polysource/adapter-flysystem` pour les contenus, à matérialiser si
+  besoin de form binding spécifique)
+- Bridges futurs (`search-meilisearch`, `search-algolia`, `search-elasticsearch`)
+  — extensions du package `polysource/search` via `SearchProviderInterface`
 
 **Aucun package supplémentaire ne sera ajouté avant v1.0 sans utilisateur identifié qui en a besoin.** Voir le plan détaillé dans [`../roadmap/development-plan.md`](../roadmap/development-plan.md).
 
@@ -189,11 +194,11 @@ Liste prioritisée des risques principaux pour la v0.1.
 ## 9. Critères de succès
 
 À 6 mois :
-- [ ] v0.1.0 publiée sur Packagist (les 6 packages : `core`, `filter`,
-      `symfony-bundle`, `twig-theme`, `adapter-messenger`,
-      `easyadmin-filter-bridge`)
+- [ ] v0.1.0 publiée sur Packagist (16 packages — primitives, bundle, theme,
+      6 adapters, 5 capacités transverses, bridge EasyAdmin)
 - [ ] démo Messenger failed disponible et fonctionnelle
 - [ ] démo « EasyAdmin avant/après » disponible (avec et sans le bridge)
+- [ ] showcase ShopCo SaaS (cf. ADR-025) déployée — hero du launch
 - [ ] 5 issues utilisateur créées par des tiers
 - [ ] 50 stars cumulés sur les packages
 

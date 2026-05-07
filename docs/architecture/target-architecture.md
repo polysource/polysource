@@ -7,28 +7,38 @@
 ## 6.1 Découpage en packages
 
 ```
-polysource/                    Méta-paquet documentation + manifest
-├── polysource/core            Contracts + value objects, ZÉRO dépendance Symfony
-├── polysource/symfony-bundle  Le bundle qui câble le tout (routing, DI, ArgResolvers, Twig)
-├── polysource/twig-theme      Templates Twig, layout par défaut
-├── polysource/forms           Wrappers Symfony Form indépendants de Doctrine
+polysource/                          Monorepo — 16 packages livrés sur main (v0.1.0 pre-release)
 │
-├── polysource/adapter-doctrine    Doctrine ORM read+write
-├── polysource/adapter-doctrine-dbal  DBAL bas-niveau (sans ORM)
-├── polysource/adapter-http        HTTP API (read+write JSON)
-├── polysource/adapter-redis       Redis hash/set/zset
-├── polysource/adapter-messenger   Messenger failed transport
-├── polysource/adapter-meilisearch Meilisearch documents
-├── polysource/adapter-flysystem   Filesystem / S3 via Flysystem
-├── polysource/adapter-config      YAML/JSON config files
+├── PRIMITIVES (zéro dep Symfony dans core)
+│   ├── polysource/core              Contracts + value objects (26 types publics)
+│   └── polysource/filter            FilterCollection, FilterService session, saved views,
+│                                    enhanced form types — utilisable standalone
 │
-├── polysource/easyadmin-bridge    Permet d'utiliser EasyAdmin comme adapter Doctrine
-│                                OU permet à un projet EasyAdmin d'embarquer
-│                                un dashboard polysource
-└── polysource/maker               commandes `php bin/console make:polysource:*`
+├── PRODUIT 1 — `polysource/admin` standalone
+│   ├── polysource/symfony-bundle    Wiring (DI, routing, AdminContext, AsResource)
+│   ├── polysource/twig-theme        Templates Twig (copiés/adaptés depuis EA v5, MIT)
+│   ├── polysource/adapter-messenger Messenger failed transport read + 4 actions
+│   ├── polysource/adapter-doctrine  Doctrine ORM read + write (whitelist filter properties)
+│   ├── polysource/adapter-redis     Redis hashes via Predis (SCAN cursor pagination)
+│   ├── polysource/adapter-flysystem Files S3 / local / Azure / GCS via Flysystem
+│   ├── polysource/adapter-http      REST APIs via Symfony HttpClient (page-num + cursor)
+│   └── polysource/adapter-meilisearch Meilisearch indexes
+│
+├── PRODUIT 2 — bridge EasyAdmin
+│   └── polysource/easyadmin-filter-bridge
+│                                    FilterConfiguratorInterface auto-tagués, 4 custom
+│                                    filters, EventSubscriber session + saved-view apply,
+│                                    override Twig (zéro fork EA)
+│
+└── CAPABILITÉS TRANSVERSES (opt-in, packages séparés — cf. ADR-018 plugin architecture)
+    ├── polysource/audit             GDPR Art. 30 / HIPAA action log
+    ├── polysource/bulk-async        Bulk over Messenger + progression Mercure
+    ├── polysource/widgets           Dashboard widgets (KPI / list / chart)
+    ├── polysource/search            Cmd+K palette cross-resource (fan-out aggregator)
+    └── polysource/workflow-bridge   Symfony Workflow integration (transitions + state chip)
 ```
 
-Au lancement v0.1, **3 packages obligatoires** : `core` + `symfony-bundle` + `twig-theme` + au moins **1 adapter** (`adapter-doctrine` ou `adapter-messenger` selon la démo de lancement). Le reste arrive progressivement.
+**Pour le minimum viable v0.1** : `core` + `symfony-bundle` + `twig-theme` + 1 adapter selon le cas d'usage. Tout le reste est opt-in via `composer require polysource/<package>`.
 
 ## 6.2 Contrat de stockage — interfaces principales
 
