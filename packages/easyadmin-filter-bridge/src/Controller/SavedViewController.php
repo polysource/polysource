@@ -144,7 +144,21 @@ final class SavedViewController
             }
 
             $value = $config['value'] ?? null;
-            $comparison = \is_string($config['comparison'] ?? null) ? $config['comparison'] : '';
+            // Operator key is `comparison` in EasyAdmin's URL shape
+            // (`?filters[X][comparison]==&[value]=foo`) and `op` in
+            // Polysource's URL shape (`?filter[X][op]=like&[value]=foo`).
+            // Reading both lets the same controller handle saves from
+            // either page family.
+            $comparison = \is_string($config['comparison'] ?? null)
+                ? $config['comparison']
+                : (\is_string($config['op'] ?? null) ? $config['op'] : '');
+
+            // The Polysource shape can also pack a multi-value list as
+            // `?filter[X][values][]=a&[values][]=b` (operator usually
+            // `in`). Promote it so the list branch below sees it.
+            if ($value === null && \is_array($config['values'] ?? null) && $config['values'] !== []) {
+                $value = $config['values'];
+            }
 
             if ($value === '' || $value === null || (\is_array($value) && $value === [])) {
                 continue;
