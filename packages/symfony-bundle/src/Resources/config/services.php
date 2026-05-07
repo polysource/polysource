@@ -130,8 +130,8 @@ return static function (ContainerConfigurator $container): void {
             // `saved_views_dropdown(resourceName)` returns the real
             // dropdown HTML. Otherwise the Twig function falls back
             // to an empty string — keeps templates parsing.
-            class_exists(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
-                ? service(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)->nullOnInvalid()
+            class_exists(Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
+                ? service(Polysource\Filter\SavedView\Twig\SavedViewExtension::class)->nullOnInvalid()
                 : null,
         ])
         ->tag('twig.extension')

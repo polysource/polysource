@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\OrderRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -71,22 +72,22 @@ class Order
     private ?string $trackingNumber = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $paidAt = null;
+    private ?DateTimeImmutable $paidAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $shippedAt = null;
+    private ?DateTimeImmutable $shippedAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $deliveredAt = null;
+    private ?DateTimeImmutable $deliveredAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $cancelledAt = null;
+    private ?DateTimeImmutable $cancelledAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $refundedAt = null;
+    private ?DateTimeImmutable $refundedAt = null;
 
     /** @var Collection<int, OrderItem> */
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'order', cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -95,7 +96,7 @@ class Order
     public function __construct()
     {
         $this->id = Uuid::v7();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->items = new ArrayCollection();
     }
 
@@ -200,72 +201,72 @@ class Order
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getPaidAt(): ?\DateTimeImmutable
+    public function getPaidAt(): ?DateTimeImmutable
     {
         return $this->paidAt;
     }
 
-    public function setPaidAt(?\DateTimeImmutable $paidAt): self
+    public function setPaidAt(?DateTimeImmutable $paidAt): self
     {
         $this->paidAt = $paidAt;
 
         return $this;
     }
 
-    public function getShippedAt(): ?\DateTimeImmutable
+    public function getShippedAt(): ?DateTimeImmutable
     {
         return $this->shippedAt;
     }
 
-    public function setShippedAt(?\DateTimeImmutable $shippedAt): self
+    public function setShippedAt(?DateTimeImmutable $shippedAt): self
     {
         $this->shippedAt = $shippedAt;
 
         return $this;
     }
 
-    public function getDeliveredAt(): ?\DateTimeImmutable
+    public function getDeliveredAt(): ?DateTimeImmutable
     {
         return $this->deliveredAt;
     }
 
-    public function setDeliveredAt(?\DateTimeImmutable $deliveredAt): self
+    public function setDeliveredAt(?DateTimeImmutable $deliveredAt): self
     {
         $this->deliveredAt = $deliveredAt;
 
         return $this;
     }
 
-    public function getCancelledAt(): ?\DateTimeImmutable
+    public function getCancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
     }
 
-    public function setCancelledAt(?\DateTimeImmutable $cancelledAt): self
+    public function setCancelledAt(?DateTimeImmutable $cancelledAt): self
     {
         $this->cancelledAt = $cancelledAt;
 
         return $this;
     }
 
-    public function getRefundedAt(): ?\DateTimeImmutable
+    public function getRefundedAt(): ?DateTimeImmutable
     {
         return $this->refundedAt;
     }
 
-    public function setRefundedAt(?\DateTimeImmutable $refundedAt): self
+    public function setRefundedAt(?DateTimeImmutable $refundedAt): self
     {
         $this->refundedAt = $refundedAt;
 

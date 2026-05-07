@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\ProductRepository;
+use DateTimeImmutable;
 use League\Flysystem\FilesystemOperator;
 use Meilisearch\Endpoints\Indexes;
 use Predis\ClientInterface as PredisClient;
@@ -14,6 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Throwable;
 
 /**
  * Seed the 3 non-Doctrine backing stores so the Polysource adapter
@@ -72,13 +74,13 @@ final class SeedNonDoctrineStoresCommand extends Command
 
         // Product hot cache — 20 entries.
         for ($i = 1; $i <= 20; ++$i) {
-            $key = sprintf('shopco:cache:product:hot:%04d', $i);
+            $key = \sprintf('shopco:cache:product:hot:%04d', $i);
             $this->redis->hmset($key, [
-                'id' => sprintf('prd-%04d', $i),
-                'name' => sprintf('Hot product #%d', $i),
+                'id' => \sprintf('prd-%04d', $i),
+                'name' => \sprintf('Hot product #%d', $i),
                 'priceCents' => (string) random_int(500, 18000),
                 'stock' => (string) random_int(0, 250),
-                'cachedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
+                'cachedAt' => (new DateTimeImmutable())->format(\DATE_ATOM),
             ]);
             $this->redis->expire($key, 3600);
             ++$count;
@@ -86,18 +88,18 @@ final class SeedNonDoctrineStoresCommand extends Command
 
         // Cart sessions — 10 entries.
         for ($i = 1; $i <= 10; ++$i) {
-            $key = sprintf('shopco:cache:cart:%s', bin2hex(random_bytes(8)));
+            $key = \sprintf('shopco:cache:cart:%s', bin2hex(random_bytes(8)));
             $this->redis->hmset($key, [
                 'id' => bin2hex(random_bytes(8)),
                 'items' => (string) random_int(1, 5),
                 'totalCents' => (string) random_int(2500, 35000),
-                'updatedAt' => (new \DateTimeImmutable())->format(\DATE_ATOM),
+                'updatedAt' => (new DateTimeImmutable())->format(\DATE_ATOM),
             ]);
             $this->redis->expire($key, 1800);
             ++$count;
         }
 
-        $io->writeln(sprintf('  → %d keys written under shopco:cache:*', $count));
+        $io->writeln(\sprintf('  → %d keys written under shopco:cache:*', $count));
     }
 
     private function seedMinio(SymfonyStyle $io): void
@@ -109,7 +111,7 @@ final class SeedNonDoctrineStoresCommand extends Command
                     $this->filesystem->delete($entry->path());
                 }
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Bucket may be empty / missing — recreated on first write.
         }
 
@@ -118,17 +120,17 @@ final class SeedNonDoctrineStoresCommand extends Command
         // 10 invoice PDFs — flat naming so Polysource's detail route
         // (which forbids "/" in identifiers) can render their links.
         for ($i = 1; $i <= 10; ++$i) {
-            $path = sprintf('INV-2026-%02d-%04d.pdf', $i, 1000 + $i);
+            $path = \sprintf('INV-2026-%02d-%04d.pdf', $i, 1000 + $i);
             $this->filesystem->write(
                 $path,
-                $this->fakePdfBytes(sprintf('ShopCo Invoice INV-2026-%04d', 1000 + $i)),
+                $this->fakePdfBytes(\sprintf('ShopCo Invoice INV-2026-%04d', 1000 + $i)),
             );
             ++$count;
         }
 
         // 5 product photos — png placeholders.
         for ($i = 1; $i <= 5; ++$i) {
-            $path = sprintf('product-photo-%04d.png', $i);
+            $path = \sprintf('product-photo-%04d.png', $i);
             $this->filesystem->write(
                 $path,
                 $this->fakePngBytes(),
@@ -136,7 +138,7 @@ final class SeedNonDoctrineStoresCommand extends Command
             ++$count;
         }
 
-        $io->writeln(sprintf('  → %d files written to bucket', $count));
+        $io->writeln(\sprintf('  → %d files written to bucket', $count));
     }
 
     private function seedMeilisearch(SymfonyStyle $io): void
@@ -161,7 +163,7 @@ final class SeedNonDoctrineStoresCommand extends Command
 
         if ($documents !== []) {
             $task = $this->meiliIndex->addDocuments($documents);
-            $io->writeln(sprintf(
+            $io->writeln(\sprintf(
                 '  → %d documents pushed (task #%s, status: %s)',
                 \count($documents),
                 $task['taskUid'] ?? $task['uid'] ?? 'n/a',
@@ -179,7 +181,7 @@ final class SeedNonDoctrineStoresCommand extends Command
         $body = "%PDF-1.4\n%\xC3\xA0\xC3\xA1\xC3\xA2\xC3\xA3\n";
         $body .= '1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj ';
         $body .= '2 0 obj<</Type/Pages/Count 0/Kids[]>>endobj ';
-        $body .= sprintf('3 0 obj<</Title(%s)>>endobj ', $title);
+        $body .= \sprintf('3 0 obj<</Title(%s)>>endobj ', $title);
         $body .= "trailer<</Root 1 0 R>>\n%%EOF";
 
         return $body;

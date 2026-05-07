@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -37,12 +38,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private string $lastName = '';
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     public function __construct()
     {
         $this->id = Uuid::v7();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getId(): Uuid
@@ -122,10 +123,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getFullName(): string
     {
-        return trim(sprintf('%s %s', $this->firstName, $this->lastName));
+        return trim(\sprintf('%s %s', $this->firstName, $this->lastName));
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }

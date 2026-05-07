@@ -57,8 +57,8 @@ final class OrderCrudController extends AbstractCrudController
     {
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
-            ->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $a) => $a->setIcon('fa fa-pen'))
-            ->update(Crud::PAGE_INDEX, Action::DELETE, fn (Action $a) => $a->setIcon('fa fa-trash'))
+            ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
+            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $a) => $a->setIcon('fa fa-trash'))
             ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
     }
 

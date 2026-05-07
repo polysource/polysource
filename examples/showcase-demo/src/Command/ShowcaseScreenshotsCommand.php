@@ -90,7 +90,7 @@ final class ShowcaseScreenshotsCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $outputDir = (string) ($input->getOption('output-dir')
-            ?: $this->projectDir.'/../../docs/user/screenshots');
+            ?: $this->projectDir . '/../../docs/user/screenshots');
         $fs = new Filesystem();
         $fs->mkdir($outputDir);
 
@@ -98,10 +98,10 @@ final class ShowcaseScreenshotsCommand extends Command
         $password = (string) $input->getOption('password');
 
         $io->title('Polysource Showcase — screenshots pipeline');
-        $io->writeln(sprintf(' • Output dir : %s', realpath($outputDir) ?: $outputDir));
-        $io->writeln(sprintf(' • Login as   : %s', $email));
-        $io->writeln(sprintf(' • Selenium   : %s', $input->getOption('selenium-url')));
-        $io->writeln(sprintf(' • Base URI   : %s', $input->getOption('base-uri')));
+        $io->writeln(\sprintf(' • Output dir : %s', realpath($outputDir) ?: $outputDir));
+        $io->writeln(\sprintf(' • Login as   : %s', $email));
+        $io->writeln(\sprintf(' • Selenium   : %s', $input->getOption('selenium-url')));
+        $io->writeln(\sprintf(' • Base URI   : %s', $input->getOption('base-uri')));
         $io->newLine();
 
         $client = $this->createBrowser((string) $input->getOption('selenium-url'), (string) $input->getOption('base-uri'));
@@ -120,7 +120,7 @@ final class ShowcaseScreenshotsCommand extends Command
             $client->quit();
         }
 
-        $io->success(sprintf('%d screenshots written to %s', \count(self::JOURNEY), $outputDir));
+        $io->success(\sprintf('%d screenshots written to %s', \count(self::JOURNEY), $outputDir));
 
         return Command::SUCCESS;
     }
@@ -133,7 +133,7 @@ final class ShowcaseScreenshotsCommand extends Command
                 '--headless=new',
                 '--no-sandbox',
                 '--disable-dev-shm-usage',
-                sprintf('--window-size=%d,%d', self::VIEWPORT_WIDTH, self::VIEWPORT_HEIGHT),
+                \sprintf('--window-size=%d,%d', self::VIEWPORT_WIDTH, self::VIEWPORT_HEIGHT),
             ],
         ]);
 
@@ -243,9 +243,9 @@ final class ShowcaseScreenshotsCommand extends Command
         // Bootstrap fonts) finish before the capture.
         usleep(300_000);
 
-        $path = $outputDir.'/'.$page['slug'].'.png';
+        $path = $outputDir . '/' . $page['slug'] . '.png';
         $client->takeScreenshot($path);
 
-        $io->writeln(sprintf(' ✓ <info>%s</info>  →  %s', $page['slug'], $page['path']));
+        $io->writeln(\sprintf(' ✓ <info>%s</info>  →  %s', $page['slug'], $page['path']));
     }
 }

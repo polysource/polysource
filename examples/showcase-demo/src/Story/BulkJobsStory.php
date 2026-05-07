@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\BulkAsync\Job\BulkJobStatus;
 use Polysource\BulkAsync\Job\Doctrine\BulkJobRecord;
@@ -39,19 +40,19 @@ final class BulkJobsStory extends Story
         foreach ($jobs as [$status, $resource, $action, $count, $startedAt, $completedAt, $processed, $failed, $errorMsg]) {
             $record = new BulkJobRecord();
             $record->id = Uuid::v7()->toRfc4122();
-            $record->createdAt = new \DateTimeImmutable(sprintf('-%d hours', random_int(1, 72)));
+            $record->createdAt = new DateTimeImmutable(\sprintf('-%d hours', random_int(1, 72)));
             $record->resourceName = $resource;
             $record->actionName = $action;
             $record->actorId = 'admin@shop.co';
             $record->recordIdsJson = json_encode(
-                array_map(fn () => Uuid::v7()->toRfc4122(), range(1, min($count, 10))),
+                array_map(static fn () => Uuid::v7()->toRfc4122(), range(1, min($count, 10))),
                 \JSON_THROW_ON_ERROR,
             );
             $record->status = strtolower($status);
             $record->processedCount = $processed;
             $record->failedCount = $failed;
-            $record->startedAt = $startedAt !== null ? new \DateTimeImmutable($startedAt) : null;
-            $record->completedAt = $completedAt !== null ? new \DateTimeImmutable($completedAt) : null;
+            $record->startedAt = $startedAt !== null ? new DateTimeImmutable($startedAt) : null;
+            $record->completedAt = $completedAt !== null ? new DateTimeImmutable($completedAt) : null;
             $record->errorMessage = $errorMsg;
 
             $this->em->persist($record);

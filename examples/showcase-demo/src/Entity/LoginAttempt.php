@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\LoginAttemptRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -60,12 +61,12 @@ class LoginAttempt
     private string $status = self::STATUS_BAD_CREDENTIALS;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $occurredAt;
+    private DateTimeImmutable $occurredAt;
 
     public function __construct()
     {
         $this->id = Uuid::v7();
-        $this->occurredAt = new \DateTimeImmutable();
+        $this->occurredAt = new DateTimeImmutable();
     }
 
     public function getId(): Uuid
@@ -121,12 +122,12 @@ class LoginAttempt
         return $this;
     }
 
-    public function getOccurredAt(): \DateTimeImmutable
+    public function getOccurredAt(): DateTimeImmutable
     {
         return $this->occurredAt;
     }
 
-    public function setOccurredAt(\DateTimeImmutable $occurredAt): self
+    public function setOccurredAt(DateTimeImmutable $occurredAt): self
     {
         $this->occurredAt = $occurredAt;
 

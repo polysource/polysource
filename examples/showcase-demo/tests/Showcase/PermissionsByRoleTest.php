@@ -86,9 +86,9 @@ final class PermissionsByRoleTest extends WebTestCase
         foreach ($attributes as $attribute) {
             $granted = $checker->isGranted($attribute);
             if ($expectDeny) {
-                self::assertFalse($granted, sprintf('%s should NOT be granted %s', $email, $attribute));
+                self::assertFalse($granted, \sprintf('%s should NOT be granted %s', $email, $attribute));
             } else {
-                self::assertTrue($granted, sprintf('%s should be granted %s', $email, $attribute));
+                self::assertTrue($granted, \sprintf('%s should be granted %s', $email, $attribute));
             }
         }
     }
@@ -98,12 +98,12 @@ final class PermissionsByRoleTest extends WebTestCase
         foreach (['admin@shop.co', 'ops@shop.co', 'viewer@shop.co'] as $email) {
             $user = self::getContainer()->get('doctrine')->getRepository(User::class)
                 ->findOneBy(['email' => $email]);
-            self::assertInstanceOf(User::class, $user, sprintf('Missing fixture user %s', $email));
+            self::assertInstanceOf(User::class, $user, \sprintf('Missing fixture user %s', $email));
 
             $this->client->loginUser($user);
             $this->client->request('GET', '/');
-            self::assertResponseIsSuccessful(sprintf('%s should reach home', $email));
-            self::assertSelectorExists('.polysource-widget', sprintf('%s should see the widgets dashboard', $email));
+            self::assertResponseIsSuccessful(\sprintf('%s should reach home', $email));
+            self::assertSelectorExists('.polysource-widget', \sprintf('%s should see the widgets dashboard', $email));
         }
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\CustomerRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -47,7 +48,7 @@ class Customer
     private string $country = 'FR';
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     /** @var Collection<int, Order> */
     #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'customer', cascade: ['persist'])]
@@ -56,7 +57,7 @@ class Customer
     public function __construct()
     {
         $this->id = Uuid::v7();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
         $this->orders = new ArrayCollection();
     }
 
@@ -103,7 +104,7 @@ class Customer
 
     public function getFullName(): string
     {
-        return trim(sprintf('%s %s', $this->firstName, $this->lastName));
+        return trim(\sprintf('%s %s', $this->firstName, $this->lastName));
     }
 
     public function getPhone(): ?string
@@ -166,12 +167,12 @@ class Customer
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 

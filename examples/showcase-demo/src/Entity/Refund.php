@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\RefundRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -47,15 +48,15 @@ class Refund
     private ?string $note = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $processedAt = null;
+    private ?DateTimeImmutable $processedAt = null;
 
     public function __construct()
     {
         $this->id = Uuid::v7();
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getId(): Uuid
@@ -123,24 +124,24 @@ class Refund
         return $this;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getProcessedAt(): ?\DateTimeImmutable
+    public function getProcessedAt(): ?DateTimeImmutable
     {
         return $this->processedAt;
     }
 
-    public function setProcessedAt(?\DateTimeImmutable $processedAt): self
+    public function setProcessedAt(?DateTimeImmutable $processedAt): self
     {
         $this->processedAt = $processedAt;
 

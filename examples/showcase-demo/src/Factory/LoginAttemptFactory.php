@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Entity\LoginAttempt;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -37,7 +38,7 @@ final class LoginAttemptFactory extends PersistentProxyObjectFactory
      */
     protected function defaults(): array
     {
-        $occurredAt = \DateTimeImmutable::createFromMutable(
+        $occurredAt = DateTimeImmutable::createFromMutable(
             self::faker()->dateTimeBetween('-30 days', 'now')
         );
 

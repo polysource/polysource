@@ -14,7 +14,7 @@ final class CustomersStory extends Story
 {
     public function build(): void
     {
-        CustomersStory::buildBucket(self::class, 500);
+        self::buildBucket(self::class, 500);
     }
 
     public static function buildBucket(string $storyClass, int $count): void

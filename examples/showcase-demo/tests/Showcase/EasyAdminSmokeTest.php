@@ -89,7 +89,7 @@ final class EasyAdminSmokeTest extends WebTestCase
             return;
         }
 
-        self::assertResponseIsSuccessful(sprintf('Expected 200 on %s', $url));
+        self::assertResponseIsSuccessful(\sprintf('Expected 200 on %s', $url));
     }
 
     public function testProductFilterEnhancementRenders(): void

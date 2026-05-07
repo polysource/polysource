@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Entity\Product;
+use DateTimeImmutable;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
@@ -44,14 +45,14 @@ final class ProductFactory extends PersistentProxyObjectFactory
     {
         $name = ucfirst(self::faker()->unique()->words(self::faker()->numberBetween(2, 4), true));
         $slugger = new AsciiSlugger();
-        $createdAt = \DateTimeImmutable::createFromMutable(
+        $createdAt = DateTimeImmutable::createFromMutable(
             self::faker()->dateTimeBetween('-18 months', '-1 day')
         );
 
         return [
-            'sku' => 'SKU-'.strtoupper(self::faker()->unique()->bothify('??##??##')),
+            'sku' => 'SKU-' . strtoupper(self::faker()->unique()->bothify('??##??##')),
             'name' => $name,
-            'slug' => $slugger->slug($name)->lower()->toString().'-'.self::faker()->randomNumber(4),
+            'slug' => $slugger->slug($name)->lower()->toString() . '-' . self::faker()->randomNumber(4),
             'description' => self::faker()->paragraphs(2, true),
             'priceCents' => self::faker()->numberBetween(500, 25000),
             'currency' => 'EUR',

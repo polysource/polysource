@@ -33,7 +33,7 @@ final class Kernel extends BaseKernel
                 }
                 $loader = $container->getDefinition('twig.loader.native_filesystem');
                 $loader->addMethodCall('prependPath', [
-                    $this->projectDir.'/templates/polysource',
+                    $this->projectDir . '/templates/polysource',
                     'Polysource',
                 ]);
             }

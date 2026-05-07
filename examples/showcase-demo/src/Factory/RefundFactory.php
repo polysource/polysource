@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Entity\Refund;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -37,7 +38,7 @@ final class RefundFactory extends PersistentProxyObjectFactory
      */
     protected function defaults(): array
     {
-        $createdAt = \DateTimeImmutable::createFromMutable(
+        $createdAt = DateTimeImmutable::createFromMutable(
             self::faker()->dateTimeBetween('-9 months', 'now')
         );
 
@@ -50,7 +51,7 @@ final class RefundFactory extends PersistentProxyObjectFactory
             'note' => self::faker()->boolean(60) ? self::faker()->sentence() : null,
             'createdAt' => $createdAt,
             'processedAt' => $status !== Refund::STATUS_PENDING
-                ? $createdAt->modify('+'.self::faker()->numberBetween(1, 10).' days')
+                ? $createdAt->modify('+' . self::faker()->numberBetween(1, 10) . ' days')
                 : null,
         ];
     }

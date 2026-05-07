@@ -25,12 +25,12 @@ final class OrdersStory extends Story
      */
     private const DISTRIBUTION = [
         Order::STATUS_DELIVERED => 580,
-        Order::STATUS_SHIPPED   => 130,
+        Order::STATUS_SHIPPED => 130,
         Order::STATUS_PREPARING => 90,
-        Order::STATUS_PAID      => 80,
-        Order::STATUS_CART      => 60,
+        Order::STATUS_PAID => 80,
+        Order::STATUS_CART => 60,
         Order::STATUS_CANCELLED => 40,
-        Order::STATUS_REFUNDED  => 20,
+        Order::STATUS_REFUNDED => 20,
     ];
 
     public function build(): void
@@ -67,10 +67,10 @@ final class OrdersStory extends Story
     private function stampLifecycle(Order $order, string $status): void
     {
         $createdAt = $order->getCreatedAt();
-        $paidAt = $createdAt->modify('+'.random_int(2, 60).' minutes');
-        $preparingAt = $paidAt->modify('+'.random_int(1, 24).' hours');
-        $shippedAt = $preparingAt->modify('+'.random_int(1, 48).' hours');
-        $deliveredAt = $shippedAt->modify('+'.random_int(1, 5).' days');
+        $paidAt = $createdAt->modify('+' . random_int(2, 60) . ' minutes');
+        $preparingAt = $paidAt->modify('+' . random_int(1, 24) . ' hours');
+        $shippedAt = $preparingAt->modify('+' . random_int(1, 48) . ' hours');
+        $deliveredAt = $shippedAt->modify('+' . random_int(1, 5) . ' days');
 
         match ($status) {
             Order::STATUS_CART => null,
@@ -79,20 +79,20 @@ final class OrdersStory extends Story
             Order::STATUS_SHIPPED => $order
                 ->setPaidAt($paidAt)
                 ->setShippedAt($shippedAt)
-                ->setTrackingNumber('DHL'.random_int(100000000, 999999999)),
+                ->setTrackingNumber('DHL' . random_int(100000000, 999999999)),
             Order::STATUS_DELIVERED => $order
                 ->setPaidAt($paidAt)
                 ->setShippedAt($shippedAt)
                 ->setDeliveredAt($deliveredAt)
-                ->setTrackingNumber('DHL'.random_int(100000000, 999999999)),
+                ->setTrackingNumber('DHL' . random_int(100000000, 999999999)),
             Order::STATUS_CANCELLED => $order
-                ->setCancelledAt($paidAt->modify('+'.random_int(10, 240).' minutes')),
+                ->setCancelledAt($paidAt->modify('+' . random_int(10, 240) . ' minutes')),
             Order::STATUS_REFUNDED => $order
                 ->setPaidAt($paidAt)
                 ->setShippedAt($shippedAt)
                 ->setDeliveredAt($deliveredAt)
-                ->setRefundedAt($deliveredAt->modify('+'.random_int(2, 14).' days'))
-                ->setTrackingNumber('DHL'.random_int(100000000, 999999999)),
+                ->setRefundedAt($deliveredAt->modify('+' . random_int(2, 14) . ' days'))
+                ->setTrackingNumber('DHL' . random_int(100000000, 999999999)),
             default => null,
         };
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Story;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Audit\Storage\Doctrine\AuditEntryRecord;
 use Symfony\Component\Uid\Uuid;
@@ -51,7 +52,7 @@ final class AuditEntriesStory extends Story
             [$actorId, $actorLabel] = self::ACTORS[array_rand(self::ACTORS)];
             $outcome = self::OUTCOMES[array_rand(self::OUTCOMES)];
 
-            $occurredAt = new \DateTimeImmutable(sprintf('-%d hours -%d minutes', random_int(0, 720), random_int(0, 59)));
+            $occurredAt = new DateTimeImmutable(\sprintf('-%d hours -%d minutes', random_int(0, 720), random_int(0, 59)));
 
             $record = new AuditEntryRecord();
             $record->id = Uuid::v7()->toRfc4122();
@@ -71,8 +72,8 @@ final class AuditEntriesStory extends Story
             };
             $record->durationMs = random_int(8, 1200);
             $record->contextJson = json_encode([
-                'request_id' => 'req-'.bin2hex(random_bytes(8)),
-                'ip' => sprintf('192.0.2.%d', random_int(1, 254)),
+                'request_id' => 'req-' . bin2hex(random_bytes(8)),
+                'ip' => \sprintf('192.0.2.%d', random_int(1, 254)),
             ], \JSON_THROW_ON_ERROR);
 
             $this->em->persist($record);

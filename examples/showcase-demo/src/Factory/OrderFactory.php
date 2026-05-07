@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Entity\Order;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -26,18 +27,18 @@ final class OrderFactory extends PersistentProxyObjectFactory
      */
     protected function defaults(): array
     {
-        $createdAt = \DateTimeImmutable::createFromMutable(
+        $createdAt = DateTimeImmutable::createFromMutable(
             self::faker()->dateTimeBetween('-12 months', 'now')
         );
 
         return [
-            'reference' => 'ORD-'.strtoupper(self::faker()->unique()->bothify('??####??')),
+            'reference' => 'ORD-' . strtoupper(self::faker()->unique()->bothify('??####??')),
             'status' => Order::STATUS_PAID,
             'customer' => CustomerFactory::randomOrCreate(),
             'totalCents' => self::faker()->numberBetween(2000, 80000),
             'currency' => 'EUR',
             'shippingAddress' => self::faker()->address(),
-            'paymentTransactionId' => 'tx_'.self::faker()->bothify('############'),
+            'paymentTransactionId' => 'tx_' . self::faker()->bothify('############'),
             'trackingNumber' => null,
             'createdAt' => $createdAt,
             'paidAt' => $createdAt->modify('+5 minutes'),

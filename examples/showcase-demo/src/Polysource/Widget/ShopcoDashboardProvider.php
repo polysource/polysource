@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Polysource\Widget;
 
-use App\Entity\Order;
 use App\Entity\Refund;
 use App\Repository\CustomerRepository;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Repository\RefundRepository;
+use DateTimeImmutable;
 use Polysource\Widgets\Dashboard\Dashboard;
 use Polysource\Widgets\Widget\ChartWidget;
 use Polysource\Widgets\Widget\CounterWidget;
 use Polysource\Widgets\Widget\ListWidget;
+
 /**
  * Builds the home dashboard from the live ShopCo state.
  *
@@ -91,7 +92,7 @@ final class ShopcoDashboardProvider
 
     private function ordersTodayCounter(): CounterWidget
     {
-        $today = new \DateTimeImmutable('today midnight');
+        $today = new DateTimeImmutable('today midnight');
         $count = $this->orders->createQueryBuilder('o')
             ->select('COUNT(o)')
             ->where('o.createdAt >= :today')
@@ -149,10 +150,10 @@ final class ShopcoDashboardProvider
     private function ordersChart(): ChartWidget
     {
         $points = [];
-        $now = new \DateTimeImmutable();
+        $now = new DateTimeImmutable();
         for ($i = 23; $i >= 0; --$i) {
-            $bucketStart = $now->modify(sprintf('-%d hours', $i + 1));
-            $bucketEnd = $now->modify(sprintf('-%d hours', $i));
+            $bucketStart = $now->modify(\sprintf('-%d hours', $i + 1));
+            $bucketEnd = $now->modify(\sprintf('-%d hours', $i));
             $count = $this->orders->createQueryBuilder('o')
                 ->select('COUNT(o)')
                 ->where('o.createdAt >= :start')
@@ -190,8 +191,8 @@ final class ShopcoDashboardProvider
             id: 'top-stock-products',
             title: 'Top stock — active SKUs',
             items: $top,
-            labelFn: static fn (mixed $p) => sprintf('%s — %d in stock', $p->getName(), $p->getStock()),
-            hrefFn: static fn (mixed $p) => '/admin/product/'.$p->getId()->toRfc4122(),
+            labelFn: static fn (mixed $p) => \sprintf('%s — %d in stock', $p->getName(), $p->getStock()),
+            hrefFn: static fn (mixed $p) => '/admin/product/' . $p->getId()->toRfc4122(),
         );
     }
 
@@ -207,8 +208,8 @@ final class ShopcoDashboardProvider
             id: 'recent-customers',
             title: 'Recent customers',
             items: $recent,
-            labelFn: static fn (mixed $c) => sprintf('%s (%s)', $c->getFullName(), $c->getCountry()),
-            hrefFn: static fn (mixed $c) => '/admin/customer/'.$c->getId()->toRfc4122(),
+            labelFn: static fn (mixed $c) => \sprintf('%s (%s)', $c->getFullName(), $c->getCountry()),
+            hrefFn: static fn (mixed $c) => '/admin/customer/' . $c->getId()->toRfc4122(),
             columnSpan: 12,
         );
     }

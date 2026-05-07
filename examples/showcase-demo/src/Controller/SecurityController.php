@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use LogicException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +29,6 @@ final class SecurityController extends AbstractController
     public function logout(): never
     {
         // Intercepted by the firewall. Never executed.
-        throw new \LogicException('This method is intercepted by the security firewall.');
+        throw new LogicException('This method is intercepted by the security firewall.');
     }
 }

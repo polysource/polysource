@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Factory;
 
 use App\Entity\Customer;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Persistence\PersistentProxyObjectFactory;
 
 /**
@@ -24,7 +25,7 @@ final class CustomerFactory extends PersistentProxyObjectFactory
      */
     protected function defaults(): array
     {
-        $createdAt = \DateTimeImmutable::createFromMutable(
+        $createdAt = DateTimeImmutable::createFromMutable(
             self::faker()->dateTimeBetween('-2 years', 'now')
         );
 

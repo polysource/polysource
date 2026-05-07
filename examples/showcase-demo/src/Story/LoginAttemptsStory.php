@@ -6,6 +6,7 @@ namespace App\Story;
 
 use App\Entity\LoginAttempt;
 use App\Factory\LoginAttemptFactory;
+use DateTimeImmutable;
 use Zenstruck\Foundry\Story;
 
 /**
@@ -24,7 +25,7 @@ final class LoginAttemptsStory extends Story
         LoginAttemptFactory::createMany(275);
 
         // Brute-force burst — same IP, same victim, 25 hits in 5 minutes.
-        $burstStart = new \DateTimeImmutable('-3 days 14:00:00');
+        $burstStart = new DateTimeImmutable('-3 days 14:00:00');
         $burstIp = '203.0.113.42';
         $victim = 'admin@shop.co';
 
@@ -36,7 +37,7 @@ final class LoginAttemptsStory extends Story
                 'status' => $i === 24
                     ? LoginAttempt::STATUS_RATE_LIMITED
                     : LoginAttempt::STATUS_BAD_CREDENTIALS,
-                'occurredAt' => $burstStart->modify('+'.($i * 12).' seconds'),
+                'occurredAt' => $burstStart->modify('+' . ($i * 12) . ' seconds'),
             ]);
         }
     }

@@ -8,7 +8,6 @@ use Polysource\Bundle\Context\AdminContext;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
