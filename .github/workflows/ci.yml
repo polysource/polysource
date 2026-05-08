@@ -208,6 +208,15 @@ jobs:
           done
           docker compose ps
 
+      - name: Allow root /repo for git inside the showcase container
+        working-directory: examples/showcase-demo
+        run: |
+          # The container's /repo bind-mount is owned by the host runner UID.
+          # Composer's plugin loader checks git's safe.directory to see whether
+          # the dependency tree is "trusted"; without this exception, the
+          # `composer install` step exits 1 on "fatal: detected dubious ownership".
+          docker compose exec -T php sh -c "git config --global --add safe.directory '*'"
+
       - name: Install showcase composer deps inside php container
         working-directory: examples/showcase-demo
         run: |

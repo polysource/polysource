@@ -25,6 +25,8 @@
         "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
     "require-dev": {
+        "async-aws/simple-s3": "^1.0 || ^2.0",
+        "league/flysystem-async-aws-s3": "^3.29",
         "league/flysystem-memory": "^3.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
         "polysource/symfony-bundle": "0.1.x-dev"

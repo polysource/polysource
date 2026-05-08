@@ -25,11 +25,14 @@
         "polysource/twig-theme": "0.1.x-dev"
     },
     "require-dev": {
+        "async-aws/simple-s3": "*",
         "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
         "friendsofphp/php-cs-fixer": "^3.65",
         "league/flysystem": "^3.0",
+        "league/flysystem-async-aws-s3": "^3.29",
         "league/flysystem-memory": "^3.0",
         "meilisearch/meilisearch-php": "^1.0",
+        "nyholm/psr7": "^1.8",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
