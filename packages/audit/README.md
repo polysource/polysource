@@ -26,6 +26,8 @@ See [ADR-020](../../docs/adr/0020-audit-non-doctrine-actions.md).
 composer require polysource/audit
 ```
 
+`polysource/audit` declares **`doctrine/orm` and `doctrine/dbal` as hard runtime dependencies**. The bundled persistence layer (`DoctrineAuditLogger`, `AuditEntryRecord`, `AuditLogDataSource`, `PurgeAuditCommand`, `ExportAuditCsvAction`) imports Doctrine at compile time, so installing this package without Doctrine would fatal at autoload. If your host already runs Doctrine for any other reason — most Symfony apps do — the cost is zero. If you need the contracts without Doctrine, depend on `polysource/core` directly and ship a custom `AuditLoggerInterface` implementation; only the storage layer is Doctrine-coupled.
+
 Register the bundle:
 
 ```php
