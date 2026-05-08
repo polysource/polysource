@@ -51,11 +51,28 @@
 
 {# Filter the slices to only those with real values. We do this in
    two passes (filter, then iterate) so the empty `{% if %}` check
-   below short-circuits cleanly when nothing is applied. #}
+   below short-circuits cleanly when nothing is applied.
+
+   Special case: NotNullFilter. Its tri-state form (Any / Has value /
+   Empty) emits an empty value AND empty comparison when "Any" is
+   chosen — the slice would otherwise be filtered out as "no real
+   value", and the user would see no chip even though they explicitly
+   picked an option. We detect the FormType and render a chip
+   regardless so the user gets visual feedback for their selection
+   (Any / Has value / Empty). Pre-v0.1.0 showcase bug. #}
 {% set _active_chips = [] %}
 {% for property, slice in applied_filters %}
-    {% if helpers.is_slice_applied(slice)|trim == '1' %}
-        {% set _active_chips = _active_chips|merge([{property: property, slice: slice}]) %}
+    {% set _is_applied = helpers.is_slice_applied(slice)|trim == '1' %}
+    {% set _is_not_null_filter = false %}
+    {% if ea is defined and ea.crud is not null %}
+        {% set _declared = ea.crud.filtersConfig.getFilter(property) %}
+        {% if _declared is not null and _declared.getAsDto is defined
+              and _declared.getAsDto().getFormType() == 'Polysource\\EasyAdminFilterBridge\\Form\\Type\\NotNullFilterType' %}
+            {% set _is_not_null_filter = true %}
+        {% endif %}
+    {% endif %}
+    {% if _is_applied or _is_not_null_filter %}
+        {% set _active_chips = _active_chips|merge([{property: property, slice: slice, isNotNull: _is_not_null_filter}]) %}
     {% endif %}
 {% endfor %}
 
@@ -115,12 +132,30 @@
                         |trim|capitalize %}
                 {% endif %}
 
+                {# Resolve a NotNullFilter human label so the chip shows
+                   "Any" / "Has value" / "Empty" instead of an empty
+                   value placeholder. The labels come from the filter's
+                   `labels` form-type option (defaults: any/not_null/null). #}
+                {% set _not_null_label = null %}
+                {% if entry.isNotNull|default(false) %}
+                    {% set _declared = ea.crud.filtersConfig.getFilter(property) %}
+                    {% set _opts = _declared.getAsDto().getFormTypeOptions %}
+                    {% set _labels = (_opts['labels']|default({any: 'Any', not_null: 'Has value', null: 'Empty'})) %}
+                    {% if value == '' or value is null %}
+                        {% set _not_null_label = _labels['any']|default('Any') %}
+                    {% elseif value == 'not_null' %}
+                        {% set _not_null_label = _labels['not_null']|default('Has value') %}
+                    {% elseif value == 'null' %}
+                        {% set _not_null_label = _labels['null']|default('Empty') %}
+                    {% endif %}
+                {% endif %}
+
                 {{ include('@EasyAdmin/crud/_chip.html.twig', {
                     property: property,
                     slice: slice,
                     label: label,
                     comparison: comparison,
-                    value: value,
+                    value: _not_null_label is not null ? _not_null_label : value,
                     value2: value2,
                 }) }}
             {% endfor %}
