@@ -80,9 +80,11 @@ docs/user/
 
 Polysource is **pre-v0.1.0** and not yet published on Packagist.
 Phases 1 → 22 shipped on `main` (16 packages). The public API is
-frozen for v0.1.0; tag + Packagist publish pending the final QA pass
-on the showcase. The documentation below matches the current state
-of `main`.
+**release-candidate stable** — committed for v0.1.x, SemVer-frozen
+only at v1.0. Breaking changes between minors are allowed and
+signalled in the CHANGELOG. Tag + Packagist publish pending the
+final QA pass on the showcase. The documentation below matches the
+current state of `main`.
 
 **Quality bar (2026-05-08)**: 674 unit + functional tests / 1684
 assertions in the package matrix, plus 27 integration tests in the

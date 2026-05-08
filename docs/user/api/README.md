@@ -8,10 +8,13 @@ If you need narrative, start with [../concepts/](../concepts/). If you
 just need a signature in front of you while coding, this page is the
 right starting point.
 
-> **Status.** Polysource is pre-v0.1.0. Public API is **not yet
-> frozen**. Every entry below comes from source on the `main` branch;
-> if a signature here disagrees with what your IDE shows, trust your
-> IDE — open an issue so we can fix the doc.
+> **Status.** Polysource is pre-v0.1.0. The public API is
+> **release-candidate stable** — committed for the v0.1.x line, but
+> SemVer-frozen only at v1.0. Breaking changes between minors are
+> allowed and signalled in the CHANGELOG. Every entry below comes
+> from source on the `main` branch; if a signature here disagrees
+> with what your IDE shows, trust your IDE — open an issue so we
+> can fix the doc.
 
 ## The three core interfaces
 
