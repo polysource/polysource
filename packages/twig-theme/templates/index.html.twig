@@ -77,7 +77,7 @@
                                     <a href="{{ path(route_prefix ~ '_detail', {resourceName: resource.name, id: record.identifier}) }}"
                                        class="btn btn-outline-secondary"
                                        data-polysource-action="detail">
-                                        Detail
+                                        {{ 'polysource.chrome.detail'|trans({}, 'Polysource') }}
                                     </a>
                                     {% for action in inline_actions %}
                                         <form method="POST"
@@ -99,7 +99,7 @@
                     {% else %}
                         <tr>
                             <td colspan="{{ fields|length + 1 }}" class="text-center text-body-secondary py-4">
-                                No records.
+                                {{ 'polysource.chrome.no_records'|trans({}, 'Polysource') }}
                             </td>
                         </tr>
                     {% endfor %}

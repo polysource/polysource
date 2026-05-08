@@ -1,0 +1,33 @@
+polysource:
+    # Page chrome — used in twig-theme's index, detail, layout templates.
+    chrome:
+        detail: 'Detail'
+        no_records: 'No records.'
+        no_fields_configured: 'No fields configured for this view.'
+        close: 'Close'
+
+    # Filter UI — twig-theme's _filters_form + _filter_chips templates.
+    filter:
+        button_label: 'Filters'
+        active_label: 'Active:'
+        clear: 'Clear'
+        clear_all: 'Clear all'
+        apply: 'Apply'
+        modal_title: 'Filters'
+        chip:
+            remove: 'Remove filter'
+
+    # Pagination — twig-theme's paginator.html.twig.
+    pagination:
+        label: 'Pagination'
+        cursor_label: 'Cursor pagination'
+        previous: 'Previous'
+        next: 'Next'
+        # Visible page summary; %count% rows, current page %current% / %last%.
+        summary: '%count% records — page %current% / %last%'
+
+    # Boolean field renderer — twig-theme's field/boolean.html.twig.
+    field:
+        boolean:
+            yes: 'Yes'
+            no: 'No'

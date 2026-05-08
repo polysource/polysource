@@ -5,12 +5,12 @@
 {% set chips = polysource_active_filters(context) %}
 {% if chips|length > 0 %}
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-polysource-filter-chips>
-        <span class="text-body-secondary small me-1">Active:</span>
+        <span class="text-body-secondary small me-1">{{ 'polysource.filter.active_label'|trans({}, 'Polysource') }}</span>
         {% for chip in chips %}
             <a href="{{ chip.removeUrl }}"
                class="badge text-bg-light border d-inline-flex align-items-center gap-1 text-decoration-none"
                data-polysource-chip-property="{{ chip.name }}"
-               title="Remove filter">
+               title="{{ 'polysource.filter.chip.remove'|trans({}, 'Polysource') }}">
                 <span class="text-body-secondary">{{ chip.label }}</span>
                 <span>{{ chip.operator }}</span>
                 <strong>{{ chip.displayValue }}</strong>
@@ -20,7 +20,7 @@
         <a href="{{ polysource_clear_filters_url(context) }}"
            class="small text-decoration-none ms-2"
            data-polysource-clear-filters>
-            Clear all
+            {{ 'polysource.filter.clear_all'|trans({}, 'Polysource') }}
         </a>
     </div>
 {% endif %}

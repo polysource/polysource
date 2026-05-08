@@ -3,7 +3,7 @@
     <div class="card-body">
         <h6 class="card-subtitle mb-3 text-muted">{{ widget.title }}</h6>
         {%- if rows is empty -%}
-            <p class="text-muted small mb-0">No items.</p>
+            <p class="text-muted small mb-0">{{ 'polysource.widgets.empty.no_items'|trans({}, 'PolysourceWidgets') }}</p>
         {%- else -%}
             <ul class="list-unstyled mb-0">
                 {%- for row in rows -%}

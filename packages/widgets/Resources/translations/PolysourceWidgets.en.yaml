@@ -1,0 +1,11 @@
+polysource:
+    widgets:
+        # Empty-state messages — shown when a widget has no data to render.
+        empty:
+            no_data: 'No data.'
+            no_items: 'No items.'
+
+        # Chart widget — table fallback header (textual rendering, v0.1).
+        chart:
+            period: 'Period'
+            value: 'Value'

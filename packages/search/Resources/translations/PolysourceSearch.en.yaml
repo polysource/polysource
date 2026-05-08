@@ -1,0 +1,11 @@
+polysource:
+    search:
+        # Cmd+K palette — overlay open via global hotkey.
+        palette:
+            aria_label: 'Search'
+            placeholder: 'Search resources… (Cmd+K)'
+            empty_state: 'Type to search across all resources.'
+            hint:
+                navigate: 'navigate'
+                open: 'open'
+                close: 'close'

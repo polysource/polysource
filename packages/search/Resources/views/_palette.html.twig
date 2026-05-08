@@ -15,13 +15,13 @@
 
     <div class="polysource-search-palette-dialog"
          role="dialog"
-         aria-label="Search"
+         aria-label="{{ 'polysource.search.palette.aria_label'|trans({}, 'PolysourceSearch') }}"
          data-polysource--search--cmdk-target="dialog"
          hidden>
 
         <input type="search"
                class="polysource-search-palette-input"
-               placeholder="Search resources… (Cmd+K)"
+               placeholder="{{ 'polysource.search.palette.placeholder'|trans({}, 'PolysourceSearch') }}"
                data-polysource--search--cmdk-target="input"
                data-action="input->polysource--search--cmdk#queryChanged
                             keydown->polysource--search--cmdk#keydown"
@@ -34,11 +34,11 @@
 
         <div class="polysource-search-palette-empty text-muted small"
              data-polysource--search--cmdk-target="empty">
-            Type to search across all resources.
+            {{ 'polysource.search.palette.empty_state'|trans({}, 'PolysourceSearch') }}
         </div>
 
         <div class="polysource-search-palette-hint text-muted small">
-            <kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>↵</kbd> open · <kbd>Esc</kbd> close
+            <kbd>↑</kbd><kbd>↓</kbd> {{ 'polysource.search.palette.hint.navigate'|trans({}, 'PolysourceSearch') }} · <kbd>↵</kbd> {{ 'polysource.search.palette.hint.open'|trans({}, 'PolysourceSearch') }} · <kbd>Esc</kbd> {{ 'polysource.search.palette.hint.close'|trans({}, 'PolysourceSearch') }}
         </div>
     </div>
 </div>

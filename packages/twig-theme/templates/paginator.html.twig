@@ -25,37 +25,36 @@
     {% set currentPage = (pagination.offset / pageSize)|round(0, 'floor') + 1 %}
     {% set lastPage = page.total > 0 ? ((page.total - 1) / pageSize)|round(0, 'floor') + 1 : 1 %}
 
-    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Pagination">
+    <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="{{ 'polysource.pagination.label'|trans({}, 'Polysource') }}">
         <small class="text-body-secondary" data-polysource-page-info>
-            {{ page.total }} record{{ page.total > 1 ? 's' : '' }}
-            — page {{ currentPage }} / {{ lastPage }}
+            {{ 'polysource.pagination.summary'|trans({'%count%': page.total, '%current%': currentPage, '%last%': lastPage}, 'Polysource') }}
         </small>
 
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {{ currentPage <= 1 ? 'disabled' : '' }}">
-                <a class="page-link" href="{{ currentPage > 1 ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage - 1})) : '#' }}" aria-label="Previous">
+                <a class="page-link" href="{{ currentPage > 1 ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage - 1})) : '#' }}" aria-label="{{ 'polysource.pagination.previous'|trans({}, 'Polysource') }}">
                     ‹
                 </a>
             </li>
             <li class="page-item {{ currentPage >= lastPage ? 'disabled' : '' }}">
-                <a class="page-link" href="{{ currentPage < lastPage ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage + 1})) : '#' }}" aria-label="Next">
+                <a class="page-link" href="{{ currentPage < lastPage ? path(app.request.attributes.get('_route'), safeQuery|merge({page: currentPage + 1})) : '#' }}" aria-label="{{ 'polysource.pagination.next'|trans({}, 'Polysource') }}">
                     ›
                 </a>
             </li>
         </ul>
     </nav>
 {% elseif page.nextCursor or page.prevCursor %}
-    <nav class="d-flex justify-content-end mt-3" aria-label="Cursor pagination">
+    <nav class="d-flex justify-content-end mt-3" aria-label="{{ 'polysource.pagination.cursor_label'|trans({}, 'Polysource') }}">
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {{ page.prevCursor ? '' : 'disabled' }}">
                 <a class="page-link"
                    href="{{ page.prevCursor ? path(app.request.attributes.get('_route'), safeQuery|merge({cursor: page.prevCursor})) : '#' }}"
-                   aria-label="Previous">‹ Previous</a>
+                   aria-label="{{ 'polysource.pagination.previous'|trans({}, 'Polysource') }}">‹ {{ 'polysource.pagination.previous'|trans({}, 'Polysource') }}</a>
             </li>
             <li class="page-item {{ page.nextCursor ? '' : 'disabled' }}">
                 <a class="page-link"
                    href="{{ page.nextCursor ? path(app.request.attributes.get('_route'), safeQuery|merge({cursor: page.nextCursor})) : '#' }}"
-                   aria-label="Next">Next ›</a>
+                   aria-label="{{ 'polysource.pagination.next'|trans({}, 'Polysource') }}">{{ 'polysource.pagination.next'|trans({}, 'Polysource') }} ›</a>
             </li>
         </ul>
     </nav>

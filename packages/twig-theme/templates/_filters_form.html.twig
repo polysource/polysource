@@ -26,7 +26,7 @@
             data-bs-target="#polysource-filters-modal"
             data-polysource-filters-trigger>
         <i class="fa fa-filter"></i>
-        Filters{% if chip_count > 0 %} <span class="action-filters-button-count">({{ chip_count }})</span>{% endif %}
+        {{ 'polysource.filter.button_label'|trans({}, 'Polysource') }}{% if chip_count > 0 %} <span class="action-filters-button-count">({{ chip_count }})</span>{% endif %}
     </button>
 
     {# Modal — mirrors EA's `_filters_modal.html.twig` HTML structure
@@ -43,16 +43,16 @@
                     <a href="{{ polysource_clear_filters_url(context) }}"
                        class="btn btn-secondary btn-sm"
                        id="polysource-modal-clear-button">
-                        <i class="fa fa-xmark"></i> Clear
+                        <i class="fa fa-xmark"></i> {{ 'polysource.filter.clear'|trans({}, 'Polysource') }}
                     </a>
                     <h5 class="modal-title">
-                        <i class="fa fa-filter"></i> Filters
+                        <i class="fa fa-filter"></i> {{ 'polysource.filter.modal_title'|trans({}, 'Polysource') }}
                     </h5>
                     <button type="submit"
                             form="polysource-filters-form"
                             class="btn btn-primary btn-sm"
                             id="polysource-modal-apply-button">
-                        <i class="fa fa-check"></i> Apply
+                        <i class="fa fa-check"></i> {{ 'polysource.filter.apply'|trans({}, 'Polysource') }}
                     </button>
                 </div>
                 <div class="modal-body p-0">

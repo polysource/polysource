@@ -1,0 +1,11 @@
+polysource:
+    widgets:
+        # Messages d'état vide — affichés quand un widget n'a pas de données.
+        empty:
+            no_data: 'Aucune donnée.'
+            no_items: 'Aucun élément.'
+
+        # Widget graphique — en-têtes du fallback textuel (rendu v0.1).
+        chart:
+            period: 'Période'
+            value: 'Valeur'

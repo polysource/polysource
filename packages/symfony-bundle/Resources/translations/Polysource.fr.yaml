@@ -1,0 +1,34 @@
+polysource:
+    # Habillage des pages — utilisé dans les templates index, detail, layout
+    # de twig-theme.
+    chrome:
+        detail: 'Détail'
+        no_records: 'Aucun enregistrement.'
+        no_fields_configured: 'Aucun champ configuré pour cette vue.'
+        close: 'Fermer'
+
+    # UI des filtres — templates _filters_form + _filter_chips de twig-theme.
+    filter:
+        button_label: 'Filtres'
+        active_label: 'Actifs :'
+        clear: 'Effacer'
+        clear_all: 'Tout effacer'
+        apply: 'Appliquer'
+        modal_title: 'Filtres'
+        chip:
+            remove: 'Retirer ce filtre'
+
+    # Pagination — paginator.html.twig de twig-theme.
+    pagination:
+        label: 'Pagination'
+        cursor_label: 'Pagination par curseur'
+        previous: 'Précédent'
+        next: 'Suivant'
+        # Récapitulatif page : %count% lignes, page %current% / %last%.
+        summary: '%count% enregistrements — page %current% / %last%'
+
+    # Rendu du champ booléen — field/boolean.html.twig de twig-theme.
+    field:
+        boolean:
+            yes: 'Oui'
+            no: 'Non'
