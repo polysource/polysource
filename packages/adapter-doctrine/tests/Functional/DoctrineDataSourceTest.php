@@ -9,6 +9,7 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\Adapter\Doctrine\DataSource\DoctrineDataSource;
 use Polysource\Adapter\Doctrine\Tests\Fixture\Product;
@@ -81,6 +82,38 @@ final class DoctrineDataSourceTest extends TestCase
     public function testFindReturnsNullForUnknownId(): void
     {
         self::assertNull($this->source->find('999999'));
+    }
+
+    public function testRejectsUnknownSearchPropertyAtConstruction(): void
+    {
+        // Defence against compromised/typo'd wiring: searchProperty must
+        // be a real mapped field, otherwise it would flow unchecked into
+        // an SQL fragment via sprintf('r.%s LIKE :search', ...).
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/searchProperty .* is not a mapped field/');
+
+        new DoctrineDataSource(
+            em: $this->em,
+            entityClass: Product::class,
+            searchProperty: 'doesNotExist; DROP TABLE products; --',
+        );
+    }
+
+    public function testAcceptsKnownSearchPropertyAtConstruction(): void
+    {
+        // Sanity: a valid mapped field constructs without raising. The
+        // setUp() already builds the canonical case ($searchProperty='name')
+        // — this assertion is here so a future refactor of the validation
+        // doesn't accidentally over-tighten and reject legitimate usage.
+        new DoctrineDataSource(
+            em: $this->em,
+            entityClass: Product::class,
+            searchProperty: 'sku',
+        );
+
+        // Construction without raising is the contract under test. PHPUnit
+        // requires an assertion to mark the test as exercised.
+        self::expectNotToPerformAssertions();
     }
 
     public function testFilterEqRestrictsResults(): void

@@ -81,6 +81,15 @@ final class DoctrineDataSource implements WritableDataSourceInterface
         $defaultFields = self::defaultFieldMap($this->metadata);
         $this->allowedFilters = $allowedFilters ?? $defaultFields;
         $this->allowedSorts = $allowedSorts ?? $this->allowedFilters;
+
+        // Validate searchProperty against the entity's mapped fields. Without this,
+        // a misconfigured wiring (compromised .env, env-injection, copy-paste typo)
+        // would let `searchProperty` flow into `sprintf('r.%s LIKE :search', ...)`
+        // unchecked — same SQL-surface footgun the allowedFilters whitelist already
+        // closes for explicit filters. Pre-v0.1.0 security audit caught this asymmetry.
+        if (null !== $this->searchProperty && !\in_array($this->searchProperty, $this->metadata->getFieldNames(), true)) {
+            throw new InvalidArgumentException(\sprintf('DoctrineDataSource: searchProperty "%s" is not a mapped field of %s. Known fields: %s.', $this->searchProperty, $entityClass, implode(', ', $this->metadata->getFieldNames())));
+        }
     }
 
     public function search(DataQuery $query): DataPage
