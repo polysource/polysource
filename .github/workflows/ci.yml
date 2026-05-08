@@ -217,6 +217,18 @@ jobs:
           # `composer install` step exits 1 on "fatal: detected dubious ownership".
           docker compose exec -T php sh -c "git config --global --add safe.directory '*'"
 
+      - name: Pre-create vendor + var dirs writeable by the container user
+        working-directory: examples/showcase-demo
+        run: |
+          # The PHP container runs as a non-root user (UID 1000 in the
+          # showcase image). The bind mount inherits the host runner's
+          # ownership (UID 1001 on ubuntu-24.04). composer install must
+          # be able to mkdir vendor/ and var/ — without world-writable
+          # parents the container user gets EACCES. Create the dirs
+          # ahead of time on the host with broad perms.
+          mkdir -p vendor var
+          chmod 0777 vendor var
+
       - name: Install showcase composer deps inside php container
         working-directory: examples/showcase-demo
         run: |

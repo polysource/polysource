@@ -22,6 +22,12 @@ $finder = (new PhpCsFixer\Finder())
         'tests/Functional/App/cache',
         'var',
     ])
+    // Symfony Flex auto-generates `examples/showcase-demo/config/reference.php`
+    // on every `composer install`. The generated content omits
+    // `declare(strict_types=1)`, so cs-fixer wants to add it back and gets
+    // reverted on the next install — endless ping-pong. Exclude the
+    // generated file; it's documented as "for apps only" in its own header.
+    ->notPath('showcase-demo/config/reference.php')
     ->ignoreDotFiles(true)
     ->ignoreVCS(true)
 ;
