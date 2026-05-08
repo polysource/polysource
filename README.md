@@ -105,10 +105,11 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Showcase tour with screenshots](./docs/user/showcase-tour.md)
 - [EasyAdmin filter bridge — getting started](./docs/user/easyadmin-filter-bridge/getting-started.md)
 - [What's new vs upstream EasyAdmin (per-filter matrix)](./docs/user/easyadmin-filter-bridge/whats-new.md)
-- [Cookbook — integrate into an existing app](./docs/user/cookbook/integrate-existing-app.md)
 - [Cookbook — build your own adapter](./docs/user/cookbook/build-your-own-adapter.md)
+- [Cookbook — add a custom action](./docs/user/cookbook/adding-a-custom-action.md)
+- [Cookbook — permissions with roles](./docs/user/cookbook/permissions-with-roles.md)
 - [Strategy / vision](./docs/strategy/product-vision.md)
-- [Architecture decisions (ADR)](./docs/adr/) — 25 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
+- [Architecture decisions (ADR)](./docs/adr/) — 24 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
 - [Roadmap / development plan](./docs/roadmap/development-plan.md)
 
 ## Bring your own everything — the contract reference

@@ -56,7 +56,7 @@ final class StripeChargesDataSource implements DataSourceInterface
         return new DataPage($records, total: null); // null = unknown, cursor-based
     }
 
-    public function find(DataQuery $query, string $id): ?DataRecord { /* ... */ }
+    public function find(string|int $identifier): ?DataRecord { /* ... */ }
     public function count(DataQuery $query): ?int { return null; }
 }
 ```

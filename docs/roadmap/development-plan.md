@@ -29,8 +29,8 @@
   - `make demo-filter` → `polysource/filter` standalone (port 8082, vanilla Symfony sans EasyAdmin — **vitrine du tronc commun pour audience non-EA**)
 - **Environnement de dev** : Docker Compose + Makefile + DDEV optionnel (cf. [ADR-008](../adr/0008-development-environment.md))
 - **Pas de DX builders fluides en v0.1** (Filament-style arrive en v0.3+)
-- **Pas de bridge EasyAdmin en v0.1** (v0.3)
-- **Pas d'écriture (`Writable*`) en v0.1** — Messenger failed est lecture + actions custom, pas CRUD
+- **`polysource/easyadmin-filter-bridge` shippé en v0.1** (cf. ADR-012, ajouté en Phase 9.7 après le pivot dual-produit)
+- **Écriture (`WritableDataSourceInterface`) shippée en v0.1** — les 6 adapters l'implémentent ; `polysource/adapter-messenger` reste read-only (le transport `ListableReceiverInterface` est read-only par nature) mais expose retry / dismiss / retry-all / purge comme Actions custom
 - **Templates Twig copiés depuis EasyAdmin v5** sous licence MIT avec attribution
 
 ## 0bis. Vue d'ensemble
@@ -1356,31 +1356,35 @@ Si l'un de ces critères n'est pas atteint, **ne pas continuer en Phase 8**.
 
 ## 15. Roadmap au-delà de v0.1
 
-### v0.2 (3 mois après v0.1)
-- `polysource/adapter-doctrine` (cohabitation EasyAdmin)
-- `polysource/adapter-flysystem` (S3, fichiers)
-- Pagination cursor (Messenger n'a pas de total)
-- Formulaires create/edit basiques
+> **Note historique** : le découpage v0.2 / v0.3 / v0.5 / v1.0 d'origine
+> prévoyait des adapters et capacités encore à livrer. Le pivot
+> dual-produit ([ADR-012](../adr/0012-dual-product-positioning.md))
+> et l'élargissement multi-version ([ADR-015](../adr/0015-multi-version-compatibility-baseline.md))
+> ont fusionné la majorité de ces incréments dans v0.1 : les 6 adapters,
+> le bridge EasyAdmin, l'écriture (`WritableDataSourceInterface`), les
+> bulk actions (sync + async), le baseline PHP 8.1+ / Symfony 5.4+
+> sont déjà shippés.
 
-### v0.3 (6 mois)
-- `polysource/adapter-http`
-- `polysource/adapter-redis`
-- `polysource/easyadmin-bridge`
-- Bulk actions
-- Builders fluides Filament-style
+### v0.2 (cibles)
 
-### v0.5 — Élargissement compatibilité (cf. ADR-007 §Migration)
-- **Support PHP 8.0+** : remplacer `final readonly class` par classes immutables conventionnelles, remplacer `enum` par classes constantes
-- **Support Symfony 5.4+ et 6.x+** : ajout au composer matrix
-- CI matrix élargie : PHP 8.0/8.1/8.2/8.3/8.4 × Symfony 5.4/6.4/7.x
-- Cible : élargir l'audience aux projets en LTS plus anciennes
+- **Drag-drop dashboards** : composition visuelle des widgets (cf. ADR-022 — différé v0.2)
+- **Real-time bridges Mercure** : extensions de `polysource/search` (Meilisearch / Algolia / Elasticsearch) via `SearchProviderInterface`
+- **Inline editing v2** : si la demande utilisateur réelle se confirme (cf. ADR-017 — non prévu en v0.1)
+- **Stabilisation API** : passage de classes `@experimental` éventuelles vers stable
+- **Cookbook patterns** : multi-app Kernel, Webpack Encore, no-Doctrine, no-Stimulus
 
-### v1.0 (12 mois)
-- `polysource/adapter-meilisearch`
-- `polysource/adapter-config`
-- Documentation complète, vidéos, cookbook
-- Gel API publique
-- Talk SymfonyCon
+### v0.3+ (à demande utilisateur)
+
+- **Builders fluides Filament-style** (`Form::schema([...])`) — uniquement si la demande utilisateur réelle se confirme
+- **`polysource/adapter-config`** (YAML/JSON files) si non couvert par `polysource/adapter-flysystem`
+- **Bridges supplémentaires** : Sonata, API Platform, autres
+
+### v1.0
+
+- Gel SemVer de l'API publique
+- Talk SymfonyCon / Symfony Live
+- Documentation complète + vidéos
+- 4-5 adapters maintenus + équipe de co-mainteneurs
 
 ## 16. Validation requise avant code
 

@@ -16,8 +16,9 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [Installation](./user/installation.md)
 - [Getting started — dashboard fonctionnel en 5 minutes](./user/getting-started.md)
 - [EasyAdmin filter bridge — getting started](./user/easyadmin-filter-bridge/getting-started.md)
-- [Cookbook — intégrer dans une app existante](./user/cookbook/integrate-existing-app.md)
 - [Cookbook — construire son propre adapter](./user/cookbook/build-your-own-adapter.md)
+- [Cookbook — ajouter une action custom](./user/cookbook/adding-a-custom-action.md)
+- [Cookbook — permissions par rôle](./user/cookbook/permissions-with-roles.md)
 
 ## Pour les contributeurs (français)
 
