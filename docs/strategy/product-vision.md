@@ -121,8 +121,6 @@ Anti-inspirations :
 | Gouvernance | Solo-mainteneur première année, ouverture progressive à des co-mainteneurs par adapter |
 | Contribution | CONTRIBUTING.md formel, ADR publics pour décisions structurantes, issues étiquetées par adapter |
 
-**Stop-loss explicite à 18 mois** : si on n'a pas atteint **100 ⭐ + 10 utilisateurs publics confirmés + 3 contributeurs externes**, le projet s'arrête formellement (pas de zombification).
-
 ## 7. Stratégie de packages
 
 Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque package a son propre `composer.json`, son propre `composer install`, et est publié indépendamment sur Packagist.
@@ -178,46 +176,6 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 - **Tag DI** : `polysource.<purpose>` (ex: `polysource.data_source`, `polysource.field_configurator`, `polysource.action`)
 - **Maker command** : `bin/console make:polysource:resource`, `make:polysource:adapter`
 
-## 8. Risques principaux
-
-Liste prioritisée des risques principaux pour la v0.1.
-
-| Risque | Sévérité | Mitigation |
-|---|---|---|
-| **Sur-engineering** : tentation de bâtir une plateforme universelle avant utilisateurs réels | **Critique** | v0.1 = un seul cas (Messenger failed) bout en bout. Refus systématique de PR « features spéculatives ». |
-| **Faible adoption** : le besoin multi-source est minoritaire | Haute | Cas tueur Messenger failed = cheval de Troie. Stop-loss à 18 mois. |
-| **Bus factor de 1** : un seul mainteneur la première année | Haute | Code simple, tests excellents, ADR clairs. Recrutement co-mainteneurs dès v0.3. |
-| **Perception « concurrent EasyAdmin »** | Haute | Naming neutre, pitch « non-Doctrine », bridge officiel, communication respectueuse. |
-| **N+1 sur ReferenceField** entre resources | Haute | Implémenter `findMany()` optionnel dès v0.2. |
-| **Form binding sans `data_class` Doctrine** | Haute | v0.1 forms basiques sur `DataPayload` ; cas complexes documentés comme « subclassez `AdminFormBuilder` ». |
-
-## 9. Critères de succès
-
-À 6 mois :
-- [ ] v0.1.0 publiée sur Packagist (16 packages — primitives, bundle, theme,
-      6 adapters, 5 capacités transverses, bridge EasyAdmin)
-- [ ] démo Messenger failed disponible et fonctionnelle
-- [ ] démo « EasyAdmin avant/après » disponible (avec et sans le bridge)
-- [ ] showcase ShopCo SaaS (cf. ADR-025) déployée — hero du launch
-- [ ] 5 issues utilisateur créées par des tiers
-- [ ] 50 stars cumulés sur les packages
-
-À 12 mois (cf. ADR-012 §critères de succès propres au pivot) :
-- [ ] `polysource/easyadmin-filter-bridge` : 200 installations Packagist,
-      30 stars
-- [ ] `polysource/admin` (standalone) : 50 installations Packagist
-- [ ] Au moins **un** issue / PR EasyAdmin référençant le bridge
-
-À 18 mois :
-- [ ] v1.0.0 publiée
-- [ ] 4-5 adapters maintenus
-- [ ] 100 stars cumulés
-- [ ] 10 utilisateurs publics confirmés (recherche `composer.lock` GitHub)
-- [ ] 3 contributeurs externes ayant mergé du code
-- [ ] 1 talk SymfonyCon ou Symfony Live accepté
-
-Si ces critères ne sont pas atteints à 18 mois → arrêt explicite du projet.
-
-## 10. À relire à chaque release majeure
+## 8. À relire à chaque release majeure
 
 Cette vision n'est pas figée. Elle doit être contestée avant chaque sortie majeure. Si un critère a changé (ex : un utilisateur réel demande une feature hors scope), ouvrir une ADR pour discuter, ne pas l'implémenter sous le capot.

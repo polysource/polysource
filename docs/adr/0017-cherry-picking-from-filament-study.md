@@ -1,4 +1,4 @@
-# ADR-017 — Cherry-picking depuis l'étude "Filament-for-Symfony"
+# ADR-017 — Cherry-picking depuis une étude de faisabilité interne
 
 - **Date** : 2026-05-05
 - **Statut** : Accepté
@@ -7,10 +7,11 @@
 
 ## Contexte
 
-Une étude `symfony-admin-framework-analysis.md` a circulé pendant la phase
-post-9.7. Elle est issue d'un exploratoire (l'auteur a demandé "liste-moi
-les fonctionnalités que EasyAdmin ne fait pas") — **ce n'est pas un document
-stratégique**, c'est un inventaire générique sans positionnement produit.
+Une étude de faisabilité interne a circulé pendant la phase
+post-9.7 sous la forme d'un inventaire générique des fonctionnalités
+d'admin Symfony. **Ce n'est pas un document stratégique** — c'est un
+brainstorm exploratoire sans positionnement produit, écrit pour
+cartographier le terrain avant les décisions de Phase 10+.
 
 L'étude propose un MVP de 14 features autour d'une thèse "the Filament for
 Symfony" : framework d'admin plugin-first, opinionated, full-feature,
@@ -145,8 +146,8 @@ Cette ADR est un **filtre stratégique**, pas une spec d'implémentation.
    du slot enterprise full-feature. Mais cette opportunité demanderait
    d'abandonner ADR-012, donc un changement de produit, pas un ajout.
 2. **L'étude n'est pas implémentable telle quelle**. C'est OK — elle ne
-   prétend pas l'être (c'est un exploratoire). L'utiliser comme inventaire
-   plutôt que comme roadmap.
+   prétend pas l'être (c'est un brainstorm exploratoire). L'utiliser comme
+   inventaire plutôt que comme roadmap.
 3. **Audit log non-Doctrine demande de la conception spécifique**. Les
    bundles existants (`damienharper/auditor-bundle`) ciblent Doctrine. On
    doit écrire le nôtre pour les actions sur ressources arbitraires
