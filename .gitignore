@@ -52,11 +52,13 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# local agent — local-only context (cf. ADR-009)
-/.local/CLAUDE.local.md
-/.local/settings.local.json
-/.local/scheduled_tasks.lock
-/.local/scheduled_tasks.json
+# local agent tooling — local-only, never committed.
+# `.local/` and `.local-flow/` carry the maintainer's local agent
+# configs (custom subagents, slash commands, helpers, swarm metrics).
+# They are environment-specific and not part of the project surface.
+/.local/
+/.local-flow/
+/.mcp.json
 
 # Docker
 /docker-compose.override.yml
