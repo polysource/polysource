@@ -66,7 +66,7 @@ Plus modeste, mais c'est ce qu'on construit réellement et c'est défendable.
 | Feature étude | Justification |
 |---|---|
 | **Plugin architecture formelle** (`AdminPluginInterface` + lifecycle) | On a déjà 80% de la fondation (DI tags, compiler passes, `#[AsResource]` cf. ADR-005). Formaliser un `AdminPluginInterface` documenté + versionné transforme l'outil en écosystème. **Foundation : doit venir avant les autres features**. |
-| **Dashboard widget framework** (`WidgetInterface`, registry tagged `polysource.widget`) | Premier écran utile pour Messenger Failed / Files / Webhooks. Cohérent avec la convention DI tags existante. |
+| **Dashboard widget framework** (`WidgetInterface`, registry tagged `polysource.widgets.dashboard`) | Premier écran utile pour Messenger Failed / Files / Webhooks. Cohérent avec la convention DI tags existante. |
 | **Bulk operations framework async via Messenger + Mercure progress** | On a déjà 4 actions Messenger (retry, dismiss, retry-all, purge). Formaliser un `BulkActionInterface` + progress streaming = différenciateur net contre EA dont le bulk est partiel. |
 | **Symfony Workflow integration** (transition buttons, state badges) | Aucun outil PHP ne le fait. S'applique parfaitement à des ressources non-Doctrine (états sur Messenger envelopes, feature flags, jobs). Très Symfony-native — colle à notre ADN. |
 | **Global cross-source search** | Notre cas est plus différenciant que celui de l'étude : chercher across S3 files + Messenger queues + Meilisearch + REST APIs en une fois. Multi-source-first est notre force. |

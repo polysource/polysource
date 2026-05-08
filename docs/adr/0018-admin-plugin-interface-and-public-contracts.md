@@ -43,7 +43,7 @@ Les 20% manquants :
    discipline de breaking change → fragilité écosystème.
 3. **Pas de point d'extension par capability** explicite. Quand on ajoute
    widgets en Phase 12, par où passe la déclaration ? Aujourd'hui la réponse
-   serait "ajoute un tag `polysource.widget` et un compiler pass" — c'est
+   serait "ajoute un tag `polysource.widgets.dashboard` et un compiler pass" — c'est
    correct mais non documenté comme contrat ; un futur plugin author n'a
    aucune source de vérité.
 
@@ -158,13 +158,14 @@ définit son propre contrat dans son propre ADR. Le pattern est uniforme :
 
 | Capability | Tag DI | Interface contributeur | ADR |
 |---|---|---|---|
-| Saved views | `polysource.saved_view_scope` | `SavedViewScopeInterface` | [ADR-019](./0019-saved-views-architecture.md) (Phase 11) |
-| Widgets | `polysource.widget` | `WidgetInterface` | ADR-020 (Phase 12) |
-| Bulk actions | `polysource.bulk_action` | `BulkActionInterface` | ADR-021 (Phase 13) |
-| Workflow | `polysource.workflow_resource` | `WorkflowAwareResource` | ADR-022 (Phase 14) |
-| Search providers | `polysource.search_provider` | `SearchProviderInterface` | ADR-023 (Phase 15) |
-| Cmd palette commands | `polysource.command` | `PaletteCommandInterface` | ADR-023 (Phase 15) |
-| Audit handlers | `polysource.audit_handler` | `AuditHandlerInterface` | ADR-024 (Phase 16) |
+| Saved views | (no DI tag — voter-based) | `SavedViewVoter` + `SavedViewStorageInterface` | [ADR-019](./0019-saved-views-architecture.md) (Phase 11) |
+| Widgets | `polysource.widgets.dashboard` | `WidgetInterface` | [ADR-022](./0022-dashboard-widgets.md) (Phase 14) |
+| Bulk-async actions | `polysource.bulk_async.action` | `BulkActionInterface` (+ `AsyncAwareBulkActionInterface` opt-in) | [ADR-024](./0024-bulk-async-mercure.md) (Phase 16) |
+| Workflow-aware resources | (no DI tag — interface marker) | `WorkflowAwareInterface` | [ADR-021](./0021-symfony-workflow-bridge.md) (Phase 13) |
+| Search providers | `polysource.search.provider` | `SearchProviderInterface` | [ADR-023](./0023-global-search-cmdk.md) (Phase 15) |
+| Audit log fan-out | `polysource.audit_logger` | `AuditLoggerInterface` | [ADR-020](./0020-audit-non-doctrine-actions.md) (Phase 12) |
+| Audit subscribers | `polysource.audit.action` | `EventSubscriberInterface` (host-defined) | [ADR-020](./0020-audit-non-doctrine-actions.md) (Phase 12) |
+| Filter pipeline (mapper / formatter / renderer) | `polysource.filter.{mapper,formatter,renderer}` | `FilterMapperInterface`, `FilterFormatterInterface`, `FilterRendererInterface` | [ADR-013](./0013-filter-package-architecture.md) (Phase 9.5) |
 
 Cette ADR-018 ne spécifie aucune de ces interfaces — elle pose le pattern.
 Chaque ADR de capability suit le même format (interface + tag + registry +

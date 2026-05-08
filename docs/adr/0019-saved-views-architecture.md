@@ -21,10 +21,15 @@ dans `polysource/filter` (cf. ADR-013).
 
 Pré-requis posés par [ADR-018](./0018-admin-plugin-interface-and-public-contracts.md) :
 
-- Tag DI primaire : `polysource.saved_view_scope`
-- Interface contributeur : `SavedViewScopeInterface`
-- Le tout ship dans un plugin séparé (pas dans `polysource/symfony-bundle`)
-  ou dans `polysource/filter` directement — décision dans cette ADR.
+- Mécanisme de scope : `SavedViewVoter` (Symfony Voter) avec 4 attributs
+  (`POLYSOURCE_VIEW_SAVED_VIEW`, `_EDIT_`, `_DELETE_`, `_SHARE_`) —
+  pas de DI tag dédié, le voter est auto-tagué `security.voter` par
+  framework-bundle.
+- Storage : `SavedViewStorageInterface` (5 méthodes) avec deux impls
+  bundled (`DoctrineSavedViewStorage` + `InMemorySavedViewStorage`) ;
+  hosts peuvent ship leur propre impl en aliasant l'interface.
+- Le tout ship dans `polysource/filter` directement (pas un plugin
+  séparé) — décision dans cette ADR.
 
 ## Décision
 
@@ -273,9 +278,10 @@ Différé pour quand le besoin remonte :
 2. **Adoption EA-bridge naturelle**. Le bridge bénéficie automatiquement
    du dropdown Twig — il branche `saved_views_dropdown('product')` dans
    son template `index.html.twig`.
-3. **Pattern réutilisable**. Le tag `polysource.saved_view_scope` (cf.
-   ADR-018) permettra plus tard à un plugin d'introduire des scopes
-   custom (ex : `organization`, `project`) sans toucher au core.
+3. **Pattern réutilisable**. `SavedViewVoter` étend la `Voter` de Symfony
+   Security — un host peut décorer ou remplacer le voter pour introduire
+   des scopes custom (ex : `organization`, `project`) sans toucher
+   au core. La fan-out via `AccessDecisionManager` reste standard.
 4. **Storage swappable**. Hosts peuvent ship leur propre
    `SavedViewStorageInterface` (S3 JSON files, Redis hash, REST API)
    — cohérent avec l'angle multi-source-first de Polysource.
