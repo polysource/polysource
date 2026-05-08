@@ -195,8 +195,15 @@ jobs:
       - name: Boot showcase compose stack (postgres + redis + mercure + meilisearch + minio + wiremock + chrome)
         working-directory: examples/showcase-demo
         run: |
-          # The showcase compose declares every backend the
-          # adapter + capability tests need. `e2e` profile adds Chrome.
+          # The PHP image's Dockerfile builds a non-root `app` user with
+          # UID/GID baked from build args. The default 1000:1000 doesn't
+          # match the GitHub runner UID — bind-mounted /repo writes fail
+          # with EACCES (composer install, importmap:install, etc.).
+          # Build the image with the host runner's actual UID/GID so
+          # every write under the mount is owned correctly.
+          export UID=$(id -u)
+          export GID=$(id -g)
+          docker compose --profile e2e build php
           docker compose --profile e2e up -d
           echo "▶ Waiting for services to become healthy..."
           for i in $(seq 1 60); do
@@ -216,19 +223,6 @@ jobs:
           # the dependency tree is "trusted"; without this exception, the
           # `composer install` step exits 1 on "fatal: detected dubious ownership".
           docker compose exec -T php sh -c "git config --global --add safe.directory '*'"
-
-      - name: Pre-create writeable dirs for the container user
-        working-directory: examples/showcase-demo
-        run: |
-          # The PHP container runs as a non-root user (UID 1000 in the
-          # showcase image). The bind mount inherits the host runner's
-          # ownership (UID 1001 on ubuntu-24.04). composer install +
-          # post-install scripts (assets:install, cache:warmup) must
-          # be able to mkdir under vendor/, var/, public/. Without
-          # world-writable parents the container user gets EACCES.
-          # Pre-create + chmod 0777 the dirs the recipes touch.
-          mkdir -p vendor var public/bundles public/assets
-          chmod -R 0777 vendor var public
 
       - name: Install showcase composer deps inside php container
         working-directory: examples/showcase-demo
