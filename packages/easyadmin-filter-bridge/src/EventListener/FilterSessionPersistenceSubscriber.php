@@ -60,6 +60,21 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
 
     public function onBeforeCrudAction(BeforeCrudActionEvent $event): void
     {
+        // Yield to any earlier subscriber that already produced a
+        // response (typically SavedViewApplySubscriber on `?view=<id>`
+        // clicks). EasyAdmin's BeforeCrudActionEvent uses its own
+        // StoppableEventTrait — Symfony's EventDispatcher only checks
+        // PSR-14 StoppableEventInterface, so listeners on this event
+        // are NOT auto-skipped after a setResponse(). Without this
+        // guard, the explicit-reset branch below would override the
+        // saved-view redirect with a clean `/admin/order` URL when the
+        // user switches between two saved views (the new request has
+        // no `filters` but the Referer does, triggering reset
+        // detection). Pre-v0.1.0 showcase bug.
+        if ($event->isPropagationStopped()) {
+            return;
+        }
+
         $context = $event->getAdminContext();
         if (null === $context) {
             return;
@@ -80,6 +95,16 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
         }
 
         $request = $context->getRequest();
+
+        // Saved-view apply round-trip: the user clicked a saved view
+        // in the dropdown. The earlier SavedViewApplySubscriber will
+        // redirect to the canonical `?filters[...]` URL; this subscriber
+        // must not concurrently treat the missing `filters` param as
+        // an explicit reset (which would clear session state AND
+        // override the redirect with a clean URL).
+        if ($request->query->has('view')) {
+            return;
+        }
 
         if ($request->query->has(self::FILTERS_QUERY_PARAM)) {
             /** @var array<string, mixed> $rawFilters */
