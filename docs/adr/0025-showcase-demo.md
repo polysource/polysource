@@ -2,12 +2,12 @@
 
 - **Date** : 2026-05-06
 - **Statut** : Accepté
-- **Décide pour** : Phase 23 — application Symfony complète exploitant les 15 packages du monorepo, devenant le hero du launch v0.1.0
+- **Décide pour** : Phase 23 — application Symfony complète exploitant les 16 packages du monorepo, devenant le hero du launch v0.1.0
 - **En lien avec** : [ADR-008 — Dev environment](./0008-development-environment.md), [ADR-012 — Dual-product positioning](./0012-dual-product-positioning.md), [ADR-015 — Multi-version compatibility baseline](./0015-multi-version-compatibility-baseline.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md)
 
 ## Contexte
 
-À fin Phase 22, le monorepo livre **15 packages** : tronc commun
+À fin Phase 22, le monorepo livre **16 packages** : tronc commun
 (`core`, `filter`, `twig-theme`, `symfony-bundle`), bridge
 (`easyadmin-filter-bridge`), 6 adapters (`messenger`, `doctrine`,
 `redis`, `flysystem`, `http`, `meilisearch`), 5 capabilities
@@ -37,7 +37,7 @@ handicap.
 
 Construire `examples/showcase-demo/` — une application Symfony
 unique, réaliste, déployable en `make showcase`, qui exploite
-**les 15 packages** dans un scénario métier cohérent. Cette démo
+**les 16 packages** dans un scénario métier cohérent. Cette démo
 **devient le hero** de l'annonce v0.1.0 (le tag v0.1.0 ne sort
 **qu'après** que la showcase est mergée et stable).
 
@@ -138,7 +138,7 @@ gigantesque.
 - **Hero du launch v0.1.0** crédible : "regarde ShopCo, tu peux
   l'avoir comme ça en 5 minutes".
 - **Smoke test cross-package** gratuit : si la showcase boot, les
-  15 packages sont câblables ensemble.
+  16 packages sont câblables ensemble.
 - **Doc EA-style** : screenshots embedded générés depuis une source
   unique de vérité, pas de drift code/doc.
 - **Pédagogie** : un évaluateur lit le code de ShopCo pour comprendre
@@ -223,7 +223,7 @@ screenshots scriptés.
 Validée par le product owner le 2026-05-06 :
 - Stack ADR-025 §3 confirmé.
 - Domaine "ShopCo SaaS" confirmé.
-- Périmètre 15 packages confirmé.
+- Périmètre 16 packages confirmé.
 - Showcase = hero du launch confirmé (release v0.1.0 retardée).
 - Merge direct sur `main` par sous-phase confirmé (pas de feature
   branch globale).

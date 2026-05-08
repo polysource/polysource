@@ -51,7 +51,7 @@
 | **9.7** | **`polysource/easyadmin-filter-bridge`** — Produit 2 | **2-3 sem** | **drop-in dans une app EasyAdmin** | ✅ |
 | 11-16 | Capabilities transverses (plugins, audit, workflow, widgets, search, bulk-async) | ~5 sem | 5 nouveaux packages opt-in | ✅ |
 | 17-22 | 5 adapters prévus (Doctrine, Redis, Flysystem, HTTP, Meilisearch) + cookbook | ~3 sem | 5 adapters + build-your-own-adapter walkthrough | ✅ |
-| **23** | **Showcase demo ShopCo SaaS** (cf. [ADR-025](../adr/0025-showcase-demo.md)) | **~3-4 sem** | **`examples/showcase-demo/` exploitant les 15 packages + screenshots** | ⏳ |
+| **23** | **Showcase demo ShopCo SaaS** (cf. [ADR-025](../adr/0025-showcase-demo.md)) | **~3-4 sem** | **`examples/showcase-demo/` exploitant les 16 packages + screenshots** | ⏳ |
 | 10 | Préparation release v0.1.0 (dual product, hero = showcase) | 0,5 sem | tags, Packagist, 2 annonces | ⏳ |
 | **Total v0.1** | | **~22-24 semaines** | v0.1.0 publiée (dual product, hero showcase) |
 
@@ -1024,7 +1024,7 @@ Tagger v0.1.0, publier les 6 packages sur Packagist, écrire les annonces.
 ### Objectif
 
 Construire une application Symfony unique, réaliste, déployable en
-`make showcase`, qui exploite **les 15 packages** du monorepo dans
+`make showcase`, qui exploite **les 16 packages** du monorepo dans
 un scénario métier cohérent (ShopCo, e-commerce B2C). Cette démo
 devient le hero du launch v0.1.0 et la source unique de vérité pour
 les screenshots de la doc utilisateur (style EasyAdmin).
@@ -1141,7 +1141,7 @@ examples/showcase-demo/
 ### Critères d'acceptation
 
 - [ ] `make showcase` boot l'application en < 60 s sur un poste vierge.
-- [ ] Les 15 packages sont câblés et démontrables dans la showcase.
+- [ ] Les 16 packages sont câblés et démontrables dans la showcase.
 - [ ] La home affiche 6 widgets fonctionnels avec données fixtures.
 - [ ] Login `admin@shop.co` → accès complet ; `ops@shop.co` → ops
       seulement ; `viewer@shop.co` → lecture seule (parcours
