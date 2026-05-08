@@ -44,7 +44,16 @@
                 {%- set view_query = app.request is defined and app.request is not null
                     ? app.request.query.all|default({})
                     : {} -%}
-                {%- set view_query = view_query|filter((v, k) => k not in ['filter', 'filters', 'view'])|merge({'view': view.id}) -%}
+                {# Cache-buster: a stale browser-cached 200 of `?view=<id>` from
+                 # a prior session (back when the apply listener wasn't wired)
+                 # could shadow the live 302 redirect — the user perceives
+                 # "first click does nothing". Appending a per-render unique
+                 # token guarantees every click hits the server. The token
+                 # is opaque to the apply listener (it never reads `_t`). #}
+                {%- set _cache_buster = (app.request is defined and app.request is not null
+                    ? app.request.attributes.get('_route_params')|default({}) : {})
+                    is empty ? random() : random() -%}
+                {%- set view_query = view_query|filter((v, k) => k not in ['filter', 'filters', 'view', '_t'])|merge({'view': view.id, '_t': _cache_buster}) -%}
                 <li class="d-flex align-items-center polysource-saved-views__row">
                     <a class="dropdown-item polysource-saved-views__item flex-grow-1
                               {{ current is not null and current.id == view.id ? 'active' : '' }}"

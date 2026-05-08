@@ -88,13 +88,24 @@ final class PolysourceSavedViewApplyListener implements EventSubscriberInterface
     private function buildRedirect(Request $request, FilterCollection $collection): RedirectResponse
     {
         $existing = $request->query->all();
-        unset($existing['view'], $existing['filter']);
+        // Drop `view` (replaced with `filter`), `filter` (about to be rebuilt),
+        // and `_t` (dropdown cache-buster — opaque, must not survive into the
+        // canonical bookmarkable URL).
+        unset($existing['view'], $existing['filter'], $existing['_t']);
 
         $existing['filter'] = self::collectionToUrlFilters($collection);
 
         $url = $request->getPathInfo() . '?' . http_build_query($existing);
 
-        return new RedirectResponse($url);
+        $response = new RedirectResponse($url);
+        // Defensive: forbid caching of this 302 — see the EA-bridge
+        // SavedViewApplySubscriber for the same rationale. Stale 200
+        // of `?view=<id>` from a prior session can shadow the live
+        // redirect and the user perceives "first click does nothing".
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->headers->set('Pragma', 'no-cache');
+
+        return $response;
     }
 
     /**

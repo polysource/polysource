@@ -79,13 +79,26 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Preserve other query params except `view`.
+        // Preserve other query params except `view` and the dropdown's
+        // `_t` cache-buster (opaque token added by the dropdown template
+        // to defeat stale browser caches; it must NOT survive into the
+        // canonical filtered URL or the user can't bookmark/share it
+        // cleanly).
         $existing = $request->query->all();
-        unset($existing['view']);
+        unset($existing['view'], $existing['_t']);
         $merged = array_replace_recursive($existing, $newQuery);
 
         $url = $request->getPathInfo() . '?' . http_build_query($merged);
-        $event->setResponse(new RedirectResponse($url));
+        $response = new RedirectResponse($url);
+        // Defensive: forbid caching of this 302. Browsers (and any
+        // intermediate caches) MUST revalidate. Without this, a stale
+        // cached 200 of `?view=<id>` from a prior session — back when
+        // the listener didn't exist or didn't redirect — can shadow
+        // the live redirect and the user perceives "first click does
+        // nothing" until the cache expires. Pre-v0.1.0 demo bug.
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->headers->set('Pragma', 'no-cache');
+        $event->setResponse($response);
     }
 
     /**
