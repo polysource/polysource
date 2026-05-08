@@ -10,7 +10,6 @@ use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
 use Polysource\Bundle\EventListener\PolysourceViewListener;
-use Polysource\Bundle\EventListener\SavedViewApplyListener;
 use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
@@ -147,15 +146,18 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     // Saved-view `?view=<id>` apply listener — wired with a
-    // graceful-degradation reference to SavedViewService. Hosts that
-    // don't pull polysource/filter still get the listener registered,
-    // but it short-circuits at runtime when the dependency is null.
-    // This avoids a runtime DI error when the bundle is in the
-    // container but polysource/filter isn't (e.g. plugin smoke
-    // tests, lean installs).
-    if (class_exists(Polysource\Filter\SavedView\SavedViewService::class)) {
+    // The Polysource saved-view bridge listener lives in `polysource/filter`
+    // since v0.1 (cf. pre-v0.1.0 review M4) — the symfony-bundle no longer
+    // owns the class. We still register the service here so it activates
+    // automatically the moment a host installs both packages, gated on
+    // class existence so symfony-bundle alone has zero coupling to
+    // polysource/filter (no autoload of Filter\* classes when filter is
+    // not in the project).
+    if (class_exists(Polysource\Filter\SavedView\SavedViewService::class)
+        && class_exists(Polysource\Filter\EventListener\PolysourceSavedViewApplyListener::class)
+    ) {
         $services
-            ->set(SavedViewApplyListener::class)
+            ->set(Polysource\Filter\EventListener\PolysourceSavedViewApplyListener::class)
             ->args([service(Polysource\Filter\SavedView\SavedViewService::class)->nullOnInvalid()])
             ->tag('kernel.event_subscriber')
         ;

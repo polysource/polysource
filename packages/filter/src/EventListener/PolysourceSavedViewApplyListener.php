@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Polysource\Bundle\EventListener;
+namespace Polysource\Filter\EventListener;
 
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\SavedView\SavedViewService;
@@ -13,20 +13,26 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Applies a `?view=<id>` saved view on Polysource index pages by
+ * Applies a `?view=<id>` saved view on Polysource-native index pages by
  * translating the SavedView's filters into the URL shape the
- * AdminContextResolver decodes (`?filter[name][op]=...&[value]=...`)
- * and redirecting to the clean URL.
+ * `Polysource\Bundle` AdminContextResolver decodes
+ * (`?filter[name][op]=...&[value]=...`) and redirecting to the clean URL.
  *
- * Without this listener, clicking a saved view in the dropdown lands
- * on `/admin/polysource/<resource>?view=<id>` with no filters applied
- * — the resolver would simply ignore the unknown `view` query param.
+ * Lives in `polysource/filter` (not `polysource/symfony-bundle`) so the
+ * Symfony bundle has zero compile-time dep on filter classes — hosts
+ * installing only `polysource/symfony-bundle` for non-Polysource use
+ * cases never autoload `Polysource\Filter\*`. The pre-v0.1.0 review
+ * caught the original cross-package import and recommended this move.
+ *
+ * Triggers only when the host registered the listener AND the request
+ * carries a `resourceName` attribute (set by the AdminContextResolver
+ * upstream of this priority). On other requests it short-circuits.
  *
  * Mirrors the EasyAdmin bridge's SavedViewApplySubscriber but for
- * Polysource-native routes. Conditionally registered (cf.
- * services.php) so the bundle has no hard dep on polysource/filter.
+ * Polysource-native routes — both translate `?view=<id>` into the
+ * filter URL shape their respective hosts decode.
  */
-final class SavedViewApplyListener implements EventSubscriberInterface
+final class PolysourceSavedViewApplyListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ?SavedViewService $service = null,
