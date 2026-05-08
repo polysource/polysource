@@ -90,7 +90,7 @@ final class AlgoliaSearchProvider implements SearchProviderInterface
 }
 ```
 
-**Future bridges** (`polysource/search-meilisearch`, `polysource/search-algolia`, `polysource/search-elasticsearch`) are nothing more than a package shipping one of these. See [ADR-023](../adr/0023-global-search-palette.md).
+**Future bridges** (`polysource/search-meilisearch`, `polysource/search-algolia`, `polysource/search-elasticsearch`) are nothing more than a package shipping one of these. See [ADR-023](../adr/0023-global-search-cmdk.md).
 
 ---
 
@@ -107,7 +107,7 @@ final class StripeAdminBundle extends AbstractBundle implements AdminPluginInter
 }
 ```
 
-The bundle's `services.php` wires resources / actions / widgets. Hosts opt in with one `composer require`. See [ADR-018](../adr/0018-plugin-architecture.md) and the cookbook chapter on plugins.
+The bundle's `services.php` wires resources / actions / widgets. Hosts opt in with one `composer require`. See [ADR-018](../adr/0018-admin-plugin-interface-and-public-contracts.md) and the cookbook chapter on plugins.
 
 This is exactly how the bundled `polysource/audit`, `polysource/bulk-async`, `polysource/widgets`, `polysource/search`, `polysource/workflow-bridge` ship — each is a plugin. **You can ship yours the same way.**
 
@@ -134,7 +134,7 @@ final class SplunkAuditLogger implements AuditLoggerInterface
 }
 ```
 
-The bundled `AggregateAuditLogger` fan-outs to every tagged logger with try/catch isolation — Splunk timing out doesn't break the Doctrine write. See [ADR-020](../adr/0020-audit-log-architecture.md) §10.
+The bundled `AggregateAuditLogger` fan-outs to every tagged logger with try/catch isolation — Splunk timing out doesn't break the Doctrine write. See [ADR-020](../adr/0020-audit-non-doctrine-actions.md) §10.
 
 ---
 
@@ -282,16 +282,19 @@ Symfony service tags, every time. No magic registries, no XML files, no global s
 
 | Capability | Tag | Bundle wiring |
 |---|---|---|
-| Data source / Resource | `polysource.resource` | Auto via `#[AsResource]` |
+| Data source | `polysource.data_source` | Auto via `#[AsResource]` |
+| Resource | `polysource.resource` | Auto via `#[AsResource]` |
+| Plugin metadata | `polysource.plugin` | Auto via `#[AsPlugin]` |
 | Search provider | `polysource.search.provider` | Autoconfigure |
-| Audit logger | `polysource.audit.logger` | Autoconfigure |
+| Audit logger | `polysource.audit_logger` | Autoconfigure |
 | Widget | `polysource.widgets.dashboard` | Autoconfigure |
+| Filter mapper / formatter / renderer | `polysource.filter.mapper`, `.formatter`, `.renderer` | Autoconfigure |
 | Filter configurator (EA bridge) | `ea.filter_configurator` | Autoconfigure (EA's own tag) |
-| Field configurator | `polysource.field_configurator` | Autoconfigure |
-| Action | `polysource.action` | Autoconfigure |
 | Permission | n/a | Service alias on `PermissionInterface` |
 
 All tags are scanned by `tagged_iterator(...)` in services.php — discoverable by reading `packages/<plugin>/Resources/config/services.php`.
+
+> Reserved for future use: the Polysource naming convention also covers `polysource.field_configurator`, `polysource.action`, and `polysource.permission`. These are not yet emitted by Polysource core in v0.1; the names are reserved so plugins can adopt them when the corresponding extension points land.
 
 ---
 
@@ -310,7 +313,7 @@ Take a look at `packages/<pkg>/tests/` for working patterns — they're meant to
 ## Where to read next
 
 - [Core architecture](../architecture/target-architecture.md) — full interface signatures, request flow, adapter sketches
-- [Plugin architecture (ADR-018)](../adr/0018-plugin-architecture.md) — formal plugin contract
+- [Plugin architecture (ADR-018)](../adr/0018-admin-plugin-interface-and-public-contracts.md) — formal plugin contract
 - [Cookbook — build your own adapter](./cookbook/build-your-own-adapter.md) — full walkthrough with patterns and gotchas
 - [Cookbook — adding a custom action](./cookbook/adding-a-custom-action.md) — inline / bulk / global actions
 - [Strategy / vision](../strategy/product-vision.md) §5 — the architectural principles behind these extension points (ISP, immutable VOs, no implementation leakage)
