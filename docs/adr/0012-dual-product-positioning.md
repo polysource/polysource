@@ -199,7 +199,5 @@ n'apporte pas la valeur perçue. Décision à prendre entre :
   produit mise à jour pour refléter le pivot
 - [`../roadmap/development-plan.md`](../roadmap/development-plan.md) —
   Phases 9.5 et 9.7 ajoutées
-- [`0009-ai-assistant-context.md`](./0009-ai-assistant-context.md) — système
-  de contexte AI (les analyses techniques internes restent privées)
 - [`0011-pre-v1.0-freeze-checklist.md`](./0011-pre-v1.0-freeze-checklist.md) —
   items de gel API à traiter avant v1.0 (inchangés par cet ADR)

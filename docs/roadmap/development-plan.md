@@ -101,7 +101,6 @@ docs/adr/0005-configuration-mechanism.md
 docs/adr/0006-envelope-mapper-serialization.md
 docs/adr/0007-php-symfony-versions.md
 docs/adr/0008-development-environment.md
-docs/adr/0009-ai-assistant-context.md
 docs/adr/README.md                 (index ADR)
 ```
 
@@ -1327,7 +1326,6 @@ Toutes les décisions structurantes sont dans `docs/adr/` :
 - [ADR-006](../adr/0006-envelope-mapper-serialization.md) — `EnvelopeMapper` serialization
 - [ADR-007](../adr/0007-php-symfony-versions.md) — Versions PHP/Symfony + roadmap migration
 - [ADR-008](../adr/0008-development-environment.md) — Dev environment (Docker/Make/DDEV)
-- [ADR-009](../adr/0009-ai-assistant-context.md) — local agent context system
 
 ## 13. Ordre recommandé d'implémentation
 

@@ -16,7 +16,6 @@
 | [ADR-006](./0006-envelope-mapper-serialization.md) | EnvelopeMapper : JSON-first + fallback | Accepté |
 | [ADR-007](./0007-php-symfony-versions.md) | Versions PHP/Symfony : 8.4/7.4 v0.1 → 8.0+/5.4+ v0.5 | Accepté |
 | [ADR-008](./0008-development-environment.md) | Docker + Makefile + DDEV optionnel | Accepté |
-| [ADR-009](./0009-ai-assistant-context.md) | Système de contexte projet persistant (the project context file) | Accepté |
 | [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
 | [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (vivant) |
 | [ADR-012](./0012-dual-product-positioning.md) | Dual-product positioning (bridge EA + admin standalone) | Accepté |
@@ -46,4 +45,4 @@
 - **Mémoire d'équipe** : pourquoi telle décision, pas telle autre.
 - **Onboarding** : un nouveau contributeur peut comprendre les choix sans les rejouer.
 - **Stabilité API** : toute proposition de breaking change doit citer l'ADR qu'elle remplace.
-- **Adoption outils** : les ADR sont consommées par les outils internes (cf. ADR-009) pour rester cohérents avec les décisions prises.
+- **Adoption outils** : les ADR sont consommées par les outils internes (le `the project context file` racine pointe explicitement les contributeurs vers le dossier ADR) pour rester cohérents avec les décisions prises.
