@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\SavedView;
 
+use Polysource\Filter\SavedView\Exception\SavedViewAccessDeniedException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
 use Polysource\Filter\SavedView\Security\SavedViewVoter;
 use Polysource\Filter\SavedView\Storage\SavedViewStorageInterface;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -91,14 +91,14 @@ final class SavedViewService
     {
         $existing = $this->storage->find($view->id);
         if (null !== $existing && !$this->authChecker->isGranted(SavedViewVoter::EDIT, $existing)) {
-            throw new RuntimeException(\sprintf('Not authorized to edit saved view "%s".', $view->id));
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::EDIT, savedViewId: $view->id, message: \sprintf('Not authorized to edit saved view "%s".', $view->id));
         }
 
         // Scope change requires SHARE on the previous-state view.
         if (null !== $existing && $existing->scope !== $view->scope
             && !$this->authChecker->isGranted(SavedViewVoter::SHARE, $existing)
         ) {
-            throw new RuntimeException(\sprintf('Not authorized to change scope of saved view "%s".', $view->id));
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::SHARE, savedViewId: $view->id, message: \sprintf('Not authorized to change scope of saved view "%s".', $view->id));
         }
 
         // Uniqueness check: a user can't have two views with the same
@@ -153,7 +153,7 @@ final class SavedViewService
         }
 
         if (!$this->authChecker->isGranted(SavedViewVoter::DELETE, $existing)) {
-            throw new RuntimeException(\sprintf('Not authorized to delete saved view "%s".', $id));
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::DELETE, savedViewId: $id, message: \sprintf('Not authorized to delete saved view "%s".', $id));
         }
 
         $this->storage->delete($id);

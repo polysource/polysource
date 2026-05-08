@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\SavedView\Exception\SavedViewAccessDeniedException;
 use Polysource\Filter\SavedView\Exception\SavedViewDuplicateNameException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Security\SavedViewVoter;
 use Polysource\Filter\SavedView\Storage\InMemorySavedViewStorage;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
@@ -147,7 +147,7 @@ final class SavedViewServiceTest extends TestCase
             tokenStorage: $this->tokenStorageFor('alice'),
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(SavedViewAccessDeniedException::class);
         $this->expectExceptionMessage('Not authorized to edit saved view "a"');
         $service->save($this->makeView('a'));
     }
@@ -169,7 +169,7 @@ final class SavedViewServiceTest extends TestCase
             tokenStorage: $this->tokenStorageFor('alice'),
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(SavedViewAccessDeniedException::class);
         $this->expectExceptionMessage('Not authorized to change scope');
         $service->save($this->makeView('a', scope: SavedViewScope::PUBLIC));
     }
@@ -189,8 +189,32 @@ final class SavedViewServiceTest extends TestCase
             tokenStorage: $this->tokenStorageFor('alice'),
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(SavedViewAccessDeniedException::class);
         $service->delete('a');
+    }
+
+    #[Test]
+    public function accessDeniedExceptionCarriesAttributeAndId(): void
+    {
+        $storage = new InMemorySavedViewStorage();
+        $storage->save($this->makeView('view-42'));
+
+        $voter = $this->createMock(AuthorizationCheckerInterface::class);
+        $voter->method('isGranted')->willReturn(false);
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $voter,
+            tokenStorage: $this->tokenStorageFor('alice'),
+        );
+
+        try {
+            $service->delete('view-42');
+            self::fail('Expected SavedViewAccessDeniedException');
+        } catch (SavedViewAccessDeniedException $e) {
+            self::assertSame(SavedViewVoter::DELETE, $e->attribute);
+            self::assertSame('view-42', $e->savedViewId);
+        }
     }
 
     #[Test]

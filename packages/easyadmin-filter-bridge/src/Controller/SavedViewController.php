@@ -6,6 +6,7 @@ namespace Polysource\EasyAdminFilterBridge\Controller;
 
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\SavedView\Exception\SavedViewAccessDeniedException;
 use Polysource\Filter\SavedView\Exception\SavedViewDuplicateNameException;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
@@ -119,6 +120,11 @@ final class SavedViewController
             $this->flash($request, 'success', \sprintf('View "%s" saved.', $name));
         } catch (SavedViewDuplicateNameException $e) {
             $this->flash($request, 'warning', \sprintf('A view named "%s" already exists.', $e->name));
+        } catch (SavedViewAccessDeniedException) {
+            // The voter denied EDIT or SHARE on the existing view. Translate
+            // to 403 instead of leaking the framework exception — the user
+            // gets a clean denial rather than a 500.
+            throw new AccessDeniedHttpException('You are not authorized to save this view.');
         }
 
         return $this->redirectToReferrer($request);
@@ -127,7 +133,11 @@ final class SavedViewController
     #[Route('/admin/saved-views/{id}/delete', name: 'polysource_saved_view_delete', methods: ['POST'])]
     public function delete(string $id, Request $request): RedirectResponse
     {
-        $this->service->delete($id);
+        try {
+            $this->service->delete($id);
+        } catch (SavedViewAccessDeniedException) {
+            throw new AccessDeniedHttpException('You are not authorized to delete this view.');
+        }
         $this->flash($request, 'success', 'View deleted.');
 
         return $this->redirectToReferrer($request);
