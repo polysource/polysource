@@ -8,6 +8,7 @@ use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\BulkActionInterface;
 use Polysource\Core\Action\InlineActionInterface;
+use Polysource\Core\Action\StyledActionInterface;
 use Polysource\Core\Field\FieldDto;
 use Polysource\Core\Permission\PermissionInterface;
 use Polysource\Core\Resource\ResourceInterface;
@@ -113,7 +114,15 @@ final class ControllerSupport
      * lists, filtered by permission. Avoids the double-iteration bug
      * when a Resource yields a Generator from `configureActions()`.
      *
-     * @return array{inline: list<array{name: string, label: string, icon: ?string}>, bulk: list<array{name: string, label: string, icon: ?string}>}
+     * Each entry carries presentation hints (`cssVariant`,
+     * `confirmation`) populated from {@see StyledActionInterface} when
+     * the action implements it; otherwise `'secondary'` and `null`
+     * defaults keep templates free of action-name switches.
+     *
+     * @return array{
+     *   inline: list<array{name: string, label: string, icon: ?string, cssVariant: string, confirmation: ?string}>,
+     *   bulk:   list<array{name: string, label: string, icon: ?string, cssVariant: string, confirmation: ?string}>
+     * }
      */
     public function collectActionViews(ResourceInterface $resource): array
     {
@@ -136,6 +145,8 @@ final class ControllerSupport
                 'name' => $action->getName(),
                 'label' => $action->getLabel(),
                 'icon' => $action->getIcon(),
+                'cssVariant' => $action instanceof StyledActionInterface ? $action->getCssVariant() : 'secondary',
+                'confirmation' => $action instanceof StyledActionInterface ? $action->getConfirmation() : null,
             ];
             if ($action instanceof InlineActionInterface) {
                 $inline[] = $view;

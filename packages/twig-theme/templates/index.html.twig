@@ -33,11 +33,11 @@
                     {% for action in bulk_actions %}
                         <form method="POST"
                               action="{{ path(route_prefix ~ '_bulk_action', {resourceName: resource.name, action: action.name}) }}"
-                              onsubmit="return confirm('Run “{{ action.label|e('js') }}” on every record? This cannot be undone.');"
+                              onsubmit="return confirm('{{ (action.confirmation ?: 'Run “' ~ action.label ~ '” on every record? This cannot be undone.')|e('js') }}');"
                               class="d-inline-block">
                             <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
                             <button type="submit"
-                                    class="btn btn-sm btn-outline-{{ action.name == 'purge' ? 'danger' : 'primary' }}"
+                                    class="btn btn-sm btn-outline-{{ action.cssVariant|default('primary') }}"
                                     data-polysource-action="bulk-{{ action.name }}">
                                 {{ action.label }}
                             </button>
@@ -82,11 +82,11 @@
                                     {% for action in inline_actions %}
                                         <form method="POST"
                                               action="{{ path(route_prefix ~ '_action', {resourceName: resource.name, id: record.identifier, action: action.name}) }}"
-                                              {% if action.name == 'dismiss' %}onsubmit="return confirm('Dismiss this message? This cannot be undone.');"{% endif %}
+                                              {% if action.confirmation %}onsubmit="return confirm('{{ action.confirmation|e('js') }}');"{% endif %}
                                               class="d-inline-block">
                                             <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
                                             <button type="submit"
-                                                    class="btn btn-outline-{{ action.name == 'dismiss' ? 'danger' : 'secondary' }}"
+                                                    class="btn btn-outline-{{ action.cssVariant|default('secondary') }}"
                                                     data-polysource-action="inline-{{ action.name }}"
                                                     data-polysource-record="{{ record.identifier }}">
                                                 {{ action.label }}

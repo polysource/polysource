@@ -7,6 +7,7 @@ namespace Polysource\Adapter\Messenger\Action;
 use Polysource\Adapter\Messenger\DataSource\EnvelopeMapper;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
+use Polysource\Core\Action\StyledActionInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
@@ -21,7 +22,7 @@ use Throwable;
  * parameter and operates on the full transport. UI surface should
  * confirm with the user before submitting.
  */
-final class PurgeFailedMessagesAction implements BulkActionInterface
+final class PurgeFailedMessagesAction implements BulkActionInterface, StyledActionInterface
 {
     private LoggerInterface $logger;
 
@@ -56,6 +57,16 @@ final class PurgeFailedMessagesAction implements BulkActionInterface
     public function isDisplayed(array $context = []): bool
     {
         return true;
+    }
+
+    public function getCssVariant(): string
+    {
+        return 'danger';
+    }
+
+    public function getConfirmation(): string
+    {
+        return 'Purge every failed message? This cannot be undone.';
     }
 
     public function executeBatch(iterable $records): ActionResult

@@ -6,6 +6,7 @@ namespace Polysource\Adapter\Messenger\Action;
 
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\InlineActionInterface;
+use Polysource\Core\Action\StyledActionInterface;
 use Polysource\Core\Query\DataRecord;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -17,7 +18,7 @@ use Throwable;
  * Acks a single failed envelope without retrying it — effectively
  * deletes the message from the failure transport.
  */
-final class DismissFailedMessageAction implements InlineActionInterface
+final class DismissFailedMessageAction implements InlineActionInterface, StyledActionInterface
 {
     private LoggerInterface $logger;
 
@@ -51,6 +52,16 @@ final class DismissFailedMessageAction implements InlineActionInterface
     public function isDisplayed(array $context = []): bool
     {
         return true;
+    }
+
+    public function getCssVariant(): string
+    {
+        return 'danger';
+    }
+
+    public function getConfirmation(): string
+    {
+        return 'Dismiss this message? This cannot be undone.';
     }
 
     public function execute(DataRecord $record): ActionResult
