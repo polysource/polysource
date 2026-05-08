@@ -2,11 +2,22 @@
 
 ## Requirements
 
-| Requirement | Version | Notes |
-|---|---|---|
-| PHP | **8.4** | Required by the v0.1 line. PHP 8.0+ support is on the v0.5 roadmap (cf. [ADR-007](../adr/0007-php-symfony-versions.md)). |
-| Symfony | **7.4 LTS** | Required by the v0.1 line. Symfony 5.4+ / 6.4+ support is on the v0.5 roadmap. |
-| Composer | **2.x** | |
+Polysource ships with a **per-package compatibility baseline** (cf.
+[ADR-015](../adr/0015-multi-version-compatibility-baseline.md)). The
+floor differs between primitive packages (`filter`, `easyadmin-filter-bridge`)
+and bundle/adapter packages that use Symfony 6.2+ APIs.
+
+| Package | PHP | Symfony | Notes |
+|---|---|---|---|
+| `polysource/core` | `>=8.1` | none | Pure PHP, zero Symfony dependency. |
+| `polysource/filter` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Standalone-usable. |
+| `polysource/easyadmin-filter-bridge` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Plus EasyAdmin `^4.24 \|\| ^5.0`. |
+| `polysource/twig-theme` | `>=8.1` | n/a (templates) | Pure Twig, no PHP. |
+| `polysource/symfony-bundle` | `>=8.1` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Uses Sf 6.2+ APIs (`ValueResolverInterface`, renamed `SecurityBundle\Security`). |
+| `polysource/adapter-messenger` | `>=8.1` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Same baseline as `symfony-bundle`. |
+| `polysource/adapter-{doctrine,redis,flysystem,http,meilisearch}` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Plus the adapter's own backend constraint. |
+| `polysource/{audit,bulk-async,widgets,search,workflow-bridge}` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Capability plugins, opt-in. |
+| Composer | **2.x** | — | — |
 
 You also need a working Symfony Security firewall protecting the URL
 prefix where Polysource will be mounted (default: `/admin`). Polysource
@@ -21,7 +32,7 @@ only the ones you need.
 | Package | What it provides | Required? |
 |---|---|---|
 | `polysource/core` | Pure-PHP contracts and value objects (`DataSourceInterface`, `ResourceInterface`, `DataQuery`, …). Zero Symfony dependency. | yes (transitive) |
-| `polysource/symfony-bundle` | Symfony bundle (every minor `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0`, matching EA 4.29 coverage): routing, controllers, DI, Twig view layer. | yes |
+| `polysource/symfony-bundle` | Symfony bundle (Symfony `^6.4 \|\| ^7.0 \|\| ^8.0`): routing, controllers, DI, Twig view layer. | yes |
 | `polysource/twig-theme` | Layout + index + detail + paginator + 6 field templates. Pure templates, no PHP. | yes (transitive) |
 | `polysource/adapter-messenger` | Read-only data source over Symfony Messenger's failed transport, plus retry / dismiss / retry-all / purge actions. | only for the Messenger dashboard |
 
