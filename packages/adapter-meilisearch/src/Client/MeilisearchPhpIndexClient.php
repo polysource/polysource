@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Adapter\Meilisearch\Client;
 
 use Meilisearch\Endpoints\Indexes;
-use Throwable;
+use Meilisearch\Exceptions\ApiException;
 
 /**
  * Default {@see MeilisearchIndexInterface} implementation wrapping
@@ -48,8 +48,17 @@ final class MeilisearchPhpIndexClient implements MeilisearchIndexInterface
             $document = $this->index->getDocument($id);
 
             return $document;
-        } catch (Throwable) {
-            return null;
+        } catch (ApiException $e) {
+            // 404 → genuinely missing document → null is the contract.
+            // Any other status (5xx server error, 401/403 auth failure,
+            // 408 timeout, etc.) is a real fault that the caller needs
+            // to know about — silently returning null would mask outages
+            // as "not found" and mislead the operator.
+            if (404 === $e->httpStatus) {
+                return null;
+            }
+
+            throw $e;
         }
     }
 
@@ -65,8 +74,16 @@ final class MeilisearchPhpIndexClient implements MeilisearchIndexInterface
     {
         try {
             $this->index->deleteDocument($id);
-        } catch (Throwable) {
-            // Idempotent — same convention as the other adapters.
+        } catch (ApiException $e) {
+            // Idempotency narrowly applies to 404 — deleting an already-
+            // missing document is a no-op. Any other status (5xx, auth,
+            // timeout) is a real failure that must propagate so the
+            // caller can retry / alert / surface in the audit log.
+            if (404 === $e->httpStatus) {
+                return;
+            }
+
+            throw $e;
         }
     }
 }
