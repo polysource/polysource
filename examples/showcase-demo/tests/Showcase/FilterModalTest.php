@@ -24,7 +24,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  *
  * @group panther
  */
-final class FilterModalTest extends AbstractShowcasePantherTest
+final class FilterModalTest extends AbstractShowcasePantherTestCase
 {
     public function testModalOpensAndContentLoadsViaAjax(): void
     {

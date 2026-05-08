@@ -18,7 +18,7 @@ namespace App\Tests\Showcase;
  *
  * @group panther
  */
-final class JourneyTest extends AbstractShowcasePantherTest
+final class JourneyTest extends AbstractShowcasePantherTestCase
 {
     public function testLoginPageRenders(): void
     {

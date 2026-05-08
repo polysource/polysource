@@ -23,7 +23,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  *
  * @group panther
  */
-final class PolysourceStandaloneTest extends AbstractShowcasePantherTest
+final class PolysourceStandaloneTest extends AbstractShowcasePantherTestCase
 {
     /**
      * @return iterable<string, array{0: string, 1: int}>

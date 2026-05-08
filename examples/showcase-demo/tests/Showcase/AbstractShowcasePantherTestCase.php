@@ -31,7 +31,7 @@ use Throwable;
  * `KernelBrowser::loginUser`, then transplant the session cookie into
  * the Panther/Selenium browser. One round-trip, no race, no JS hooks.
  */
-abstract class AbstractShowcasePantherTest extends PantherTestCase
+abstract class AbstractShowcasePantherTestCase extends PantherTestCase
 {
     protected static ?Client $browser = null;
 

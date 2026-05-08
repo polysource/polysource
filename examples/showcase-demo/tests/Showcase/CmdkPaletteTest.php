@@ -20,7 +20,7 @@ use Facebook\WebDriver\WebDriverKeys;
  *
  * @group panther
  */
-final class CmdkPaletteTest extends AbstractShowcasePantherTest
+final class CmdkPaletteTest extends AbstractShowcasePantherTestCase
 {
     public function testCmdkHotkeyOpensPaletteAndShowsAvailableResources(): void
     {

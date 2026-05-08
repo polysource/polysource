@@ -26,7 +26,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  *
  * @group panther
  */
-final class CapabilitiesTest extends AbstractShowcasePantherTest
+final class CapabilitiesTest extends AbstractShowcasePantherTestCase
 {
     public function testBulkJobProgressEndpointReturnsJsonStatus(): void
     {

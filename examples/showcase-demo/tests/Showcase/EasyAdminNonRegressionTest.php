@@ -28,7 +28,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  *
  * @group panther
  */
-final class EasyAdminNonRegressionTest extends AbstractShowcasePantherTest
+final class EasyAdminNonRegressionTest extends AbstractShowcasePantherTestCase
 {
     public function testProductsIndexRenders50Rows(): void
     {

@@ -25,7 +25,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  *
  * @group panther
  */
-final class SavedViewDropdownTest extends AbstractShowcasePantherTest
+final class SavedViewDropdownTest extends AbstractShowcasePantherTestCase
 {
     public function testDropdownOpensAndShowsSeededViews(): void
     {
