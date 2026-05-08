@@ -79,7 +79,7 @@ final class ActionController
             throw new ResourceNotFoundException(\sprintf('Action route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
         }
 
-        $action = self::findAction($context->resource, $context->action);
+        $action = $this->support->findAction($context->resource, $context->action);
         if (!$action instanceof InlineActionInterface) {
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not an inline action.', $context->action, $context->resource->getName()));
         }
@@ -118,7 +118,7 @@ final class ActionController
             throw new ResourceNotFoundException(\sprintf('Bulk action route for resource "%s" requires an "action" parameter.', $context->resource->getName()));
         }
 
-        $action = self::findAction($context->resource, $actionName);
+        $action = $this->support->findAction($context->resource, $actionName);
         if (!$action instanceof BulkActionInterface) {
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not a bulk action.', $actionName, $context->resource->getName()));
         }
@@ -241,16 +241,5 @@ final class ActionController
         if (!\is_string($token) || !$this->csrfTokenManager->isTokenValid(new CsrfToken(self::CSRF_TOKEN_ID, $token))) {
             throw new AccessDeniedHttpException('Invalid or missing CSRF token.');
         }
-    }
-
-    private static function findAction(ResourceInterface $resource, string $name): ?ActionInterface
-    {
-        foreach ($resource->configureActions() as $action) {
-            if ($action->getName() === $name) {
-                return $action;
-            }
-        }
-
-        return null;
     }
 }

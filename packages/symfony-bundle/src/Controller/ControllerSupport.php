@@ -90,6 +90,25 @@ final class ControllerSupport
     }
 
     /**
+     * Locate a registered action on the resource by its public name.
+     * Centralised here so callers (action-invoke controllers,
+     * dispatchers, audit subscribers) all use the same lookup path —
+     * if a generator-based `configureActions()` is mutated to apply
+     * filtering, every consumer benefits at once. Returns `null` so
+     * callers can produce contextual 404 messages.
+     */
+    public function findAction(ResourceInterface $resource, string $name): ?ActionInterface
+    {
+        foreach ($resource->configureActions() as $action) {
+            if ($action->getName() === $name) {
+                return $action;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Single-pass partition of `configureActions()` into inline + bulk
      * lists, filtered by permission. Avoids the double-iteration bug
      * when a Resource yields a Generator from `configureActions()`.
