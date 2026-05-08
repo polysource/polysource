@@ -44,8 +44,14 @@ final class BulkJobsStory extends Story
             $record->resourceName = $resource;
             $record->actionName = $action;
             $record->actorId = 'admin@shop.co';
+            // BulkJob's VO derives `total` from count(recordIds). The
+            // previous `min($count, 10)` cap broke the invariant
+            // "processedCount cannot exceed total" the moment a fixture
+            // declared `processed > 10` (e.g. the Completed reindex
+            // job at 200/200). Emit exactly `$count` UUIDs — 200 IDs
+            // ≈ 7 KB of JSON, fine for a fixture.
             $record->recordIdsJson = json_encode(
-                array_map(static fn () => Uuid::v7()->toRfc4122(), range(1, min($count, 10))),
+                array_map(static fn () => Uuid::v7()->toRfc4122(), range(1, $count)),
                 \JSON_THROW_ON_ERROR,
             );
             $record->status = strtolower($status);
