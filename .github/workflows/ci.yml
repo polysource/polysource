@@ -253,14 +253,14 @@ jobs:
 
       - name: Run Panther test suite
         working-directory: examples/showcase-demo
-        # The showcase phpunit.xml is strict (failOnDeprecation +
+        # The default phpunit.dist.xml is strict (failOnDeprecation +
         # failOnWarning) so the package matrix catches drift fast.
         # Symfony Panther 2.x on Sf 7 emits ~10 unrelated framework
         # deprecations every Panther run plus 1 "abstract class"
         # PHPUnit runner warning for AbstractShowcasePantherTest.
-        # Override the strict fail-on-* for this suite ONLY — the
-        # actual test outcomes (✘/✔) are what matters here.
-        run: docker compose exec -T php sh -c 'php -d memory_limit=2G vendor/bin/phpunit --group=panther --testdox --do-not-fail-on-deprecation --do-not-fail-on-warning --do-not-fail-on-notice'
+        # Use the dedicated `phpunit.panther-ci.xml` config that keeps
+        # the same testsuite but drops the fail-on-* attributes.
+        run: docker compose exec -T php sh -c 'php -d memory_limit=2G vendor/bin/phpunit -c phpunit.panther-ci.xml --group=panther --testdox'
 
       - name: Run adapter integration tests against real containers
         working-directory: examples/showcase-demo
