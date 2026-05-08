@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * JSON progress endpoint backing the Stimulus polling fallback (cf.
@@ -47,6 +48,12 @@ final class ProgressController
     ) {
     }
 
+    #[Route(
+        path: '/admin/bulk-jobs/{id}/progress',
+        name: 'polysource_bulk_async_progress',
+        requirements: ['id' => '[0-9a-fA-F\-]{36}'],
+        methods: ['GET'],
+    )]
     public function __invoke(string $id): Response
     {
         if (!$this->permission->isGranted(BulkJobResource::PERMISSION_VIEW)) {
