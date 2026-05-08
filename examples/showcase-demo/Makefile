@@ -109,7 +109,15 @@ cs-fix: ## Apply PSR-12 + Symfony rules
 	$(PHP_EXEC) php vendor/bin/php-cs-fixer fix
 
 .PHONY: screenshots
-screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/
+screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/ (re-runs seeds first to avoid empty captures)
+	@# Always re-run the non-Doctrine seeds before capturing — Postgres
+	@# fixtures persist between runs, but Redis/MinIO/Meilisearch can drift
+	@# (volume reset, restarted container, partial seed failure). Capturing
+	@# screenshots of an empty showcase is worse than no screenshots — they
+	@# end up in the public docs and make the project look broken.
+	@echo "▶ Refreshing non-Doctrine seeds (Redis cache + MinIO files + Meilisearch docs)..."
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages || true
 	$(DOCKER_COMPOSE) --profile e2e up -d chrome
 	@echo "▶ waiting for Selenium grid…"
 	@for i in 1 2 3 4 5 6 7 8 9 10; do \

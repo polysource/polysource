@@ -39,35 +39,51 @@ final class ShowcaseScreenshotsCommand extends Command
 
     /**
      * Sequenced journey — each entry produces one PNG.
-     * `path` is relative to baseUri. `wait` is a CSS selector to wait
-     * for before capturing (lets dynamic content render). `auth=false`
-     * captures pre-login pages.
      *
-     * @var list<array{slug: string, path: string, wait?: string, auth?: bool, label?: string}>
+     * Per-entry contract:
+     *   - `path`              relative to baseUri.
+     *   - `wait`              CSS selector to wait for (lets dynamic content render).
+     *   - `auth`              false ⇒ captured pre-login.
+     *   - `click`             optional CSS selector clicked after the page settles.
+     *   - `waitAfterClick`    CSS selector that MUST become VISIBLE (not just present)
+     *                         after the click — used for modal/dropdown captures.
+     *   - `assertMinRows`     sanity check: `<tbody>` must contain at least N
+     *                         `<tr>` rows. Empty listings are a release blocker
+     *                         — the run fails loud rather than ship empty PNGs.
+     *
+     * @var list<array{slug: string, path: string, wait?: string, auth?: bool, label?: string, click?: string, waitAfterClick?: string, assertMinRows?: int}>
      */
     private const JOURNEY = [
         // Anonymous.
         ['slug' => '01-login', 'path' => '/login', 'wait' => 'input[name="_username"]', 'auth' => false],
-        // Authenticated home + EA CRUDs.
+        // Authenticated home + EA CRUDs. Each EA index seeded with Foundry (1700 rows total).
         ['slug' => '02-home-dashboard', 'path' => '/', 'wait' => '.polysource-widget'],
-        ['slug' => '03-easyadmin-products', 'path' => '/admin/product', 'wait' => 'table tbody tr'],
-        ['slug' => '04-easyadmin-customers', 'path' => '/admin/customer', 'wait' => 'table tbody tr'],
-        ['slug' => '05-easyadmin-orders', 'path' => '/admin/order', 'wait' => 'table tbody tr'],
-        ['slug' => '06-easyadmin-refunds', 'path' => '/admin/refund', 'wait' => 'table tbody tr'],
-        // Polysource standalone resources.
-        ['slug' => '07-polysource-failed-messages', 'path' => '/admin/polysource/failed-messages', 'wait' => 'h1'],
-        ['slug' => '08-polysource-login-attempts', 'path' => '/admin/polysource/login-attempts', 'wait' => 'h1'],
-        ['slug' => '09-polysource-audit-log', 'path' => '/admin/polysource/audit-log', 'wait' => 'h1'],
-        ['slug' => '10-polysource-bulk-jobs', 'path' => '/admin/polysource/bulk-jobs', 'wait' => 'h1'],
-        // Phase E adapter-backed resources.
-        ['slug' => '11-polysource-cache-keys', 'path' => '/admin/polysource/cache-keys', 'wait' => 'h1'],
-        ['slug' => '12-polysource-s3-files', 'path' => '/admin/polysource/s3-files', 'wait' => 'h1'],
-        ['slug' => '13-polysource-microservices', 'path' => '/admin/polysource/microservices', 'wait' => 'h1'],
-        ['slug' => '14-polysource-search-index', 'path' => '/admin/polysource/search-index', 'wait' => 'h1'],
-        // Feature deep-dives — captured AFTER an interaction.
-        ['slug' => '15-saved-views-dropdown-open', 'path' => '/admin/order', 'wait' => '.polysource-saved-views', 'click' => '.polysource-saved-views .dropdown-toggle'],
-        ['slug' => '16-filters-modal-tabs', 'path' => '/admin/order', 'wait' => '[data-bs-target="#modal-filters"]', 'click' => '[data-bs-target="#modal-filters"]', 'waitAfterClick' => '#modal-filters .nav-tabs'],
+        ['slug' => '03-easyadmin-products', 'path' => '/admin/product', 'wait' => 'table tbody tr', 'assertMinRows' => 5],
+        ['slug' => '04-easyadmin-customers', 'path' => '/admin/customer', 'wait' => 'table tbody tr', 'assertMinRows' => 5],
+        ['slug' => '05-easyadmin-orders', 'path' => '/admin/order', 'wait' => 'table tbody tr', 'assertMinRows' => 5],
+        ['slug' => '06-easyadmin-refunds', 'path' => '/admin/refund', 'wait' => 'table tbody tr', 'assertMinRows' => 5],
+        // Polysource standalone resources — non-Doctrine backends.
+        ['slug' => '07-polysource-failed-messages', 'path' => '/admin/polysource/failed-messages', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        ['slug' => '08-polysource-login-attempts', 'path' => '/admin/polysource/login-attempts', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        ['slug' => '09-polysource-audit-log', 'path' => '/admin/polysource/audit-log', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        ['slug' => '10-polysource-bulk-jobs', 'path' => '/admin/polysource/bulk-jobs', 'wait' => 'tbody tr', 'assertMinRows' => 1],
+        // Phase E adapter-backed resources — Redis / MinIO / WireMock / Meilisearch.
+        ['slug' => '11-polysource-cache-keys', 'path' => '/admin/polysource/cache-keys', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        ['slug' => '12-polysource-s3-files', 'path' => '/admin/polysource/s3-files', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        ['slug' => '13-polysource-microservices', 'path' => '/admin/polysource/microservices', 'wait' => 'tbody tr', 'assertMinRows' => 1],
+        ['slug' => '14-polysource-search-index', 'path' => '/admin/polysource/search-index', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+        // Feature deep-dives — captured AFTER an interaction. `waitAfterClick`
+        // pins the post-click visible state; if the modal/dropdown doesn't open
+        // we fail loud rather than ship a blank capture.
+        ['slug' => '15-saved-views-dropdown-open', 'path' => '/admin/order', 'wait' => '.polysource-saved-views', 'click' => '.polysource-saved-views .dropdown-toggle', 'waitAfterClick' => '.polysource-saved-views .dropdown-menu.show'],
+        // Filter modal: wait for `.show` (visible) AND a content selector
+        // injected by the AJAX `/admin/<resource>/render-filters` call —
+        // otherwise we capture the modal mid-load (Bootstrap spinner only).
+        ['slug' => '16-filters-modal-tabs', 'path' => '/admin/order', 'wait' => '[data-bs-target="#modal-filters"]', 'click' => '[data-bs-target="#modal-filters"]', 'waitAfterClick' => '#modal-filters.show .filter-field'],
     ];
+
+    /** @var list<string> Warnings collected during the run; printed at the end + return non-zero. */
+    private array $warnings = [];
 
     public function __construct(
         private readonly string $projectDir,
@@ -118,6 +134,21 @@ final class ShowcaseScreenshotsCommand extends Command
             $this->captureAuthenticatedPages($client, $outputDir, $io);
         } finally {
             $client->quit();
+        }
+
+        if ($this->warnings !== []) {
+            $io->newLine();
+            $io->error(\sprintf('%d capture(s) flagged as suspect — DO NOT publish these screenshots:', \count($this->warnings)));
+            foreach ($this->warnings as $warning) {
+                $io->writeln(' • ' . $warning);
+            }
+            $io->newLine();
+            $io->writeln('<comment>Common causes:</comment>');
+            $io->writeln('  - Fixtures not loaded → run <info>make fixtures</info> then re-run.');
+            $io->writeln('  - Modal Stimulus controller failed to boot → check JS console in dev tools.');
+            $io->writeln('  - Wrong selector after a UI refactor → update the JOURNEY entry.');
+
+            return Command::FAILURE;
         }
 
         $io->success(\sprintf('%d screenshots written to %s', \count(self::JOURNEY), $outputDir));
@@ -189,7 +220,7 @@ final class ShowcaseScreenshotsCommand extends Command
     }
 
     /**
-     * @param array{slug: string, path: string, wait?: string, auth?: bool, label?: string, click?: string} $page
+     * @param array{slug: string, path: string, wait?: string, auth?: bool, label?: string, click?: string, waitAfterClick?: string, assertMinRows?: int} $page
      */
     private function capture(Client $client, string $outputDir, array $page, SymfonyStyle $io): void
     {
@@ -202,9 +233,27 @@ final class ShowcaseScreenshotsCommand extends Command
                     ),
                 );
             } catch (\Facebook\WebDriver\Exception\TimeoutException) {
-                // Fall through — capture whatever rendered (the page
-                // might be empty by design, e.g. a polysource resource
-                // with no rows). The PNG will document the empty state.
+                $this->warnings[] = \sprintf(
+                    '%s — wait selector "%s" never appeared on %s (page likely empty or rendering broken)',
+                    $page['slug'],
+                    $page['wait'],
+                    $page['path'],
+                );
+            }
+        }
+
+        // Sanity assertion: listing pages MUST have at least N rows.
+        // Capturing an empty `<tbody>` yields a screenshot that falsely
+        // documents a broken feature — we'd rather fail the run loud.
+        if (isset($page['assertMinRows'])) {
+            $rowCount = \count($client->findElements(WebDriverBy::cssSelector('tbody tr')));
+            if ($rowCount < $page['assertMinRows']) {
+                $this->warnings[] = \sprintf(
+                    '%s — only %d row(s) in <tbody> (expected >= %d). Resource backend is likely empty: re-run seeds.',
+                    $page['slug'],
+                    $rowCount,
+                    $page['assertMinRows'],
+                );
             }
         }
 
@@ -212,30 +261,9 @@ final class ShowcaseScreenshotsCommand extends Command
         // open the saved-views dropdown / filter modal so the screenshot
         // captures the feature *in action*).
         if (isset($page['click'])) {
-            try {
-                $element = $client->findElement(WebDriverBy::cssSelector($page['click']));
-                $element->click();
-
-                if (isset($page['waitAfterClick'])) {
-                    try {
-                        $client->wait(8)->until(
-                            WebDriverExpectedCondition::presenceOfElementLocated(
-                                WebDriverBy::cssSelector($page['waitAfterClick']),
-                            ),
-                        );
-                    } catch (\Facebook\WebDriver\Exception\TimeoutException) {
-                        usleep(2_000_000);
-                        // Diagnostic: dump what's in the modal-body so
-                        // we know if the controller ran at all.
-                        // No diagnostic — usage was for debugging the
-                        // stimulus_bootstrap loading on EA pages, fixed
-                        // by Dashboard::configureAssets().
-                    }
-                } else {
-                    usleep(2_500_000);
-                }
-            } catch (\Facebook\WebDriver\Exception\NoSuchElementException) {
-                // Element absent — capture the page as-is.
+            $clickOk = $this->performClick($client, $page);
+            if ($clickOk && isset($page['waitAfterClick'])) {
+                $this->waitForVisibleAfterClick($client, $page);
             }
         }
 
@@ -247,5 +275,58 @@ final class ShowcaseScreenshotsCommand extends Command
         $client->takeScreenshot($path);
 
         $io->writeln(\sprintf(' ✓ <info>%s</info>  →  %s', $page['slug'], $page['path']));
+    }
+
+    /**
+     * @param array{slug: string, click?: string} $page
+     */
+    private function performClick(Client $client, array $page): bool
+    {
+        if (!isset($page['click'])) {
+            return false;
+        }
+        try {
+            $element = $client->findElement(WebDriverBy::cssSelector($page['click']));
+            $element->click();
+
+            return true;
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException) {
+            $this->warnings[] = \sprintf(
+                '%s — click target "%s" not found in DOM (selector outdated after a UI refactor?)',
+                $page['slug'],
+                $page['click'],
+            );
+
+            return false;
+        }
+    }
+
+    /**
+     * Modal / dropdown captures need the post-click element to be
+     * VISIBLE, not just present in the DOM (Bootstrap modals exist in
+     * the DOM with `display:none` until `.show` is added). Use
+     * `visibilityOfElementLocated` so a stuck-hidden modal raises a
+     * timeout we can flag rather than silently capturing the trigger.
+     *
+     * @param array{slug: string, waitAfterClick?: string} $page
+     */
+    private function waitForVisibleAfterClick(Client $client, array $page): void
+    {
+        if (!isset($page['waitAfterClick'])) {
+            return;
+        }
+        try {
+            $client->wait(8)->until(
+                WebDriverExpectedCondition::visibilityOfElementLocated(
+                    WebDriverBy::cssSelector($page['waitAfterClick']),
+                ),
+            );
+        } catch (\Facebook\WebDriver\Exception\TimeoutException) {
+            $this->warnings[] = \sprintf(
+                '%s — post-click selector "%s" never became visible. Modal/dropdown likely failed to open (Stimulus boot? Bootstrap JS missing?).',
+                $page['slug'],
+                $page['waitAfterClick'],
+            );
+        }
     }
 }
