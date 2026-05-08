@@ -1,0 +1,17 @@
+{
+    "name": "@polysource/search",
+    "description": "Stimulus controller shipped with polysource/search — Cmd+K cross-resource palette overlay.",
+    "license": "MIT",
+    "private": true,
+    "symfony": {
+        "controllers": {
+            "polysource--search--cmdk": {
+                "main": "./controllers/cmdk_controller.js",
+                "name": "polysource--search--cmdk",
+                "fetch": "eager",
+                "enabled": true,
+                "autoimport": {}
+            }
+        }
+    }
+}

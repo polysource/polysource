@@ -1,0 +1,17 @@
+{
+    "name": "@polysource/bulk-async",
+    "description": "Stimulus controller shipped with polysource/bulk-async — live progress bar wired to Mercure EventSource with polling fallback.",
+    "license": "MIT",
+    "private": true,
+    "symfony": {
+        "controllers": {
+            "polysource--bulk-async--progress": {
+                "main": "./controllers/progress_controller.js",
+                "name": "polysource--bulk-async--progress",
+                "fetch": "eager",
+                "enabled": true,
+                "autoimport": {}
+            }
+        }
+    }
+}

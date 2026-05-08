@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Panther\Client;
 use Symfony\Component\Panther\PantherTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Throwable;
 
 /**
  * Base class for Panther E2E tests + the Phase I screenshot pipeline.
@@ -67,9 +68,53 @@ abstract class AbstractShowcasePantherTest extends PantherTestCase
     }
 
     /**
-     * Mint a session for the requested email via a KernelBrowser, then
-     * transplant the session cookie into Panther so the next browser
-     * navigation lands authenticated.
+     * Authenticate by submitting the real login form. Robust across
+     * test/dev kernels (no shared session storage required) and exercises
+     * the same auth path a real user would.
+     */
+    protected function loginViaForm(string $email, string $password = 'shopco'): void
+    {
+        $client = $this->browser();
+        $client->request('GET', '/login');
+
+        // Idempotent: PantherTestCase shares the browser across tests
+        // in the same class, so subsequent calls land on a page that
+        // doesn't have the login form (already authenticated, redirected
+        // away). Bail early when no form fields appear.
+        // Probe for the form. The condition can raise either
+        // TimeoutException (wait expired with falsy result) or
+        // NoSuchElementException (element absent at probe time)
+        // depending on Selenium server version. Treat both as
+        // "already logged in".
+        $hasForm = false;
+        try {
+            $hasForm = !empty($client->findElements(\Facebook\WebDriver\WebDriverBy::name('_username')));
+        } catch (Throwable) {
+            $hasForm = false;
+        }
+        if (!$hasForm) {
+            return;
+        }
+
+        $client->findElement(\Facebook\WebDriver\WebDriverBy::name('_username'))->sendKeys($email);
+        $client->findElement(\Facebook\WebDriver\WebDriverBy::name('_password'))->sendKeys($password);
+        $client->executeScript('document.querySelector("form").submit();');
+
+        // Land on the authenticated home dashboard. If credentials are
+        // wrong, we'd bounce back to /login with an error flash —
+        // assert we did NOT bounce so failures surface loud.
+        $client->wait(10)->until(
+            \Facebook\WebDriver\WebDriverExpectedCondition::not(
+                \Facebook\WebDriver\WebDriverExpectedCondition::urlContains('/login'),
+            ),
+        );
+    }
+
+    /**
+     * @deprecated KernelBrowser session-cookie transplant turned out to
+     *             be flaky against the live Redis-backed sessions; use
+     *             {@see self::loginViaForm()} instead. Kept for
+     *             compatibility with older tests.
      */
     protected function loginAs(string $email): void
     {

@@ -218,6 +218,14 @@
         </section>
     </div>
 
+    {# Cmd+K cross-resource search palette — included site-wide so
+     # the hotkey works from every Polysource standalone page, not
+     # just the home dashboard. The package's `@PolysourceSearch`
+     # template is registered when polysource/search is installed. #}
+    {% block search_palette %}
+        {% include '@PolysourceSearch/_palette.html.twig' ignore missing %}
+    {% endblock %}
+
     {% block javascripts %}{% endblock %}
 </body>
 </html>

@@ -39,6 +39,15 @@
         {% block content_footer %}{% endblock %}
     </main>
 
+    {# Cmd+K cross-resource palette — rendered when polysource/search
+     # is installed (its bundle ships the template under
+     # `@PolysourceSearch`). Hosts without the package get nothing
+     # here thanks to `ignore missing`, so the layout stays usable
+     # without polysource/search. #}
+    {% block search_palette %}
+        {% include '@PolysourceSearch/_palette.html.twig' ignore missing %}
+    {% endblock %}
+
     {% block javascripts %}{% endblock %}
 </body>
 </html>

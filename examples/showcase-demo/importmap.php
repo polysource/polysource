@@ -37,4 +37,10 @@ return [
     '@polysource/filter/controllers/filter_modal_layout_controller.js' => [
         'path' => '@polysource/filter/controllers/filter_modal_layout_controller.js',
     ],
+    '@polysource/search/controllers/cmdk_controller.js' => [
+        'path' => '@polysource/search/controllers/cmdk_controller.js',
+    ],
+    '@polysource/bulk-async/controllers/progress_controller.js' => [
+        'path' => '@polysource/bulk-async/controllers/progress_controller.js',
+    ],
 ];
