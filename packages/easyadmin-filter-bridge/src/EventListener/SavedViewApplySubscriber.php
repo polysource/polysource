@@ -108,15 +108,18 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
      * - Filters whose FormType is `BooleanFilterType` (a Symfony
      *   ChoiceType, no comparison/value envelope) → bare scalar:
      *   `filters[<property>]=<scalar>`.
-     * - Every other FormType (ComparisonFilterType-derived: text,
-     *   numeric, datetime, choice with multiple, ...) → envelope:
-     *   `filters[<property>][comparison]=<op>&[value]=<v>`.
-     *
-     * Without this dispatch, replaying a saved BooleanFilter view
-     * would emit the envelope shape that the underlying ChoiceType
-     * doesn't understand → form binding silently drops the slice
-     * → no filter applied → table shows wrong rows even though the
-     * chips bar renders correctly (chips read the URL verbatim).
+     * - Filters whose FormType has `multiple: true` (ChoiceFilter /
+     *   EntityFilter / ArrayFilter with `canSelectMultiple`) → envelope
+     *   with array value: `filters[<p>][value][]=v` even for `eq`. The
+     *   underlying ChoiceType refuses scalars when `multiple` is set —
+     *   it silently coerces them to an empty selection and the table
+     *   shows unfiltered. Pre-v0.1.0 showcase bug: a saved view created
+     *   from a single-item ChoiceFilter selection saved as `eq` would
+     *   replay as `value=paid` scalar and the table never filtered;
+     *   the user perceived "first click does nothing".
+     * - Every other FormType (ComparisonFilter-derived: text, numeric,
+     *   datetime, single-value choice/entity, ...) → envelope:
+     *   `filters[<p>][comparison]=<op>&[value]=<v>` (scalar value).
      *
      * @return array{}|array{filters: non-empty-array<string, mixed>}
      */
@@ -136,26 +139,63 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
                 continue;
             }
 
+            $expectsArrayValue = $this->filterExpectsArrayValue($filtersConfig, $property);
+
+            // Single-value scalar wrapped to a 1-element list when the form expects array.
+            $singleValue = $expectsArrayValue
+                ? [$values[0] ?? '']
+                : ($values[0] ?? '');
+
             $entry = match ($criterion->operator) {
-                'eq' => ['comparison' => '=', 'value' => $values[0] ?? ''],
-                'neq' => ['comparison' => '!=', 'value' => $values[0] ?? ''],
-                'gt' => ['comparison' => '>', 'value' => $values[0] ?? ''],
-                'gte' => ['comparison' => '>=', 'value' => $values[0] ?? ''],
-                'lt' => ['comparison' => '<', 'value' => $values[0] ?? ''],
-                'lte' => ['comparison' => '<=', 'value' => $values[0] ?? ''],
-                'like' => ['comparison' => 'like', 'value' => $values[0] ?? ''],
+                'eq' => ['comparison' => '=', 'value' => $singleValue],
+                'neq' => ['comparison' => '!=', 'value' => $singleValue],
+                'gt' => ['comparison' => '>', 'value' => $singleValue],
+                'gte' => ['comparison' => '>=', 'value' => $singleValue],
+                'lt' => ['comparison' => '<', 'value' => $singleValue],
+                'lte' => ['comparison' => '<=', 'value' => $singleValue],
+                'like' => ['comparison' => 'like', 'value' => $singleValue],
                 'in' => ['comparison' => '=', 'value' => array_values($values)],
                 'between' => [
                     'comparison' => 'between',
                     'value' => ['min' => $values[0] ?? '', 'max' => $values[1] ?? ''],
                 ],
-                default => ['comparison' => $criterion->operator, 'value' => $values[0] ?? ''],
+                default => ['comparison' => $criterion->operator, 'value' => $singleValue],
             };
 
             $filters[$property] = $entry;
         }
 
         return $filters !== [] ? ['filters' => $filters] : [];
+    }
+
+    /**
+     * True when the property's filter declared a multi-select FormType
+     * (ChoiceType / EntityType with `multiple: true`). Single-element
+     * selections must replay as `value[]=x` arrays, never `value=x`
+     * scalars — the form's choice transformer silently drops scalar
+     * input on `multiple: true` types.
+     */
+    private function filterExpectsArrayValue(
+        \EasyCorp\Bundle\EasyAdminBundle\Dto\FilterConfigDto $filtersConfig,
+        string $property,
+    ): bool {
+        $declared = $filtersConfig->getFilter($property);
+        if (null === $declared || \is_string($declared)) {
+            return false;
+        }
+
+        $dto = $declared->getAsDto();
+        $options = $dto->getFormTypeOptions();
+
+        // ChoiceFilter / EntityFilter expose `canSelectMultiple()` via the
+        // nested `value_type_options.multiple` form-type option. Some
+        // filters set `multiple` at the top level instead — accept both.
+        $valueOptions = $options['value_type_options'] ?? null;
+        if (\is_array($valueOptions) && true === ($valueOptions['multiple'] ?? null)) {
+            return true;
+        }
+
+        return true === ($options['multiple'] ?? null);
     }
 
     /**
