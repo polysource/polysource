@@ -59,5 +59,5 @@ batch and can't accept "click retry-all and hope".
 
 - [ADR-024 — Bulk async + Mercure](../../adr/0024-bulk-async-mercure.md)
 - [ADR-020 — Audit non-Doctrine actions](../../adr/0020-audit-non-doctrine-actions.md) — every async run is audited
-- [ADR-018 — Plugin architecture](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
+- [ADR-018 — AdminPluginInterface + public contracts](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
 - [`docs/user/audit/`](../audit/) — companion package; the audit log captures async jobs gracefully

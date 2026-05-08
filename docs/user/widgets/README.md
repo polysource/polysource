@@ -37,4 +37,4 @@ to hand-roll dashboard tiles in HTML/Twig with no shared contract.
 ## See also
 
 - [ADR-022 — Dashboard widgets](../../adr/0022-dashboard-widgets.md)
-- [ADR-018 — Plugin architecture](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
+- [ADR-018 — AdminPluginInterface + public contracts](../../adr/0018-admin-plugin-interface-and-public-contracts.md)

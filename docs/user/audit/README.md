@@ -53,5 +53,5 @@ that can't ship an admin without an audit trail.
 ## See also
 
 - [ADR-020 — Audit non-Doctrine actions](../../adr/0020-audit-non-doctrine-actions.md)
-- [ADR-018 — Plugin architecture](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
+- [ADR-018 — AdminPluginInterface + public contracts](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
 - [`examples/messenger-demo/`](../../../examples/messenger-demo/) — runnable demo with the audit log wired up

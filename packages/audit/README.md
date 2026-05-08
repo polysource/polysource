@@ -41,7 +41,7 @@ Run the migration to create `polysource_audit_log`.
 `AuditLoggerInterface` is **1 method** (`log(AuditEntry $entry)`). To pipe events to Splunk, Datadog, OpenSearch, or any SIEM:
 
 ```php
-#[AutoconfigureTag('polysource.audit.logger')]
+#[AutoconfigureTag('polysource.audit_logger')]
 final class SplunkAuditLogger implements AuditLoggerInterface
 {
     public function log(AuditEntry $entry): void

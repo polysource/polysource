@@ -96,6 +96,6 @@ contract — server-side enforcement is the source of truth.
 
 ## See also
 
-- [ADR-002 — Pagination cursor](../../adr/0002-data-page-total-semantics.md)
+- [ADR-002 — DataPage::total semantics (cursor pagination)](../../adr/0002-data-page-total-semantics.md)
 - [`docs/user/search/`](../search/) — `polysource/search` (separate package — global Cmd+K palette across resources, **not** the same thing as this adapter).
 - [`docs/user/cookbook/build-your-own-adapter.md`](../cookbook/build-your-own-adapter.md)

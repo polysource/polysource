@@ -48,4 +48,4 @@ implementing `SearchProviderInterface`.
 ## See also
 
 - [ADR-023 — Global search + Cmd+K](../../adr/0023-global-search-cmdk.md)
-- [ADR-018 — Plugin architecture](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
+- [ADR-018 — AdminPluginInterface + public contracts](../../adr/0018-admin-plugin-interface-and-public-contracts.md)

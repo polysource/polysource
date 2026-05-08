@@ -59,4 +59,4 @@ abstraction.
 
 - [ADR-021 — Symfony Workflow bridge](../../adr/0021-symfony-workflow-bridge.md)
 - [ADR-020 — Audit non-Doctrine actions](../../adr/0020-audit-non-doctrine-actions.md) (audit traces transitions for free)
-- [ADR-018 — Plugin architecture](../../adr/0018-admin-plugin-interface-and-public-contracts.md)
+- [ADR-018 — AdminPluginInterface + public contracts](../../adr/0018-admin-plugin-interface-and-public-contracts.md)

@@ -294,7 +294,7 @@ Symfony service tags, every time. No magic registries, no XML files, no global s
 
 All tags are scanned by `tagged_iterator(...)` in services.php — discoverable by reading `packages/<plugin>/Resources/config/services.php`.
 
-> Reserved for future use: the Polysource naming convention also covers `polysource.field_configurator`, `polysource.action`, and `polysource.permission`. These are not yet emitted by Polysource core in v0.1; the names are reserved so plugins can adopt them when the corresponding extension points land.
+> About `polysource.field_configurator`, `polysource.action`, and `polysource.permission`: these tags are part of the public naming convention. `polysource.action` is autoconfigured on every `ActionInterface` implementation today (`PolysourceExtension::registerForAutoconfiguration`), but no global registry consumes it yet — capability packages use scoped tags (e.g. `polysource.audit.action`, `polysource.bulk_async.action`). `polysource.field_configurator` and `polysource.permission` are reserved names; the corresponding extension points will land in a later v0.x.
 
 ---
 

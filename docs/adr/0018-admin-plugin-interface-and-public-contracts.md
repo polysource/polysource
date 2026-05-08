@@ -164,7 +164,7 @@ définit son propre contrat dans son propre ADR. Le pattern est uniforme :
 | Workflow-aware resources | (no DI tag — interface marker) | `WorkflowAwareInterface` | [ADR-021](./0021-symfony-workflow-bridge.md) (Phase 13) |
 | Search providers | `polysource.search.provider` | `SearchProviderInterface` | [ADR-023](./0023-global-search-cmdk.md) (Phase 15) |
 | Audit log fan-out | `polysource.audit_logger` | `AuditLoggerInterface` | [ADR-020](./0020-audit-non-doctrine-actions.md) (Phase 12) |
-| Audit subscribers | `polysource.audit.action` | `EventSubscriberInterface` (host-defined) | [ADR-020](./0020-audit-non-doctrine-actions.md) (Phase 12) |
+| Audit log actions (rows in `AuditLogResource`) | `polysource.audit.action` | `ActionInterface` / `BulkActionInterface` | [ADR-020](./0020-audit-non-doctrine-actions.md) (Phase 12) |
 | Filter pipeline (mapper / formatter / renderer) | `polysource.filter.{mapper,formatter,renderer}` | `FilterMapperInterface`, `FilterFormatterInterface`, `FilterRendererInterface` | [ADR-013](./0013-filter-package-architecture.md) (Phase 9.5) |
 
 Cette ADR-018 ne spécifie aucune de ces interfaces — elle pose le pattern.

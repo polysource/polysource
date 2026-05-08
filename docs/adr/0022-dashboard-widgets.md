@@ -3,7 +3,7 @@
 - **Date** : 2026-05-05
 - **Statut** : Accepté
 - **Décide pour** : Phase 14 — quatrième capability ADR-017 cherry-picks
-- **En lien avec** : [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — Plugin architecture](./0018-admin-plugin-interface-and-public-contracts.md)
+- **En lien avec** : [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — AdminPluginInterface + public contracts](./0018-admin-plugin-interface-and-public-contracts.md)
 
 ## Contexte
 
