@@ -6,10 +6,9 @@ copy/pasting URL fragments. The feature ships in
 `polysource/filter` and is consumed identically by the standalone
 filter primitive and the EasyAdmin bridge.
 
-This walkthrough covers a vanilla Symfony app — for the
-zero-config EasyAdmin variant see
-[`docs/user/easyadmin-filter-bridge/saved-views.md`](../easyadmin-filter-bridge/saved-views.md)
-when shipped.
+This walkthrough covers a vanilla Symfony app. A dedicated
+zero-config EasyAdmin variant page (`docs/user/easyadmin-filter-bridge/saved-views.md`)
+will land alongside the bridge cookbook in a later docs sprint.
 
 ## What you get
 

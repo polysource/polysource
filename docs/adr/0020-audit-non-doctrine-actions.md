@@ -3,7 +3,7 @@
 - **Date** : 2026-05-05
 - **Statut** : Accepté
 - **Décide pour** : Phase 12 — deuxième capability ADR-017 cherry-picks
-- **En lien avec** : [ADR-005 — `#[AsResource]` + actions](./0005-as-resource-attribute.md), [ADR-006 — Messenger envelope mapper](./0006-messenger-envelope-mapper.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — `AdminPluginInterface` + public contracts](./0018-admin-plugin-interface-and-public-contracts.md), [ADR-019 — Architecture des saved views](./0019-saved-views-architecture.md)
+- **En lien avec** : [ADR-005 — `#[AsResource]` + actions](./0005-configuration-mechanism.md), [ADR-006 — Messenger envelope mapper](./0006-envelope-mapper-serialization.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — `AdminPluginInterface` + public contracts](./0018-admin-plugin-interface-and-public-contracts.md), [ADR-019 — Architecture des saved views](./0019-saved-views-architecture.md)
 
 ## Contexte
 

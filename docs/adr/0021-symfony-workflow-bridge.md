@@ -3,7 +3,7 @@
 - **Date** : 2026-05-05
 - **Statut** : Accepté
 - **Décide pour** : Phase 13 — troisième capability ADR-017 cherry-picks
-- **En lien avec** : [ADR-005 — `#[AsResource]` + actions](./0005-as-resource-attribute.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — `AdminPluginInterface` + public contracts](./0018-admin-plugin-interface-and-public-contracts.md), [ADR-020 — Audit non-Doctrine actions](./0020-audit-non-doctrine-actions.md)
+- **En lien avec** : [ADR-005 — `#[AsResource]` + actions](./0005-configuration-mechanism.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — `AdminPluginInterface` + public contracts](./0018-admin-plugin-interface-and-public-contracts.md), [ADR-020 — Audit non-Doctrine actions](./0020-audit-non-doctrine-actions.md)
 
 ## Contexte
 

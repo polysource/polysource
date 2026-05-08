@@ -116,5 +116,5 @@ canonical pattern.
 
 ## See also
 
-- [ADR-002 — Pagination cursor](../../adr/0002-pagination-cursor.md)
+- [ADR-002 — Pagination cursor](../../adr/0002-data-page-total-semantics.md)
 - [`docs/user/cookbook/build-your-own-adapter.md`](../cookbook/build-your-own-adapter.md) — implementing a custom pagination strategy or a richer filter mapping.

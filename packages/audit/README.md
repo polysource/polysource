@@ -18,7 +18,7 @@ You're running a regulated workload (healthcare, finance, B2B SaaS) and need a w
 - **`ExportAuditCsvAction`** — GDPR Art. 30 export with 12 locked columns (RFC 4180).
 - **`polysource:audit:purge --before`** — retention command with cutoff exclusive, `--dry-run`, exit codes.
 
-See [ADR-020](../../docs/adr/0020-audit-log-architecture.md).
+See [ADR-020](../../docs/adr/0020-audit-non-doctrine-actions.md).
 
 ## Install
 

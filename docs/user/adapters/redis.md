@@ -88,5 +88,5 @@ collections > 5k records, write a custom data source.
 
 ## See also
 
-- [ADR-002 — Pagination cursor](../../adr/0002-pagination-cursor.md) — why count returns null.
+- [ADR-002 — Pagination cursor](../../adr/0002-data-page-total-semantics.md) — why count returns null.
 - [`docs/user/cookbook/build-your-own-adapter.md`](../cookbook/build-your-own-adapter.md) — how to write a RediSearch-backed alternative.

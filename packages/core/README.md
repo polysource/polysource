@@ -20,7 +20,7 @@ Tiny on purpose. If a contract grows past 5 methods we open an ADR (cf. [ADR-010
 | `BulkActionInterface` | extends | Multi-record action (selection-driven) |
 | `FilterInterface` | n/a (DTO) | A filter declaration |
 | `PermissionInterface` | **1** (`isGranted`) | Plug your auth backend (Symfony default, OPA, LDAP, custom) |
-| `AdminPluginInterface` | 3 metadata | Self-contained capability bundle (cf. [ADR-018](../../docs/adr/0018-plugin-architecture.md)) |
+| `AdminPluginInterface` | 3 metadata | Self-contained capability bundle (cf. [ADR-018](../../docs/adr/0018-admin-plugin-interface-and-public-contracts.md)) |
 
 ## Value objects
 

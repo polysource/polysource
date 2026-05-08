@@ -8,7 +8,7 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 
 You're modelling an ecommerce / CRM / claims / HR / regulated workflow with `symfony/workflow` and want the admin UI to expose only the transitions actually enabled by the workflow guards. This package wraps Symfony's `Workflow\Registry` into auto-generated Polysource actions and a state chip Twig helper.
 
-See [ADR-021](../../docs/adr/0021-workflow-bridge.md). Separate package so `polysource/symfony-bundle` doesn't pull `symfony/workflow` for hosts that don't use it.
+See [ADR-021](../../docs/adr/0021-symfony-workflow-bridge.md). Separate package so `polysource/symfony-bundle` doesn't pull `symfony/workflow` for hosts that don't use it.
 
 ## What it ships
 

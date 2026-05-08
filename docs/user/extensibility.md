@@ -118,7 +118,7 @@ This is exactly how the bundled `polysource/audit`, `polysource/bulk-async`, `po
 Out of the box, `polysource/audit` writes to Doctrine. To add Splunk, Datadog, OpenSearch, or your custom SIEM — implement one method:
 
 ```php
-#[AutoconfigureTag('polysource.audit.logger')]
+#[AutoconfigureTag('polysource.audit_logger')]
 final class SplunkAuditLogger implements AuditLoggerInterface
 {
     public function log(AuditEntry $entry): void
@@ -229,7 +229,7 @@ final class StatusChipFormatter implements ChipFormatterInterface
 }
 ```
 
-Inject by property name. See [ADR-016](../adr/0016-filter-chip-formatter-contract.md).
+Inject by property name. See [ADR-016](../adr/0016-bridge-contracts-shared-with-polysource-filter.md).
 
 ---
 

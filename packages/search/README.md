@@ -17,7 +17,7 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 - Stimulus **`cmdk_controller.js`** — Cmd+K / Ctrl+K / "/" hooks, debounce 150 ms, arrow-keys + Enter nav, Esc close, results grouped per resource.
 - Accessible overlay template `_palette.html.twig`.
 
-See [ADR-023](../../docs/adr/0023-global-search-palette.md). Future bridges (`search-meilisearch`, `search-algolia`, `search-elasticsearch`) extend via `SearchProviderInterface`.
+See [ADR-023](../../docs/adr/0023-global-search-cmdk.md). Future bridges (`search-meilisearch`, `search-algolia`, `search-elasticsearch`) extend via `SearchProviderInterface`.
 
 ## Extend it
 

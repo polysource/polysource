@@ -3,7 +3,7 @@
 - **Date** : 2026-05-05
 - **Statut** : Accepté
 - **Décide pour** : Phase 15 — cinquième capability ADR-017 cherry-picks
-- **En lien avec** : [ADR-001 — DataSource](./0001-datasource-contract.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — Plugin architecture](./0018-admin-plugin-interface-and-public-contracts.md)
+- **En lien avec** : [ADR-001 — DataSource](./0001-data-record-identifier.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md), [ADR-018 — Plugin architecture](./0018-admin-plugin-interface-and-public-contracts.md)
 
 ## Contexte
 

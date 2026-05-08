@@ -262,8 +262,8 @@ Configurators never read either argument.
 
 - [ADR-012 — Dual-product positioning](../../docs/adr/0012-dual-product-positioning.md) —
   why this bridge exists alongside `polysource/admin` standalone.
-- [ADR-009 — local agent context](../../docs/adr/0009-ai-assistant-context.md) —
-  context system for ongoing development.
+- [ADR-016 — Bridge contracts shared with polysource/filter](../../docs/adr/0016-bridge-contracts-shared-with-polysource-filter.md) —
+  the `ChipFormatterInterface` boundary between the bridge and the standalone primitive.
 
 ## License
 

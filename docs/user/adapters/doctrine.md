@@ -106,5 +106,5 @@ custom write logic (workflow guards, audit hooks beyond ADR-020),
 ## See also
 
 - [ADR-012 — Dual product positioning](../../adr/0012-dual-product-positioning.md) — why cohabitation matters.
-- [ADR-001 — Data source interface](../../adr/0001-datasource-interface.md) — the contract.
+- [ADR-001 — Data source interface](../../adr/0001-data-record-identifier.md) — the contract.
 - [`docs/user/cookbook/build-your-own-adapter.md`](../cookbook/build-your-own-adapter.md) — when to write your own data source instead.

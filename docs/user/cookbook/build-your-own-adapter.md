@@ -268,5 +268,5 @@ you can and let the next page recover.
 - [`adapters/http.md`](../adapters/http.md) — read+write over REST APIs, pluggable pagination strategies.
 - [`adapters/meilisearch.md`](../adapters/meilisearch.md) — search-first read+write, server-side filter expressions.
 - [`adapters/messenger.md`](../adapters/messenger.md) — read-only over Symfony Messenger failed transports.
-- [ADR-001 — Data source interface](../../adr/0001-datasource-interface.md)
-- [ADR-002 — Pagination cursor](../../adr/0002-pagination-cursor.md)
+- [ADR-001 — Data source interface](../../adr/0001-data-record-identifier.md)
+- [ADR-002 — Pagination cursor](../../adr/0002-data-page-total-semantics.md)
