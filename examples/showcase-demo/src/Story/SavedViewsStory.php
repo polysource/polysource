@@ -65,19 +65,36 @@ final class SavedViewsStory extends Story
                 ['property' => 'stock', 'operator' => 'lt', 'values' => ['10']],
             ],
         );
+
+        // Private (admin-only) view on the audit-log Polysource resource.
+        // Kept private on purpose so the saved-views scope visibility
+        // E2E test has a fixture that proves admin sees it AND ops
+        // doesn't (the whole point of `private` scope per ADR-019).
+        // resourceName is the Polysource resource slug (`audit-log`),
+        // NOT the entity FQCN — Polysource standalone resources route
+        // by slug, not by FQCN.
+        $this->save(
+            id: 'sv-audit-admin',
+            name: 'Admin actions',
+            resource: 'audit-log',
+            criteria: [
+                ['property' => 'actorId', 'operator' => 'eq', 'values' => ['admin@shop.co']],
+            ],
+            scope: 'private',
+        );
     }
 
     /**
      * @param list<array{property: string, operator: string, values: list<string>}> $criteria
      */
-    private function save(string $id, string $name, string $resource, array $criteria): void
+    private function save(string $id, string $name, string $resource, array $criteria, string $scope = 'public'): void
     {
         $record = new SavedViewRecord();
         $record->id = $id;
         $record->name = $name;
         $record->resourceName = $resource;
         $record->ownerId = 'admin@shop.co';
-        $record->scope = 'public';
+        $record->scope = $scope;
         $record->filtersJson = json_encode($criteria, \JSON_THROW_ON_ERROR);
         $record->columnsJson = json_encode([], \JSON_THROW_ON_ERROR);
         $record->sortJson = json_encode([], \JSON_THROW_ON_ERROR);
