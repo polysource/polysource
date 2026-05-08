@@ -137,10 +137,23 @@ The opening pitch in one table. **Most contracts are 1-5 methods** — that's th
 ## Quality bar
 
 - **674 unit + functional tests / 1684 assertions** in the package matrix, plus 27 integration tests in the showcase
+- **29 browser E2E tests** (Symfony Panther) + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) running in CI on every push
 - **PHPStan level max** across all packages
 - **PHP-CS-Fixer** PSR-12 + Symfony rules
 - **Core coverage gate ≥ 90%** (`polysource/core` sits at 99.17%)
 - **CI matrix** runs PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0
+
+## Known limitations in v0.1
+
+Polysource is **pre-v0.1.0** and not yet production-hardened. Adopt early, with eyes open:
+
+- **Some UI surfaces are intentionally minimal** and will be polished in v0.2 (drag-drop dashboard composition, fluent form builders, real-time collaborative cursors).
+- **`polysource/admin` is not a replacement for EasyAdmin on pure Doctrine CRUD.** Keep using EasyAdmin for that. The standalone admin shines on resources outside Doctrine (Messenger, Redis, S3, REST, Meilisearch).
+- **Concrete field helpers are still limited.** The bundled `Field` API covers common types (text, datetime, money, boolean, code) but advanced renderers (rich-text editors, dependent dropdowns, file uploaders with progress) are app-side for now.
+- **Some advanced capabilities are opt-in packages and require host wiring.** Audit log, bulk-async, widgets, search palette, workflow bridge each ship as a separate Composer package — install and register only what you use.
+- **The public API is release-candidate stable but not SemVer-frozen until v1.0.** Breaking changes between v0.1.x minors are allowed, signalled in the CHANGELOG, and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).
+- **Cursor pagination is best-effort on adapters that don't expose a total count** (Redis SCAN, some HTTP APIs, Meilisearch in some configurations). The UI gracefully degrades to "Previous / Next" without page-of-N counts.
+- **Browser-driven UX (Cmd+K, modal Stimulus reshuffle, Mercure SSE)** is exercised by the Panther suite against Chromium 128. Older browsers / Safari quirks are not yet pinned in CI.
 
 ## Contributing
 
