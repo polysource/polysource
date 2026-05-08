@@ -6,6 +6,7 @@ namespace Polysource\BulkAsync\Twig;
 
 use Polysource\BulkAsync\Controller\ProgressController;
 use Polysource\BulkAsync\Job\BulkJob;
+use Polysource\BulkAsync\Mercure\MercureBulkJobBroadcaster;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -21,6 +22,11 @@ use Twig\TwigFunction;
  *  - `polysource_bulk_progress_payload(BulkJob)` — returns the
  *    canonical progress JSON shape as an array (useful for hosts
  *    embedding the data in a custom template).
+ *  - `polysource_bulk_progress_topic(BulkJob)` — returns the
+ *    canonical Mercure topic string `polysource/bulk-jobs/{actorId}/{id}`.
+ *    Use it when constructing the Mercure subscribe URL so client
+ *    and broadcaster agree on the topic shape (including URL-encoded
+ *    actor segment).
  */
 final class BulkProgressExtension extends AbstractExtension
 {
@@ -38,7 +44,16 @@ final class BulkProgressExtension extends AbstractExtension
         return [
             new TwigFunction('polysource_bulk_progress', $this->renderProgress(...), ['is_safe' => ['html']]),
             new TwigFunction('polysource_bulk_progress_payload', $this->payload(...)),
+            new TwigFunction('polysource_bulk_progress_topic', $this->topic(...)),
         ];
+    }
+
+    /**
+     * Canonical Mercure topic for the job (matches the broadcaster).
+     */
+    public function topic(BulkJob $job): string
+    {
+        return MercureBulkJobBroadcaster::topicFor($job->actorId, $job->id);
     }
 
     public function renderProgress(BulkJob $job, ?string $mercureTopic = null): string

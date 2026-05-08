@@ -19,8 +19,8 @@ See [ADR-024](../../docs/adr/0024-bulk-async-mercure.md).
 - **`AsyncAwareBulkActionInterface`** — opt-in marker (parallel interface, no BC break to `BulkActionInterface`).
 - **`BulkJobResource`** — browsable admin resource (`#[AsResource]`, slug `bulk-jobs`).
 - **`CancelBulkJobAction`** — idempotent on terminal, gated `POLYSOURCE_BULK_JOB_CANCEL`.
-- **`ProgressController`** — JSON `GET /admin/bulk-jobs/{id}/progress`.
-- **`MercureBulkJobBroadcaster`** — gated on `class_exists(HubInterface)`, hub failures swallowed, topic `polysource/bulk-jobs/{id}`.
+- **`ProgressController`** — JSON `GET /admin/bulk-jobs/{id}/progress`. Two-stage gate: coarse `POLYSOURCE_BULK_JOB_VIEW` permission + ownership check (requester must own the job, or hold `POLYSOURCE_BULK_JOB_VIEW_ANY`).
+- **`MercureBulkJobBroadcaster`** — gated on `class_exists(HubInterface)`, hub failures swallowed, topic `polysource/bulk-jobs/{actorId}/{id}` (actor segment URL-encoded). Pair with the `polysource_bulk_progress_topic(job)` Twig helper so client and broadcaster always agree on the topic shape; configure your Mercure JWT subscriber claims to restrict per-actor for defence-in-depth.
 - **Stimulus `progress_controller.js`** — EventSource Mercure → polling fallback auto on error.
 
 ## Install

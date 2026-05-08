@@ -21,8 +21,15 @@ use Throwable;
  * without Mercure don't pay the runtime cost — they fall back to
  * Stimulus polling against {@see ProgressController}.
  *
- * Topic format (stable contract): `polysource/bulk-jobs/{id}`. The
- * payload mirrors {@see ProgressController::serialise()} so SSE
+ * Topic format (stable contract): `polysource/bulk-jobs/{actorId}/{id}`.
+ * The actor segment is included so hosts can constrain Mercure
+ * subscriber JWT claims per-user (e.g. claim
+ * `["polysource/bulk-jobs/{theirActorId}/*"]`), preventing horizontal
+ * access where one operator subscribes to another's progress topic.
+ * `actorId` is URL-encoded to survive identifiers containing slashes,
+ * spaces or other characters Mercure topic paths reserve.
+ *
+ * The payload mirrors {@see ProgressController::serialise()} so SSE
  * subscribers and polling clients consume identical JSON shape.
  *
  * Failure isolation: any Hub exception is caught + logged, never
@@ -33,7 +40,17 @@ use Throwable;
  */
 final class MercureBulkJobBroadcaster implements EventSubscriberInterface
 {
-    public const TOPIC_TEMPLATE = 'polysource/bulk-jobs/%s';
+    public const TOPIC_TEMPLATE = 'polysource/bulk-jobs/%s/%s';
+
+    /**
+     * Build the canonical topic string for a job. Centralised so the
+     * broadcaster, the Twig helper and any host code agree on the
+     * shape (including URL-encoding of the actor segment).
+     */
+    public static function topicFor(string $actorId, string $jobId): string
+    {
+        return \sprintf(self::TOPIC_TEMPLATE, rawurlencode($actorId), $jobId);
+    }
 
     private LoggerInterface $logger;
 
@@ -60,7 +77,7 @@ final class MercureBulkJobBroadcaster implements EventSubscriberInterface
 
         try {
             $update = new Update(
-                topics: \sprintf(self::TOPIC_TEMPLATE, $job->id),
+                topics: self::topicFor($job->actorId, $job->id),
                 data: (string) json_encode(ProgressController::serialise($job), \JSON_THROW_ON_ERROR),
             );
             $this->hub->publish($update);

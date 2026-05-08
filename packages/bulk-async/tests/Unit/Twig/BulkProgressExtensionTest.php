@@ -58,10 +58,19 @@ final class BulkProgressExtensionTest extends TestCase
     {
         $extension = new BulkProgressExtension($this->makeTwig());
         $job = $this->makeJob(BulkJobStatus::Pending);
+        $topic = $extension->topic($job);
 
-        $html = $extension->renderProgress($job, 'http://localhost/.well-known/mercure?topic=polysource/bulk-jobs/' . $job->id);
+        $html = $extension->renderProgress($job, 'http://localhost/.well-known/mercure?topic=' . $topic);
 
-        self::assertStringContainsString('data-polysource-bulk-progress-mercure-url-value="http://localhost/.well-known/mercure?topic=polysource/bulk-jobs/' . $job->id . '"', $html);
+        self::assertStringContainsString('data-polysource-bulk-progress-mercure-url-value="http://localhost/.well-known/mercure?topic=' . $topic . '"', $html);
+    }
+
+    public function testTopicHelperEncodesActorAndIdToMatchBroadcaster(): void
+    {
+        $extension = new BulkProgressExtension($this->makeTwig());
+        $job = $this->makeJob(BulkJobStatus::Pending);
+
+        self::assertSame('polysource/bulk-jobs/alice/job-twig-test', $extension->topic($job));
     }
 
     private function makeTwig(): Environment

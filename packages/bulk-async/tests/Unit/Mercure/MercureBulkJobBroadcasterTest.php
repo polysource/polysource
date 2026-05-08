@@ -29,7 +29,11 @@ final class MercureBulkJobBroadcasterTest extends TestCase
 
         self::assertCount(1, $hub->updates);
         $update = $hub->updates[0];
-        self::assertSame(['polysource/bulk-jobs/' . $job->id], $update->getTopics());
+        self::assertSame(
+            ['polysource/bulk-jobs/' . rawurlencode($job->actorId) . '/' . $job->id],
+            $update->getTopics(),
+            'topic must include actor segment so hosts can constrain Mercure JWT subscriber claims per-user',
+        );
 
         /** @var array<string, mixed> $payload */
         $payload = json_decode($update->getData(), true, flags: \JSON_THROW_ON_ERROR);
@@ -38,6 +42,20 @@ final class MercureBulkJobBroadcasterTest extends TestCase
         self::assertSame(2, $payload['processed']);
         self::assertSame(1, $payload['failed']);
         self::assertSame(3, $payload['total']);
+    }
+
+    public function testTopicForUrlEncodesActorIdSoSpecialCharsDoNotBreakTopicPath(): void
+    {
+        // Email-style identifiers contain '@' which is harmless,
+        // but slashes / spaces / unicode would shred topic routing.
+        self::assertSame(
+            'polysource/bulk-jobs/alice%40acme.com/job-1',
+            MercureBulkJobBroadcaster::topicFor('alice@acme.com', 'job-1'),
+        );
+        self::assertSame(
+            'polysource/bulk-jobs/team%2Fadmins/job-2',
+            MercureBulkJobBroadcaster::topicFor('team/admins', 'job-2'),
+        );
     }
 
     public function testHubFailureIsSwallowed(): void

@@ -80,6 +80,10 @@ return static function (ContainerConfigurator $container): void {
     $services->set(ProgressController::class)
         ->arg('$storage', service(BulkJobStorageInterface::class))
         ->arg('$permission', service(PermissionInterface::class))
+        // Optional: when no Symfony Security firewall is wired, the controller
+        // falls back to the coarse VIEW gate alone. Production hosts always
+        // have the firewall and therefore always get the ownership check.
+        ->arg('$tokenStorage', service('security.token_storage')->nullOnInvalid())
         ->public()
         ->tag('controller.service_arguments');
 

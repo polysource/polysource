@@ -12,35 +12,35 @@ use Polysource\Audit\Storage\Doctrine\AuditEntryRecord;
 
 final class AuditCsvExporterTest extends TestCase
 {
-    public function test_writes_header_then_rows(): void
+    public function testWritesHeaderThenRows(): void
     {
         $stream = fopen('php://memory', 'w+');
-        $this->assertIsResource($stream);
+        self::assertIsResource($stream);
 
         $exporter = new AuditCsvExporter();
         $written = $exporter->write([$this->record(actorLabel: 'alice')], $stream);
 
-        $this->assertSame(1, $written);
+        self::assertSame(1, $written);
 
         rewind($stream);
         $header = fgetcsv($stream, escape: '');
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
 
-        $this->assertIsArray($header);
-        $this->assertSame('id', $header[0]);
-        $this->assertSame('actor_label', $header[3]);
-        $this->assertIsArray($row);
-        $this->assertSame('alice', $row[3]);
+        self::assertIsArray($header);
+        self::assertSame('id', $header[0]);
+        self::assertSame('actor_label', $header[3]);
+        self::assertIsArray($row);
+        self::assertSame('alice', $row[3]);
     }
 
     /**
      * @dataProvider formulaInjectionPayloads
      */
-    public function test_prefixes_formula_chars_so_spreadsheets_treat_them_as_literals(string $payload): void
+    public function testPrefixesFormulaCharsSoSpreadsheetsTreatThemAsLiterals(string $payload): void
     {
         $stream = fopen('php://memory', 'w+');
-        $this->assertIsResource($stream);
+        self::assertIsResource($stream);
 
         $exporter = new AuditCsvExporter();
         $exporter->write([$this->record(actorLabel: $payload)], $stream);
@@ -50,10 +50,10 @@ final class AuditCsvExporterTest extends TestCase
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
 
-        $this->assertIsArray($row);
+        self::assertIsArray($row);
         $cell = (string) $row[3];
-        $this->assertStringStartsWith("'", $cell, 'cell must be prefixed so Excel/Calc do not parse it as a formula');
-        $this->assertSame("'" . $payload, $cell);
+        self::assertStringStartsWith("'", $cell, 'cell must be prefixed so Excel/Calc do not parse it as a formula');
+        self::assertSame("'" . $payload, $cell);
     }
 
     /**
@@ -61,18 +61,18 @@ final class AuditCsvExporterTest extends TestCase
      */
     public static function formulaInjectionPayloads(): iterable
     {
-        yield 'equals'    => ['=cmd|\' /C calc\'!A0'];
-        yield 'plus'      => ['+1+1+cmd'];
-        yield 'minus'     => ['-2+3+cmd'];
-        yield 'at-sign'   => ['@SUM(A1:A2)'];
-        yield 'tab'       => ["\t=1+1"];
-        yield 'cr'        => ["\r=1+1"];
+        yield 'equals' => ['=cmd|\' /C calc\'!A0'];
+        yield 'plus' => ['+1+1+cmd'];
+        yield 'minus' => ['-2+3+cmd'];
+        yield 'at-sign' => ['@SUM(A1:A2)'];
+        yield 'tab' => ["\t=1+1"];
+        yield 'cr' => ["\r=1+1"];
     }
 
-    public function test_safe_values_are_left_untouched(): void
+    public function testSafeValuesAreLeftUntouched(): void
     {
         $stream = fopen('php://memory', 'w+');
-        $this->assertIsResource($stream);
+        self::assertIsResource($stream);
 
         $exporter = new AuditCsvExporter();
         $exporter->write([$this->record(actorLabel: 'alice@acme.com')], $stream);
@@ -82,8 +82,8 @@ final class AuditCsvExporterTest extends TestCase
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
 
-        $this->assertIsArray($row);
-        $this->assertSame('alice@acme.com', $row[3], 'mid-string @ must not trigger sanitisation');
+        self::assertIsArray($row);
+        self::assertSame('alice@acme.com', $row[3], 'mid-string @ must not trigger sanitisation');
     }
 
     private function record(string $actorLabel): AuditEntryRecord

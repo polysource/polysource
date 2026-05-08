@@ -10,11 +10,14 @@ use PHPUnit\Framework\TestCase;
 use Polysource\BulkAsync\Controller\ProgressController;
 use Polysource\BulkAsync\Job\BulkJob;
 use Polysource\BulkAsync\Job\BulkJobStatus;
+use Polysource\BulkAsync\Resource\BulkJobResource;
 use Polysource\BulkAsync\Tests\InMemory\InMemoryBulkJobStorage;
 use Polysource\Core\Permission\PermissionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 final class ProgressControllerTest extends TestCase
 {
@@ -72,6 +75,68 @@ final class ProgressControllerTest extends TestCase
         $controller('any-id');
     }
 
+    public function testReturns403WhenRequesterIsNotJobOwnerAndLacksViewAnyAttribute(): void
+    {
+        $storage = new InMemoryBulkJobStorage();
+        $storage->save($this->makeJob(BulkJobStatus::Running)); // owner: alice
+
+        $controller = new ProgressController(
+            $storage,
+            $this->grantOnly(BulkJobResource::PERMISSION_VIEW),
+            $this->tokenStorageFor('mallory'),
+        );
+
+        $this->expectException(AccessDeniedHttpException::class);
+        $this->expectExceptionMessageMatches('/belongs to another actor/');
+        $controller('job-progress-test');
+    }
+
+    public function testGrantsAccessToJobOwnerEvenWithoutViewAny(): void
+    {
+        $storage = new InMemoryBulkJobStorage();
+        $storage->save($this->makeJob(BulkJobStatus::Running));
+
+        $controller = new ProgressController(
+            $storage,
+            $this->grantOnly(BulkJobResource::PERMISSION_VIEW),
+            $this->tokenStorageFor('alice'),
+        );
+
+        $response = $controller('job-progress-test');
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testGrantsAccessToNonOwnerWhenViewAnyIsHeld(): void
+    {
+        $storage = new InMemoryBulkJobStorage();
+        $storage->save($this->makeJob(BulkJobStatus::Running));
+
+        $controller = new ProgressController(
+            $storage,
+            $this->grantingChecker(), // grants every attribute including VIEW_ANY
+            $this->tokenStorageFor('mallory'),
+        );
+
+        $response = $controller('job-progress-test');
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testFallsBackToCoarseGateWhenNoSecurityFirewallIsWired(): void
+    {
+        $storage = new InMemoryBulkJobStorage();
+        $storage->save($this->makeJob(BulkJobStatus::Running));
+
+        // No TokenStorage → host has no firewall → coarse gate suffices.
+        $controller = new ProgressController(
+            $storage,
+            $this->grantOnly(BulkJobResource::PERMISSION_VIEW),
+            null,
+        );
+
+        $response = $controller('job-progress-test');
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public function testSerialisesTerminalJobWithCompletionStamps(): void
     {
         $storage = new InMemoryBulkJobStorage();
@@ -119,5 +184,26 @@ final class ProgressControllerTest extends TestCase
         $checker->method('isGranted')->willReturn(false);
 
         return $checker;
+    }
+
+    private function grantOnly(string $allowedAttribute): PermissionInterface
+    {
+        $checker = $this->createMock(PermissionInterface::class);
+        $checker->method('isGranted')->willReturnCallback(
+            static fn (string $attr): bool => $attr === $allowedAttribute,
+        );
+
+        return $checker;
+    }
+
+    private function tokenStorageFor(string $userIdentifier): TokenStorageInterface
+    {
+        $token = $this->createMock(TokenInterface::class);
+        $token->method('getUserIdentifier')->willReturn($userIdentifier);
+
+        $storage = $this->createMock(TokenStorageInterface::class);
+        $storage->method('getToken')->willReturn($token);
+
+        return $storage;
     }
 }

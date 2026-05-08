@@ -32,6 +32,15 @@ class BulkJobResource extends AbstractResource
     public const PERMISSION_VIEW = 'POLYSOURCE_BULK_JOB_VIEW';
 
     /**
+     * Admin-style override letting an operator inspect any user's
+     * bulk-job progress, not only their own. Without this attribute,
+     * {@see \Polysource\BulkAsync\Controller\ProgressController}
+     * enforces actor-only access (the requester must own the job).
+     * Hosts grant this to SREs and platform admins via their voter.
+     */
+    public const PERMISSION_VIEW_ANY = 'POLYSOURCE_BULK_JOB_VIEW_ANY';
+
+    /**
      * @param iterable<ActionInterface> $actions
      */
     public function __construct(
