@@ -25,15 +25,22 @@ Capability extension stays the **primary** contract. Each capability
 introduced in a future phase ships an interface + a service tag + a
 registry, e.g.:
 
-| Capability | Tag | Interface | Phase |
-|---|---|---|---|
-| Saved views | `polysource.saved_view_scope` | `SavedViewScopeInterface` | 11 |
-| Widgets | `polysource.widget` | `WidgetInterface` | 12 |
-| Bulk actions | `polysource.bulk_action` | `BulkActionInterface` | 13 |
-| Workflow | `polysource.workflow_resource` | `WorkflowAwareResource` | 14 |
-| Search providers | `polysource.search_provider` | `SearchProviderInterface` | 15 |
-| Cmd palette | `polysource.command` | `PaletteCommandInterface` | 15 |
-| Audit handlers | `polysource.audit_handler` | `AuditHandlerInterface` | 16 |
+| Capability | Tag | Interface |
+|---|---|---|
+| Resources | `polysource.resource` (auto via `#[AsResource]`) | `ResourceInterface` |
+| Data sources | `polysource.data_source` | `DataSourceInterface` |
+| Actions (per-Resource) | `polysource.action` | `ActionInterface` |
+| Plugins | `polysource.plugin` (auto via `#[AsPlugin]`) | `AdminPluginInterface` |
+| Filter pipeline — mapper | `polysource.filter.mapper` | `FilterMapperInterface` |
+| Filter pipeline — formatter | `polysource.filter.formatter` | `FilterFormatterInterface` |
+| Filter pipeline — renderer | `polysource.filter.renderer` | `FilterRendererInterface` |
+| Filter chip formatter | `polysource.chip_formatter` | `ChipFormatterInterface` |
+| Search providers | `polysource.search.provider` | `SearchProviderInterface` |
+| Audit log fan-out | `polysource.audit_logger` | `AuditLoggerInterface` |
+| Audit subscribers | `polysource.audit.action` | `EventSubscriberInterface` |
+| Bulk-async dispatchers | `polysource.bulk_async.action` | `BulkActionInterface` |
+| Dashboard widgets | `polysource.widgets.dashboard` | `WidgetInterface` |
+| Messenger actions | `polysource.messenger.action` | `ActionInterface` |
 
 A plugin is **anything that registers tagged services in any of those
 slots**. The `AdminPluginInterface` itself is just a metadata layer on
@@ -140,11 +147,11 @@ later phase):
 services:
     Acme\PolysourceHello\Widget\GreetingWidget:
         tags:
-            - { name: polysource.widget, position: 'top-left' }
+            - { name: polysource.widgets.dashboard, position: 'top-left' }
 
     Acme\PolysourceHello\BulkAction\GreetEveryone:
         tags:
-            - polysource.bulk_action
+            - polysource.bulk_async.action
 ```
 
 The `polysource.*` tag is what wires the service into the matching
