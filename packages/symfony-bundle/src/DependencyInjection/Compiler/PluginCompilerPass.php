@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Throwable;
 
 /**
  * Wires services tagged `polysource.plugin` into `PluginRegistry`.
@@ -58,7 +59,7 @@ final class PluginCompilerPass implements CompilerPassInterface
                     if (!class_exists($bundleClass)) {
                         continue;
                     }
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     continue;
                 }
 
@@ -107,7 +108,7 @@ final class PluginCompilerPass implements CompilerPassInterface
                 if (!class_exists($class)) {
                     continue;
                 }
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 continue;
             }
 
