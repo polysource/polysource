@@ -262,6 +262,14 @@ jobs:
         # the same testsuite but drops the fail-on-* attributes.
         run: docker compose exec -T php sh -c 'php -d memory_limit=2G vendor/bin/phpunit -c phpunit.panther-ci.xml --group=panther --testdox'
 
+      - name: Install root composer deps inside the container
+        working-directory: examples/showcase-demo
+        # The real-container adapter tests live in packages/adapter-*/
+        # and run via the ROOT composer's phpunit + autoload, NOT the
+        # showcase's. Same container, different vendor tree.
+        run: |
+          docker compose exec -T php sh -c 'cd /repo && composer install --no-interaction --no-progress'
+
       - name: Run adapter integration tests against real containers
         working-directory: examples/showcase-demo
         # Defined per-adapter in packages/adapter-*/tests/Functional/RealContainer*.
