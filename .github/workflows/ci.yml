@@ -201,9 +201,10 @@ jobs:
           # with EACCES (composer install, importmap:install, etc.).
           # Build the image with the host runner's actual UID/GID so
           # every write under the mount is owned correctly.
-          export UID=$(id -u)
-          export GID=$(id -g)
-          docker compose --profile e2e build php
+          #
+          # bash treats `UID` as readonly; pass via --build-arg directly
+          # rather than `export UID=…`.
+          docker compose --profile e2e build --build-arg UID="$(id -u)" --build-arg GID="$(id -g)" php
           docker compose --profile e2e up -d
           echo "▶ Waiting for services to become healthy..."
           for i in $(seq 1 60); do
