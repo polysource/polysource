@@ -51,7 +51,14 @@ final class PluginCompilerPass implements CompilerPassInterface
             : [];
         if (\is_array($bundles)) {
             foreach ($bundles as $bundleClass) {
-                if (!\is_string($bundleClass) || !class_exists($bundleClass)) {
+                if (!\is_string($bundleClass)) {
+                    continue;
+                }
+                try {
+                    if (!class_exists($bundleClass)) {
+                        continue;
+                    }
+                } catch (\Throwable) {
                     continue;
                 }
 
@@ -80,10 +87,27 @@ final class PluginCompilerPass implements CompilerPassInterface
 
         // 2. Also auto-tag any service whose class implements
         //    AdminPluginInterface — covers hosts that explicitly
-        //    register a non-Bundle plugin service in services.yaml.
+        //    register a non-Bundle plugin service in services.yaml
+        //    without going through autoconfiguration.
+        //
+        // We must not let `class_exists()` propagate fatal errors when
+        // a service in the container has a missing transitive dep
+        // (e.g. symfony/translation's TransMethodVisitor depending on
+        // nikic/php-parser). Symfony's DebugClassLoader turns these
+        // into ClassNotFoundError at autoload time. Catching every
+        // Throwable lets compilation proceed: the missing class
+        // genuinely isn't a plugin candidate, and the runtime that
+        // uses it will fail informatively if the host actually tries.
         foreach ($container->getDefinitions() as $serviceId => $definition) {
             $class = $definition->getClass();
-            if (!\is_string($class) || !class_exists($class)) {
+            if (!\is_string($class)) {
+                continue;
+            }
+            try {
+                if (!class_exists($class)) {
+                    continue;
+                }
+            } catch (\Throwable) {
                 continue;
             }
 

@@ -10,6 +10,7 @@ use Polysource\Bundle\Attribute\AsResource;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\DataSource\DataSourceInterface;
 use Polysource\Core\Filter\FilterInterface;
+use Polysource\Core\Plugin\AdminPluginInterface;
 use Polysource\Core\Resource\ResourceInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -110,6 +111,13 @@ final class PolysourceExtension extends Extension implements PrependExtensionInt
         ;
         $container->registerForAutoconfiguration(ResourceInterface::class)
             ->addTag('polysource.resource')
+        ;
+        // ADR-018: any service whose class implements AdminPluginInterface
+        // is a polysource.plugin. Autoconfig handles the common path so
+        // PluginCompilerPass step 2 only needs to cover services that
+        // disable autoconfigure explicitly.
+        $container->registerForAutoconfiguration(AdminPluginInterface::class)
+            ->addTag('polysource.plugin')
         ;
 
         $container->registerAttributeForAutoconfiguration(
