@@ -55,9 +55,20 @@ final class RealS3ContainerTest extends TestCase
         $adapter = new AsyncAwsS3Adapter($client, $bucket);
         $this->filesystem = new Filesystem($adapter);
 
-        // Clean any pre-existing files under our prefix.
+        // Clean any pre-existing files under our prefix. Iterate +
+        // delete one-by-one because `deleteDirectory()` semantics on
+        // S3-compatible backends (MinIO via AsyncAws) can silently
+        // miss files when the "directory" was previously left in a
+        // partial state, leaving leaked test data that breaks the
+        // host's admin pages (the showcase forbids "/" in S3 ids,
+        // so leaked paths from prior runs surface a 500).
         try {
-            $this->filesystem->deleteDirectory(rtrim(self::PREFIX, '/'));
+            $contents = $this->filesystem->listContents(rtrim(self::PREFIX, '/'), true);
+            foreach ($contents as $entry) {
+                if ($entry->isFile()) {
+                    $this->filesystem->delete($entry->path());
+                }
+            }
         } catch (Throwable) {
             // best-effort
         }

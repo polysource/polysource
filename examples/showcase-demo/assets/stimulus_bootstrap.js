@@ -16,4 +16,4 @@ import progressController from '@polysource/bulk-async/controllers/progress_cont
 const app = startStimulusApp();
 app.register('polysource--filter-modal-layout', filterModalLayoutController);
 app.register('polysource--search--cmdk', cmdkController);
-app.register('polysource--bulk-async--progress', progressController);
+app.register('polysource-bulk-progress', progressController);
