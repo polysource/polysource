@@ -4,11 +4,19 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — heading toward v0.1.0 stable
+## [Unreleased]
 
-This section captures everything shipped since `0.1.0-alpha.1`. When the
-v0.1.0 tag is cut, move this block into a `[0.1.0]` heading and start a
-fresh `[Unreleased]`.
+_No changes yet._
+
+## [0.1.0] — 2026-05-08
+
+First public release. 16 packages, full multi-version CI matrix
+(PHP 8.1→8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0), 29 browser
+E2E + 15 adapter real-container tests + 674 unit/functional tests
+(1684 assertions). Released after the irreproachable-coverage push
+(`feedback_e2e_is_non_negotiable`).
+
+This block captures everything shipped since `0.1.0-alpha.1`.
 
 ### Added — saved views (Phase 11)
 
