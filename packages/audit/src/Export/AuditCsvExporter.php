@@ -30,6 +30,20 @@ use Polysource\Audit\Storage\Doctrine\AuditEntryRecord;
 final class AuditCsvExporter
 {
     /**
+     * Characters that LibreOffice Calc / Excel / Google Sheets parse as the
+     * start of a formula when they appear at position 0 of a cell. Prefixing
+     * such cells with a single quote forces the spreadsheet to treat the
+     * value as a literal string instead of evaluating it. See OWASP
+     * "CSV Injection" (a.k.a. Formula Injection) guidance.
+     *
+     * RFC 4180 itself does not address this — it only specifies escaping
+     * for `,` `"` and CRLF inside cells.
+     *
+     * @var list<string>
+     */
+    private const FORMULA_TRIGGERS = ['=', '+', '-', '@', "\t", "\r"];
+
+    /**
      * Locked column order. Snake_case names match the Art. 30 register
      * conventions used by most compliance tooling (OneTrust, Trustarc,
      * Vanta).
@@ -87,19 +101,38 @@ final class AuditCsvExporter
         $context = \is_array($decoded) ? $decoded : [];
 
         return [
-            $record->id,
-            $record->occurredAt->format(\DATE_ATOM),
-            $record->actorId,
-            $record->actorLabel ?? '',
-            $record->resourceName,
-            $record->actionName,
-            $record->outcome,
-            $record->message ?? '',
-            (string) $record->durationMs,
-            $record->recordIdsJson,
-            self::stringField($context, 'ip'),
-            self::stringField($context, 'requestId'),
+            self::sanitize($record->id),
+            self::sanitize($record->occurredAt->format(\DATE_ATOM)),
+            self::sanitize($record->actorId),
+            self::sanitize($record->actorLabel ?? ''),
+            self::sanitize($record->resourceName),
+            self::sanitize($record->actionName),
+            self::sanitize($record->outcome),
+            self::sanitize($record->message ?? ''),
+            self::sanitize((string) $record->durationMs),
+            self::sanitize($record->recordIdsJson),
+            self::sanitize(self::stringField($context, 'ip')),
+            self::sanitize(self::stringField($context, 'requestId')),
         ];
+    }
+
+    /**
+     * Defeats CSV / formula-injection: any cell starting with a formula
+     * trigger is prefixed with a single quote so Excel / Calc / Sheets
+     * render it as a literal string. Cost is a single-character prefix
+     * on a tiny minority of cells; benefit is that a malicious actor
+     * who manages to seed `=cmd|' /C calc'!A0` into an actor label
+     * cannot exploit the compliance officer's machine on export.
+     */
+    private static function sanitize(string $value): string
+    {
+        if ('' === $value) {
+            return $value;
+        }
+
+        return \in_array($value[0], self::FORMULA_TRIGGERS, true)
+            ? "'" . $value
+            : $value;
     }
 
     /**
