@@ -25,9 +25,9 @@ docker compose -f examples/showcase-demo/docker-compose.yml --profile e2e up -d 
 
 | Login | Pass | Role | Permissions |
 |---|---|---|---|
-| `admin@shop.co` | `shopco` | `ROLE_ADMIN` | tout, dont CSV export + audit purge |
+| `admin@shop.co` | `shopco` | `ROLE_ADMIN` | everything, including CSV export + audit purge |
 | `ops@shop.co` | `shopco` | `ROLE_OPS` | retry / dismiss / cancel / workflow transition |
-| `viewer@shop.co` | `shopco` | `ROLE_VIEWER` | lecture seule |
+| `viewer@shop.co` | `shopco` | `ROLE_VIEWER` | read-only |
 
 Reset DB to fixtures baseline before each full pass:
 
@@ -40,7 +40,7 @@ docker compose -f examples/showcase-demo/docker-compose.yml exec -T php \
 
 ## Test format
 
-For each test you fill in `✅` / `❌` + a one-line note for failures.
+For each test fill in `✅` / `❌` + a one-line note for failures.
 
 ```
 A1 ✅
@@ -56,299 +56,299 @@ Each EasyAdmin filter type gets swapped at runtime for an enhanced
 version with extra UX (presets, quick ranges, Tom Select, …). Tests
 on EA pages.
 
-### A1 — TextFilter (enrichi via `EnhancedTextFilterType`)
+### A1 — TextFilter (enhanced via `EnhancedTextFilterType`)
 
 - Page: `/admin/customer`
 - Open Filters → field `Email`
-- **Expected**: input texte EA standard, mais block prefix
-  `polysource_enhanced_text_filter` (vérifier en inspectant le DOM)
-- Tape `alice` → Apply → table filtered
+- **Expected**: standard EA text input, but block prefix
+  `polysource_enhanced_text_filter` (verify by inspecting the DOM)
+- Type `alice` → Apply → table filtered
 
 ### A2 — ChoiceFilter multi-select (Tom Select via `EnhancedChoiceFilterType`)
 
 - Page: `/admin/customer` → Filters → `Country`
-- **Expected**: Tom Select dropdown (recherche + chips de sélection),
-  pas le `<select multiple>` natif d'EA
-- Sélectionne 2-3 valeurs → Apply
-- URL contient `filters[country][value][]=FR&[]=DE`
+- **Expected**: Tom Select dropdown (search + selection chips), not
+  EA's native `<select multiple>`
+- Pick 2-3 values → Apply
+- URL contains `filters[country][value][]=FR&[]=DE`
 
 ### A3 — NumericFilter (`EnhancedNumericFilterType`)
 
 - Page: `/admin/product` → Filters → `Price (cents)`
 - **Expected**: comparison dropdown (`=`, `≠`, `>`, `<`, `>=`, `<=`,
-  `between`) + value input (+ optional `quick_ranges` buttons si
-  configurés — vide dans la showcase actuelle)
+  `between`) + value input (+ optional `quick_ranges` buttons when
+  configured — empty in the current showcase)
 - Comparison `>=`, value `5000` → Apply → Products ≥ 50€ only
 
-### A4 — DateTimeFilter avec presets ⭐ (`EnhancedDateTimeFilterType`)
+### A4 — DateTimeFilter with presets ⭐ (`EnhancedDateTimeFilterType`)
 
 - Page: `/admin/order` → Filters → tab **Dates** → `Order date`
-- **Expected**: 5 boutons preset visibles : **Today / Last 7 days /
+- **Expected**: 5 preset buttons visible — **Today / Last 7 days /
   Last 30 days / This month / Custom**
-- Click **Last 7 days** → input rempli auto avec date d'il y a 7 jours
+- Click **Last 7 days** → input auto-populated with the date 7 days ago
 - Apply → table filtered
-- Click **This month** → input rempli avec début du mois courant
+- Click **This month** → input populated with the start of the current month
 
 ### A5 — EntityFilter (Tom Select via `EnhancedEntityFilterType`)
 
-- ⚠️ Pas wired dans la showcase actuelle (aucun `EntityFilter::new()`).
-- Pour tester, ajouter dans `OrderCrudController::configureFilters()` :
-  `->add(EntityFilter::new('customer'))`. **Skipped pour v0.1**.
+- ⚠️ Not wired in the current showcase (no `EntityFilter::new()` calls).
+- To exercise, add to `OrderCrudController::configureFilters()`:
+  `->add(EntityFilter::new('customer'))`. **Skipped for v0.1**.
 
 ### A6 — BooleanFilter (`EnhancedBooleanFilterType`)
 
-- ⚠️ Pas wired dans la showcase actuelle. **Skipped pour v0.1**.
+- ⚠️ Not wired in the current showcase. **Skipped for v0.1**.
 
 ### A7 — ComparisonFilter (`EnhancedComparisonFilterType`)
 
-- Implicite — c'est le parent de NumericFilter, DateTimeFilter, etc.
-- **Couvert indirectement par A3 et A4**.
+- Implicit — it's the parent of NumericFilter, DateTimeFilter, etc.
+- **Indirectly covered by A3 and A4**.
 
 ### A8 — ArrayFilter (`EnhancedArrayFilterType`)
 
-- ⚠️ Pas wired dans la showcase. **Skipped pour v0.1**.
+- ⚠️ Not wired in the showcase. **Skipped for v0.1**.
 
 ---
 
-## B — Filtres custom shipped par le bridge
+## B — Custom filters shipped by the bridge
 
-Filtres qui n'existent PAS dans EA upstream — ajoutés par le bridge.
+Filters that do NOT exist in EA upstream — added by the bridge.
 
 ### B1 — NotNullFilter (tri-state Any / Has value / Empty)
 
 - Page: `/admin/order` → Filters → tab **Lifecycle** → `Has shipped`
-- **Expected**: 3 radio buttons : Any / Has value / Empty
-- Test "**Has value**" → Apply → orders avec `shippedAt IS NOT NULL`
-- Test "**Empty**" → orders avec `shippedAt IS NULL`
-- Test "**Any**" → pas de filtre + chip "Has shipped: Any" (commit `d70953b`)
-- Variantes : `Has refunded` (Order), `Customer: Has phone`
+- **Expected**: 3 radio buttons — Any / Has value / Empty
+- Test "**Has value**" → Apply → orders with `shippedAt IS NOT NULL`
+- Test "**Empty**" → orders with `shippedAt IS NULL`
+- Test "**Any**" → no filter applied + chip "Has shipped: Any" (commit `d70953b`)
+- Variants: `Has refunded` (Order), `Customer: Has phone`
 
 ### B2 — BetweenDateFilter (range picker)
 
 - Page: `/admin/order` → Filters → tab **Dates** → `Paid between (range picker)`
-- **Expected**: 2 inputs side-by-side `from` + `to`
-- Saisir 2026-01-01 → 2026-12-31 → Apply
+- **Expected**: 2 side-by-side inputs `from` + `to`
+- Enter 2026-01-01 → 2026-12-31 → Apply
 - Chip "Paid between (range picker): 2026-01-01 → 2026-12-31"
 
 ### B3 — InFilter (`IS IN [...]` multi-value)
 
 - Page: `/admin/customer` → Filters → `City is one of`
-- Saisir `Paris, Lyon, Marseille` → Apply
-- Variante : `/admin/product` → `SKU is one of` → `WIDGET-1, WIDGET-2`
+- Enter `Paris, Lyon, Marseille` → Apply
+- Variant: `/admin/product` → `SKU is one of` → `WIDGET-1, WIDGET-2`
 
 ### B4 — FullTextSearchFilter (cross-cols LIKE)
 
 - Page: `/admin/product` → Filters → `Full-text in description`
-- Saisir un mot du contenu (ex: `premium`) → Apply
-- **Expected**: table filtrée aux Products dont la description contient ce mot
+- Enter a word from the seed data (e.g. `premium`) → Apply
+- **Expected**: table filtered to Products whose description contains the word
 
 ---
 
-## C — Organisation modale (Markers `Polysource::tab` / `::group`)
+## C — Modal organization (Markers `Polysource::tab` / `::group`)
 
 ### C1 — Tabs
 
 - Page: `/admin/order` → Filters
-- **Expected**: modal divisée en 4 tabs : **Identification / Dates / Money / Lifecycle**
-- Click chaque tab → contenu différent
+- **Expected**: modal split into 4 tabs — **Identification / Dates / Money / Lifecycle**
+- Click each tab → different content
 
 ### C2 — Groups (accordion)
 
 - `/admin/order` → Filters → tab **Dates**
-- **Expected**: 2 sections accordion : **Created** + **Paid**
-- Chaque section contient ses filtres groupés visuellement
+- **Expected**: 2 accordion sections — **Created** + **Paid**
+- Each section contains its filters grouped visually
 
 ### C3 — Per-tab applied count badge
 
-- Applique un filtre dans tab "Money" (`Total >= 5000`) sans fermer le modal
-- **Expected**: tab "Money" affiche un badge `1` (1 filtre actif dans ce tab)
+- Apply a filter inside the "Money" tab (`Total >= 5000`) without closing the modal
+- **Expected**: the "Money" tab shows a `1` badge (1 active filter in that tab)
 
 ---
 
-## D — Modes UI (modal / subpanel / integrated)
+## D — UI modes (modal / subpanel / integrated)
 
-### D1 — Modal mode (default sur la showcase EA)
+### D1 — Modal mode (default on the EA showcase)
 
-- `/admin/order` → click bouton **Filters** → modal Bootstrap s'ouvre
-- **Expected**: modal avec tabs + groups + form
+- `/admin/order` → click **Filters** button → Bootstrap modal opens
+- **Expected**: modal with tabs + groups + form
 
 ### D2 — Subpanel mode
 
-- ⚠️ Pas activé sur la showcase Order. Activé dans `examples/easyadmin-bridge-demo`.
-- Pour tester : `make demo-bridge` → http://localhost:8081
+- ⚠️ Not enabled on the showcase Order page. Enabled in `examples/easyadmin-bridge-demo`.
+- To test: `make demo-bridge` → http://localhost:8081
 
 ### D3 — Integrated mode (no EA, `polysource/filter` standalone)
 
-- ⚠️ Pas dans la showcase. Disponible via `make demo-filter` (http://localhost:8082)
+- ⚠️ Not in the showcase. Available via `make demo-filter` (http://localhost:8082)
 
 ---
 
 ## E — Chips bar
 
-### E1 — Chip render après apply
+### E1 — Chip render after apply
 
-- `/admin/order` → applique 2-3 filtres → Apply
-- **Expected**: barre chips au-dessus de la table avec un chip par filtre actif
+- `/admin/order` → apply 2-3 filters → Apply
+- **Expected**: chips bar above the table with one chip per active filter
 
-### E2 — Chip label = label déclaré du filtre
+### E2 — Chip label = filter's declared label
 
-- Filter `Order date` → chip dit "Order date: ..."
-- (pas "Created at" qui serait l'humanisation par défaut depuis le property name)
+- Filter `Order date` → chip says "Order date: ..."
+- (not "Created at" which would be the default humanisation from the property name)
 
 ### E3 — Chip value formatting (5-stage chain)
 
-- ChoiceFilter → labels traduits affichés (pas valeurs DB)
-  - ex: `status` chip = "Cart, Paid" (pas "cart, paid")
-- BooleanFilter → "Yes" / "No" (pas "1" / "0")
-- EntityFilter → `__toString()` de l'entité (pas l'ID)
-- DateTimeFilter → date formatée localement
-- Custom `chip_formatter` (option du filtre) → callable de l'host fire en stage 1
+- ChoiceFilter → translated labels rendered (not DB values)
+  - e.g. `status` chip = "Cart, Paid" (not "cart, paid")
+- BooleanFilter → "Yes" / "No" (not "1" / "0")
+- EntityFilter → entity's `__toString()` (not the ID)
+- DateTimeFilter → locally-formatted date
+- Custom `chip_formatter` (filter option) → host callable fires at stage 1
 
 ### E4 — NotNullFilter "Any" chip (commit `d70953b`)
 
-- Couvert par B1 — chip "Has shipped: Any" doit s'afficher
+- Covered by B1 — "Has shipped: Any" chip must render
 
-### E5 — Chip X remove individuel
+### E5 — Individual chip X remove
 
-- Avec plusieurs filtres → click le X d'un chip
-- **Expected**: ce filtre seul retiré, les autres restent
+- With multiple filters active → click the X on one chip
+- **Expected**: only that filter is removed, the others stay
 
 ### E6 — "Clear all"
 
-- Avec plusieurs filtres → click **Clear all** en bout de barre
-- **Expected**: tous les filtres retirés, URL clean
+- With multiple filters active → click **Clear all** at the end of the bar
+- **Expected**: every filter removed, URL clean
 
-### E7 — Chip remove sans JS (server-driven fallback)
+### E7 — Chip remove without JS (server-driven fallback)
 
 - DevTools → Cmd+Shift+P → "Disable JavaScript"
-- Reload → applique filtres → click X d'un chip
-- **Expected**: ça marche quand même (le X est un `<a href>` server-driven)
+- Reload → apply filters → click X on a chip
+- **Expected**: still works (the X is a server-driven `<a href>`)
 
 ---
 
 ## F — Session persistence
 
-### F1 — Filter survie navigation
+### F1 — Filter survives navigation
 
-- `/admin/order` → applique un filtre → Apply
-- Navigue vers `/admin/customer`, puis re-clique "Orders" dans le menu
-- **Expected**: retour sur `/admin/order` avec les filtres précédents restaurés
+- `/admin/order` → apply a filter → Apply
+- Navigate to `/admin/customer`, then click "Orders" in the menu again
+- **Expected**: back on `/admin/order` with the previous filters restored
 
 ### F2 — Reset detection
 
-- URL `/admin/order?filters[status]=paid` (filtré)
-- Navigue vers URL clean `/admin/order` (no filter)
-- **Expected**: session entry cleared, retour `/admin/order` sans filtres
+- URL `/admin/order?filters[status]=paid` (filtered)
+- Navigate to clean URL `/admin/order` (no filter)
+- **Expected**: session entry cleared, lands on `/admin/order` without filters
 
 ---
 
 ## G — Saved views
 
-### G1 — Liste des views par scope
+### G1 — View list per scope
 
-- Login `admin@shop.co` → `/admin/order` → ouvre dropdown "Saved views"
-- **Expected**: 4 vues seedées (toutes scope=public)
-- Login `ops@shop.co` → mêmes 4 vues visibles
+- Login `admin@shop.co` → `/admin/order` → open the "Saved views" dropdown
+- **Expected**: 4 seeded views (all scope=public)
+- Login `ops@shop.co` → same 4 views visible
 
-### G2 — Private view invisible aux autres
+### G2 — Private view invisible to others
 
 - `admin@shop.co` → `/admin/polysource/audit-log` → dropdown
-- **Expected**: voit "Admin actions" (private, owner=admin)
-- Logout → `ops@shop.co` → même page → dropdown
-- **Expected**: "Admin actions" PAS visible
+- **Expected**: sees "Admin actions" (private, owner=admin)
+- Logout → `ops@shop.co` → same page → dropdown
+- **Expected**: "Admin actions" NOT visible
 
-### G3 — Apply view → redirect au filter URL au 1er clic ⭐
+### G3 — Apply view → redirect to filter URL on first click ⭐
 
 - `admin@shop.co` → `/admin/order` → dropdown → click "Late deliveries"
-- **Expected**: URL devient `?filters[status][value][]=paid&[]=preparing`,
-  table filtrée
-- (commits `3f91cce` + `548ea66` — bug fixé pre-v0.1.0)
+- **Expected**: URL becomes `?filters[status][value][]=paid&[]=preparing`,
+  table filtered
+- (commits `3f91cce` + `548ea66` — bug fixed pre-v0.1.0)
 
-### G4 — Switch view A → view B au 1er clic ⭐ (commit `3f91cce`)
+### G4 — Switch view A → view B on first click ⭐ (commit `3f91cce`)
 
-- Click "Late deliveries" → filtré
-- Click "Paid Orders" → URL devient `?filters[status][value][]=paid`
-- **Expected**: pas besoin de cliquer 2 fois
+- Click "Late deliveries" → filtered
+- Click "Paid Orders" → URL becomes `?filters[status][value][]=paid`
+- **Expected**: no need to click twice
 
 ### G5 — Save current view
 
-- Applique un filtre custom → click "Save current" dans dropdown
-- Modal s'ouvre → name + scope (Private / Team / Public) → Save
-- **Expected**: nouvelle view dans dropdown
+- Apply a custom filter → click "Save current" in the dropdown
+- Modal opens → name + scope (Private / Team / Public) → Save
+- **Expected**: new view appears in the dropdown
 
 ### G6 — Delete view (owner only)
 
-- Dropdown → click le X à côté d'une view dont tu es owner
-- Confirm → view supprimée
+- Dropdown → click the X next to a view you own
+- Confirm → view deleted
 
-### G7 — Delete cross-user denied (commit `a6e0cbb` — typed exception)
+### G7 — Cross-user delete denied (commit `a6e0cbb` — typed exception)
 
 - Login `ops@shop.co`
-- Tente POST `/admin/saved-views/sv-audit-admin/delete` (admin's view)
-  - depuis DevTools, copie le form de delete d'une view d'ops, change `id`
-- **Expected**: 403 propre (pas un 500 stack trace)
+- Try POST `/admin/saved-views/sv-audit-admin/delete` (admin's view)
+  - via DevTools, copy the delete form of one of ops' views, swap `id`
+- **Expected**: clean 403 (not a 500 stack trace)
 
 ### G8 — "Clear current view" link
 
-- Apply une view → URL `?filters=...` → dropdown affiche cette view active
+- Apply a view → URL `?filters=...` → dropdown shows that view as active
 - Click "Clear current view"
-- **Expected**: URL devient clean `/admin/order`, dropdown back to default state
+- **Expected**: URL becomes clean `/admin/order`, dropdown back to default state
 
 ### G9 — Cache buster `_t` (commit `cd2a7be`)
 
-- Inspect dropdown HTML
-- **Expected**: chaque link saved-view a `&_t=<chiffres>` unique
-- Pas dans l'URL après redirect (strippé par les apply listeners)
+- Inspect the dropdown HTML
+- **Expected**: each saved-view link has a unique `&_t=<digits>` param
+- Not present in the URL after redirect (stripped by the apply listeners)
 
-### G10 — Headers `no-store` sur 302 (commit `cd2a7be`)
+### G10 — `no-store` headers on 302 (commit `cd2a7be`)
 
 ```bash
 curl -sI -b /tmp/admin.txt 'http://localhost:8084/admin/order?view=sv-late-deliveries' | grep -i cache
 # → Cache-Control: no-store, no-cache, must-revalidate
 ```
 
-### G11 — Roundtrip per filter type ⭐ (test critique)
+### G11 — Roundtrip per filter type ⭐ (critical test)
 
-Pour chaque filtre wired, save + replay :
+For each wired filter, save + replay:
 
 | Filter | Save criterion | Expected replay |
 |---|---|---|
-| TextFilter | `reference contains "ORD"` | Apply view → input rempli |
-| ChoiceFilter multi | `status in [paid, preparing]` | Multi-select restauré (commit `548ea66`) |
-| NumericFilter | `totalCents >= 5000` | Comparison + value restaurés |
-| DateTimeFilter | `createdAt > 2026-01-01` | Date restaurée |
-| BetweenDateFilter | `paidAt between [X, Y]` | Range restauré |
-| InFilter | `city in [Paris, Lyon]` | Multi-value restauré |
-| NotNullFilter | "Has value" | `value=not_null` restauré |
+| TextFilter | `reference contains "ORD"` | Apply view → input populated |
+| ChoiceFilter multi | `status in [paid, preparing]` | Multi-select restored (commit `548ea66`) |
+| NumericFilter | `totalCents >= 5000` | Comparison + value restored |
+| DateTimeFilter | `createdAt > 2026-01-01` | Date restored |
+| BetweenDateFilter | `paidAt between [X, Y]` | Range restored |
+| InFilter | `city in [Paris, Lyon]` | Multi-value restored |
+| NotNullFilter | "Has value" | `value=not_null` restored |
 
 ---
 
-## H — Polysource standalone (resources non-EA)
+## H — Polysource standalone (non-EA resources)
 
-### H1 — Filtres sur `/admin/polysource/audit-log`
+### H1 — Filters on `/admin/polysource/audit-log`
 
-- Click bouton "Filters" sur la page
-- **Expected**: modal avec 5 filtres (occurredAt, actorId, resourceName, actionName, outcome)
-- Apply → table filtrée
+- Click the "Filters" button on the page
+- **Expected**: modal with 5 filters (occurredAt, actorId, resourceName, actionName, outcome)
+- Apply → table filtered
 
-### H2 — Filtres sur `/admin/polysource/bulk-jobs`
+### H2 — Filters on `/admin/polysource/bulk-jobs`
 
-- **Expected**: 4 filtres (actorId, status, createdAt, resourceName)
+- **Expected**: 4 filters (actorId, status, createdAt, resourceName)
 
-### H3 — Filtres sur `/admin/polysource/failed-messages`
+### H3 — Filters on `/admin/polysource/failed-messages`
 
-- **Expected**: filtres customs depuis `FailedMessageResource::configureFilters()`
+- **Expected**: custom filters from `FailedMessageResource::configureFilters()`
 
-### H4 — Saved views sur Polysource standalone (commit `30697ca`)
+### H4 — Saved views on Polysource standalone (commit `30697ca`)
 
 - `admin@shop.co` → `/admin/polysource/audit-log` → dropdown
 - Apply "Admin actions" (private admin view)
-- **Expected**: URL devient `?filter[actor_id][value]=admin@shop.co`
-  (Polysource shape, pas EA shape)
+- **Expected**: URL becomes `?filter[actor_id][value]=admin@shop.co`
+  (Polysource shape, not the EA shape)
 
 ---
 
-## Quick balayage en 5 minutes
+## 5-minute quick sweep
 
 ```
 1. admin@shop.co
@@ -359,7 +359,7 @@ Pour chaque filtre wired, save + replay :
    - /admin/product : FullTextSearchFilter
    - /admin/polysource/audit-log : private "Admin actions" visible
 2. Logout → ops@shop.co
-   - /admin/polysource/audit-log : "Admin actions" PAS visible
+   - /admin/polysource/audit-log : "Admin actions" NOT visible
 3. Logout → viewer@shop.co
    - read-only check
 ```
@@ -372,9 +372,9 @@ Pour chaque filtre wired, save + replay :
 (headless Chrome). The showcase already has the infra — see
 `examples/showcase-demo/tests/Showcase/AbstractShowcasePantherTestCase.php`.
 
-### Coverage actuelle (~17 scenarios couverts)
+### Existing coverage (~17 scenarios covered)
 
-| Test file | Scenarios manuels couverts |
+| Test file | Manual scenarios covered |
 |---|---|
 | `EasyAdminSmokeTest` | A1 (renders) |
 | `EasyAdminNonRegressionTest` | EA pagination/sort/search baseline |
@@ -386,61 +386,67 @@ Pour chaque filtre wired, save + replay :
 | `JourneyTest` | login + auth flow |
 | `PolysourceStandaloneTest` | H1, H2 (resource indexes render) |
 
-### Lacunes prioritaires à automatiser
+### Priority gaps to automate
 
-| Test | Priorité | Notes |
+| Test | Priority | Notes |
 |---|---|---|
-| **A4 (DateTime presets)** | HIGH | preset clicks remplissent l'input |
-| **A2 (ChoiceFilter Tom Select)** | HIGH | multi-select interaction Stimulus |
-| **B1 (NotNullFilter tri-state + Any chip)** | HIGH | régression `d70953b` à pin |
-| **G4 (switch view A → B 1er clic)** | HIGH | régression `3f91cce` à pin |
-| **G7 (cross-user delete 403)** | HIGH | régression `a6e0cbb` à pin |
-| **G8 (clear current view)** | MEDIUM | régression `0dc1f55` |
-| **G9 (cache buster `_t`)** | MEDIUM | check DOM attribute |
-| **G10 (no-store headers)** | LOW | curl-able, pas besoin de browser |
+| **A4 (DateTime presets)** | HIGH | preset clicks populate the input |
+| **A2 (ChoiceFilter Tom Select)** | HIGH | multi-select Stimulus interaction |
+| **B1 (NotNullFilter tri-state + Any chip)** | HIGH | pin regression of `d70953b` |
+| **G4 (switch view A → B first click)** | HIGH | pin regression of `3f91cce` |
+| **G7 (cross-user delete 403)** | HIGH | pin regression of `a6e0cbb` |
+| **G8 (clear current view)** | MEDIUM | regression of `0dc1f55` |
+| **G9 (cache buster `_t`)** | MEDIUM | DOM attribute check |
+| **G10 (no-store headers)** | LOW | curl-able, no browser needed |
 | **E5/E6 (chip X / Clear all)** | MEDIUM | DOM interaction Stimulus + server-driven |
-| **E7 (no-JS fallback)** | LOW | nécessite désactivation JS Panther |
+| **E7 (no-JS fallback)** | LOW | requires Panther JS toggling |
 | **F1/F2 (session persist)** | MEDIUM | multi-request Panther |
 | **C3 (per-tab badge count)** | LOW | DOM check |
 
-### Comment lancer la suite Panther actuelle
+### Running the existing Panther suite
 
 ```bash
-# Démarre le service Chrome (headless)
+# Start the (headless) Chrome service
 docker compose -f examples/showcase-demo/docker-compose.yml --profile e2e up -d chrome
 
-# Lance la suite Panther
+# Run the Panther tests
 docker compose -f examples/showcase-demo/docker-compose.yml exec -T php \
   /repo/examples/showcase-demo/vendor/bin/phpunit --group panther
 ```
 
-CI YAML déjà wired (cf. `.github/workflows/showcase.yml` futur). Voir `docs/user/cookbook/build-your-own-adapter.md` pour le pattern Panther test.
+CI YAML already wired (cf. `.github/workflows/showcase.yml` future). See
+`docs/user/cookbook/build-your-own-adapter.md` for the Panther test pattern.
 
-### Roadmap d'automatisation suggérée
+### Suggested automation roadmap
 
-**Sprint 1 — combler les régressions critiques (~4h)** :
-1. `FilterPresetsTest` : DateTime presets click + value injection
-2. `SavedViewSwitchTest` : switch view A → view B 1er clic (régression `3f91cce`)
-3. `SavedViewAccessDeniedTest` : POST cross-user → assertResponseStatusCodeSame(403)
-4. `NotNullFilterChipTest` : "Any" chip render (régression `d70953b`)
+**Sprint 1 — close the critical regressions (~4h)**:
+1. `FilterPresetsTest` — DateTime presets click + value injection
+2. `SavedViewSwitchTest` — switch view A → view B on first click (regression `3f91cce`)
+3. `SavedViewAccessDeniedTest` — POST cross-user → assertResponseStatusCodeSame(403)
+4. `NotNullFilterChipTest` — "Any" chip render (regression `d70953b`)
 
-**Sprint 2 — couvrir le reste (~4h)** :
-5. `TomSelectInteractionTest` : multi-select Tom Select via Selenium WebDriver
-6. `ChipInteractionTest` : X individual + Clear all + no-JS fallback
-7. `SessionPersistenceTest` : navigate away + come back → filtres restaurés
-8. `FilterRoundtripTest` (per-filter-type matrix) : compléter `SavedViewRoundtripTest` avec NumericFilter, NotNullFilter, InFilter, FullTextSearchFilter, EnhancedTextFilter min_length
+**Sprint 2 — broader coverage (~4h)**:
+5. `TomSelectInteractionTest` — multi-select Tom Select via Selenium WebDriver
+6. `ChipInteractionTest` — X individual + Clear all + no-JS fallback
+7. `SessionPersistenceTest` — navigate away + come back → filters restored
+8. `FilterRoundtripTest` (per-filter-type matrix) — extend `SavedViewRoundtripTest`
+   with NumericFilter, NotNullFilter, InFilter, FullTextSearchFilter,
+   EnhancedTextFilter min_length
 
-**Sprint 3 — couvrir les Polysource standalone resources (~2h)** :
-9. `PolysourceFilterModalTest` : `/admin/polysource/audit-log` + bulk-jobs + failed-messages → modal opens, filter applies
-10. `PolysourceSavedViewApplyTest` : `?view=<id>` redirect sur Polysource native pages
+**Sprint 3 — cover the Polysource standalone resources (~2h)**:
+9. `PolysourceFilterModalTest` — `/admin/polysource/audit-log` + bulk-jobs +
+   failed-messages → modal opens, filter applies
+10. `PolysourceSavedViewApplyTest` — `?view=<id>` redirect on Polysource
+    native pages
 
-**Total ~10h** pour couverture E2E complète. Une fois en place, `make test-panther` te donne la garantie de non-régression sur tout ce plan.
+**Total ~10h** for full E2E coverage. Once in place, `make test-panther`
+gives non-regression confidence on this entire plan.
 
-### Setup d'un nouveau test Panther (template)
+### New Panther test setup (template)
 
 ```php
 <?php
-// examples/showcase-demo/tests/Showcase/MonNouveauTest.php
+// examples/showcase-demo/tests/Showcase/MyNewTest.php
 
 declare(strict_types=1);
 
@@ -452,9 +458,9 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 /**
  * @group panther
  */
-final class MonNouveauTest extends AbstractShowcasePantherTestCase
+final class MyNewTest extends AbstractShowcasePantherTestCase
 {
-    public function testMaFonctionnalite(): void
+    public function testMyFeature(): void
     {
         $this->loginViaForm('admin@shop.co');
         $client = $this->browser();
@@ -467,7 +473,7 @@ final class MonNouveauTest extends AbstractShowcasePantherTestCase
             ),
         );
 
-        // ... interactions Selenium ...
+        // ... Selenium interactions ...
         $client->findElement(WebDriverBy::cssSelector('...'))->click();
 
         // Assert
@@ -478,21 +484,21 @@ final class MonNouveauTest extends AbstractShowcasePantherTestCase
 
 ---
 
-## Référence — fixes de cette session
+## Reference — fixes from this session
 
-Bugs trouvés et corrigés pre-v0.1.0 sur la stack filter / saved-views :
+Bugs found and fixed pre-v0.1.0 on the filter / saved-views stack:
 
 | Commit | Description |
 |---|---|
-| `cd2a7be` | Headers `no-store` + cache buster `_t` (défense en profondeur cache HTTP) |
-| `548ea66` | `eq` op sur multi-select ChoiceFilter → array shape `value[]=` |
-| `3f91cce` | 2 subscribers en conflit (cause racine du "1er clic ne marche pas") |
-| `d70953b` | Chip pour NotNullFilter "Any" |
+| `cd2a7be` | `no-store` headers + `_t` cache buster (defence-in-depth against HTTP cache) |
+| `548ea66` | `eq` op on multi-select ChoiceFilter → array shape `value[]=` |
+| `3f91cce` | 2 subscribers conflict (root cause of the "first click does nothing" bug) |
+| `d70953b` | Chip rendered for NotNullFilter "Any" |
 | `30697ca` | `SavedViewApplyListener` moved to `polysource/filter` package |
-| `a6e0cbb` | `SavedViewAccessDeniedException` typed (vs bare RuntimeException) |
+| `a6e0cbb` | `SavedViewAccessDeniedException` typed (vs bare `RuntimeException`) |
 | `aaebd5a` | Resource overrides re-wire `$actions` tagged_iterator |
-| `5e082d1` `100bb0c` | EasyAdminAuditSubscriber capture diff complet sur EA edits |
-| `b2672c7` | UTF-8 BOM + newline collapse sur CSV export |
-| `f597b7d` | Stub message handlers pour que "Retry all" succeed visiblement |
+| `5e082d1` `100bb0c` | `EasyAdminAuditSubscriber` captures full diff on EA edits |
+| `b2672c7` | UTF-8 BOM + newline collapse in CSV export |
+| `f597b7d` | Stub message handlers so "Retry all" succeeds visibly |
 
-Chaque fix doit avoir un test de non-régression dans la liste ci-dessus.
+Each fix should have a regression test in the list above.
