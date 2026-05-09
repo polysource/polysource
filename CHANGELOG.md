@@ -8,12 +8,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
-## [0.1.0] — 2026-05-08
+## [0.1.0] — 2026-05-09
 
 First public release. 16 packages, full multi-version CI matrix
 (PHP 8.1→8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0), 29 browser
-E2E + 15 adapter real-container tests + 674 unit/functional tests
-(1684 assertions). Released after the irreproachable-coverage push
+E2E + 15 adapter real-container tests + 782 unit/functional tests
+(1932 assertions). Released after the irreproachable-coverage push
 (`feedback_e2e_is_non_negotiable`).
 
 This block captures everything shipped since `0.1.0-alpha.1`.
@@ -227,6 +227,33 @@ base + `*DataSource` implementing `WritableDataSourceInterface` +
 Total **674 unit + functional tests / 1684 assertions** in the package
 matrix, plus **27 integration tests** in the showcase WebTestCase suite.
 
+### Added — EasyAdmin CRUD edits in the audit trail
+
+- `EasyAdminAuditSubscriber` (in `polysource/audit`) bridges EA's
+  `AfterEntityPersistedEvent`, `AfterEntityUpdatedEvent`,
+  `AfterEntityDeletedEvent` to the audit logger. Diff is captured in
+  the matching `Before*Event` via Doctrine's
+  `UnitOfWork::getEntityChangeSet()` so the `After*` callback gets a
+  field-level changes map (old → new).
+- The `AuditEntry::context` payload carries `changes` + `snapshot` as
+  truncatable JSON (cap 1024 bytes per message column to fit the GDPR
+  export schema).
+- Gated on `class_exists(AfterEntityUpdatedEvent::class)` — if EA isn't
+  installed, the subscriber registers nothing.
+
+### Changed — audit CSV export hardening
+
+- The `Polysource.audit.export.csv` action now declares
+  `POLYSOURCE_AUDIT_EXPORT` as its permission (was `null`, which left
+  the button hidden in every host security setup).
+- Output now starts with the UTF-8 BOM (`\xEF\xBB\xBF`) so Excel /
+  Numbers / Calc detect the encoding correctly. Also collapses
+  multi-line message bodies to single lines (RFC 4180 quoting still
+  applies, but the BOM unblocks consumers that mis-detect UTF-8 as
+  Windows-1252 — the `→` mojibake reported on 2026-05-09).
+- Sanitises formula triggers (`=`, `+`, `-`, `@`, tab, CR) on every
+  cell to defeat CSV injection in spreadsheet readers.
+
 ### Fixed — 8 latent bugs surfaced during 2026-05-07 client integration
 
 - Saved-view replay used the wrong URL shape per FormType — BooleanFilter
@@ -247,6 +274,29 @@ matrix, plus **27 integration tests** in the showcase WebTestCase suite.
 - TEAM-scoped `SavedView::save()` crashed with
   `InvalidArgumentException` when no team resolver was wired. Now
   gracefully falls back to PRIVATE with a flash message.
+
+### Fixed — bridge regressions surfaced during 2026-05-09 showcase QA
+
+- `FilterSessionPersistenceSubscriber` could clobber a
+  `SavedViewApplySubscriber` redirect because EA's
+  `StoppableEventTrait` is **not** PSR-14 (Symfony's dispatcher does
+  not auto-skip listeners after `stopPropagation()`). Both subscribers
+  now bail explicitly when `?view=<id>` is in the request or when
+  propagation has been stopped — switching saved view A → view B is
+  now a single-click operation.
+- Multi-select `EnhancedChoiceFilterType` saved with a single `value`
+  was replaying as a bare scalar; EA's form binding then rejected the
+  shape with "Filter operator cannot be empty". The bridge now
+  promotes single-value `eq` criteria to an array when the target
+  FormType expects multiple values.
+- `NotNullFilter` chip was hidden when the user picked "Any" (the
+  no-op tri-state value). Now the chips macro introspects the
+  FilterDto FormType and force-renders for `NotNullFilterType` so
+  saved-view replay shows the user the filter is in effect.
+- `polysource/filter` saved-view dropdown response is no longer
+  cached (cache-busting `_t=` query param + `Cache-Control` headers)
+  — fixes the report where reopening the dropdown after an apply
+  showed a stale list.
 
 ### Fixed — CI matrix robustness
 
