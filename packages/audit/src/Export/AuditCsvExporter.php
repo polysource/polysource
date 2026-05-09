@@ -77,6 +77,15 @@ final class AuditCsvExporter
             throw new InvalidArgumentException('AuditCsvExporter::write() requires an open file handle.');
         }
 
+        // UTF-8 BOM. Required for Excel / LibreOffice Calc to detect
+        // the encoding correctly: without it, multi-byte characters in
+        // the audit message (e.g. `→` U+2192 emitted by the EA bridge
+        // diff summary, accented actor names, non-Latin scripts) get
+        // interpreted as Windows-1252 / Mac Roman and render as
+        // garbage glyphs (`â†'` instead of `→`, `Ã©` instead of `é`).
+        // The 3-byte BOM is invisible to UTF-8-aware consumers.
+        fwrite($handle, "\xEF\xBB\xBF");
+
         fputcsv($handle, self::COLUMNS, escape: '');
 
         $count = 0;
@@ -108,12 +117,25 @@ final class AuditCsvExporter
             self::sanitize($record->resourceName),
             self::sanitize($record->actionName),
             self::sanitize($record->outcome),
-            self::sanitize($record->message ?? ''),
+            // The message column carries the human-readable diff
+            // summary (EA bridge) or action result text. Embedded
+            // CR/LF would split the cell visually in some readers
+            // (Excel renders them as in-cell line breaks; tail-style
+            // grep'ing the file becomes painful). Collapse to single
+            // space so the column is grep-friendly. Forensic detail
+            // stays in `context_json.changes` / `.snapshot` — the
+            // CSV is the executive summary.
+            self::sanitize(self::singleLine($record->message ?? '')),
             self::sanitize((string) $record->durationMs),
             self::sanitize($record->recordIdsJson),
             self::sanitize(self::stringField($context, 'ip')),
             self::sanitize(self::stringField($context, 'requestId')),
         ];
+    }
+
+    private static function singleLine(string $value): string
+    {
+        return preg_replace('/[\r\n]+/', ' ', $value) ?? $value;
     }
 
     /**

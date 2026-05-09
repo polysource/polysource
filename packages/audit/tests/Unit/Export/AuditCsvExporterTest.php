@@ -23,6 +23,8 @@ final class AuditCsvExporterTest extends TestCase
         self::assertSame(1, $written);
 
         rewind($stream);
+        // Skip the UTF-8 BOM emitted before the header row.
+        self::assertSame("\xEF\xBB\xBF", fread($stream, 3));
         $header = fgetcsv($stream, escape: '');
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
@@ -32,6 +34,39 @@ final class AuditCsvExporterTest extends TestCase
         self::assertSame('actor_label', $header[3]);
         self::assertIsArray($row);
         self::assertSame('alice', $row[3]);
+    }
+
+    public function testEmitsUtf8BomBeforeHeaderSoSpreadsheetsDetectEncoding(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        self::assertIsResource($stream);
+
+        (new AuditCsvExporter())->write([$this->record(actorLabel: 'alice')], $stream);
+
+        rewind($stream);
+        self::assertSame("\xEF\xBB\xBF", fread($stream, 3), 'UTF-8 BOM must be the first three bytes of the file');
+    }
+
+    public function testCollapsesNewlinesInMessageColumn(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        self::assertIsResource($stream);
+
+        $message = "shippingAddress: '123 Main St\nApt 4B\nNYC' → '=cmd|...'";
+        $exporter = new AuditCsvExporter();
+        $exporter->write([$this->record(actorLabel: 'alice', message: $message)], $stream);
+
+        rewind($stream);
+        fread($stream, 3); // skip BOM
+        fgetcsv($stream, escape: ''); // header
+        $row = fgetcsv($stream, escape: '');
+        fclose($stream);
+
+        self::assertIsArray($row);
+        $messageCell = (string) $row[7];
+        self::assertStringNotContainsString("\n", $messageCell, 'embedded newlines must be collapsed for grep-friendly CSV');
+        self::assertStringNotContainsString("\r", $messageCell);
+        self::assertStringContainsString('123 Main St Apt 4B NYC', $messageCell);
     }
 
     /**
@@ -46,6 +81,7 @@ final class AuditCsvExporterTest extends TestCase
         $exporter->write([$this->record(actorLabel: $payload)], $stream);
 
         rewind($stream);
+        fread($stream, 3); // skip BOM
         fgetcsv($stream, escape: ''); // header
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
@@ -78,6 +114,7 @@ final class AuditCsvExporterTest extends TestCase
         $exporter->write([$this->record(actorLabel: 'alice@acme.com')], $stream);
 
         rewind($stream);
+        fread($stream, 3); // skip BOM
         fgetcsv($stream, escape: ''); // header
         $row = fgetcsv($stream, escape: '');
         fclose($stream);
@@ -86,7 +123,7 @@ final class AuditCsvExporterTest extends TestCase
         self::assertSame('alice@acme.com', $row[3], 'mid-string @ must not trigger sanitisation');
     }
 
-    private function record(string $actorLabel): AuditEntryRecord
+    private function record(string $actorLabel, ?string $message = null): AuditEntryRecord
     {
         $record = new AuditEntryRecord();
         $record->id = '0192f0c0-0000-0000-0000-000000000001';
@@ -96,7 +133,7 @@ final class AuditCsvExporterTest extends TestCase
         $record->resourceName = 'failed-messages';
         $record->actionName = 'retry';
         $record->outcome = 'success';
-        $record->message = null;
+        $record->message = $message;
         $record->durationMs = 12;
         $record->recordIdsJson = '["1"]';
         $record->contextJson = '{}';
