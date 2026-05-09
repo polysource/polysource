@@ -30,9 +30,13 @@
         "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
     "require-dev": {
+        "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
         "polysource/symfony-bundle": "0.1.x-dev",
         "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+    },
+    "suggest": {
+        "easycorp/easyadmin-bundle": "Audits EasyAdmin CRUD edits (Edit / New / Delete on Doctrine entities) via the bundled EasyAdminAuditSubscriber. Gated on EA being installed; no effect when absent."
     },
     "autoload": {
         "psr-4": {

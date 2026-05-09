@@ -7,6 +7,7 @@ use Polysource\Audit\Action\ExportAuditCsvAction;
 use Polysource\Audit\Command\PurgeAuditCommand;
 use Polysource\Audit\DataSource\AuditLogDataSource;
 use Polysource\Audit\EventListener\ActionAuditSubscriber;
+use Polysource\Audit\EventListener\EasyAdminAuditSubscriber;
 use Polysource\Audit\Export\AuditCsvExporter;
 use Polysource\Audit\Logger\AggregateAuditLogger;
 use Polysource\Audit\Logger\AuditLoggerInterface;
@@ -105,4 +106,21 @@ return static function (ContainerConfigurator $container): void {
     $services->set(ActionAuditSubscriber::class)
         ->arg('$logger', service(AuditLoggerInterface::class))
         ->arg('$actor', service(AuditActorInterface::class));
+
+    /* ---------------------------------------------------------------
+     * EasyAdmin lifecycle bridge — audits Edit / New / Delete on EA
+     * CRUD pages (Doctrine entities). Gated on EA being installed so
+     * audit-only hosts (no EA) don't pull in EA's autoload graph.
+     *
+     * Without this, EA Doctrine edits bypass the Polysource action
+     * pipeline and silently escape the audit trail — the only entries
+     * recorded would be Polysource-native actions (failed-message
+     * retry, bulk-job cancel, workflow transitions).
+     * --------------------------------------------------------------- */
+    if (class_exists(EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent::class)) {
+        $services->set(EasyAdminAuditSubscriber::class)
+            ->arg('$logger', service(AuditLoggerInterface::class))
+            ->arg('$actor', service(AuditActorInterface::class))
+            ->arg('$requestStack', service('request_stack'));
+    }
 };

@@ -14,8 +14,9 @@ You're running a regulated workload (healthcare, finance, B2B SaaS) and need a w
 - **`AuditLoggerInterface`** (write-only) with fan-out via `AggregateAuditLogger`.
 - **`DoctrineAuditLogger`** + Doctrine entity (`polysource_audit_log` table with 3 indexes for Art. 30 queries).
 - **`ActionAuditSubscriber`** — bridges `ActionAboutToExecuteEvent` / `ActionExecutedEvent` (dispatched by `polysource/symfony-bundle`) to the logger. UUID v7 per entry, IP/UA/RequestID in context, trace truncated to 8KB.
+- **`EasyAdminAuditSubscriber`** — optional bridge that audits EA CRUD edits (Edit / New / Delete on Doctrine entities). Auto-wired when `easycorp/easyadmin-bundle` is installed (gated on `class_exists`); inert otherwise.
 - **`AuditLogResource`** — browsable admin resource with 5 standard filters (time range, actor, outcome, action name, resource).
-- **`ExportAuditCsvAction`** — GDPR Art. 30 export with 12 locked columns (RFC 4180).
+- **`ExportAuditCsvAction`** — GDPR Art. 30 export with 12 locked columns (RFC 4180), gated on `POLYSOURCE_AUDIT_EXPORT`.
 - **`polysource:audit:purge --before`** — retention command with cutoff exclusive, `--dry-run`, exit codes.
 
 See [ADR-020](../../docs/adr/0020-audit-non-doctrine-actions.md).

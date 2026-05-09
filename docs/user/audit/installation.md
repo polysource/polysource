@@ -117,6 +117,35 @@ bin/console doctrine:query:sql "SELECT id, actor_id, resource_name, action_name,
 Or visit `/admin/audit-log` (with `POLYSOURCE_AUDIT_VIEW` granted)
 to see the browsable index with filters.
 
+## 7. EasyAdmin integration (optional)
+
+If your host runs EasyAdmin alongside Polysource, EA's CRUD edits
+(Edit / New / Delete on Doctrine entities) bypass
+`polysource/symfony-bundle::ActionController` and are NOT picked up
+by `ActionAuditSubscriber`. To audit them, the bundled
+`EasyAdminAuditSubscriber` listens to EA's three lifecycle events and
+emits one audit entry per CRUD operation.
+
+Auto-wired the moment `easycorp/easyadmin-bundle` is installed —
+service registration in `services.php` is gated on
+`class_exists(AfterEntityUpdatedEvent::class)`. Hosts without EA see
+no overhead.
+
+What lands in the audit log per EA edit:
+
+| Field | Value |
+|---|---|
+| `resource_name` | The entity's FQCN (e.g. `App\Entity\Order`) |
+| `action_name` | `create` / `update` / `delete` |
+| `actor_id` / `actor_label` | From `AuditActorInterface` (Symfony Security by default) |
+| `record_ids_json` | `[<id>]` — best-effort via `getId()` / `getUuid()` / `id` / `uuid` property |
+| `outcome` | Always `success` (EA dispatches lifecycle events only on the success path) |
+| `context_json` | `ip`, `userAgent`, `requestId` |
+
+Hosts whose entities use exotic identifiers (composite keys, factory
+methods, …) subclass `EasyAdminAuditSubscriber` and override
+`extractIdentifier()`.
+
 ## See also
 
 - [walkthrough.md](./walkthrough.md) — what to do once it's installed.
