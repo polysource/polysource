@@ -1,7 +1,8 @@
 # `polysource/easyadmin-filter-bridge` — getting started
 
 This guide walks you from `composer require` to a working,
-session-persisted filter UI on an existing EasyAdmin v5 application.
+session-persisted filter UI on an existing EasyAdmin application
+(4.24+ or 5.0+).
 By the end you'll have:
 
 - the 8 enhanced built-in EA filters (presets, ranges, multi-select,

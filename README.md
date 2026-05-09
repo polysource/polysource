@@ -14,11 +14,11 @@
 - 🛡️ **GDPR Art. 30 / HIPAA audit trail** with a 1-method `AuditLoggerInterface` (pipe to Splunk, Datadog, your SIEM)
 - 🔄 **Symfony Workflow integration** — auto-generated transition buttons + state chip per resource
 - 🎯 **Field-level + action-level + resource-level permissions** through one `PermissionInterface` (Symfony default; swap for OPA / LDAP / custom)
-- 🎨 **Enhanced filter UX** — date presets, range pickers, multi-select, between, session persistence, chips bar — usable standalone OR dropped into an existing EasyAdmin v5 app **without forking**
+- 🎨 **Enhanced filter UX** — date presets, range pickers, multi-select, between, session persistence, chips bar — usable standalone OR dropped into an existing EasyAdmin app (4.24+ or 5.0+) **without forking**
 
 **Two products, same primitives, run side-by-side in the same app:**
 
-1. **`polysource/easyadmin-filter-bridge`** — drop next to your existing EasyAdmin v5 install, gain everything in the filter list above. Zero EA fork.
+1. **`polysource/easyadmin-filter-bridge`** — drop next to your existing EasyAdmin install (4.24+ or 5.0+), gain everything in the filter list above. Zero EA fork.
 2. **`polysource/admin`** — standalone admin for resources outside Doctrine ORM: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch indexes, configurations, jobs, webhooks.
 
 → **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — every contract, every method count, every registration tag, with sample code.

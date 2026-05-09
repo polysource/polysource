@@ -172,7 +172,7 @@ EA index, no glue code per CRUD. Scopes are gated by Symfony's
 
 This is one of the two killer features of the **Produit 1** in the
 [dual-product positioning](../adr/0012-dual-product-positioning.md)
-— a drop-in for any existing EasyAdmin v5 app, no fork.
+— a drop-in for any existing EasyAdmin app (4.24+ or 5.0+), no fork.
 
 ## 16 · Filters modal on EasyAdmin — `polysource/easyadmin-filter-bridge`
 

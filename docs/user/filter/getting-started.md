@@ -2,7 +2,7 @@
 
 This page walks you from zero to a working, session-persisted filter
 form on a non-EasyAdmin Symfony controller. If you're integrating with
-EasyAdmin v5, install
+EasyAdmin (4.24+ or 5.0+), install
 [`polysource/easyadmin-filter-bridge`](../easyadmin-filter-bridge/whats-new.md)
 instead — it composes the same primitives and wires them into EA's
 extension points. This guide is for hosts who want to use the

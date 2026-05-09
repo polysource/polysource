@@ -1,9 +1,9 @@
-# `polysource/easyadmin-filter-bridge` — What's actually new vs EasyAdmin v5
+# `polysource/easyadmin-filter-bridge` — What's actually new vs upstream EasyAdmin
 
 This page is the authoritative answer to "what does the bridge add that
-upstream EasyAdmin v5 doesn't already do?" — written without marketing
-spin so you can decide whether the bridge is worth installing in your
-stack.
+upstream EasyAdmin (4.24+ or 5.0+) doesn't already do?" — written
+without marketing spin so you can decide whether the bridge is worth
+installing in your stack.
 
 ## TL;DR
 

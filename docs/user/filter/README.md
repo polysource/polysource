@@ -36,4 +36,5 @@ the `FilterService` session contract, and the two rendering modes
   Factory→Builder→Loader datasource lifecycle that the bridge uses
   internally and that hosts will be able to consume directly in v0.2+.
 - [Bridge what's-new](../easyadmin-filter-bridge/whats-new.md) — what
-  the bridge layers on top when used inside an EasyAdmin v5 app.
+  the bridge layers on top when used inside an existing EasyAdmin
+  app (4.24+ or 5.0+).

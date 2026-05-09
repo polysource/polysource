@@ -30,7 +30,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Add a Cmd+K command palette for cross-resource search | [search/](./search/) |
 | Run bulk actions asynchronously with live progress + cancel | [bulk-async/](./bulk-async/) |
 | Build filter UIs (standalone primitive) | [filter/](./filter/) |
-| Enrich an EasyAdmin v5 app's filters (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
+| Enrich an existing EasyAdmin app's filters — 4.24+ or 5.0+ (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
 | Honest per-filter matrix vs upstream EA | [easyadmin-filter-bridge/whats-new.md](./easyadmin-filter-bridge/whats-new.md) |
 | Copy-paste a runnable recipe | [cookbook/](./cookbook/) |
 | Look up a public interface signature | [api/](./api/) |
@@ -54,7 +54,7 @@ docs/user/
 ├── filter/                    ← standalone polysource/filter primitive
 │   ├── README.md
 │   └── getting-started.md
-├── easyadmin-filter-bridge/   ← drop-in for EasyAdmin v5
+├── easyadmin-filter-bridge/   ← drop-in for EasyAdmin (4.24+ or 5.0+)
 │   ├── getting-started.md
 │   └── whats-new.md
 ├── cookbook/
