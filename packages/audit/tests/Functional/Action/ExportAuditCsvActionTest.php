@@ -193,6 +193,13 @@ final class ExportAuditCsvActionTest extends TestCase
         $rows = [];
         $handle = fopen($path, 'r');
         self::assertNotFalse($handle);
+        // Skip the UTF-8 BOM emitted by AuditCsvExporter (3 bytes,
+        // required for Excel / LibreOffice Calc encoding detection).
+        $bom = fread($handle, 3);
+        if ("\xEF\xBB\xBF" !== $bom) {
+            // Not a BOM — rewind so the bytes belong to the first row.
+            rewind($handle);
+        }
         while (false !== $row = fgetcsv($handle, escape: '')) {
             /** @var list<string> $row */
             $rows[] = $row;
