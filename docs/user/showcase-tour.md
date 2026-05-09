@@ -1,6 +1,6 @@
 # Polysource Showcase — guided tour
 
-> A 14-step walkthrough of `examples/showcase-demo/`, the **ShopCo
+> A 16-step walkthrough of `examples/showcase-demo/`, the **ShopCo
 > SaaS** application that exercises every Polysource package in a
 > single Symfony 7.4 app. Each step embeds the screenshot regenerated
 > on every release via `make screenshots` (Phase I pipeline, ADR-025).
@@ -158,11 +158,42 @@ Meilisearch index by `app:seed-stores`. The DataSource translates
 filter criteria to Meilisearch's filter expression syntax with
 strict property-whitelisting (anti-injection).
 
+## 15 · Saved views on EasyAdmin — `polysource/easyadmin-filter-bridge`
+
+![Saved views dropdown opened on the Orders index](./screenshots/15-saved-views-dropdown-open.png)
+
+The bridge adds a **Saved views** dropdown above EasyAdmin's filter
+chips bar. Apply once, save with a name, share via URL — the bridge
+translates each saved criterion back into the form-type shape EA's
+binding expects (BooleanFilter bare scalar, ChoiceFilter array,
+between-date envelope) so the redirect lands on a fully-populated
+EA index, no glue code per CRUD. Scopes are gated by Symfony's
+`SavedViewVoter` (private / team / public).
+
+This is one of the two killer features of the **Produit 1** in the
+[dual-product positioning](../adr/0012-dual-product-positioning.md)
+— a drop-in for any existing EasyAdmin v5 app, no fork.
+
+## 16 · Filters modal on EasyAdmin — `polysource/easyadmin-filter-bridge`
+
+![Filters modal with tabs opened on the Orders index](./screenshots/16-filters-modal-tabs.png)
+
+The bridge replaces EA's inline filter strip with a tabbed modal
+(`View / Identification / Dates / Money / Lifecycle` on the Orders
+CRUD). Eight `FilterEnhancer`s auto-swap the form-types of standard
+EA filters (multi-select for ChoiceFilter, date-presets for DateTime,
+between for numeric / date, in for repeated values, full-text for
+EntityFilter), and four custom filter types
+(`BetweenDateFilter`, `InFilter`, `NotNullFilter`,
+`FullTextSearchFilter`) are opt-in via `configureFilters()`. Tabs
+group filters by domain so the modal stays scannable on resources
+with 15+ filterable columns.
+
 ## Regenerate this tour
 
 ```bash
 make showcase            # if not already running
-make screenshots         # captures all 14 PNGs into docs/user/screenshots/
+make screenshots         # captures all 16 PNGs into docs/user/screenshots/
 ```
 
 The pipeline is committed to the repo so the doc and the code never
