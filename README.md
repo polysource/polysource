@@ -37,7 +37,7 @@ Phases 1 → 22 shipped on `main` (16 packages). The public API is **release-can
 |---|---|
 | `polysource/core` | 26 public types, zero Symfony dep — pure PHP 8.1+ contracts |
 | `polysource/filter` | Filter primitives (collection, criteria, session persistence, **saved views**) — usable standalone in any Symfony app |
-| `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin v5 — auto-swaps built-in filter form types, ships 4 custom filters (Between/In/NotNull/FullText), saved views dropdown |
+| `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin (4.24+ or 5.0+) — auto-swaps built-in filter form types, ships 4 custom filters (Between/In/NotNull/FullText), saved views dropdown |
 | `polysource/symfony-bundle` | Symfony bundle wiring for the admin: DI extension, route loader, controllers, view listener, CSRF, pagination caps |
 | `polysource/twig-theme` | Default Bootstrap 5 templates for index/detail/forms/fields |
 | `polysource/adapter-messenger` | Browse + retry / dismiss / retry-all / purge Messenger failed envelopes |
@@ -86,7 +86,7 @@ That's why the same engine handles your products table AND your Messenger failed
 polysource/
 ├── core/                       contracts + value objects, no Symfony deps
 ├── filter/                     filter primitives (standalone usable)
-├── easyadmin-filter-bridge/    drop-in for EasyAdmin v5
+├── easyadmin-filter-bridge/    drop-in for EasyAdmin (4.24+ or 5.0+)
 ├── symfony-bundle/             admin wiring (DI, routing, controllers, Twig)
 ├── twig-theme/                 default UI templates
 ├── adapter-{messenger,doctrine,redis,flysystem,http,meilisearch}/
