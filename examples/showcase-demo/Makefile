@@ -35,10 +35,11 @@ db: ## Reset and migrate the database (dev)
 	$(PHP_EXEC) php bin/console messenger:setup-transports --no-interaction
 
 .PHONY: fixtures
-fixtures: ## Load Foundry fixtures + seed messenger/redis/minio/meilisearch
+fixtures: ## Load Foundry fixtures + seed messenger/redis/minio/meilisearch + freshen orders
 	$(PHP_EXEC) php -d memory_limit=2G bin/console doctrine:fixtures:load --no-interaction
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:freshen-orders
 
 .PHONY: assets
 assets: ## Compile AssetMapper public/ files
@@ -118,6 +119,8 @@ screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/ (re-r
 	@echo "▶ Refreshing non-Doctrine seeds (Redis cache + MinIO files + Meilisearch docs)..."
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages || true
+	@echo "▶ Re-dating recent orders so dashboard widgets have today/24h data..."
+	$(PHP_EXEC) php -d memory_limit=2G bin/console app:freshen-orders || true
 	$(DOCKER_COMPOSE) --profile e2e up -d chrome
 	@echo "▶ waiting for Selenium grid…"
 	@for i in 1 2 3 4 5 6 7 8 9 10; do \
