@@ -121,6 +121,7 @@ return static function (ContainerConfigurator $container): void {
         $services->set(EasyAdminAuditSubscriber::class)
             ->arg('$logger', service(AuditLoggerInterface::class))
             ->arg('$actor', service(AuditActorInterface::class))
-            ->arg('$requestStack', service('request_stack'));
+            ->arg('$requestStack', service('request_stack'))
+            ->arg('$em', service(EntityManagerInterface::class));
     }
 };
