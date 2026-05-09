@@ -108,11 +108,25 @@ services:
     # (cf. ADR-011). The Shopco* subclasses are excluded from the
     # App\ autodiscovery scan above so they don't get double-tagged.
     # -------------------------------------------------------------------
+    # The bundle's services.php registers each parent resource with its
+    # tagged_iterator($actions). When we override `class:` here, Symfony's
+    # autowire fills only the typed args (DataSource) and falls back to
+    # the constructor default `[]` for the `iterable $actions` because
+    # iterables can't be auto-resolved. Result: the override loses every
+    # bundled action (e.g. ExportAuditCsvAction on audit-log,
+    # CancelBulkJobAction on bulk-jobs, retry/dismiss/purge on
+    # failed-messages). We re-pass the tagged_iterator explicitly.
     Polysource\Adapter\Messenger\Resource\FailedMessageResource:
         class: App\Polysource\Resource\ShopcoFailedMessageResource
+        arguments:
+            $actions: !tagged_iterator polysource.messenger.action
 
     Polysource\Audit\Resource\AuditLogResource:
         class: App\Polysource\Resource\ShopcoAuditLogResource
+        arguments:
+            $actions: !tagged_iterator polysource.audit.action
 
     Polysource\BulkAsync\Resource\BulkJobResource:
         class: App\Polysource\Resource\ShopcoBulkJobResource
+        arguments:
+            $actions: !tagged_iterator polysource.bulk_async.action

@@ -63,13 +63,20 @@ final class ExportAuditCsvAction implements BulkActionInterface
         return 'download';
     }
 
-    public function getPermission(): ?string
+    public function getPermission(): string
     {
-        // Inherit the resource's POLYSOURCE_AUDIT_VIEW. We don't
-        // require an EXPORT-specific permission in v0.1 — anyone who
-        // can read the audit log can export it. Hosts with stricter
-        // policies override via a custom voter.
-        return null;
+        // CSV export of the audit log is a destructive / compliance-
+        // sensitive operation: it produces a GDPR Art. 30 register
+        // extraction containing actor identifiers, IPs, and full
+        // action context for every audited request. Returning `null`
+        // would fall back to the framework's coarse
+        // POLYSOURCE_ACTION_INVOKE which most hosts don't map to any
+        // role in their voter — the action would be hidden for every
+        // user (showcase repro). A dedicated attribute lets hosts
+        // grant export to their compliance/admin tier explicitly.
+        // Read-only audit browsing stays gated at the resource level
+        // on POLYSOURCE_AUDIT_VIEW, independent of this.
+        return 'POLYSOURCE_AUDIT_EXPORT';
     }
 
     public function isDisplayed(array $context = []): bool
