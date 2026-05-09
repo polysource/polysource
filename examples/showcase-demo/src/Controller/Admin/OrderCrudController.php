@@ -112,13 +112,19 @@ final class OrderCrudController extends AbstractCrudController
         yield FormField::addFieldset('Payment')->setIcon('fa fa-credit-card');
         yield TextField::new('paymentTransactionId', 'Transaction ID');
 
-        yield FormField::addTab('Lifecycle', 'fa fa-clock-rotate-left');
-        yield DateTimeField::new('createdAt')->hideOnForm();
-        yield DateTimeField::new('paidAt')->hideOnForm();
-        yield DateTimeField::new('shippedAt')->hideOnForm();
-        yield DateTimeField::new('deliveredAt')->hideOnForm();
-        yield DateTimeField::new('cancelledAt')->hideOnForm();
-        yield DateTimeField::new('refundedAt')->hideOnForm();
+        // Lifecycle timestamps are workflow-driven (OrderWorkflow sets
+        // paidAt / shippedAt / etc. on each transition). Editing them
+        // by hand would corrupt the audit trail, so the whole tab is
+        // detail-only — `hideOnForm()` would have hidden the fields
+        // but left the tab empty on Edit, surfacing as "Lifecycle has
+        // nothing inside" (reported during pre-flight QA).
+        yield FormField::addTab('Lifecycle', 'fa fa-clock-rotate-left')->onlyOnDetail();
+        yield DateTimeField::new('createdAt')->onlyOnDetail();
+        yield DateTimeField::new('paidAt')->onlyOnDetail();
+        yield DateTimeField::new('shippedAt')->onlyOnDetail();
+        yield DateTimeField::new('deliveredAt')->onlyOnDetail();
+        yield DateTimeField::new('cancelledAt')->onlyOnDetail();
+        yield DateTimeField::new('refundedAt')->onlyOnDetail();
     }
 
     public function configureFilters(Filters $filters): Filters
