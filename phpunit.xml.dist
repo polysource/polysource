@@ -40,6 +40,7 @@
             <directory>packages/adapter-doctrine/tests/Functional</directory>
             <directory>packages/adapter-messenger/tests/Functional</directory>
             <directory>packages/audit/tests/Functional</directory>
+            <directory>packages/bulk-async/tests/Functional</directory>
             <directory>packages/easyadmin-filter-bridge/tests/Functional</directory>
             <directory>packages/filter/tests/Functional</directory>
         </testsuite>

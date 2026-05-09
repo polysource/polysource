@@ -22,7 +22,22 @@ parameters:
     treatPhpDocTypesAsCertain: false
 
     # PHPUnit-specific noise: ignore on test classes
-    ignoreErrors: []
+    ignoreErrors:
+        # EA's lifecycle events are generic over the entity type; constructing
+        # them in tests with a non-generic-tagged class triggers
+        # generics.unspecified at every callsite without adding signal —
+        # the tests cover the subscriber's contract, not EA's typing.
+        -
+            identifier: argument.type
+            paths:
+                - packages/*/tests/Unit/EventListener/EasyAdminAuditSubscriberTest.php
+        # OptionsResolver / AuditEntry context return array<string, mixed>;
+        # asserting on specific keys in tests would otherwise need a wide
+        # cast on every line.
+        -
+            identifier: offsetAccess.nonOffsetAccessible
+            paths:
+                - packages/*/tests/*
 
     # Inline strict-rules level (cf. phpstan/phpstan-strict-rules)
     # Provided by phpstan/extension-installer auto-loading
