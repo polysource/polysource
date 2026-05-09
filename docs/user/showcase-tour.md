@@ -199,6 +199,45 @@ make screenshots         # captures all 16 PNGs into docs/user/screenshots/
 The pipeline is committed to the repo so the doc and the code never
 drift — see [`examples/showcase-demo/src/Command/ShowcaseScreenshotsCommand.php`](../../examples/showcase-demo/src/Command/ShowcaseScreenshotsCommand.php).
 
+## Why two visual languages?
+
+Reading the tour you may notice that the EasyAdmin pages (steps
+3 → 6, 15, 16) and the Polysource pages (steps 7 → 14) don't share
+the exact same chrome:
+
+|  | EasyAdmin (Catalog / Sales) | Polysource (standalone + adapters) |
+|---|---|---|
+| Top bar | Search input + settings cog | Page title + breadcrumb only |
+| Column headers | Sort arrows on every column | No sort arrows in v0.1 |
+| Status display | Coloured Bootstrap badges | Plain text |
+| Action buttons | Icon + label buttons (`Show` / `Edit`) | Plain text links (`Detail` / `Retry` / `Dismiss`) |
+| Layout shell | EA's own templates | `@Polysource/index.html.twig` (twig-theme package) |
+
+This is **intentional** per
+[ADR-012 dual-product positioning](../adr/0012-dual-product-positioning.md).
+EasyAdmin and Polysource are two distinct products that cohabit in
+the same Symfony app:
+
+- **EasyAdmin owns its Doctrine CRUDs** with its own templates,
+  voters, and form rendering pipeline. Polysource never touches
+  them — your existing EA configuration carries through unchanged.
+- **Polysource owns its standalone resources** with the
+  `polysource/twig-theme` package's templates. They're styled with
+  Bootstrap 5 to match a typical Symfony admin, but they don't
+  pretend to be EA.
+
+Aligning the two visual languages — sort arrows on Polysource
+indexes, button-styled actions, status badges by convention,
+optional top search bar — is on the v0.2 roadmap (tracked as a
+"polish-shell" help-wanted issue at launch). For v0.1 the priority
+was correctness and the architectural separation; the visual gap
+is acknowledged here so the reader is not surprised.
+
+If you're integrating Polysource into an existing EA app and want
+the two halves to feel uniform on day one, see
+[`docs/user/cookbook/integrate-existing-app.md`](./cookbook/integrate-existing-app.md)
+for the layout-override pattern.
+
 ## What this showcase proves
 
 1. **The 15 Polysource packages cohabit** in a single Symfony 7.4
