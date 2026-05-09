@@ -69,3 +69,9 @@ Desktop.ini
 /.ddev/import-db/
 /.ddev/import.yaml
 /.ddev/.global_commands/
+
+# Local-only launch material — drafts of announcements + GH issue
+# bodies prepared before tag day. Kept on the maintainer's machine,
+# never published verbatim; per session memory the public repo
+# stays clean of pre-launch sensitivity.
+/.launch-drafts/
