@@ -63,11 +63,17 @@ final class ProductCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        // Hard-delete is disabled because OrderItem rows reference Product
+        // via a non-nullable, non-cascading FK — destroying a product would
+        // either crash on the FK constraint or orphan years of order history.
+        // Real shops archive products instead (set status = archived); the
+        // STATUS_CHOICES enum exposes that path through the regular Edit
+        // form, which is the realistic e-commerce posture.
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
-            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $a) => $a->setIcon('fa fa-trash'))
-            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
+            ->disable(Action::DELETE)
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT]);
     }
 
     public function configureFields(string $pageName): iterable

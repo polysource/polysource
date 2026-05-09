@@ -48,11 +48,17 @@ final class CustomerCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        // Hard-delete disabled — Order rows reference Customer via a
+        // non-nullable, non-cascading FK (Order.customer_id), so deleting
+        // a customer with even one order crashes on the constraint. GDPR
+        // erasure flows in production typically anonymise the customer
+        // record (zero out email/name/address) rather than DELETE, which
+        // keeps order history queryable for accounting/legal retention.
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
-            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $a) => $a->setIcon('fa fa-trash'))
-            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
+            ->disable(Action::DELETE)
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT]);
     }
 
     public function configureFields(string $pageName): iterable

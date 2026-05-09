@@ -55,11 +55,17 @@ final class OrderCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        // Hard-delete disabled — Refund rows reference Order via a
+        // non-nullable, non-cascading FK; deleting an order that has
+        // even one refund crashes. The right business action is to
+        // transition the order through OrderWorkflow to `cancelled` (and
+        // then to `refunded` if money was already taken), which the
+        // workflow-bridge transition buttons expose on the detail page.
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
-            ->update(Crud::PAGE_INDEX, Action::DELETE, static fn (Action $a) => $a->setIcon('fa fa-trash'))
-            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT, Action::DELETE]);
+            ->disable(Action::DELETE)
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT]);
     }
 
     public function configureFields(string $pageName): iterable
