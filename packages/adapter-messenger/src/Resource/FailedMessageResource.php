@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Adapter\Messenger\Resource;
 
 use Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource;
+use Polysource\Adapter\Messenger\Filter\FailedMessageFilter;
 use Polysource\Bundle\Attribute\AsResource;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Resource\AbstractResource;
@@ -73,5 +74,22 @@ class FailedMessageResource extends AbstractResource
     public function configureActions(): iterable
     {
         return $this->actions;
+    }
+
+    /**
+     * Default filter set covering the 3 properties operators most often
+     * triage on: which message classes are failing, which exception
+     * classes triggered, and the time window. Subclasses are free to
+     * extend or replace this list.
+     *
+     * The filters are translated to client-side post-mapping filtering
+     * inside {@see MessengerFailedDataSource::search()} — the underlying
+     * Messenger receivers don't expose a native filtering primitive.
+     */
+    public function configureFilters(): iterable
+    {
+        yield FailedMessageFilter::messageClass();
+        yield FailedMessageFilter::exceptionClass();
+        yield FailedMessageFilter::failedAt();
     }
 }
