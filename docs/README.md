@@ -2,7 +2,7 @@
 
 > Polysource — deux outils complémentaires pour Symfony, partageant les mêmes primitives :
 >
-> 1. **`polysource/easyadmin-filter-bridge`** — enrichit les filtres d'une app EasyAdmin v5 existante (presets, ranges, multi-select, saved views, chips bar) sans forker EA.
+> 1. **`polysource/easyadmin-filter-bridge`** — enrichit les filtres d'une app EasyAdmin existante (4.24+ ou 5.0+) — presets, ranges, multi-select, saved views, chips bar — sans forker EA.
 > 2. **`polysource/admin`** — admin standalone pour ressources non-Doctrine : Messenger, Redis, S3, REST, Meilisearch, configs.
 
 Statut : Phases 1 → 22 livrées sur `main` (16 packages). Pré-v0.1.0, tag en attente. Voir [`roadmap/development-plan.md`](./roadmap/development-plan.md).
