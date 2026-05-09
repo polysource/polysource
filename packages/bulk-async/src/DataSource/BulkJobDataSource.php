@@ -7,6 +7,8 @@ namespace Polysource\BulkAsync\DataSource;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Polysource\BulkAsync\Job\BulkJob;
+use Polysource\BulkAsync\Job\BulkJobStatus;
 use Polysource\BulkAsync\Job\Doctrine\BulkJobRecord;
 use Polysource\Core\DataSource\DataSourceInterface;
 use Polysource\Core\Query\DataPage;
@@ -185,20 +187,71 @@ final class BulkJobDataSource implements DataSourceInterface
         $total = \is_array($recordIds) ? \count($recordIds) : 0;
         $progress = $total > 0 ? $record->processedCount / $total : 1.0;
 
-        return new DataRecord($record->id, [
-            'id' => $record->id,
-            'createdAt' => $record->createdAt->format(\DATE_ATOM),
-            'startedAt' => $record->startedAt?->format(\DATE_ATOM),
-            'completedAt' => $record->completedAt?->format(\DATE_ATOM),
-            'resourceName' => $record->resourceName,
-            'actionName' => $record->actionName,
-            'actorId' => $record->actorId,
-            'status' => $record->status,
-            'processedCount' => $record->processedCount,
-            'failedCount' => $record->failedCount,
-            'total' => $total,
-            'progress' => $progress,
-            'errorMessage' => $record->errorMessage,
-        ]);
+        return new DataRecord(
+            $record->id,
+            [
+                'id' => $record->id,
+                'createdAt' => $record->createdAt->format(\DATE_ATOM),
+                'startedAt' => $record->startedAt?->format(\DATE_ATOM),
+                'completedAt' => $record->completedAt?->format(\DATE_ATOM),
+                'resourceName' => $record->resourceName,
+                'actionName' => $record->actionName,
+                'actorId' => $record->actorId,
+                'status' => $record->status,
+                'processedCount' => $record->processedCount,
+                'failedCount' => $record->failedCount,
+                'total' => $total,
+                'progress' => $progress,
+                'errorMessage' => $record->errorMessage,
+            ],
+            // Expose the BulkJob VO as rawSource so host detail
+            // templates can call `polysource_bulk_progress(record.rawSource)`
+            // directly without re-querying the storage. The conversion
+            // mirrors {@see \Polysource\BulkAsync\Job\DoctrineBulkJobStorage::find()};
+            // duplicating it here avoids forcing a second DB roundtrip
+            // per record.
+            self::recordToBulkJob($record, $recordIds),
+        );
+    }
+
+    /**
+     * @param mixed $decodedRecordIds the json_decoded `recordIdsJson` payload
+     */
+    private static function recordToBulkJob(BulkJobRecord $record, mixed $decodedRecordIds): ?BulkJob
+    {
+        if (!\is_array($decodedRecordIds)) {
+            return null;
+        }
+        /** @var list<non-empty-string> $recordIds */
+        $recordIds = array_values(array_filter(
+            $decodedRecordIds,
+            static fn ($v): bool => \is_string($v) && '' !== $v,
+        ));
+        $status = BulkJobStatus::tryFrom($record->status) ?? BulkJobStatus::Pending;
+
+        try {
+            return new BulkJob(
+                id: $record->id,
+                createdAt: $record->createdAt,
+                resourceName: $record->resourceName,
+                actionName: $record->actionName,
+                actorId: $record->actorId,
+                recordIds: $recordIds,
+                status: $status,
+                processedCount: $record->processedCount,
+                failedCount: $record->failedCount,
+                startedAt: $record->startedAt,
+                completedAt: $record->completedAt,
+                errorMessage: $record->errorMessage,
+            );
+        } catch (Throwable) {
+            // Defensive: if the row got corrupted (negative counts,
+            // counts > total, etc.) the BulkJob constructor throws.
+            // Don't break the listing — the DataRecord properties
+            // still carry the raw values for the index template,
+            // and the host template just won't render the progress
+            // card for that one row.
+            return null;
+        }
     }
 }

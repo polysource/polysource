@@ -1,0 +1,78 @@
+{# Showcase override for @Polysource/detail.html.twig.
+ #
+ # On the bulk-jobs resource, render the live progress card on top
+ # of the standard field grid — this is what the showcase tour and
+ # the pre-flight QA checklist promise: "Click a Running job →
+ # progress page renders, progress bar updates without page reload
+ # (Mercure SSE OR polling fallback)".
+ #
+ # For every other resource, fall back to the bundle's stock detail
+ # layout. The `!` prefix in the include path resolves to the
+ # NEXT-IN-CHAIN version of the namespace — i.e. the bundle's own
+ # template, bypassing this override and avoiding an infinite loop.
+ #}
+{% extends polysource_layout|default('@Polysource/layout.html.twig') %}
+
+{% block title %}{{ resource.label }} — {{ record.identifier }}{% endblock %}
+
+{% block content %}
+    {% set route_prefix = 'polysource_' ~ resource.name|replace({'-': '_'}) %}
+
+    <header class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <a href="{{ path(route_prefix ~ '_index', {resourceName: resource.name}) }}"
+               class="text-decoration-none text-body-secondary small">
+                ← {{ resource.label }}
+            </a>
+            <h1 class="h3 mb-0 mt-1" data-polysource-record="{{ record.identifier }}">
+                {{ record.identifier }}
+            </h1>
+        </div>
+
+        {% if inline_actions is defined and inline_actions|length > 0 %}
+            <div class="d-flex gap-2 flex-wrap">
+                {% for action in inline_actions %}
+                    <form method="POST"
+                          action="{{ path(route_prefix ~ '_action', {resourceName: resource.name, id: record.identifier, action: action.name}) }}"
+                          {% if action.name == 'dismiss' %}onsubmit="return confirm('Dismiss this message? This cannot be undone.');"{% endif %}
+                          class="d-inline-block">
+                        <input type="hidden" name="_token" value="{{ csrf_token('polysource_action') }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-{{ action.name == 'dismiss' ? 'danger' : 'primary' }}"
+                                data-polysource-action="inline-{{ action.name }}">
+                            {{ action.label }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </header>
+
+    {# --------------------------------------------------------------- #}
+    {# Bulk-jobs only: render the live progress card.                  #}
+    {# --------------------------------------------------------------- #}
+    {% if resource.name == 'bulk-jobs' %}
+        {% set bulk_job = record.rawSource ?? null %}
+        {% if bulk_job is not null %}
+            <div class="mb-4">
+                {{ polysource_bulk_progress(bulk_job) }}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <dl class="row mb-0 p-4">
+            {% for field in fields %}
+                <dt class="col-sm-3 text-body-secondary">{{ field.label|default(field.property) }}</dt>
+                <dd class="col-sm-9">
+                    {% include field.template|default('@Polysource/field/generic.html.twig')
+                        with {value: record.get(field.property), field: field, record: record}
+                        only
+                    %}
+                </dd>
+            {% else %}
+                <p class="text-body-secondary mb-0">{{ 'polysource.chrome.no_fields_configured'|trans({}, 'Polysource') }}</p>
+            {% endfor %}
+        </dl>
+    </div>
+{% endblock %}
