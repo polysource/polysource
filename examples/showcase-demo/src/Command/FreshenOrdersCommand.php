@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Re-date the most-recent 30 orders so the dashboard widgets always
+ * Re-date the most-recent 50 orders so the dashboard widgets always
  * have data to render on the day the showcase is opened.
  *
  * The OrderFactory seeds `createdAt` between -12 months and "now AT
@@ -24,34 +24,38 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * chart further from reality — by 2026-05-10 a fixture load from
  * 2026-05-06 leaves both widgets at 0.
  *
- * This command bumps the 30 most recent orders' `createdAt` (and
+ * This command bumps the 50 most recent orders' `createdAt` (and
  * the dependent `paidAt` / `shippedAt` / `deliveredAt` /
  * `cancelledAt` / `refundedAt`, by the same delta — keeps the
- * lifecycle invariants intact) onto a deterministic distribution:
+ * lifecycle invariants intact) onto a stratified distribution that
+ * gives the chart visible bars in most of the 24 hourly bins:
  *
- *  - 3 orders in "today"
- *  - 9 more in "last 24 hours"
- *  - 18 more spread over "last 7 days"
+ *  - 4 orders in "today" (calendar day, working hours)
+ *  - 22 orders stratified across the last 22 hours (1-2 per hour
+ *    so the chart hardly ever shows 3+ consecutive empty bins —
+ *    leaves 2 random hours empty for realistic noise)
+ *  - 24 orders in "last 7 days excluding last 24h" (background
+ *    fill so the "Orders this week" widget — when added — also has
+ *    data without overweighting the chart bucket)
  *
- * Idempotent: re-running picks the same 30 most-recent orders (now
- * the freshly-bumped ones) and re-distributes them. After the first
- * run the command is a no-op in terms of which orders are recent —
- * the distribution just gets re-shuffled within today / yesterday /
- * last-7d.
+ * Idempotent: re-running picks the same 50 most-recent orders (now
+ * the freshly-bumped ones) and re-shuffles them within the same
+ * envelope. Total order count stays constant at 1000.
  *
- * Wired into `make showcase` and `make screenshots` so the demo is
+ * Wired into `make fixtures` and `make screenshots` so the demo is
  * fresh whatever clock-day the maintainer is on.
  */
 #[AsCommand(
     name: 'app:freshen-orders',
-    description: 'Re-date the most recent 30 orders to today / last 24h / last 7d so dashboard widgets always have data.',
+    description: 'Re-date the most recent 50 orders so dashboard widgets always have data.',
 )]
 final class FreshenOrdersCommand extends Command
 {
-    private const FRESHEN_COUNT = 30;
-    private const TODAY_COUNT = 3;
-    private const LAST_24H_COUNT = 9;
-    // Remaining 18 orders fall into "last 7 days" by subtraction.
+    private const FRESHEN_COUNT = 50;
+    private const TODAY_COUNT = 4;
+    private const LAST_24H_COUNT = 22;
+    // Remaining 24 orders fall into "last 7 days excluding last 24h"
+    // by subtraction.
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -79,6 +83,10 @@ final class FreshenOrdersCommand extends Command
             return Command::FAILURE;
         }
 
+        // Build the 22-hour stratified schedule once, then iterate
+        // over the picked orders consuming hours one at a time.
+        $stratifiedHours = $this->stratifiedHourSchedule(self::LAST_24H_COUNT);
+
         $todayBucket = 0;
         $last24hBucket = 0;
         $last7dBucket = 0;
@@ -86,8 +94,8 @@ final class FreshenOrdersCommand extends Command
         foreach ($orders as $i => $order) {
             $newCreatedAt = match (true) {
                 $i < self::TODAY_COUNT => $this->somewhereToday($now),
-                $i < self::TODAY_COUNT + self::LAST_24H_COUNT => $this->somewhereInLast24h($now),
-                default => $this->somewhereInLast7Days($now),
+                $i < self::TODAY_COUNT + self::LAST_24H_COUNT => $this->stratifiedHourAgo($now, $stratifiedHours[$i - self::TODAY_COUNT]),
+                default => $this->somewhereInLast7DaysExcludingLast24h($now),
             };
 
             $deltaSeconds = $newCreatedAt->getTimestamp() - $order->getCreatedAt()->getTimestamp();
@@ -123,6 +131,30 @@ final class FreshenOrdersCommand extends Command
         return Command::SUCCESS;
     }
 
+    /**
+     * Build a list of $count "hours-ago" values stratified across
+     * 1..23 hours so the chart's hourly bins are densely populated.
+     * For $count=22, exactly 2 hours in [1, 23] are dropped, picked
+     * randomly so each run has a slightly different shape — looks
+     * organic rather than templated.
+     *
+     * @return list<int>
+     */
+    private function stratifiedHourSchedule(int $count): array
+    {
+        $availableHours = range(1, 23);
+        shuffle($availableHours);
+
+        return \array_slice($availableHours, 0, $count);
+    }
+
+    private function stratifiedHourAgo(DateTimeImmutable $now, int $hoursAgo): DateTimeImmutable
+    {
+        $minutesAgo = random_int(0, 59);
+
+        return $now->modify(\sprintf('-%d hours -%d minutes', $hoursAgo, $minutesAgo));
+    }
+
     private function somewhereToday(DateTimeImmutable $now): DateTimeImmutable
     {
         $hour = random_int(8, 22);
@@ -135,15 +167,7 @@ final class FreshenOrdersCommand extends Command
         return $candidate <= $now ? $candidate : $now->modify('-1 minute');
     }
 
-    private function somewhereInLast24h(DateTimeImmutable $now): DateTimeImmutable
-    {
-        $hoursAgo = random_int(1, 23);
-        $minutesAgo = random_int(0, 59);
-
-        return $now->modify(\sprintf('-%d hours -%d minutes', $hoursAgo, $minutesAgo));
-    }
-
-    private function somewhereInLast7Days(DateTimeImmutable $now): DateTimeImmutable
+    private function somewhereInLast7DaysExcludingLast24h(DateTimeImmutable $now): DateTimeImmutable
     {
         $daysAgo = random_int(2, 7);
         $hoursAgo = random_int(0, 23);
