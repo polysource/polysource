@@ -185,7 +185,20 @@ final class BulkJobDataSource implements DataSourceInterface
         $recordIds = json_decode($record->recordIdsJson, true);
 
         $total = \is_array($recordIds) ? \count($recordIds) : 0;
-        $progress = $total > 0 ? $record->processedCount / $total : 1.0;
+        $progressFloat = $total > 0 ? $record->processedCount / $total : 1.0;
+
+        // Index column display: human-readable percentage with up to
+        // one decimal, trailing zeros trimmed so "100.0%" reads as
+        // "100%" and "0.0%" reads as "0%". Polysource v0.1 ships only
+        // the abstract FieldInterface — no built-in PercentageField —
+        // so pre-formatting at the data-source layer is the right
+        // contract until v0.2 introduces concrete field types
+        // (cf. ADR-011). Hosts that want the raw 0..1 float for
+        // their own rendering pipeline read `record.rawSource.progress()`,
+        // which is the BulkJob VO method (lossless).
+        $progressDisplay = $total > 0
+            ? rtrim(rtrim(\sprintf('%.1f', $progressFloat * 100), '0'), '.') . '%'
+            : '100%';
 
         return new DataRecord(
             $record->id,
@@ -201,7 +214,7 @@ final class BulkJobDataSource implements DataSourceInterface
                 'processedCount' => $record->processedCount,
                 'failedCount' => $record->failedCount,
                 'total' => $total,
-                'progress' => $progress,
+                'progress' => $progressDisplay,
                 'errorMessage' => $record->errorMessage,
             ],
             // Expose the BulkJob VO as rawSource so host detail
