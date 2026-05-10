@@ -149,7 +149,7 @@ final class FlysystemDataSourceTest extends TestCase
         $this->source->delete('notes.txt');
     }
 
-    public function testPaginationOffsetLimit(): void
+    public function testPaginationOffsetLimitExposesTotal(): void
     {
         // Add a bunch of files to overflow one page.
         for ($i = 0; $i < 30; ++$i) {
@@ -160,7 +160,10 @@ final class FlysystemDataSourceTest extends TestCase
             (new DataQuery('files'))->withPagination(new Pagination(offset: 0, limit: 10))
         );
         self::assertCount(10, $page->asArray());
-        self::assertNotNull($page->nextCursor);
+        // Switched from cursor to offset/limit pagination — total is
+        // now the materialised file count, not null.
+        self::assertGreaterThanOrEqual(30, $page->total);
+        self::assertNull($page->nextCursor);
     }
 
     public function testNoPathPrefixUsesBareFilesystem(): void

@@ -61,39 +61,30 @@ final class FlysystemDataSource implements WritableDataSourceInterface
             /** @var iterable<StorageAttributes> $listing */
             $listing = $this->filesystem->listContents($this->pathPrefix, $this->recursive);
         } catch (FilesystemException) {
-            return new DataPage([], null);
+            return new DataPage([], 0);
         }
 
-        $records = [];
-        $skipped = 0;
-        $hasMore = false;
-
+        // Materialise every matching record so we can expose `total`
+        // and let the Twig paginator render the canonical
+        // "X records — page Y/Z" summary + Prev/Next links. Flysystem
+        // listings are O(N) anyway (S3 LIST, local readdir, …) so the
+        // change is cost-neutral. Hosts with very large buckets are
+        // expected to ship a custom data source over a search index.
+        $allRecords = [];
         foreach ($listing as $attributes) {
             $record = $this->toDataRecord($attributes);
             if (!self::matchesFilters($record, $query)) {
                 continue;
             }
-
-            if ($skipped < $offset) {
-                ++$skipped;
-
-                continue;
-            }
-
-            if (\count($records) >= $limit) {
-                $hasMore = true;
-
-                break;
-            }
-
-            $records[] = $record;
+            $allRecords[] = $record;
         }
 
+        $total = \count($allRecords);
+        $page = \array_slice($allRecords, $offset, $limit);
+
         return new DataPage(
-            items: $records,
-            total: null,
-            nextCursor: $hasMore ? (string) ($offset + $limit) : null,
-            prevCursor: $offset > 0 ? (string) max(0, $offset - $limit) : null,
+            items: $page,
+            total: $total,
         );
     }
 

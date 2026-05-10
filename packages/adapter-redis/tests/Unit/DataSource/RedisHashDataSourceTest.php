@@ -9,6 +9,7 @@ use Polysource\Adapter\Redis\DataSource\RedisHashDataSource;
 use Polysource\Adapter\Redis\Tests\InMemory\InMemoryRedisHashClient;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
+use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
 use Polysource\Core\Query\Pagination;
 use RuntimeException;
@@ -159,10 +160,10 @@ final class RedisHashDataSourceTest extends TestCase
         $this->source->delete('dark-mode');
     }
 
-    public function testDataPageCarriesNextCursorForOngoingScan(): void
+    public function testDataPageHonoursOffsetLimitAndExposesTotal(): void
     {
-        // Seed enough flags to overflow at least two SCAN batches
-        // (data source uses count = max(limit*2, 100) per batch).
+        // setUp seeds 3 baseline flags + 1 outside-prefix; this test
+        // adds 250 more under the same prefix → 253 records total.
         for ($i = 0; $i < 250; ++$i) {
             $this->client->seed("polysource:flag:bulk-{$i}", ['name' => "bulk-{$i}", 'enabled' => '1']);
         }
@@ -172,8 +173,28 @@ final class RedisHashDataSourceTest extends TestCase
 
         $page = $this->source->search($query);
         self::assertCount(20, $page->asArray());
-        self::assertNotNull($page->nextCursor);
-        self::assertNotSame('0', $page->nextCursor);
+        // Switched from cursor to offset/limit pagination — total is
+        // now the full materialised count, not null.
+        self::assertSame(253, $page->total);
+        self::assertNull($page->nextCursor);
+
+        // Page 2 lands on items 20-39 of the sorted set, deterministic.
+        $page2 = $this->source->search(
+            (new DataQuery('flags'))->withPagination(new Pagination(offset: 20, limit: 20)),
+        );
+        self::assertCount(20, $page2->asArray());
+        self::assertSame(253, $page2->total);
+        // Pages do not overlap.
+        $idsOf = static function (array $records): array {
+            $out = [];
+            foreach ($records as $r) {
+                /** @var DataRecord $r */
+                $out[] = $r->identifier;
+            }
+
+            return $out;
+        };
+        self::assertSame([], array_intersect($idsOf($page->asArray()), $idsOf($page2->asArray())));
     }
 
     public function testPayloadWithoutIdRejected(): void

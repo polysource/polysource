@@ -21,16 +21,29 @@ use RuntimeException;
  * are the record's properties. The identifier carried by
  * {@see DataRecord} is the suffix of the key (without the prefix).
  *
- * Cf. ADR-002 — `count()` returns `null`. SCAN does not give us a
- * cheap exact count, and the `KEYS` command is forbidden in
- * production (O(n) blocking). The UI uses cursor pagination
- * driven by `nextCursor` / `prevCursor`.
+ * Pagination is **offset/limit** since v0.1.0: `search()`
+ * materialises every matching key via repeated SCAN until the
+ * cursor exhausts (capped at 50 iterations, ~5k keys), sorts by
+ * id for stable ordering across requests, then slices in memory.
+ * `total` is therefore exposed (the count of materialised keys),
+ * which lets the Twig paginator render the canonical
+ * "X records — page Y/Z" summary + Prev/Next links instead of the
+ * cursor-only fallback.
+ *
+ * Why offset over cursor: Redis SCAN's cursor is session-bound —
+ * Prev/Next navigation across separate requests can't share a
+ * cursor reliably. Materialising once per page request and slicing
+ * gives consistent UX for the small-to-medium namespaces this
+ * adapter targets. For collections of more than a few thousand
+ * records, hosts run their own RediSearch / RedisJSON index and
+ * ship a custom data source.
+ *
+ * `count()` still returns `null` (cheap path); `search()` exposes
+ * the materialised total in the DataPage so the controller does
+ * not need to call both.
  *
  * Filter mapping in v0.1 is **client-side** — Redis hashes don't
  * support server-side filtering; we'd need RediSearch for that.
- * `search()` materialises a page and filters in-process. For
- * collections of more than a few thousand records, hosts run their
- * own RediSearch index and ship a custom data source.
  */
 final class RedisHashDataSource implements WritableDataSourceInterface
 {
@@ -46,57 +59,46 @@ final class RedisHashDataSource implements WritableDataSourceInterface
     public function search(DataQuery $query): DataPage
     {
         $pagination = $query->pagination;
+        $offset = null === $pagination ? 0 : $pagination->offset;
         $limit = null === $pagination ? $this->defaultPageSize : $pagination->limit;
 
-        // Cursor pagination: SCAN returns its own cursor — we surface
-        // it as DataPage::$nextCursor. The DataQuery's offset is
-        // ignored (cursor-based sources can't honour offset cheaply).
-        $cursor = self::cursorFromQuery($pagination);
+        // Materialise every matching key via SCAN until cursor exhausts.
+        // Hard-capped at 50 iterations × COUNT 100 = 5000 keys against
+        // pathological scans; hosts with bigger namespaces ship a
+        // custom data source over RediSearch / RedisJSON.
         $records = [];
+        $cursor = '0';
         $iterations = 0;
-        $reachedLimit = false;
-        $lastScanCursor = $cursor;
-
         do {
-            [$nextCursor, $keys] = $this->client->scan($cursor, $this->keyPrefix . '*', max($limit * 2, 100));
-            $lastScanCursor = $nextCursor;
-
+            [$cursor, $keys] = $this->client->scan($cursor, $this->keyPrefix . '*', 100);
             foreach ($keys as $key) {
                 $hash = $this->client->hgetall($key);
                 $id = substr($key, \strlen($this->keyPrefix));
                 if ('' === $id || [] === $hash) {
                     continue;
                 }
-
                 $record = new DataRecord($id, $hash);
                 if (!self::matchesFilters($record, $query)) {
                     continue;
                 }
-                $records[] = $record;
-
-                if (\count($records) >= $limit) {
-                    $reachedLimit = true;
-
-                    break 2;
-                }
+                // Dedupe by id — Redis SCAN can legitimately return
+                // the same key twice across iterations.
+                $records[$id] = $record;
             }
-
-            $cursor = $nextCursor;
             ++$iterations;
-        } while ('0' !== $cursor && $iterations < 50); // hard cap against pathological scans
+        } while ('0' !== $cursor && $iterations < 50);
 
-        // When we stopped because we hit the limit, expose the cursor
-        // from the most recent scan so the caller can resume there.
-        // Redis SCAN tolerates duplicate keys across pages.
-        $pageNextCursor = $reachedLimit
-            ? ('0' === $lastScanCursor ? null : $lastScanCursor)
-            : ('0' === $cursor ? null : $cursor);
+        // Stable order by id so page N lands on the same records
+        // regardless of when the user navigates there.
+        ksort($records);
+        $allRecords = array_values($records);
+
+        $total = \count($allRecords);
+        $page = \array_slice($allRecords, $offset, $limit);
 
         return new DataPage(
-            items: $records,
-            total: null,
-            nextCursor: $pageNextCursor,
-            prevCursor: null === $pagination ? null : self::cursorFromQuery($pagination),
+            items: $page,
+            total: $total,
         );
     }
 
@@ -160,18 +162,6 @@ final class RedisHashDataSource implements WritableDataSourceInterface
     public function delete(int|string $identifier): void
     {
         $this->client->del($this->keyPrefix . (string) $identifier);
-    }
-
-    private static function cursorFromQuery(?\Polysource\Core\Query\Pagination $pagination): string
-    {
-        if (null === $pagination) {
-            return '0';
-        }
-
-        // Pagination::offset is misused as a cursor token here — the
-        // UI builds it from the previous response's nextCursor. This
-        // is a minor protocol abuse but avoids an extra type for v0.1.
-        return 0 === $pagination->offset ? '0' : (string) $pagination->offset;
     }
 
     private static function matchesFilters(DataRecord $record, DataQuery $query): bool
