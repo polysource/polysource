@@ -73,6 +73,11 @@ jobs:
           # subtree split needs the full history
           fetch-depth: 0
           fetch-tags: true
+          # Don't keep the runner's GITHUB_TOKEN in `.git/config` as
+          # an http.extraheader — otherwise it overrides the App
+          # installation token we embed in the push URL below, and
+          # the push gets rejected with `denied to github-actions[bot]`.
+          persist-credentials: false
 
       - name: Configure git identity
         run: |
