@@ -300,7 +300,7 @@ All tags are scanned by `tagged_iterator(...)` in services.php — discoverable 
 
 ## Test discipline for your extensions
 
-Polysource itself ships **674 tests / 1684 assertions** in the package matrix. The same discipline applies to your extensions:
+Polysource itself ships **782 tests / 1932 assertions** in the package matrix (plus 29 Panther browser E2E and 15 adapter real-container tests). The same discipline applies to your extensions:
 
 - **Pure adapters/providers** → unit-test with the in-memory fakes Polysource ships (`InMemoryRedisHashFake`, `InMemoryMeilisearchFake`, `InMemorySavedViewStorage`, etc.). Zero infrastructure.
 - **Plugins** → functional-test against `Symfony\Bundle\FrameworkBundle\Test\KernelTestCase`.

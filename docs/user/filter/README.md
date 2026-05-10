@@ -21,8 +21,8 @@ you need a filter form that survives a page reload.
 
 ## Status
 
-`polysource/filter` is **pre-v0.1.0** and shipped from the same monorepo
-as the bridge. The public API is the one documented in
+`polysource/filter` is published in **v0.1.0** alongside the rest of
+the monorepo. The public API is the one documented in
 [ADR-013](../../adr/0013-filter-package-architecture.md) — the form/datasource
 separation, the 3-tag pipeline (`mapper` / `formatter` / `renderer`),
 the `FilterService` session contract, and the two rendering modes

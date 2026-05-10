@@ -25,9 +25,9 @@
 
 ---
 
-## Status — pre-v0.1.0
+## Status — v0.1.0 published (2026-05-10)
 
-Phases 1 → 22 shipped on `main` (16 packages). The public API is **release-candidate stable** — the surface is committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the CHANGELOG, and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). Tag + Packagist publish pending the final QA pass on the showcase. License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors, and the [ADRs](./docs/adr/) for the choices that landed.
+16 packages distributed on Packagist as `polysource/<pkg>`, mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
 
 **Multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md))**: PHP 8.1 → 8.4, Symfony 5.4 / 6.4 / 7.2 / 7.4 LTS, EasyAdmin 4.24+ / 5.0+, Doctrine ORM 2.20+ / 3.6+. CI runs the full matrix.
 
@@ -136,7 +136,7 @@ The opening pitch in one table. **Most contracts are 1-5 methods** — that's th
 
 ## Quality bar
 
-- **674 unit + functional tests / 1684 assertions** in the package matrix, plus 27 integration tests in the showcase
+- **782 unit + functional tests / 1932 assertions** in the package matrix
 - **29 browser E2E tests** (Symfony Panther) + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) running in CI on every push
 - **PHPStan level max** across all packages
 - **PHP-CS-Fixer** PSR-12 + Symfony rules
@@ -145,7 +145,7 @@ The opening pitch in one table. **Most contracts are 1-5 methods** — that's th
 
 ## Known limitations in v0.1
 
-Polysource is **pre-v0.1.0** and not yet production-hardened. Adopt early, with eyes open:
+Polysource v0.1.0 is published but not yet production-hardened. Adopt early, with eyes open:
 
 - **Some UI surfaces are intentionally minimal** and will be polished in v0.2 (drag-drop dashboard composition, fluent form builders, real-time collaborative cursors).
 - **`polysource/admin` is not a replacement for EasyAdmin on pure Doctrine CRUD.** Keep using EasyAdmin for that. The standalone admin shines on resources outside Doctrine (Messenger, Redis, S3, REST, Meilisearch).

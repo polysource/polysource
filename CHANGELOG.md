@@ -8,13 +8,15 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
-## [0.1.0] — 2026-05-09
+## [0.1.0] — 2026-05-10
 
-First public release. 16 packages, full multi-version CI matrix
-(PHP 8.1→8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0), 29 browser
-E2E + 15 adapter real-container tests + 782 unit/functional tests
-(1932 assertions). Released after the irreproachable-coverage push
-(`feedback_e2e_is_non_negotiable`).
+First public release. 16 packages distributed on Packagist as
+`polysource/<pkg>`, mirrored from the `polysource/polysource`
+monorepo via the automated subtree-split pipeline (see ADR-026).
+Full multi-version CI matrix (PHP 8.1→8.4 × Symfony 6.4/7.2/7.4 ×
+EasyAdmin 4.24/5.0), 29 browser E2E + 15 adapter real-container
+tests + 782 unit/functional tests (1932 assertions). Released after
+the irreproachable-coverage push.
 
 This block captures everything shipped since `0.1.0-alpha.1`.
 
@@ -224,8 +226,10 @@ base + `*DataSource` implementing `WritableDataSourceInterface` +
 - `PermissionsByRoleTest` — voter decision matrix across 3 roles ×
   9 attributes.
 
-Total **674 unit + functional tests / 1684 assertions** in the package
-matrix, plus **27 integration tests** in the showcase WebTestCase suite.
+Subtotal at this point in the [0.1.0] block: **674 unit + functional
+tests / 1684 assertions** in the package matrix, plus **27 integration
+tests** in the showcase WebTestCase suite. (Final v0.1.0 totals are
+quoted at the top of the [0.1.0] section.)
 
 ### Added — EasyAdmin CRUD edits in the audit trail
 

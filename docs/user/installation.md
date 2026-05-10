@@ -36,12 +36,13 @@ only the ones you need.
 | `polysource/twig-theme` | Layout + index + detail + paginator + 6 field templates. Pure templates, no PHP. | yes (transitive) |
 | `polysource/adapter-messenger` | Read-only data source over Symfony Messenger's failed transport, plus retry / dismiss / retry-all / purge actions. | only for the Messenger dashboard |
 
-> **Heads-up.** The packages are not yet published on Packagist
-> (pre-v0.1.0). Until they are, install directly from the Git monorepo
-> as a Composer path repository — see [the dev install](#dev-install)
-> below.
+> **Two install paths.** The standard install pulls the packages from
+> Packagist (recommended for any consumer). The dev install at the
+> bottom of this page wires the packages from a local clone of the
+> monorepo as a Composer path repository — useful only if you're
+> contributing to Polysource itself or testing an unreleased branch.
 
-## Standard install (once published on Packagist)
+## Standard install (from Packagist)
 
 ```bash
 composer require polysource/symfony-bundle
@@ -92,10 +93,11 @@ polysource_messenger:
 Continue with [getting-started.md](./getting-started.md) for the
 5-minute path to a working dashboard.
 
-## Dev install (pre-v0.1.0, from this repository) {#dev-install}
+## Dev install (from this repository) {#dev-install}
 
-While the packages are unpublished, depend on them through a Composer
-path repository:
+If you're contributing to Polysource itself or testing an unreleased
+branch, depend on the packages through a Composer path repository
+instead of Packagist:
 
 ```bash
 git clone git@github.com:polysource/polysource.git ../polysource

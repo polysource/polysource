@@ -518,4 +518,4 @@ Les deux peuvent coexister.
 **Coût estimé** v0.1 (resources read-only + 1-2 adapters + index/detail seulement) : **6–8 semaines pour 1 senior**.
 **Coût v1.0** (CRUD complet + 4-5 adapters + actions + filters complets + bridge EasyAdmin) : **6 mois temps complet**.
 
-Voir [development-plan.md](../roadmap/development-plan.md) pour le plan de construction détaillé.
+Voir [`CHANGELOG.md`](../../CHANGELOG.md) pour ce qui a été livré et [`ROADMAP.md`](../../ROADMAP.md) pour ce qui reste à venir. Le plan de construction phase-par-phase reste un document de travail interne du mainteneur (non publié).

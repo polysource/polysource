@@ -98,9 +98,10 @@ Deux nouvelles phases s'intercalent :
 - **Phase 9.7** — `polysource/easyadmin-filter-bridge` (les 7 configurators,
   les 7 enhanced form types, l'EventSubscriber, les overrides Twig).
 
-L'estimation Phase 9.5 + 9.7 : **4 à 6 semaines**. Voir
-[`../roadmap/development-plan.md`](../roadmap/development-plan.md) pour le
-détail des livrables.
+L'estimation Phase 9.5 + 9.7 au moment de la décision : **4 à 6
+semaines**. Le détail des livrables est tenu dans le plan de
+développement interne du mainteneur (non publié) ; le résultat
+versionné est consigné dans [`CHANGELOG.md`](../../CHANGELOG.md).
 
 ### Ce qui change pour la communication
 
@@ -197,7 +198,7 @@ n'apporte pas la valeur perçue. Décision à prendre entre :
 
 - [`../strategy/product-vision.md`](../strategy/product-vision.md) — vision
   produit mise à jour pour refléter le pivot
-- [`../roadmap/development-plan.md`](../roadmap/development-plan.md) —
-  Phases 9.5 et 9.7 ajoutées
+- [`../../CHANGELOG.md`](../../CHANGELOG.md) — résultat livré (Phases 9.5
+  et 9.7 atterrissent dans `[0.1.0]`)
 - [`0011-pre-v1.0-freeze-checklist.md`](./0011-pre-v1.0-freeze-checklist.md) —
   items de gel API à traiter avant v1.0 (inchangés par cet ADR)

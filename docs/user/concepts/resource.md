@@ -171,7 +171,7 @@ to resolve it back to a record.
   do not write controllers per resource.
 - It is **not** a form. Fields are render hints, not Symfony Form
   types. (Form integration arrives in v0.3+ — see the
-  [development plan](../../roadmap/development-plan.md).)
+  [ROADMAP](../../../ROADMAP.md).)
 
 ## See also
 

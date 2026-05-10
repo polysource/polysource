@@ -5,7 +5,7 @@
 > 1. **`polysource/easyadmin-filter-bridge`** — enrichit les filtres d'une app EasyAdmin existante (4.24+ ou 5.0+) — presets, ranges, multi-select, saved views, chips bar — sans forker EA.
 > 2. **`polysource/admin`** — admin standalone pour ressources non-Doctrine : Messenger, Redis, S3, REST, Meilisearch, configs.
 
-Statut : Phases 1 → 22 livrées sur `main` (16 packages). Pré-v0.1.0, tag en attente. Voir [`roadmap/development-plan.md`](./roadmap/development-plan.md).
+Statut : **v0.1.0 publiée le 2026-05-10** — 16 packages distribués sur Packagist comme `polysource/<pkg>`, mirrorés depuis ce monorepo via le pipeline subtree-split documenté dans [ADR-026](./adr/0026-monorepo-split-and-packagist-mirrors.md). Pour l'historique versionné voir [`CHANGELOG.md`](../CHANGELOG.md), pour ce qui vient ensuite voir [`ROADMAP.md`](../ROADMAP.md), et pour les items à trancher avant le freeze v1.0 voir [ADR-011](./adr/0011-pre-v1.0-freeze-checklist.md).
 
 ## Pour les utilisateurs
 
@@ -33,9 +33,12 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [**Monorepo split + Packagist mirrors (ADR-026)**](./adr/0026-monorepo-split-and-packagist-mirrors.md) — pourquoi 1 monorepo de dev + 16 mirrors read-only sur Packagist
 - [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
 
-### Roadmap
-- [**Plan de développement**](./roadmap/development-plan.md) — Phases 0 à 22 livrées, Phase 10 (release v0.1.0) en cours
-- [**Pre-v1.0 freeze checklist (ADR-011)**](./adr/0011-pre-v1.0-freeze-checklist.md)
+### Roadmap & historique
+- [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré en v0.1, ce qui est planifié en v0.2+
+- [**CHANGELOG.md**](../CHANGELOG.md) — historique versionné des releases (v0.1.0 → 2026-05-10)
+- [**Pre-v1.0 freeze checklist (ADR-011)**](./adr/0011-pre-v1.0-freeze-checklist.md) — items API à trancher avant le freeze v1.0
+
+> Le plan de développement détaillé (par phase, par item, par jour) reste un document de travail interne du mainteneur — non publié.
 
 ## Note pour les contributeurs
 
@@ -44,14 +47,14 @@ Avant tout PR de code, lire dans l'ordre :
 1. [Vision produit](./strategy/product-vision.md) — comprendre le scope strict
 2. [Architecture cible](./architecture/target-architecture.md) — comprendre les contrats
 3. [ADR](./adr/) — comprendre les choix tranchés
-4. [Plan de développement](./roadmap/development-plan.md) — savoir où on en est
+4. [CHANGELOG](../CHANGELOG.md) + [ROADMAP](../ROADMAP.md) — savoir où on en est et où on va
 
 Voir [CONTRIBUTING.md](../CONTRIBUTING.md) à la racine pour le workflow.
 
-## Quality bar (à jour 2026-05-08)
+## Quality bar (v0.1.0 — 2026-05-10)
 
-- **674 tests unitaires + fonctionnels / 1684 assertions** au niveau packages
-- **27 tests d'intégration** au niveau showcase
+- **782 tests unitaires + fonctionnels / 1932 assertions** au niveau packages
+- **29 tests E2E browser** (Panther) + **15 tests d'intégration adapter** sur conteneurs réels (Redis, S3 MinIO, Meilisearch, HTTP API)
 - **PHPStan level max** partout
 - **PHP-CS-Fixer** PSR-12 + Symfony rules
 - **Core coverage ≥ 90%** (`polysource/core` à 99.17 %)

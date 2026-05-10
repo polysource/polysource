@@ -167,7 +167,7 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 - Bridges futurs (`search-meilisearch`, `search-algolia`, `search-elasticsearch`)
   — extensions du package `polysource/search` via `SearchProviderInterface`
 
-**Aucun package supplémentaire ne sera ajouté avant v1.0 sans utilisateur identifié qui en a besoin.** Voir le plan détaillé dans [`../roadmap/development-plan.md`](../roadmap/development-plan.md).
+**Aucun package supplémentaire ne sera ajouté avant v1.0 sans utilisateur identifié qui en a besoin.** Voir [`ROADMAP.md`](../../ROADMAP.md) pour les jalons publics et [ADR-011](../adr/0011-pre-v1.0-freeze-checklist.md) pour la checklist de gel API à trancher avant v1.0.
 
 ### Conventions
 

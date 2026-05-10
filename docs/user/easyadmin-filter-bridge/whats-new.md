@@ -226,9 +226,8 @@ unit tests.
   the same chips/subpanel/multi-group UI in a non-EasyAdmin
   controller, or if you want to add a custom filter type and
   understand the 3-tag pipeline.
-- [Roadmap](../../roadmap/development-plan.md) — what's planned for
-  v0.2 and beyond (chip-display Stimulus, autocomplete enhancements,
-  saved-filter UX).
+- [ROADMAP](../../../ROADMAP.md) — what's planned for v0.2 and beyond
+  (chip-display Stimulus, autocomplete enhancements, saved-filter UX).
 - [ADR-012](../../adr/0012-dual-product-positioning.md) — why the bridge
   exists at all (vs forking EasyAdmin).
 - [ADR-013](../../adr/0013-filter-package-architecture.md) — the

@@ -35,7 +35,8 @@ steps.
 composer require polysource/symfony-bundle polysource/adapter-messenger
 ```
 
-If you're working pre-v0.1.0 from the monorepo, follow
+If you're working from a clone of the monorepo (contributor or
+unreleased-branch testing), follow
 [installation.md → Dev install](./installation.md#dev-install) first,
 then come back here.
 

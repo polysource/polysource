@@ -234,19 +234,20 @@ was correctness and the architectural separation; the visual gap
 is acknowledged here so the reader is not surprised.
 
 If you're integrating Polysource into an existing EA app and want
-the two halves to feel uniform on day one, see
-[`docs/user/cookbook/integrate-existing-app.md`](./cookbook/integrate-existing-app.md)
-for the layout-override pattern.
+the two halves to feel uniform on day one, the showcase
+(`examples/showcase-demo/templates/`) is the reference for the
+layout-override pattern. A dedicated cookbook page is on the v0.2
+documentation backlog.
 
 ## What this showcase proves
 
-1. **The 15 Polysource packages cohabit** in a single Symfony 7.4
+1. **The 16 Polysource packages cohabit** in a single Symfony 7.4
    application (ADR-012 dual-product positioning).
 2. **EasyAdmin keeps owning the Doctrine entities** it's good at,
    while Polysource owns everything else.
-3. **All eight non-Doctrine adapters** (Messenger, Doctrine
-   read-only, Redis, Flysystem, HTTP, Meilisearch, Search index,
-   Audit log) browse real data without exotic configuration.
+3. **All six non-Doctrine adapters** (Messenger, Doctrine
+   read-only, Redis, Flysystem, HTTP, Meilisearch) browse real data
+   without exotic configuration.
 4. **The 5 cross-cutting capabilities** (workflow, audit, widgets,
    search palette, bulk-async) plug into the same admin shell
    without forking it.
