@@ -68,7 +68,7 @@ jobs:
           - adapter-http
           - adapter-meilisearch
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # subtree split needs the full history
           fetch-depth: 0
@@ -86,7 +86,7 @@ jobs:
 
       - name: Mint installation token from polysource-split GitHub App
         id: app_token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
