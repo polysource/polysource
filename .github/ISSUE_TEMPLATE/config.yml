@@ -1,0 +1,21 @@
+# Issue templates configuration.
+#
+# Disables the "Open a blank issue" link so reporters land on the
+# matching template (bug, feature, or one of the contact links
+# below). Security reports are deliberately routed off-issue per
+# SECURITY.md.
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/polysource/polysource/security/advisories/new
+    about: Report a security issue privately. See SECURITY.md for the disclosure policy.
+
+  - name: Question / general discussion
+    url: https://github.com/polysource/polysource/discussions
+    about: Open a discussion thread for usage questions, ideas, or "should I…" topics.
+
+  - name: Contribution guide
+    url: https://github.com/polysource/polysource/blob/main/CONTRIBUTING.md
+    about: Read the contribution guide before opening a pull request.

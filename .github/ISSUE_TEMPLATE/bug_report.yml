@@ -1,0 +1,88 @@
+name: Bug report
+description: Report something that's broken or behaves contrary to the docs.
+title: "bug: <one-line summary>"
+labels:
+  - bug
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill out the
+        sections below — issues with reproductions are triaged faster.
+
+        **Security issues**: do NOT file them here. Use the Security
+        tab → "Report a vulnerability" instead, or follow the
+        [SECURITY.md](../blob/main/SECURITY.md) policy.
+
+  - type: input
+    id: package
+    attributes:
+      label: Affected package(s)
+      description: Which Polysource package(s) is the bug in?
+      placeholder: e.g. polysource/symfony-bundle, polysource/easyadmin-filter-bridge
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: PHP / Symfony / EasyAdmin / Doctrine versions you're running.
+      placeholder: e.g. PHP 8.3 / Sf 7.4 / EA 5.0 / Doctrine 3.2
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What actually happened? Copy-paste error messages and stack traces inside fenced code blocks.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: |
+        The shortest reproduction wins. Either:
+        - a code snippet that fails when copy-pasted into a Symfony
+          controller / test
+        - a link to a minimal repo that demonstrates the bug
+        - a sequence of clicks on `make showcase` that triggers it
+      placeholder: |
+        1. Install polysource/...
+        2. Configure ...
+        3. Run ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround you've identified (optional)
+      description: If you've found a way to make it work, describe what you changed.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues and didn't find this one already reported.
+          required: true
+        - label: I read the [docs](../blob/main/docs/user/README.md) and the bug is not a documented limitation.
+          required: true
+        - label: This is not a security issue (those go through the [Security tab](../security/advisories/new) per SECURITY.md).
+          required: true

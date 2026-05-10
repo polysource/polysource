@@ -1,0 +1,89 @@
+name: Feature request
+description: Propose a new capability, an API extension, or a UX improvement.
+title: "feat: <one-line summary>"
+labels:
+  - enhancement
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the proposal. Polysource keeps a strict scope (cf.
+        [ADR-012](../blob/main/docs/adr/0012-dual-product-positioning.md)
+        and [ADR-017](../blob/main/docs/adr/0017-cherry-picking-from-filament-study.md))
+        — please skim those before asking for features that compete
+        head-on with EasyAdmin on Doctrine territory or that re-create
+        BI dashboards / no-code builders. The roadmap is in
+        [ROADMAP.md](../blob/main/ROADMAP.md).
+
+        For exploratory ideas, prefer
+        [Discussions](../discussions) — they're a better fit than
+        issues for early-stage thinking.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What pain are you trying to solve? Concrete scenarios beat abstract wishes.
+      placeholder: |
+        I'm running … in production. Today I have to … which costs
+        me … every time. I'd like Polysource to …
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        How would you like Polysource to behave? Sketch the API shape
+        (interface signatures, config nodes, Twig functions, CLI
+        flags) — even rough drafts help triage the cost.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you try / think about that didn't work?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which package(s) would this touch?
+      multiple: true
+      options:
+        - polysource/core
+        - polysource/symfony-bundle
+        - polysource/twig-theme
+        - polysource/filter
+        - polysource/easyadmin-filter-bridge
+        - polysource/audit
+        - polysource/widgets
+        - polysource/search
+        - polysource/workflow-bridge
+        - polysource/bulk-async
+        - polysource/adapter-messenger
+        - polysource/adapter-doctrine
+        - polysource/adapter-redis
+        - polysource/adapter-flysystem
+        - polysource/adapter-http
+        - polysource/adapter-meilisearch
+        - new package
+        - showcase / examples
+        - documentation only
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope_checks
+    attributes:
+      label: Scope sanity
+      options:
+        - label: I read [ADR-012](../blob/main/docs/adr/0012-dual-product-positioning.md) and this proposal does not push Polysource into frontal competition with EasyAdmin on Doctrine territory.
+          required: true
+        - label: I read [ROADMAP.md](../blob/main/ROADMAP.md) and the proposal aligns with one of the planned themes (or I justify a new theme below).
+          required: false

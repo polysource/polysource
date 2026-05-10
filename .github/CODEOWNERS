@@ -1,0 +1,21 @@
+# Default reviewer for every change. Until the project grows a
+# broader review team, every PR pings the maintainer; new
+# contributors comfortable with a given area can be added per-path
+# below.
+#
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+*                                       @aymensamaali
+
+# Per-package ownership stays open — refine as the project grows
+# (e.g. once a co-maintainer takes over the EasyAdmin bridge or the
+# Doctrine adapter, list them here so PRs touching those paths
+# auto-request their review).
+#
+# /packages/easyadmin-filter-bridge/    @aymensamaali @bridge-co-maintainer
+# /packages/adapter-meilisearch/        @aymensamaali @search-co-maintainer
+
+# Security-sensitive paths get a maintainer review every time.
+/SECURITY.md                            @aymensamaali
+/.github/                               @aymensamaali
+/docs/adr/                              @aymensamaali
