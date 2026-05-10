@@ -9,8 +9,8 @@ persistence, a chips bar, and two ready-to-use rendering modes
 It is the foundation that the `polysource/easyadmin-filter-bridge`
 plugs into. **Both packages can be installed in the same app** —
 `polysource/filter` does not depend on EasyAdmin and is happy to power
-controllers in plain Symfony, in `polysource/admin`, or anywhere else
-you need a filter form that survives a page reload.
+controllers in plain Symfony, in a Polysource standalone admin, or
+anywhere else you need a filter form that survives a page reload.
 
 ## What's in this folder
 

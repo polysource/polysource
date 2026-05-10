@@ -19,7 +19,7 @@
 **Two products, same primitives, run side-by-side in the same app:**
 
 1. **`polysource/easyadmin-filter-bridge`** — drop next to your existing EasyAdmin install (4.24+ or 5.0+), gain everything in the filter list above. Zero EA fork.
-2. **`polysource/admin`** — standalone admin for resources outside Doctrine ORM: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch indexes, configurations, jobs, webhooks.
+2. **Polysource standalone admin** (install via `polysource/symfony-bundle` plus the adapters you need) — admin for resources outside Doctrine ORM: Messenger failed messages, feature flags in Redis, files on S3, external REST APIs, Meilisearch indexes, configurations, jobs, webhooks.
 
 → **Full extensibility map**: [`docs/user/extensibility.md`](./docs/user/extensibility.md) — every contract, every method count, every registration tag, with sample code.
 
@@ -148,7 +148,7 @@ The opening pitch in one table. **Most contracts are 1-5 methods** — that's th
 Polysource v0.1.0 is published but not yet production-hardened. Adopt early, with eyes open:
 
 - **Some UI surfaces are intentionally minimal** and will be polished in v0.2 (drag-drop dashboard composition, fluent form builders, real-time collaborative cursors).
-- **`polysource/admin` is not a replacement for EasyAdmin on pure Doctrine CRUD.** Keep using EasyAdmin for that. The standalone admin shines on resources outside Doctrine (Messenger, Redis, S3, REST, Meilisearch).
+- **The standalone admin is not a replacement for EasyAdmin on pure Doctrine CRUD.** Keep using EasyAdmin for that. The Polysource standalone admin shines on resources outside Doctrine (Messenger, Redis, S3, REST, Meilisearch).
 - **Concrete field helpers are still limited.** The bundled `Field` API covers common types (text, datetime, money, boolean, code) but advanced renderers (rich-text editors, dependent dropdowns, file uploaders with progress) are app-side for now.
 - **Some advanced capabilities are opt-in packages and require host wiring.** Audit log, bulk-async, widgets, search palette, workflow bridge each ship as a separate Composer package — install and register only what you use.
 - **The public API is release-candidate stable but not SemVer-frozen until v1.0.** Breaking changes between v0.1.x minors are allowed, signalled in the CHANGELOG, and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).

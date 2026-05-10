@@ -41,9 +41,14 @@ Ces non-objectifs ne sont pas négociables avant d'avoir validé le scope étroi
 Polysource cohabite avec EasyAdmin de **deux manières distinctes** selon le
 produit considéré :
 
-### Produit 1 — `polysource/admin` standalone
+### Produit 1 — Polysource standalone admin
 
-| Aspect | EasyAdmin | `polysource/admin` |
+> Installé via `polysource/symfony-bundle` + les adapters utiles
+> (`polysource/adapter-messenger`, `polysource/adapter-redis`, …). Il
+> n'existe pas de package `polysource/admin` : c'est le nom du produit,
+> pas d'un package Composer.
+
+| Aspect | EasyAdmin | Polysource standalone admin |
 |---|---|---|
 | Cible | Entités Doctrine ORM | Ressources techniques non-Doctrine ou multi-source |
 | Couplage | Doctrine obligatoire | Aucune dépendance Doctrine dans `core` |
@@ -125,7 +130,7 @@ Anti-inspirations :
 
 Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque package a son propre `composer.json`, son propre `composer install`, et est publié indépendamment sur Packagist.
 
-### Packages v0.1 (16 packages livrés sur `main`, tag en cours)
+### Packages v0.1 (16 packages livrés, v0.1.0 publiée 2026-05-10)
 
 **Primitives partagées** (utilisables seules, zéro Symfony dans `core`) :
 
@@ -134,7 +139,7 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
   views, enhanced form types, Twig extension `filter_tags` (utilisable seul,
   sans Polysource Admin ni EasyAdmin)
 
-**Produit 1 — `polysource/admin` standalone** :
+**Produit 1 — Polysource standalone admin** :
 
 - `polysource/symfony-bundle` — wiring (DI, routing, ArgumentResolvers, Twig)
 - `polysource/twig-theme` — templates Twig par défaut (copiés et adaptés depuis EasyAdmin v5, MIT)

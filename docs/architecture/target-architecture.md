@@ -7,14 +7,14 @@
 ## 6.1 Découpage en packages
 
 ```
-polysource/                          Monorepo — 16 packages livrés sur main (v0.1.0 pre-release)
+polysource/                          Monorepo — 16 packages livrés, v0.1.0 publiée 2026-05-10
 │
 ├── PRIMITIVES (zéro dep Symfony dans core)
 │   ├── polysource/core              Contracts + value objects (26 types publics)
 │   └── polysource/filter            FilterCollection, FilterService session, saved views,
 │                                    enhanced form types — utilisable standalone
 │
-├── PRODUIT 1 — `polysource/admin` standalone
+├── PRODUIT 1 — Polysource standalone admin (= bundle ci-dessous + adapters)
 │   ├── polysource/symfony-bundle    Wiring (DI, routing, AdminContext, AsResource)
 │   ├── polysource/twig-theme        Templates Twig (copiés/adaptés depuis EA v5, MIT)
 │   ├── polysource/adapter-messenger Messenger failed transport read + 4 actions

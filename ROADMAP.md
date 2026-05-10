@@ -16,8 +16,8 @@ Capabilities included:
 - **Two products, same primitives**:
   - `polysource/easyadmin-filter-bridge` — drop-in for an existing
     EasyAdmin app
-  - `polysource/symfony-bundle` (+ `polysource/admin` family) —
-    standalone admin engine for non-Doctrine resources
+  - `polysource/symfony-bundle` (+ adapters + cross-cutting capabilities) —
+    Polysource standalone admin engine for non-Doctrine resources
 - **6 adapters**: Messenger, Doctrine read-only, Redis (hashes),
   Flysystem (S3 / local / MinIO / Azure / GCS), HTTP REST, Meilisearch
 - **5 cross-cutting capabilities**: audit log, dashboard widgets,

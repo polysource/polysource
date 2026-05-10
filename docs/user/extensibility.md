@@ -102,7 +102,7 @@ Want to ship "Stripe-charges admin + an audit hook + a custom widget" as one Com
 #[AsPlugin(name: 'acme/stripe-admin', version: '1.2.0')]
 final class StripeAdminBundle extends AbstractBundle implements AdminPluginInterface
 {
-    public function getRequirements(): array { return ['polysource/admin' => '^0.1']; }
+    public function getRequirements(): array { return ['polysource/symfony-bundle' => '^0.1']; }
     public function getCapabilities(): array { return ['stripe.charges', 'stripe.subscriptions']; }
 }
 ```
