@@ -126,7 +126,9 @@ Chaque run du workflow `auto-split.yml` :
 Le seul secret long-terme est la **private key** de l'App, stockée
 chiffrée comme `SPLIT_APP_PRIVATE_KEY` sur le monorepo. Cette clé seule
 ne donne aucun accès direct ; elle sert uniquement à signer les JWTs
-qui demandent un installation token.
+qui demandent un installation token. L'App est identifiée par son
+**Client ID** stocké en variable repo `SPLIT_APP_CLIENT_ID` (variable,
+pas secret — c'est un identifiant public au sens GitHub).
 
 **Garde-fou critique** : `actions/checkout@v4` est appelé avec
 `persist-credentials: false`. Sans ça, le `GITHUB_TOKEN` du runner est

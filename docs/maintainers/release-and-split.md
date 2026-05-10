@@ -144,9 +144,11 @@ Causes possibles :
 - **`SPLIT_APP_PRIVATE_KEY` invalide ou expiré** (la clé a été
   révoquée depuis la page App settings) → régénérer + remplacer
   (procédure de rotation ci-dessous)
-- **`SPLIT_APP_ID` ne correspond plus à l'App** (App supprimée et
-  recréée) → vérifier `gh variable list --repo polysource/polysource`
-  vs l'App ID affiché dans org Settings → GitHub Apps
+- **`SPLIT_APP_CLIENT_ID` ne correspond plus à l'App** (App
+  supprimée et recréée) → vérifier `gh variable list --repo
+  polysource/polysource` vs le Client ID affiché dans org Settings →
+  GitHub Apps → polysource-split (le Client ID est à côté du
+  numeric App ID, format `Iv23li…`)
 
 ### Symptôme : le job échoue au step *Push split to polysource/&lt;pkg&gt;*
 
@@ -238,10 +240,13 @@ cas hypothétique où on devrait recréer l'org from scratch.
    ```bash
    gh secret set SPLIT_APP_PRIVATE_KEY \
      --repo polysource/polysource < polysource-split.YYYY-MM-DD.private-key.pem
-   gh variable set SPLIT_APP_ID \
-     --repo polysource/polysource --body "<app-id>"
+   gh variable set SPLIT_APP_CLIENT_ID \
+     --repo polysource/polysource --body "<client-id>"   # format Iv23li…
    rm polysource-split.YYYY-MM-DD.private-key.pem
    ```
+   Note : on stocke le **Client ID** (chaîne `Iv23li…`), pas le
+   numeric App ID. `actions/create-github-app-token@v3` accepte les
+   deux mais préfère `client-id`.
 
 5. **Inscrire les 16 packages sur Packagist** (UI Packagist) — installe
    le webhook GitHub Packagist sur chaque mirror.

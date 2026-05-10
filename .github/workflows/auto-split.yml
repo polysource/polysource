@@ -22,6 +22,11 @@ name: Split monorepo to per-package repos
 #   3. Delete the old private key from the App settings page.
 #   4. `rm new.pem` locally.
 #
+# The `SPLIT_APP_CLIENT_ID` variable holds the App's *Client ID*
+# (shown on the App settings page next to the numeric App ID). The
+# `actions/create-github-app-token@v3` `client-id` input is the
+# preferred form; `app-id` is still accepted but deprecated.
+#
 # To add a new package mirror:
 #   1. Create the empty `polysource/<pkg>` repo (see
 #      `scripts/split-packages.sh ensure_repo`).
@@ -88,7 +93,11 @@ jobs:
         id: app_token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.SPLIT_APP_ID }}
+          # `client-id` is the v3 input name; `app-id` still works but
+          # is deprecated. Both reference the same App; the Client ID
+          # is shown alongside the numeric App ID on the App settings
+          # page.
+          client-id: ${{ vars.SPLIT_APP_CLIENT_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
           owner: polysource
           repositories: ${{ matrix.package }}
