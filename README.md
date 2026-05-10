@@ -4,7 +4,7 @@
 >
 > A Symfony admin engine built on **14+ public extension points** (1 to 5 methods each). Plug in your data source, your search backend, your audit sink, your dashboard tiles, your permission backend, your filter formatter — without forking a single line. The 16 bundled packages are themselves implementations of these contracts; yours sit next to them as equal citizens.
 
-**What you get out of the box** that goes beyond the usual Doctrine-CRUD admin :
+**What you get out of the box** that goes beyond the usual Doctrine-CRUD admin:
 
 - 🔌 **6 adapters** ready: Doctrine, Messenger, Redis, S3 / Flysystem, HTTP REST, Meilisearch — each ~80-300 LOC and a model for the next one you'll write
 - 🔍 **Cmd+K cross-resource search palette** with a 3-method provider contract (Algolia / ES / your service in 30 min)
@@ -25,9 +25,21 @@
 
 ---
 
+## Install
+
+```bash
+# Polysource standalone admin — start with the bundle + the adapter you need
+composer require polysource/symfony-bundle polysource/adapter-messenger
+
+# Or just the EasyAdmin filter bridge, dropped next to your existing EA install
+composer require polysource/easyadmin-filter-bridge
+```
+
+Symfony Flex registers the bundles automatically. Full guide (manual registration, dev install from the monorepo, package picker) in [`docs/user/installation.md`](./docs/user/installation.md). Five-minute path to a working dashboard in [`docs/user/getting-started.md`](./docs/user/getting-started.md).
+
 ## Status — v0.1.0 published (2026-05-10)
 
-16 packages distributed on Packagist as `polysource/<pkg>`, mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
+16 packages distributed on Packagist as [`polysource/*`](https://packagist.org/?query=polysource%2F), mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
 
 **Multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md))**: PHP 8.1 → 8.4, Symfony 5.4 / 6.4 / 7.2 / 7.4 LTS, EasyAdmin 4.24+ / 5.0+, Doctrine ORM 2.20+ / 3.6+. CI runs the full matrix.
 
@@ -109,8 +121,9 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Cookbook — add a custom action](./docs/user/cookbook/adding-a-custom-action.md)
 - [Cookbook — permissions with roles](./docs/user/cookbook/permissions-with-roles.md)
 - [Strategy / vision](./docs/strategy/product-vision.md)
-- [Architecture decisions (ADR)](./docs/adr/) — 24 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
-- [Roadmap](./ROADMAP.md)
+- [Architecture decisions (ADR)](./docs/adr/) — 26 ADRs covering identifiers, routing, immutability, multi-version baseline (ADR-015), dual-product positioning (ADR-012), plugin architecture (ADR-018), showcase demo (ADR-025), monorepo split + Packagist mirrors (ADR-026), etc.
+- [Roadmap](./ROADMAP.md) — what's planned for v0.2 and beyond
+- [Changelog](./CHANGELOG.md) — versioned history of releases
 
 ## Bring your own everything — the contract reference
 
