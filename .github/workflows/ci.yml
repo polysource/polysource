@@ -201,7 +201,7 @@ jobs:
 
       - name: Upload Clover report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-core
           path: var/coverage-core.xml
@@ -329,7 +329,7 @@ jobs:
 
       - name: Upload diagnostic artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-failure-diagnostics
           path: |
