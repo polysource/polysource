@@ -91,23 +91,27 @@ jobs:
           coverage: none
 
       - name: Patch branch-alias for non-main PR branches
-        # Composer's path repos derive the package version from the
-        # current branch (`dev-<branch>`). The root constraint
-        # `polysource/*: 0.1.x-dev` is satisfied via the
-        # `dev-main` -> `0.1.x-dev` alias declared in each
-        # sub-package. PRs from non-main branches (dependabot, forks)
-        # therefore fail composer resolution. We patch the
-        # `extra.branch-alias` map at install time so the current
-        # branch also aliases to `0.1.x-dev`. Touches working-tree
-        # files only; never committed back.
+        # Composer's path repos derive the package version from git
+        # state. The root constraint `polysource/*: 0.1.x-dev` is
+        # satisfied by the `dev-main -> 0.1.x-dev` alias each
+        # sub-package declares. On `pull_request` events,
+        # `actions/checkout` checks out a detached HEAD on the
+        # PR's merge ref, so composer computes `dev-<commit-sha>`
+        # — which the alias map doesn't cover. We add aliases for
+        # BOTH the branch name and the current commit SHA so
+        # whichever heuristic composer picks resolves cleanly.
+        # Touches working-tree files only; never committed back.
         if: github.event_name == 'pull_request' && github.head_ref != 'main'
         shell: bash
         run: |
           BRANCH="${{ github.head_ref }}"
           SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          SHA=$(git rev-parse HEAD)
           for f in packages/*/composer.json; do
             tmp=$(mktemp)
-            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            jq --arg branch "dev-$SAFE" --arg sha "dev-$SHA" \
+              '.extra["branch-alias"][$branch] = "0.1.x-dev"
+             | .extra["branch-alias"][$sha] = "0.1.x-dev"' "$f" > "$tmp"
             mv "$tmp" "$f"
           done
 
@@ -130,23 +134,27 @@ jobs:
           coverage: none
 
       - name: Patch branch-alias for non-main PR branches
-        # Composer's path repos derive the package version from the
-        # current branch (`dev-<branch>`). The root constraint
-        # `polysource/*: 0.1.x-dev` is satisfied via the
-        # `dev-main` -> `0.1.x-dev` alias declared in each
-        # sub-package. PRs from non-main branches (dependabot, forks)
-        # therefore fail composer resolution. We patch the
-        # `extra.branch-alias` map at install time so the current
-        # branch also aliases to `0.1.x-dev`. Touches working-tree
-        # files only; never committed back.
+        # Composer's path repos derive the package version from git
+        # state. The root constraint `polysource/*: 0.1.x-dev` is
+        # satisfied by the `dev-main -> 0.1.x-dev` alias each
+        # sub-package declares. On `pull_request` events,
+        # `actions/checkout` checks out a detached HEAD on the
+        # PR's merge ref, so composer computes `dev-<commit-sha>`
+        # — which the alias map doesn't cover. We add aliases for
+        # BOTH the branch name and the current commit SHA so
+        # whichever heuristic composer picks resolves cleanly.
+        # Touches working-tree files only; never committed back.
         if: github.event_name == 'pull_request' && github.head_ref != 'main'
         shell: bash
         run: |
           BRANCH="${{ github.head_ref }}"
           SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          SHA=$(git rev-parse HEAD)
           for f in packages/*/composer.json; do
             tmp=$(mktemp)
-            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            jq --arg branch "dev-$SAFE" --arg sha "dev-$SHA" \
+              '.extra["branch-alias"][$branch] = "0.1.x-dev"
+             | .extra["branch-alias"][$sha] = "0.1.x-dev"' "$f" > "$tmp"
             mv "$tmp" "$f"
           done
 
@@ -223,23 +231,27 @@ jobs:
             "easycorp/easyadmin-bundle:${{ matrix.easyadmin }}"
 
       - name: Patch branch-alias for non-main PR branches
-        # Composer's path repos derive the package version from the
-        # current branch (`dev-<branch>`). The root constraint
-        # `polysource/*: 0.1.x-dev` is satisfied via the
-        # `dev-main` -> `0.1.x-dev` alias declared in each
-        # sub-package. PRs from non-main branches (dependabot, forks)
-        # therefore fail composer resolution. We patch the
-        # `extra.branch-alias` map at install time so the current
-        # branch also aliases to `0.1.x-dev`. Touches working-tree
-        # files only; never committed back.
+        # Composer's path repos derive the package version from git
+        # state. The root constraint `polysource/*: 0.1.x-dev` is
+        # satisfied by the `dev-main -> 0.1.x-dev` alias each
+        # sub-package declares. On `pull_request` events,
+        # `actions/checkout` checks out a detached HEAD on the
+        # PR's merge ref, so composer computes `dev-<commit-sha>`
+        # — which the alias map doesn't cover. We add aliases for
+        # BOTH the branch name and the current commit SHA so
+        # whichever heuristic composer picks resolves cleanly.
+        # Touches working-tree files only; never committed back.
         if: github.event_name == 'pull_request' && github.head_ref != 'main'
         shell: bash
         run: |
           BRANCH="${{ github.head_ref }}"
           SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          SHA=$(git rev-parse HEAD)
           for f in packages/*/composer.json; do
             tmp=$(mktemp)
-            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            jq --arg branch "dev-$SAFE" --arg sha "dev-$SHA" \
+              '.extra["branch-alias"][$branch] = "0.1.x-dev"
+             | .extra["branch-alias"][$sha] = "0.1.x-dev"' "$f" > "$tmp"
             mv "$tmp" "$f"
           done
 
@@ -262,23 +274,27 @@ jobs:
           coverage: pcov
 
       - name: Patch branch-alias for non-main PR branches
-        # Composer's path repos derive the package version from the
-        # current branch (`dev-<branch>`). The root constraint
-        # `polysource/*: 0.1.x-dev` is satisfied via the
-        # `dev-main` -> `0.1.x-dev` alias declared in each
-        # sub-package. PRs from non-main branches (dependabot, forks)
-        # therefore fail composer resolution. We patch the
-        # `extra.branch-alias` map at install time so the current
-        # branch also aliases to `0.1.x-dev`. Touches working-tree
-        # files only; never committed back.
+        # Composer's path repos derive the package version from git
+        # state. The root constraint `polysource/*: 0.1.x-dev` is
+        # satisfied by the `dev-main -> 0.1.x-dev` alias each
+        # sub-package declares. On `pull_request` events,
+        # `actions/checkout` checks out a detached HEAD on the
+        # PR's merge ref, so composer computes `dev-<commit-sha>`
+        # — which the alias map doesn't cover. We add aliases for
+        # BOTH the branch name and the current commit SHA so
+        # whichever heuristic composer picks resolves cleanly.
+        # Touches working-tree files only; never committed back.
         if: github.event_name == 'pull_request' && github.head_ref != 'main'
         shell: bash
         run: |
           BRANCH="${{ github.head_ref }}"
           SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          SHA=$(git rev-parse HEAD)
           for f in packages/*/composer.json; do
             tmp=$(mktemp)
-            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            jq --arg branch "dev-$SAFE" --arg sha "dev-$SHA" \
+              '.extra["branch-alias"][$branch] = "0.1.x-dev"
+             | .extra["branch-alias"][$sha] = "0.1.x-dev"' "$f" > "$tmp"
             mv "$tmp" "$f"
           done
 
