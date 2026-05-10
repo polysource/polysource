@@ -3,8 +3,37 @@ name: CI
 on:
   push:
     branches: [main]
+    # Skip CI when a push only touches docs / launch-drafts /
+    # markdown / screenshots — those changes don't affect runtime
+    # behaviour and the maintainer runs `make ci` locally as the
+    # last guardrail. Saves ~20 GH-Action-minutes per docs commit
+    # (we burn one full matrix run otherwise).
+    #
+    # GitHub semantics: a push is skipped only when EVERY changed
+    # path matches `paths-ignore`. Mixed code+docs commits still
+    # trigger CI.
+    paths-ignore:
+      - 'docs/**'
+      - '.launch-drafts/**'
+      - '**/*.md'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '.launch-drafts/**'
+      - '**/*.md'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 permissions:
   contents: read
