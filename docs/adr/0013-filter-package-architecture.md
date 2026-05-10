@@ -132,7 +132,7 @@ Distribution via Symfony UX manifest (`assets/package.json`) avec `name` overrid
 
 ### A. Tout pousser dans `polysource/core`
 
-Rejeté : `core` doit rester sans dépendance Symfony (cf. the project context file §Architectural constraints). Y mettre `FilterService` (qui dépend de Session) violerait la règle.
+Rejeté : `core` doit rester sans dépendance Symfony (cf. ADR-007 §Plateforme cible). Y mettre `FilterService` (qui dépend de Session) violerait la règle.
 
 ### B. Un seul `FilterTypeInterface` qui combine mapper/formatter/renderer
 

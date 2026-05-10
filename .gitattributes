@@ -29,8 +29,6 @@
 /.idea                  export-ignore
 /.vscode                export-ignore
 /.ddev                  export-ignore
-/.local                export-ignore
-/the project context file              export-ignore
 /Makefile               export-ignore
 /Dockerfile             export-ignore
 /docker-compose.yml     export-ignore

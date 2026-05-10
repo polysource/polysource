@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 /**
  * Loads Polysource services and wires the autoconfiguration tags.
  *
- * Cf. the project context file §"Symfony DI tags" for the canonical tag names.
+ * Tags follow the canonical naming convention `polysource.*`.
  */
 final class PolysourceExtension extends Extension implements PrependExtensionInterface
 {

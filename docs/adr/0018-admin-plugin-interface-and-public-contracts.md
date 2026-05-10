@@ -22,7 +22,7 @@ contrats publics il consomme avec quelles garanties de stabilité.
 
 État actuel — on a 80% de la fondation :
 
-- **DI tags** déjà conventionnés (cf. `the project context file` §"Symfony DI tags") :
+- **DI tags** déjà conventionnés :
   `polysource.data_source`, `polysource.resource`, `polysource.field_configurator`,
   `polysource.action`, `polysource.permission`.
 - **Compiler passes** qui collectent les services tagged dans des registries

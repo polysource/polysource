@@ -1,4 +1,4 @@
-# ADR-017 — Cherry-picking depuis une étude de faisabilité interne
+# ADR-017 — Cherry-picking depuis une étude exploratoire
 
 - **Date** : 2026-05-05
 - **Statut** : Accepté
@@ -7,13 +7,13 @@
 
 ## Contexte
 
-Une étude de faisabilité interne a circulé pendant la phase
-post-9.7 sous la forme d'un inventaire générique des fonctionnalités
-d'admin Symfony. **Ce n'est pas un document stratégique** — c'est un
-brainstorm exploratoire sans positionnement produit, écrit pour
-cartographier le terrain avant les décisions de Phase 10+.
+Pendant la phase post-9.7, un inventaire exploratoire des
+fonctionnalités d'admin Symfony a été produit en parallèle des
+décisions stratégiques. **Ce n'est pas un document stratégique** —
+c'est un exploratoire sans positionnement produit,
+écrit pour repérer le terrain avant les décisions de Phase 10+.
 
-L'étude propose un MVP de 14 features autour d'une thèse "the Filament for
+L'inventaire propose un MVP de 14 features autour d'une thèse "the Filament for
 Symfony" : framework d'admin plugin-first, opinionated, full-feature,
 positionné en concurrence frontale avec EasyAdmin sur le territoire Doctrine
 (audit log Doctrine, multi-tenancy Doctrine filter, field-level perms sur
@@ -30,8 +30,8 @@ qui acte le positionnement dual-produit :
 >
 > **Pas un fork d'EasyAdmin. Pas un concurrent frontal sur le cas Doctrine.**
 
-Sans ADR explicite, le risque est qu'un futur contributeur (ou un futur
-contributeur) ressorte l'étude et pousse pour des features hors-scope au nom de
+Sans ADR explicite, le risque est qu'un futur contributeur ressorte
+cet inventaire et pousse pour des features hors-scope au nom de
 "completeness" ou "feature parity avec Filament". Il faut acter dès
 maintenant ce qu'on prend, ce qu'on rejette, et pourquoi.
 
@@ -78,14 +78,14 @@ Plus modeste, mais c'est ce qu'on construit réellement et c'est défendable.
 | Feature étude | Raison du rejet |
 |---|---|
 | **Audit log + revisions sur entités Doctrine** | Territoire EA + bundles existants (`damienharper/auditor-bundle`, `simplethings/entity-audit-bundle`). Pas notre job. Note : l'audit pour ressources **non-Doctrine** est dans le scope (cf. §2b). |
-| **Multi-tenancy Doctrine filter** | Out of scope explicite (cf. the project context file §"Out of scope" + product vision). |
+| **Multi-tenancy Doctrine filter** | Out of scope explicite (cf. [product-vision.md](../strategy/product-vision.md)). |
 | **Field-level permissions sur forms Doctrine** | Frontal EA. EA a `setPermission()` (grossier mais existant) ; les bundles communautaires complètent. Note : §2a décore les **filtres** pas les **forms** — différent. |
 | **Inline list editing** | Frontal EA sur Doctrine. |
 | **Conditional fields show/hide** | Frontal EA sur Doctrine. |
 | **Multi-step wizard forms** | Frontal EA sur Doctrine. |
 | **Polymorphic relations** | Frontal EA sur Doctrine. |
 | **CSV/Excel import/export Doctrine** | EA + plugins existants. |
-| **Real-time collaborative editing** (CRDTs, OT) | v2+ explicite (the project context file). Mercure presence suffit pour v1 si jamais on y vient. |
+| **Real-time collaborative editing** (CRDTs, OT) | v2+ explicite (cf. [product-vision.md](../strategy/product-vision.md)). Mercure presence suffit pour v1 si jamais on y vient. |
 | **Visual builders** (forms, workflows, no-code) | L'étude elle-même dit "DO NOT". Confirmé. |
 | **Headless API mode / API Platform integration** | Laisser API Platform faire son boulot. P3 indéfini. |
 | **PHP attribute config** | Déjà fait via `#[AsResource]` (ADR-005). Rien à ajouter. |
@@ -128,7 +128,7 @@ Cette ADR est un **filtre stratégique**, pas une spec d'implémentation.
 
 ### Positives
 
-1. **Discipline scope verrouillée**. Un futur contributeur (ou IA) qui ressort
+1. **Discipline scope verrouillée**. Un futur contributeur qui ressort
    l'étude pour proposer audit-Doctrine ou multi-tenancy-Doctrine doit
    d'abord proposer une révision d'ADR-012 + ADR-017 — pas juste pousser un
    PR.

@@ -163,8 +163,7 @@ gigantesque.
 
 ## Plan d'implémentation (Phase 23)
 
-10 sous-phases A→J détaillées dans
-[`docs/roadmap/development-plan.md` §Phase 23](../roadmap/development-plan.md).
+10 sous-phases A→J listées ci-dessous.
 
 | Batch | Objet | Durée |
 |---|---|---|

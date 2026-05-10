@@ -6,7 +6,7 @@ Thanks for your interest in Polysource Admin. This document explains how to cont
 
 Polysource is **pre-v0.1.0** — Phases 1 → 22 shipped on `main` (16 packages: core, filter, easyadmin-filter-bridge, symfony-bundle, twig-theme, 6 adapters, audit, bulk-async, widgets, search, workflow-bridge). The public API is frozen for v0.1.0; tag and Packagist publish are in progress (Phase 10 + Phase 23 showcase QA).
 
-The strategic and architectural analysis lives in [`docs/`](./docs/README.md), and the implementation roadmap is in [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md).
+The strategic and architectural analysis lives in [`docs/`](./docs/README.md), and the public roadmap is in [`ROADMAP.md`](./ROADMAP.md).
 
 Useful contributions right now:
 

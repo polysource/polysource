@@ -49,7 +49,7 @@ Requires PHP 8.1+ (cf. [ADR-015](../../docs/adr/0015-multi-version-compatibility
 
 You can use `polysource/core` in any PHP framework — Laravel, Slim, vanilla, anywhere. The Symfony wiring lives in `polysource/symfony-bundle`. The contracts here travel.
 
-This is the line we won't cross: any PR adding a Symfony dependency to this package gets rejected on principle. See `the project context file` §architectural constraints.
+This is the line we won't cross: any PR adding a Symfony dependency to this package gets rejected on principle. See [ADR-007 — PHP / Symfony version baseline](../../docs/adr/0007-php-symfony-versions.md).
 
 ## Documentation
 

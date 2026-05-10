@@ -46,4 +46,3 @@
 - **Mémoire d'équipe** : pourquoi telle décision, pas telle autre.
 - **Onboarding** : un nouveau contributeur peut comprendre les choix sans les rejouer.
 - **Stabilité API** : toute proposition de breaking change doit citer l'ADR qu'elle remplace.
-- **Adoption outils** : les ADR sont consommées par les outils internes (le `the project context file` racine pointe explicitement les contributeurs vers le dossier ADR) pour rester cohérents avec les décisions prises.

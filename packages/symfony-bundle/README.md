@@ -26,7 +26,7 @@ polysource:
 ## Status
 
 **v0.1 — work in progress.** Public API not yet frozen. See
-[development plan](../../docs/roadmap/development-plan.md) Phase 2.
+[ROADMAP](../../ROADMAP.md) Phase 2.
 
 ## Architectural decisions
 

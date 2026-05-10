@@ -122,7 +122,7 @@ Choix :
 
 ### 3. Enum `AuditOutcome`
 
-Trois cas (cf. the project context file « enums simples, case-only ») :
+Trois cas (convention enums simples, case-only) :
 
 ```php
 enum AuditOutcome: string

@@ -27,7 +27,7 @@
 
 ## Status — pre-v0.1.0
 
-Phases 1 → 22 shipped on `main` (16 packages). The public API is **release-candidate stable** — the surface is committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the CHANGELOG, and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). Tag + Packagist publish pending the final QA pass on the showcase. License: MIT. See [`docs/roadmap/development-plan.md`](./docs/roadmap/development-plan.md) for phase status, and the [ADRs](./docs/adr/) for the choices that landed.
+Phases 1 → 22 shipped on `main` (16 packages). The public API is **release-candidate stable** — the surface is committed for v0.1.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the CHANGELOG, and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). Tag + Packagist publish pending the final QA pass on the showcase. License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors, and the [ADRs](./docs/adr/) for the choices that landed.
 
 **Multi-version baseline (cf. [ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md))**: PHP 8.1 → 8.4, Symfony 5.4 / 6.4 / 7.2 / 7.4 LTS, EasyAdmin 4.24+ / 5.0+, Doctrine ORM 2.20+ / 3.6+. CI runs the full matrix.
 
@@ -110,7 +110,7 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Cookbook — permissions with roles](./docs/user/cookbook/permissions-with-roles.md)
 - [Strategy / vision](./docs/strategy/product-vision.md)
 - [Architecture decisions (ADR)](./docs/adr/) — 24 ADRs covering identifiers, routing, immutability, multi-version baseline, dual-product positioning, plugin architecture, etc.
-- [Roadmap / development plan](./docs/roadmap/development-plan.md)
+- [Roadmap](./ROADMAP.md)
 
 ## Bring your own everything — the contract reference
 

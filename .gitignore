@@ -52,13 +52,12 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# local agent tooling — local-only, never committed.
-# `.local/` and `.local-flow/` carry the maintainer's local agent
-# configs (custom subagents, slash commands, helpers, swarm metrics).
-# They are environment-specific and not part of the project surface.
+# Local maintainer tooling — never committed. Contents are
+# environment-specific and not part of the project surface.
 /.local/
 /.local-flow/
 /.mcp.json
+/.private-docs/
 
 # Docker
 /docker-compose.override.yml

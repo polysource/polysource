@@ -132,10 +132,9 @@ Vérifier régulièrement que `core` n'est pas devenu un God Object déguisé :
 
 ### Mise à jour des documents
 
-Cette ADR entraîne les modifications suivantes :
-
-- `docs/roadmap/development-plan.md` §14 : remplacer le critère "stop-the-line" sur la taille du core par une référence à cette ADR.
-- `the project context file` racine § File size discipline : remplacer « `core` package: < 12 public classes/interfaces » par « `core` package: ≤ 40 public types, with qualitative criteria — cf. ADR-010 ».
+Cette ADR remplace le critère "stop-the-line" précédent (« `core` package: <
+12 public classes/interfaces ») par : `core` package ≤ 40 public types,
+avec des critères qualitatifs (ISP, single responsibility, no redundancy).
 
 ## Suivi
 
