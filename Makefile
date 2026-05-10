@@ -177,22 +177,6 @@ clean: ## Remove vendor/, var/, caches
 clean-all: clean demo-down ## clean + stop containers + remove docker images
 	$(DOCKER_COMPOSE) down -v --rmi local
 
-##@ Context (ADR-009)
-
-.PHONY: context-check
-context-check: ## Verify the project context file mentions the latest ADR
-	@last_adr=$$(ls docs/adr/0*.md 2>/dev/null | sort | tail -1) && \
-	if [ -z "$$last_adr" ]; then \
-		echo "No ADRs found in docs/adr/"; exit 0; \
-	fi && \
-	last_id=$$(basename "$$last_adr" .md | sed 's/-.*//') && \
-	if ! grep -q "ADR-$$last_id" the project context file; then \
-		echo "⚠️ the project context file does not mention $$last_adr"; \
-		echo "   Update the project context file to reference the latest ADR."; \
-		exit 1; \
-	fi && \
-	echo "✓ the project context file mentions latest ADR ($$last_adr)"
-
 ##@ Local (without Docker)
 
 .PHONY: local-test

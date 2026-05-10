@@ -52,10 +52,13 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Local maintainer tooling — never committed. Contents are
+# Local IDE / agent / editor tooling — never committed. Contents are
 # environment-specific and not part of the project surface.
-/.local/
-/.local-flow/
+/.claude/
+/.claude-flow/
+/.cursor/
+/.idea/
+/.vscode/
 /.mcp.json
 /.private-docs/
 

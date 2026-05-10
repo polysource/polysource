@@ -16,7 +16,7 @@
 | [ADR-006](./0006-envelope-mapper-serialization.md) | EnvelopeMapper : JSON-first + fallback | Accepté |
 | [ADR-007](./0007-php-symfony-versions.md) | Versions PHP/Symfony : 8.4/7.4 v0.1 → 8.0+/5.4+ v0.5 | Accepté |
 | [ADR-008](./0008-development-environment.md) | Docker + Makefile + DDEV optionnel | Accepté |
-| ADR-009 | _retiré_ — concernait l'outillage local-agent local du mainteneur, pas une décision d'architecture projet ; supprimé avant publication. Le numéro reste réservé pour préserver la traçabilité historique. | — |
+| ADR-009 | _retiré_ — concernait l'outillage local du mainteneur, pas une décision d'architecture projet ; supprimé avant publication. Le numéro reste réservé pour préserver la traçabilité historique. | — |
 | [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
 | [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (vivant) |
 | [ADR-012](./0012-dual-product-positioning.md) | Dual-product positioning (bridge EA + admin standalone) | Accepté |
