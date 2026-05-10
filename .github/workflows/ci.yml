@@ -79,7 +79,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run PHP-CS-Fixer (dry-run)
         run: vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction --using-cache=no
@@ -97,7 +97,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=github
@@ -169,7 +169,7 @@ jobs:
             "easycorp/easyadmin-bundle:${{ matrix.easyadmin }}"
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Run PHPUnit
         run: vendor/bin/phpunit --testdox
@@ -187,7 +187,7 @@ jobs:
           coverage: pcov
 
       - name: Install dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@v4
 
       - name: Generate Clover report (core only)
         run: |
