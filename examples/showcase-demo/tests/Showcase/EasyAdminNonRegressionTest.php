@@ -158,13 +158,20 @@ final class EasyAdminNonRegressionTest extends AbstractShowcasePantherTestCase
 
     public function testEaBatchActionsAreExposedOnTheIndex(): void
     {
-        // EA exposes batch actions through a `.batch-actions-selector`
-        // checkbox per row + a dropdown that becomes available once
-        // ≥ 1 row is selected. This test pins that the markup is
-        // emitted by EA, regardless of whether the bridge is active.
+        // EA exposes batch actions through a `.form-batch-checkbox`
+        // input per row + a dropdown that becomes available once
+        // ≥ 1 row is selected. EA only renders the checkbox column
+        // when the CRUD has at least one batch action enabled — the
+        // native Delete action counts. We probe `/admin/refund`
+        // because Product / Customer / Order intentionally disable
+        // hard-delete (FK constraints from history rows; the
+        // archive/anonymise/cancel-via-workflow flows are the
+        // real-world replacement, cf. commit a9cfabf). Refund is
+        // a leaf in the FK graph, keeps Delete, therefore keeps the
+        // batch checkbox column.
         $this->loginViaForm('admin@shop.co');
         $client = $this->browser();
-        $client->request('GET', '/admin/product');
+        $client->request('GET', '/admin/refund');
 
         $client->wait(8)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(
@@ -173,6 +180,6 @@ final class EasyAdminNonRegressionTest extends AbstractShowcasePantherTestCase
         );
 
         $batchCheckboxes = $client->findElements(WebDriverBy::cssSelector('input.form-batch-checkbox'));
-        self::assertGreaterThan(0, \count($batchCheckboxes), 'EA Products rows must expose batch-action checkboxes.');
+        self::assertGreaterThan(0, \count($batchCheckboxes), 'EA Refunds rows must expose batch-action checkboxes.');
     }
 }
