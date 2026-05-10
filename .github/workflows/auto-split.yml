@@ -6,26 +6,34 @@ name: Split monorepo to per-package repos
 # subtree of the monorepo. Packagist's GitHub webhook on each
 # mirror picks up the new tag and indexes the version.
 #
-# One-time setup before this workflow can run:
-#   1. Generate an SSH key pair: `ssh-keygen -t ed25519 -f /tmp/split -N ""`
-#   2. For EACH of the 16 split repos (polysource/core, etc.):
-#      Settings → Deploy keys → Add deploy key → paste /tmp/split.pub,
-#      tick "Allow write access".
-#   3. On polysource/polysource (this repo): Settings → Secrets and
-#      variables → Actions → New repository secret → name
-#      `SPLIT_PUSH_KEY`, value = contents of /tmp/split (private key).
-#   4. Delete /tmp/split + /tmp/split.pub locally — the secret is
-#      now stored on GitHub.
+# Authentication: a dedicated GitHub App (`polysource-split`) is
+# installed on the org with `contents: write` + `metadata: read`
+# scoped to exactly the 16 mirror repos. Each workflow run mints a
+# short-lived (≤60 min) installation token via
+# `actions/create-github-app-token`; no long-lived push credential
+# is stored in the runner. The App's private key lives only as a
+# repository secret on this monorepo and never touches a runner's
+# disk.
 #
-# Until that's configured, this workflow runs but fails on push;
-# the v0.1.0 split mirrors were bootstrapped via
-# `scripts/split-packages.sh` directly from the maintainer's
-# machine using their personal SSH credential.
+# To rotate the App private key:
+#   1. Generate a new private key on the App settings page and
+#      download the .pem.
+#   2. `gh secret set SPLIT_APP_PRIVATE_KEY --repo polysource/polysource < new.pem`
+#   3. Delete the old private key from the App settings page.
+#   4. `rm new.pem` locally.
+#
+# To add a new package mirror:
+#   1. Create the empty `polysource/<pkg>` repo (see
+#      `scripts/split-packages.sh ensure_repo`).
+#   2. Add it to the App's installation: org Settings → GitHub Apps →
+#      polysource-split → Configure → Repository access.
+#   3. Append the package name to the matrix below.
 
 on:
   push:
     branches: [main]
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -68,17 +76,17 @@ jobs:
 
       - name: Configure git identity
         run: |
-          git config user.name "polysource-bot"
-          git config user.email "noreply@polysource.dev"
+          git config user.name "polysource-split[bot]"
+          git config user.email "polysource-split[bot]@users.noreply.github.com"
 
-      - name: Set up SSH deploy key for the split mirror
-        env:
-          SSH_DEPLOY_KEY: ${{ secrets.SPLIT_PUSH_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Mint installation token from polysource-split GitHub App
+        id: app_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
+          owner: polysource
+          repositories: ${{ matrix.package }}
 
       - name: Run subtree split for packages/${{ matrix.package }}
         id: split
@@ -93,7 +101,7 @@ jobs:
 
       - name: Push split to polysource/${{ matrix.package }}
         env:
-          REMOTE: git@github.com:polysource/${{ matrix.package }}.git
+          REMOTE: https://x-access-token:${{ steps.app_token.outputs.token }}@github.com/polysource/${{ matrix.package }}.git
           SHA: ${{ steps.split.outputs.sha }}
         run: |
           # Push main first; this is force-only because the split
@@ -101,9 +109,9 @@ jobs:
           git push --force "$REMOTE" "$SHA:refs/heads/main"
 
           # If the trigger is a tag push, mirror the tag onto the
-          # split mirror at the corresponding split SHA. Annotated
-          # tags would need a re-creation; lightweight tags pushed
-          # at $SHA are enough for Packagist to pick the version up.
+          # split mirror at the corresponding split SHA. Lightweight
+          # tags pushed at $SHA are enough for Packagist to pick the
+          # version up.
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             git push --force "$REMOTE" "$SHA:${{ github.ref }}"
           fi
