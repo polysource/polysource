@@ -137,7 +137,7 @@ demo-filter-down: ## Stop the standalone filter demo container
 	@$(MAKE) -C examples/filter-standalone-demo clean
 
 .PHONY: showcase
-showcase: ## [HERO v0.1.0] Boot the ShopCo SaaS showcase on http://localhost:8084 (15 packages, 8 services — cf. ADR-025)
+showcase: ## [HERO v0.1.0] Boot the ShopCo SaaS showcase on http://localhost:8084 (16 packages, 8 services — cf. ADR-025)
 	@$(MAKE) -C examples/showcase-demo up
 
 .PHONY: showcase-down
