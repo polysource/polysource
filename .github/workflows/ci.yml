@@ -43,6 +43,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Reusable step. The monorepo's path-resolved sub-packages take
+  # their version from the current branch via Composer's
+  # `extra.branch-alias` map, which is keyed on `dev-main`. PRs
+  # opened on any other branch (typically `dependabot/...`) end up
+  # advertising themselves as `dev-<branch-name>` and the root
+  # constraint `polysource/*: 0.1.x-dev` no longer matches — every
+  # CI job then fails at composer install.
+  #
+  # The workaround: before the install step, patch each
+  # sub-package's `extra.branch-alias` to additionally map the
+  # current branch to `0.1.x-dev`. Touches working-tree files only
+  # (never committed back). No-op on `main`.
   validate:
     name: Validate composer
     runs-on: ubuntu-24.04
@@ -78,6 +90,27 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Patch branch-alias for non-main PR branches
+        # Composer's path repos derive the package version from the
+        # current branch (`dev-<branch>`). The root constraint
+        # `polysource/*: 0.1.x-dev` is satisfied via the
+        # `dev-main` -> `0.1.x-dev` alias declared in each
+        # sub-package. PRs from non-main branches (dependabot, forks)
+        # therefore fail composer resolution. We patch the
+        # `extra.branch-alias` map at install time so the current
+        # branch also aliases to `0.1.x-dev`. Touches working-tree
+        # files only; never committed back.
+        if: github.event_name == 'pull_request' && github.head_ref != 'main'
+        shell: bash
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          for f in packages/*/composer.json; do
+            tmp=$(mktemp)
+            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            mv "$tmp" "$f"
+          done
+
       - name: Install dependencies
         uses: ramsey/composer-install@v3
 
@@ -95,6 +128,27 @@ jobs:
           php-version: '8.4'
           tools: composer:v2
           coverage: none
+
+      - name: Patch branch-alias for non-main PR branches
+        # Composer's path repos derive the package version from the
+        # current branch (`dev-<branch>`). The root constraint
+        # `polysource/*: 0.1.x-dev` is satisfied via the
+        # `dev-main` -> `0.1.x-dev` alias declared in each
+        # sub-package. PRs from non-main branches (dependabot, forks)
+        # therefore fail composer resolution. We patch the
+        # `extra.branch-alias` map at install time so the current
+        # branch also aliases to `0.1.x-dev`. Touches working-tree
+        # files only; never committed back.
+        if: github.event_name == 'pull_request' && github.head_ref != 'main'
+        shell: bash
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          for f in packages/*/composer.json; do
+            tmp=$(mktemp)
+            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            mv "$tmp" "$f"
+          done
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
@@ -168,6 +222,27 @@ jobs:
           composer require --no-update --no-interaction \
             "easycorp/easyadmin-bundle:${{ matrix.easyadmin }}"
 
+      - name: Patch branch-alias for non-main PR branches
+        # Composer's path repos derive the package version from the
+        # current branch (`dev-<branch>`). The root constraint
+        # `polysource/*: 0.1.x-dev` is satisfied via the
+        # `dev-main` -> `0.1.x-dev` alias declared in each
+        # sub-package. PRs from non-main branches (dependabot, forks)
+        # therefore fail composer resolution. We patch the
+        # `extra.branch-alias` map at install time so the current
+        # branch also aliases to `0.1.x-dev`. Touches working-tree
+        # files only; never committed back.
+        if: github.event_name == 'pull_request' && github.head_ref != 'main'
+        shell: bash
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          for f in packages/*/composer.json; do
+            tmp=$(mktemp)
+            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            mv "$tmp" "$f"
+          done
+
       - name: Install dependencies
         uses: ramsey/composer-install@v3
 
@@ -185,6 +260,27 @@ jobs:
           php-version: '8.4'
           tools: composer:v2
           coverage: pcov
+
+      - name: Patch branch-alias for non-main PR branches
+        # Composer's path repos derive the package version from the
+        # current branch (`dev-<branch>`). The root constraint
+        # `polysource/*: 0.1.x-dev` is satisfied via the
+        # `dev-main` -> `0.1.x-dev` alias declared in each
+        # sub-package. PRs from non-main branches (dependabot, forks)
+        # therefore fail composer resolution. We patch the
+        # `extra.branch-alias` map at install time so the current
+        # branch also aliases to `0.1.x-dev`. Touches working-tree
+        # files only; never committed back.
+        if: github.event_name == 'pull_request' && github.head_ref != 'main'
+        shell: bash
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          SAFE="${BRANCH//[^a-zA-Z0-9_-]/-}"
+          for f in packages/*/composer.json; do
+            tmp=$(mktemp)
+            jq --arg key "dev-$SAFE" '.extra["branch-alias"][$key] = "0.1.x-dev"' "$f" > "$tmp"
+            mv "$tmp" "$f"
+          done
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3
