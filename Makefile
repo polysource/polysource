@@ -75,8 +75,12 @@ validate: ## Validate root + sub-package composer.json files (strict)
 	done
 
 .PHONY: smoke
-smoke: ## Smoke test: install polysource/symfony-bundle on a vanilla Sf 7.4 skeleton (run before every release)
+smoke: ## Smoke test (pre-publish, path repos): install polysource/symfony-bundle on a vanilla Sf 7.4 skeleton — run before every release
 	./scripts/smoke-vanilla-symfony.sh
+
+.PHONY: smoke-packagist
+smoke-packagist: ## Smoke test (post-publish, real Packagist): install polysource/symfony-bundle from Packagist on a vanilla Sf 7.4 skeleton — run after every release
+	./scripts/smoke-packagist.sh
 
 .PHONY: ci
 ci: validate cs-check phpstan test coverage ## Reproduce the 5 GitHub Actions CI jobs locally (run before every push)

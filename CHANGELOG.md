@@ -8,6 +8,37 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 _No changes yet._
 
+## [0.1.1] — 2026-05-10
+
+**Install fix — please upgrade from v0.1.0.** v0.1.0 was uninstallable
+under Composer's default `minimum-stability: stable` because the 14
+sub-packages with inter-package dependencies advertised
+`polysource/core: 0.1.x-dev` instead of `^0.1`. A vanilla
+`composer require polysource/symfony-bundle` failed to resolve because
+the dev-only constraint is incompatible with stable mode.
+
+This release retags the same code as v0.1.0 with the constraints
+fixed. The local-monorepo dev workflow is unaffected (Composer's
+`branch-alias dev-main → 0.1.x-dev` still satisfies `^0.1` under
+`minimum-stability: dev`).
+
+### Fixed
+
+- `polysource/{adapter-doctrine, adapter-flysystem, adapter-http,
+  adapter-meilisearch, adapter-messenger, adapter-redis, audit,
+  bulk-async, easyadmin-filter-bridge, filter, search,
+  symfony-bundle, widgets, workflow-bridge}` — replaced inter-package
+  constraint `0.1.x-dev` with `^0.1` so `composer require` works in
+  Composer's default stable mode.
+
+### Tooling
+
+- New `scripts/smoke-packagist.sh` (+ `make smoke-packagist` target)
+  installs `polysource/symfony-bundle` from Packagist (no path repos)
+  on a vanilla Symfony 7.4 skeleton and verifies the bundle boots.
+  This script caught the v0.1.0 install bug; it must run before every
+  release tag from now on.
+
 ## [0.1.0] — 2026-05-10
 
 First public release. 16 packages distributed on Packagist as

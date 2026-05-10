@@ -16,8 +16,8 @@
     },
     "require": {
         "php": ">=8.1",
-        "polysource/core": "0.1.x-dev",
-        "polysource/twig-theme": "0.1.x-dev",
+        "polysource/core": "^0.1",
+        "polysource/twig-theme": "^0.1",
         "symfony/config": "^6.4 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
         "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
