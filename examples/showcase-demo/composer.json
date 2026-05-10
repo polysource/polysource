@@ -35,7 +35,7 @@
         "polysource/workflow-bridge": "0.1.x-dev",
         "predis/predis": "^2.3",
         "symfony/asset": "^7.4",
-        "symfony/asset-mapper": "^7.4",
+        "symfony/asset-mapper": "^8.0",
         "symfony/console": "^7.4",
         "symfony/doctrine-messenger": "^7.4",
         "symfony/dotenv": "^7.4",
