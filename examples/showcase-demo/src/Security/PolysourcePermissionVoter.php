@@ -43,6 +43,7 @@ final class PolysourcePermissionVoter extends Voter
         'POLYSOURCE_WORKFLOW_TRANSITION' => 'ROLE_OPS',
         'POLYSOURCE_FAILED_MESSAGE_RETRY' => 'ROLE_OPS',
         'POLYSOURCE_FAILED_MESSAGE_DISMISS' => 'ROLE_OPS',
+        'POLYSOURCE_CACHE_DROP' => 'ROLE_OPS',
         // Destructive / compliance — admin only.
         'POLYSOURCE_AUDIT_EXPORT' => 'ROLE_ADMIN',
         'POLYSOURCE_FAILED_MESSAGE_PURGE' => 'ROLE_ADMIN',

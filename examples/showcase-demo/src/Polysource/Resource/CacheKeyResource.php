@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Polysource\Resource;
 
+use App\Polysource\Action\DropCacheKeyAction;
 use App\Polysource\Field\Field;
 use App\Polysource\Filter\GenericFilter;
 use Polysource\Adapter\Redis\Client\RedisHashClientInterface;
@@ -23,13 +24,16 @@ use Polysource\Bundle\Attribute\AsResource;
 #[AsResource]
 final class CacheKeyResource extends RedisHashResource
 {
-    public function __construct(RedisHashClientInterface $client)
-    {
+    public function __construct(
+        RedisHashClientInterface $client,
+        DropCacheKeyAction $dropAction,
+    ) {
         parent::__construct(
             dataSource: new RedisHashDataSource($client, 'shopco:cache:'),
             slug: 'cache-keys',
             label: 'Redis cache',
             permission: 'POLYSOURCE_CACHE_VIEW',
+            actions: [$dropAction],
         );
     }
 
