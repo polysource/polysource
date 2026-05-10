@@ -27,7 +27,11 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [**Architecture cible**](./architecture/target-architecture.md) — packages, interfaces (signatures PHP), flux d'une requête, esquisses d'adapters
 
 ### Décisions
-- [**Architecture Decision Records (ADR)**](./adr/) — 25 ADRs structurants : identifiants, routing, immutabilité, baseline multi-version (ADR-015), dual-product positioning (ADR-012), architecture plugin (ADR-018), saved views (ADR-019), audit (ADR-020), workflow-bridge (ADR-021), widgets (ADR-022), search (ADR-023), bulk async (ADR-024), showcase demo (ADR-025), etc.
+- [**Architecture Decision Records (ADR)**](./adr/) — 26 ADRs structurants : identifiants, routing, immutabilité, baseline multi-version (ADR-015), dual-product positioning (ADR-012), architecture plugin (ADR-018), saved views (ADR-019), audit (ADR-020), workflow-bridge (ADR-021), widgets (ADR-022), search (ADR-023), bulk async (ADR-024), showcase demo (ADR-025), monorepo split + Packagist mirrors (ADR-026), etc.
+
+### Release & distribution
+- [**Monorepo split + Packagist mirrors (ADR-026)**](./adr/0026-monorepo-split-and-packagist-mirrors.md) — pourquoi 1 monorepo de dev + 16 mirrors read-only sur Packagist
+- [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
 
 ### Roadmap
 - [**Plan de développement**](./roadmap/development-plan.md) — Phases 0 à 22 livrées, Phase 10 (release v0.1.0) en cours

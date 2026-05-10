@@ -33,6 +33,7 @@
 | [ADR-023](./0023-global-search-cmdk.md) | Global search + Cmd+K (Phase 15) | Accepté |
 | [ADR-024](./0024-bulk-async-mercure.md) | Bulk async + Mercure (Phase 16) | Accepté |
 | [ADR-025](./0025-showcase-demo.md) | Showcase demo "ShopCo SaaS" + hero du launch v0.1.0 (Phase 23) | Accepté |
+| [ADR-026](./0026-monorepo-split-and-packagist-mirrors.md) | Monorepo unique + 16 mirrors Packagist via subtree split + GitHub App | Accepté |
 
 ## Convention
 
