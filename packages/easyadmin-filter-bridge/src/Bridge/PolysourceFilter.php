@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDataDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FilterDto;
 use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
+use Symfony\Contracts\Translation\TranslatableInterface;
 
 /**
  * Fluent decorator over an EA `FilterInterface` exposing the
@@ -116,6 +117,81 @@ final class PolysourceFilter implements FilterInterface
     public function meta(string $key, mixed $value): self
     {
         $this->filter->getAsDto()->setCustomOption($key, $value);
+
+        return $this;
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // EA FilterTrait fluent-setter proxies.
+    //
+    // EA's filter classes expose a fluent surface via `FilterTrait`
+    // (`setLabel`, `setProperty`, `setFormType`, `setFormTypeOption`,
+    // `setFormTypeOptionIfNotSet`, `setFormTypeOptions`). The
+    // documented usage of `Polysource::filter()` chains these
+    // setters DIRECTLY on the wrapper, e.g.:
+    //
+    //     ->add(Polysource::filter(InFilter::new('status'))
+    //         ->tab('Lifecycle')
+    //         ->group('Status')
+    //         ->setFormTypeOption('choices', [...]));
+    //
+    // Before these proxies existed, the chain crashed with
+    // "Attempted to call an undefined method named setFormTypeOption
+    //  of class PolysourceFilter" — a contract violation against
+    // the docs flagship example.
+    //
+    // Each proxy writes through to the wrapped filter's
+    // `FilterDto` (same surface EA's own setters target via
+    // `FilterTrait`), returning `$this` to preserve fluent chaining.
+    // ──────────────────────────────────────────────────────────────
+
+    public function setLabel(TranslatableInterface|string|bool|null $label): self
+    {
+        $this->filter->getAsDto()->setLabel($label);
+
+        return $this;
+    }
+
+    public function setProperty(string $property): self
+    {
+        $this->filter->getAsDto()->setProperty($property);
+
+        return $this;
+    }
+
+    /**
+     * @param class-string $formTypeFqcn
+     */
+    public function setFormType(string $formTypeFqcn): self
+    {
+        $this->filter->getAsDto()->setFormType($formTypeFqcn);
+
+        return $this;
+    }
+
+    public function setFormTypeOption(string $name, mixed $value): self
+    {
+        $this->filter->getAsDto()->setFormTypeOption($name, $value);
+
+        return $this;
+    }
+
+    public function setFormTypeOptionIfNotSet(string $name, mixed $value): self
+    {
+        $dto = $this->filter->getAsDto();
+        if (!\array_key_exists($name, $dto->getFormTypeOptions())) {
+            $dto->setFormTypeOption($name, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function setFormTypeOptions(array $options): self
+    {
+        $this->filter->getAsDto()->setFormTypeOptions($options);
 
         return $this;
     }
