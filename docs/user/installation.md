@@ -43,19 +43,53 @@ persistence, custom filter types, chip text formatting, page rendering,
 async dispatch, search backends) **do NOT require Stimulus** and work
 on any host.
 
-Auto-discovery via `extra.symfony.controllers` (the standard Symfony UX
-manifest mechanism) is **scheduled for v0.2** — for v0.1.x, hosts
-register the controllers manually in their Stimulus application. See
-each package's getting-started guide for the snippet.
+#### Auto-discovery — already wired
 
-If your host has no Stimulus pipeline at all (classic Webpack Encore
-with manual `.addEntry()`, plain jQuery / vanilla JS frontend), the
-listed interactive features render as inert UI elements (buttons in
-the DOM that don't react to clicks, etc.). The recommended path is
-to either (a) install `@symfony/stimulus-bundle` and register the
-controllers, or (b) opt out of the JS-driven options in each
-controller / configuration — the bridge and filter primitives degrade
-to a usable read-only / submit-by-form-button surface.
+Every Polysource package that ships Stimulus controllers declares
+them via the canonical Symfony UX manifest in `assets/package.json`
+(`symfony.controllers`), with an explicit `name` override that
+preserves the short identifier used by templates
+(`polysource--filter`, `polysource--filter-modal-layout`, etc.).
+
+- **Webpack Encore + `@symfony/stimulus-bridge`**: auto-discovery
+  works out-of-the-box once you `composer require` a Polysource
+  package — the bridge reads `assets/package.json` and registers
+  each controller under its `name`.
+- **AssetMapper + `@symfony/stimulus-bundle`**: auto-discovery works
+  too — the bundle reads the same `assets/package.json` manifest
+  (cf. `ControllersMapGenerator::loadUxControllers()`) and honors
+  the `name` field. The only manual step is adding the package to
+  your host's `assets/controllers.json`:
+
+  ```json
+  {
+      "controllers": {
+          "@polysource/filter": {
+              "polysource--filter-modal-layout": { "enabled": true },
+              "polysource--filter-chips":        { "enabled": true },
+              "polysource--filter-subpanel":     { "enabled": true }
+          },
+          "@polysource/easyadmin-filter-bridge": {
+              "polysource--filter": { "enabled": true }
+          }
+      }
+  }
+  ```
+
+  A future Symfony Flex recipe (tracked in `symfony/recipes-contrib`)
+  will populate these entries automatically on `composer require` —
+  for v0.1.x, the snippet above is one-time manual work.
+
+#### Hosts without any Stimulus pipeline
+
+If your app has no Stimulus pipeline (classic Webpack Encore with
+manual `.addEntry()`, plain jQuery / vanilla JS frontend), the
+listed interactive features render as inert UI elements (buttons
+in the DOM that don't react to clicks, etc.). The recommended path
+is to either (a) install `@hotwired/stimulus` + one of the discovery
+bundles above, or (b) opt out of the JS-driven options in each
+controller / configuration — the bridge and filter primitives
+degrade to a usable read-only / submit-by-form-button surface.
 
 ## Packages
 

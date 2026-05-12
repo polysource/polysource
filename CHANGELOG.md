@@ -4,6 +4,53 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-05-12
+
+**Documentation correction.** The v0.1.2 release notes added a
+"Known limitations" entry stating that Stimulus controller
+auto-discovery via `extra.symfony.controllers` was not shipped and
+required a future v0.2 refactor. **That claim was wrong on two
+counts** and is retracted in this release:
+
+1. `composer.json extra.symfony.controllers` is **not a Symfony UX
+   convention**. The canonical Stimulus controller manifest lives in
+   each package's `assets/package.json symfony.controllers` — which
+   Polysource has shipped from v0.1.0 onwards for all four packages
+   with controllers (`polysource/filter`,
+   `polysource/easyadmin-filter-bridge`, `polysource/bulk-async`,
+   `polysource/search`).
+2. The custom-identifier story Polysource uses
+   (`polysource--filter`, `polysource--filter-modal-layout`, etc.,
+   with a single dash between segments rather than the auto-generated
+   double-dash `vendor--package--key` form) is preserved end-to-end
+   by the `name` field on each manifest entry. `@symfony/stimulus-bundle`
+   honors this `name` (cf. `AssetMapper/ControllersMapGenerator.php`)
+   so AssetMapper hosts get the same identifiers as Webpack Encore
+   hosts.
+
+**What actually works today** (and did from v0.1.0):
+
+- **Webpack Encore + `@symfony/stimulus-bridge`**: auto-discovery
+  zero-config on `composer require`.
+- **AssetMapper + `@symfony/stimulus-bundle`**: auto-discovery via
+  one manual `assets/controllers.json` snippet per host. A Symfony
+  Flex recipe (tracked separately in `symfony/recipes-contrib`)
+  would make this fully zero-config.
+
+The v0.1.2 docs have been corrected to describe both paths
+accurately and drop the "scheduled for v0.2" claim.
+
+### Docs
+
+- Rewrote the "JavaScript / Stimulus prerequisite" section in
+  `docs/user/installation.md`,
+  `docs/user/easyadmin-filter-bridge/getting-started.md`, and
+  `docs/user/filter/getting-started.md`. Replaced the inaccurate
+  "manual registration only" instructions with the actual
+  auto-discovery story (`assets/package.json` manifest + per-host
+  `controllers.json` snippet for AssetMapper) and dropped the
+  "scheduled v0.2" reference.
+
 ## [0.1.2] — 2026-05-12
 
 **Install fix — please upgrade from v0.1.1.** Under the documented
