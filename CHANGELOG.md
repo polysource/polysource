@@ -45,6 +45,44 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   about what is and isn't proxied. Each proxy writes through to the
   wrapped filter's `FilterDto` (same surface EA's own setters target),
   returning `$this` to preserve fluent chaining.
+- `scripts/smoke-packagist-bridge.sh` + `make smoke-packagist-bridge`
+  — bridge-alone install smoke test. Mirrors `smoke-packagist.sh`
+  but exercises the `composer require polysource/easyadmin-filter-bridge`
+  path **without** `polysource/symfony-bundle`, then runs
+  `lint:twig` on the bridge's prepended templates. This is the
+  regression guard that would have caught the v0.1.1 install blocker
+  before tag (the existing `smoke-packagist.sh` masked the bug by
+  installing symfony-bundle, which registers the `saved_views_dropdown`
+  Twig function — the bridge-alone path is what users actually hit).
+  Run after every release that touches the bridge.
+
+### Docs
+
+- New "JavaScript / Stimulus prerequisite" section in
+  `docs/user/installation.md` (top-level prereq table) and in
+  `docs/user/easyadmin-filter-bridge/getting-started.md` /
+  `docs/user/filter/getting-started.md` (per-package guides).
+  Documents which features need Stimulus, which work server-side,
+  and how to register the controllers manually in v0.1.x — until
+  `extra.symfony.controllers` auto-discovery lands in v0.2.
+
+### Known limitations (v0.1.2)
+
+- **Stimulus controller auto-discovery is NOT shipped yet.** Polysource
+  packages (`polysource/filter`, `polysource/easyadmin-filter-bridge`,
+  `polysource/bulk-async`, `polysource/search`) ship Stimulus
+  controllers under `assets/controllers/` but do not declare them via
+  `extra.symfony.controllers` in their `composer.json`. The reason
+  is non-trivial: the controllers use deliberate Stimulus identifiers
+  (`polysource--filter`, `polysource--filter-modal-layout`, etc.)
+  that do not match the `<vendor>--<package>--<short-name>`
+  convention that `@symfony/stimulus-bridge` auto-discovery generates.
+  Adding the manifest naively would auto-load controllers under
+  identifiers that the bridge templates never invoke. The proper fix
+  (rename identifiers OR adopt a different auto-discovery mechanism)
+  requires an ADR and is scheduled for v0.2. Until then, hosts
+  register the controllers manually in their Stimulus app — see the
+  Stimulus prerequisite section in each package's getting-started.
 
 ## [0.1.1] — 2026-05-10
 
