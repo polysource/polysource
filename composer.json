@@ -63,7 +63,27 @@
     "repositories": [
         {
             "type": "path",
-            "url": "packages/*"
+            "url": "packages/*",
+            "options": {
+                "versions": {
+                    "polysource/adapter-doctrine": "0.1.x-dev",
+                    "polysource/adapter-flysystem": "0.1.x-dev",
+                    "polysource/adapter-http": "0.1.x-dev",
+                    "polysource/adapter-meilisearch": "0.1.x-dev",
+                    "polysource/adapter-messenger": "0.1.x-dev",
+                    "polysource/adapter-redis": "0.1.x-dev",
+                    "polysource/audit": "0.1.x-dev",
+                    "polysource/bulk-async": "0.1.x-dev",
+                    "polysource/core": "0.1.x-dev",
+                    "polysource/easyadmin-filter-bridge": "0.1.x-dev",
+                    "polysource/filter": "0.1.x-dev",
+                    "polysource/search": "0.1.x-dev",
+                    "polysource/symfony-bundle": "0.1.x-dev",
+                    "polysource/twig-theme": "0.1.x-dev",
+                    "polysource/widgets": "0.1.x-dev",
+                    "polysource/workflow-bridge": "0.1.x-dev"
+                }
+            }
         }
     ],
     "minimum-stability": "dev",
