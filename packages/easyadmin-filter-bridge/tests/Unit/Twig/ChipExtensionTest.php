@@ -186,8 +186,8 @@ final class ChipExtensionTest extends TestCase
     private function makeFormatter(): ChipValueFormatter
     {
         return new ChipValueFormatter(
-            $this->createStub(AdminContextProviderInterface::class),
-            $this->createMock(EntityManagerInterface::class),
+            self::createStub(AdminContextProviderInterface::class),
+            self::createMock(EntityManagerInterface::class),
             new Translator('en'),
         );
     }
@@ -203,6 +203,11 @@ final class ChipExtensionTest extends TestCase
             self::fail("Could not locate source of {$class}::{$method}().");
         }
 
-        return implode('', array_slice(file($file), $start - 1, $end - $start + 1));
+        $lines = file($file);
+        if (false === $lines) {
+            self::fail("Could not read source file {$file}.");
+        }
+
+        return implode('', \array_slice($lines, $start - 1, $end - $start + 1));
     }
 }
