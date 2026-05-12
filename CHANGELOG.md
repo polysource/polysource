@@ -6,7 +6,45 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_No changes yet._
+### Fixed
+
+- `polysource/easyadmin-filter-bridge` — **CRITICAL install blocker**.
+  Under the documented happy-path install (`composer require
+  polysource/easyadmin-filter-bridge`), every EasyAdmin index page
+  with filters applied crashed at render time with
+  `Twig\Error\SyntaxError: Unknown "saved_views_dropdown" function in
+  @PolysourceEasyAdminFilterBridge/crud/index.html.twig`. Two
+  load-bearing bugs combined: (1) the bridge's auto-prepended
+  `crud/index.html.twig` referenced a Twig function owned by
+  `polysource/symfony-bundle` (not a dep of the bridge), and (2) the
+  runtime gate `polysource_saved_views_available()` returned true on
+  bare installs because it checked `class_exists(SavedViewExtension)
+  && interface_exists(EntityManagerInterface)` — both true via
+  transitive deps. Even with the gate corrected, Twig resolves
+  function names at parse time independently of `{% if %}` guards, so
+  the template still failed to compile when the function was not
+  registered. Fix: register a silent stub for `saved_views_dropdown`
+  in `ChipExtension::getFunctions()` when symfony-bundle is absent,
+  and correct the runtime gate to `class_exists(PolysourceBundle)` —
+  the only honest signal that the real function is registered.
+  Adds the previously-missing `ChipExtensionTest` (this extension had
+  zero coverage before).
+
+### Added
+
+- `polysource/easyadmin-filter-bridge` — `PolysourceFilter` now
+  proxies EasyAdmin's `FilterTrait` fluent setters (`setLabel`,
+  `setProperty`, `setFormType`, `setFormTypeOption`,
+  `setFormTypeOptionIfNotSet`, `setFormTypeOptions`). The documented
+  flagship example in `whats-new.md` and `getting-started.md`
+  (`Polysource::filter($f)->tab()->group()->setFormTypeOption(...)`)
+  crashed at runtime before this change with `Attempted to call an
+  undefined method named "setFormTypeOption" of class
+  "PolysourceFilter"`. Explicit typed proxies were chosen over a
+  generic `__call` for IDE autocomplete, static analysis, and clarity
+  about what is and isn't proxied. Each proxy writes through to the
+  wrapped filter's `FilterDto` (same surface EA's own setters target),
+  returning `$this` to preserve fluent chaining.
 
 ## [0.1.1] — 2026-05-10
 
