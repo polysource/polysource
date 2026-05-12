@@ -6,7 +6,83 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-_No changes yet._
+### Fixed
+
+- `polysource/easyadmin-filter-bridge` — **CRITICAL install blocker**.
+  Under the documented happy-path install (`composer require
+  polysource/easyadmin-filter-bridge`), every EasyAdmin index page
+  with filters applied crashed at render time with
+  `Twig\Error\SyntaxError: Unknown "saved_views_dropdown" function in
+  @PolysourceEasyAdminFilterBridge/crud/index.html.twig`. Two
+  load-bearing bugs combined: (1) the bridge's auto-prepended
+  `crud/index.html.twig` referenced a Twig function owned by
+  `polysource/symfony-bundle` (not a dep of the bridge), and (2) the
+  runtime gate `polysource_saved_views_available()` returned true on
+  bare installs because it checked `class_exists(SavedViewExtension)
+  && interface_exists(EntityManagerInterface)` — both true via
+  transitive deps. Even with the gate corrected, Twig resolves
+  function names at parse time independently of `{% if %}` guards, so
+  the template still failed to compile when the function was not
+  registered. Fix: register a silent stub for `saved_views_dropdown`
+  in `ChipExtension::getFunctions()` when symfony-bundle is absent,
+  and correct the runtime gate to `class_exists(PolysourceBundle)` —
+  the only honest signal that the real function is registered.
+  Adds the previously-missing `ChipExtensionTest` (this extension had
+  zero coverage before).
+
+### Added
+
+- `polysource/easyadmin-filter-bridge` — `PolysourceFilter` now
+  proxies EasyAdmin's `FilterTrait` fluent setters (`setLabel`,
+  `setProperty`, `setFormType`, `setFormTypeOption`,
+  `setFormTypeOptionIfNotSet`, `setFormTypeOptions`). The documented
+  flagship example in `whats-new.md` and `getting-started.md`
+  (`Polysource::filter($f)->tab()->group()->setFormTypeOption(...)`)
+  crashed at runtime before this change with `Attempted to call an
+  undefined method named "setFormTypeOption" of class
+  "PolysourceFilter"`. Explicit typed proxies were chosen over a
+  generic `__call` for IDE autocomplete, static analysis, and clarity
+  about what is and isn't proxied. Each proxy writes through to the
+  wrapped filter's `FilterDto` (same surface EA's own setters target),
+  returning `$this` to preserve fluent chaining.
+- `scripts/smoke-packagist-bridge.sh` + `make smoke-packagist-bridge`
+  — bridge-alone install smoke test. Mirrors `smoke-packagist.sh`
+  but exercises the `composer require polysource/easyadmin-filter-bridge`
+  path **without** `polysource/symfony-bundle`, then runs
+  `lint:twig` on the bridge's prepended templates. This is the
+  regression guard that would have caught the v0.1.1 install blocker
+  before tag (the existing `smoke-packagist.sh` masked the bug by
+  installing symfony-bundle, which registers the `saved_views_dropdown`
+  Twig function — the bridge-alone path is what users actually hit).
+  Run after every release that touches the bridge.
+
+### Docs
+
+- New "JavaScript / Stimulus prerequisite" section in
+  `docs/user/installation.md` (top-level prereq table) and in
+  `docs/user/easyadmin-filter-bridge/getting-started.md` /
+  `docs/user/filter/getting-started.md` (per-package guides).
+  Documents which features need Stimulus, which work server-side,
+  and how to register the controllers manually in v0.1.x — until
+  `extra.symfony.controllers` auto-discovery lands in v0.2.
+
+### Known limitations (v0.1.2)
+
+- **Stimulus controller auto-discovery is NOT shipped yet.** Polysource
+  packages (`polysource/filter`, `polysource/easyadmin-filter-bridge`,
+  `polysource/bulk-async`, `polysource/search`) ship Stimulus
+  controllers under `assets/controllers/` but do not declare them via
+  `extra.symfony.controllers` in their `composer.json`. The reason
+  is non-trivial: the controllers use deliberate Stimulus identifiers
+  (`polysource--filter`, `polysource--filter-modal-layout`, etc.)
+  that do not match the `<vendor>--<package>--<short-name>`
+  convention that `@symfony/stimulus-bridge` auto-discovery generates.
+  Adding the manifest naively would auto-load controllers under
+  identifiers that the bridge templates never invoke. The proper fix
+  (rename identifiers OR adopt a different auto-discovery mechanism)
+  requires an ADR and is scheduled for v0.2. Until then, hosts
+  register the controllers manually in their Stimulus app — see the
+  Stimulus prerequisite section in each package's getting-started.
 
 ## [0.1.1] — 2026-05-10
 

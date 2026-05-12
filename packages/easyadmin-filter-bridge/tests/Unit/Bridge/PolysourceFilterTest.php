@@ -127,6 +127,132 @@ final class PolysourceFilterTest extends TestCase
         self::assertSame('name', (string) PolysourceFilter::on(TextFilter::new('name')));
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // EA FilterTrait fluent-setter proxies.
+    //
+    // The decorator must transparently expose EA's own filter
+    // configuration surface so hosts can mix bridge-specific
+    // setters (tab/group/chipFormatter) with EA-native ones
+    // (setFormTypeOption, setLabel, etc.) in a single fluent chain
+    // — the documented pattern in `whats-new.md`. Before these
+    // proxies existed, the chain crashed with
+    // "Attempted to call an undefined method named setFormTypeOption
+    //  of class PolysourceFilter".
+    // ──────────────────────────────────────────────────────────────
+
+    public function testSetFormTypeOptionProxiesToDto(): void
+    {
+        $filter = TextFilter::new('name');
+        $proxy = PolysourceFilter::on($filter);
+
+        $result = $proxy->setFormTypeOption('placeholder', 'Search…');
+
+        self::assertSame($proxy, $result);
+        self::assertSame('Search…', $filter->getAsDto()->getFormTypeOption('placeholder'));
+    }
+
+    public function testSetFormTypeOptionIfNotSetSkipsExistingKey(): void
+    {
+        $filter = TextFilter::new('name');
+        $filter->setFormTypeOption('placeholder', 'Original');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setFormTypeOptionIfNotSet('placeholder', 'Override');
+
+        self::assertSame('Original', $filter->getAsDto()->getFormTypeOption('placeholder'));
+    }
+
+    public function testSetFormTypeOptionIfNotSetWritesNewKey(): void
+    {
+        $filter = TextFilter::new('name');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setFormTypeOptionIfNotSet('placeholder', 'Default');
+
+        self::assertSame('Default', $filter->getAsDto()->getFormTypeOption('placeholder'));
+    }
+
+    public function testSetFormTypeOptionsMergesIntoExistingOptions(): void
+    {
+        // Mirrors EA's own contract: FilterDto::setFormTypeOptions
+        // delegates to KeyValueStore::setAll, which iterates and
+        // calls set() per key — a merge, not a wholesale replace.
+        // Hosts relying on this proxy keep that behaviour.
+        $filter = TextFilter::new('name');
+        $filter->setFormTypeOption('placeholder', 'Existing');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setFormTypeOptions(['help' => 'Help text', 'required' => false]);
+
+        $options = $filter->getAsDto()->getFormTypeOptions();
+        self::assertSame('Help text', $options['help']);
+        self::assertFalse($options['required']);
+        self::assertSame(
+            'Existing',
+            $options['placeholder'],
+            'setFormTypeOptions must merge with existing options, matching EA contract.'
+        );
+    }
+
+    public function testSetFormTypeOnProxyWritesDtoFormTypeWithoutCustomOption(): void
+    {
+        $filter = TextFilter::new('name');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setFormType(stdClass::class);
+
+        self::assertSame(stdClass::class, $filter->getAsDto()->getFormType());
+        // Distinguishing setFormType (plain proxy) from renderer()
+        // (also writes BridgeOptions::RENDERER): only renderer()
+        // sets the customOption.
+        self::assertNull($filter->getAsDto()->getCustomOption(BridgeOptions::RENDERER));
+    }
+
+    public function testSetLabelProxiesToDto(): void
+    {
+        $filter = TextFilter::new('name');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setLabel('Visible label');
+
+        self::assertSame('Visible label', $filter->getAsDto()->getLabel());
+    }
+
+    public function testSetPropertyProxiesToDto(): void
+    {
+        $filter = TextFilter::new('name');
+        $proxy = PolysourceFilter::on($filter);
+
+        $proxy->setProperty('renamed');
+
+        self::assertSame('renamed', $filter->getAsDto()->getProperty());
+    }
+
+    /**
+     * The flagship `whats-new.md` example — a single fluent chain
+     * mixing EA setters and bridge setters. Pre-fix, this crashed
+     * on the first EA setter encountered after `Polysource::filter()`.
+     */
+    public function testDocsFlagshipChainCompilesAndAppliesAllOptions(): void
+    {
+        $filter = TextFilter::new('status');
+
+        PolysourceFilter::on($filter)
+            ->tab('Lifecycle')
+            ->group('Status')
+            ->setFormTypeOption('choices', ['Draft' => 'draft', 'Published' => 'published'])
+            ->setLabel('Status (multi)');
+
+        $dto = $filter->getAsDto();
+        self::assertSame('Lifecycle', $dto->getCustomOption(BridgeOptions::TAB));
+        self::assertSame('Status', $dto->getCustomOption(BridgeOptions::GROUP));
+        self::assertSame(
+            ['Draft' => 'draft', 'Published' => 'published'],
+            $dto->getFormTypeOption('choices'),
+        );
+        self::assertSame('Status (multi)', $dto->getLabel());
+    }
+
     private function makeFilterData(): FilterDataDto
     {
         $dto = new FilterDto();

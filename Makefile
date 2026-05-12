@@ -82,6 +82,10 @@ smoke: ## Smoke test (pre-publish, path repos): install polysource/symfony-bundl
 smoke-packagist: ## Smoke test (post-publish, real Packagist): install polysource/symfony-bundle from Packagist on a vanilla Sf 7.4 skeleton — run after every release
 	./scripts/smoke-packagist.sh
 
+.PHONY: smoke-packagist-bridge
+smoke-packagist-bridge: ## Smoke test (post-publish, real Packagist, bridge-alone): install polysource/easyadmin-filter-bridge from Packagist — catches B2-style Twig parse errors on bridge-alone installs
+	./scripts/smoke-packagist-bridge.sh
+
 .PHONY: ci
 ci: validate cs-check phpstan test coverage ## Reproduce the 5 GitHub Actions CI jobs locally (run before every push)
 

@@ -24,6 +24,39 @@ prefix where Polysource will be mounted (default: `/admin`). Polysource
 **refuses** to fall back to a permissive default — see
 [concepts/permission.md](./concepts/permission.md).
 
+### JavaScript / Stimulus prerequisite
+
+Several Polysource packages (`polysource/filter`,
+`polysource/easyadmin-filter-bridge`, `polysource/bulk-async`,
+`polysource/search`) ship Stimulus controllers that power interactive
+UI features:
+
+| Package | Controller(s) | What needs Stimulus |
+|---|---|---|
+| `polysource/filter` | `polysource--filter-modal-layout`, `polysource--filter-chips`, `polysource--filter-subpanel` | tab / group filter layout, chip × close button, subpanel mode |
+| `polysource/easyadmin-filter-bridge` | `polysource--filter` | numeric `quick_ranges` buttons, datetime `presets` buttons, `show_clear` button |
+| `polysource/bulk-async` | `polysource--bulk-async--progress` | live progress bar for async bulk actions |
+| `polysource/search` | `polysource--search--cmdk` | command-palette overlay |
+
+Server-side features (filter rendering, chips bar markup, session
+persistence, custom filter types, chip text formatting, page rendering,
+async dispatch, search backends) **do NOT require Stimulus** and work
+on any host.
+
+Auto-discovery via `extra.symfony.controllers` (the standard Symfony UX
+manifest mechanism) is **scheduled for v0.2** — for v0.1.x, hosts
+register the controllers manually in their Stimulus application. See
+each package's getting-started guide for the snippet.
+
+If your host has no Stimulus pipeline at all (classic Webpack Encore
+with manual `.addEntry()`, plain jQuery / vanilla JS frontend), the
+listed interactive features render as inert UI elements (buttons in
+the DOM that don't react to clicks, etc.). The recommended path is
+to either (a) install `@symfony/stimulus-bundle` and register the
+controllers, or (b) opt out of the JS-driven options in each
+controller / configuration — the bridge and filter primitives degrade
+to a usable read-only / submit-by-form-button surface.
+
 ## Packages
 
 Polysource ships as a small monorepo of Composer packages. You install

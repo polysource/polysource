@@ -27,6 +27,8 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 
 ## 1. Prerequisites
 
+### PHP / Symfony / EasyAdmin stack
+
 | Component | Required |
 |---|---|
 | PHP | `>=8.1` (any 8.1+, 9.x forward-compat) |
@@ -35,6 +37,72 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 | Doctrine ORM | `^2.20 \|\| ^3.6` |
 | Twig | `^3.0` |
 | Bootstrap | 5 (the chips bar markup uses Bootstrap 5 classes) |
+
+### Stimulus (required for interactive features)
+
+The bridge ships a Stimulus controller layer that powers every
+**interactive** feature. The server-side surface (filter rendering,
+chips bar markup, session persistence, custom filter types,
+chip text formatting) works fine without it; the **interactive**
+surface does not.
+
+| Feature | Needs Stimulus? |
+|---|---|
+| Chips bar render | no (server-rendered HTML) |
+| Chip text via `chipFormatter()` | no (server-rendered) |
+| Custom filter types (`BetweenDateFilter`, `InFilter`, `NotNullFilter`, `FullTextSearchFilter`) | no |
+| Session persistence | no |
+| `placeholder` on `EntityFilter` | no (HTML attribute only) |
+| `NumericFilter` `quick_ranges` buttons | **yes — clicks dispatched by `polysource--filter#applyQuickRange`** |
+| `DateTimeFilter` `presets` buttons | **yes — `polysource--filter#applyPreset`** |
+| `DateTimeFilter` `show_clear` button | **yes — `polysource--filter#clearValues`** |
+| Chip × close buttons | **yes — `polysource--filter-chips`** |
+| Tab + group layout (multi-tab filter modal) | **yes — `polysource--filter-modal-layout`** |
+| Subpanel mode (right-anchored slide-in) | **yes — `polysource--filter-subpanel`** |
+
+If your host has Stimulus configured (via
+[`@symfony/stimulus-bundle`](https://github.com/symfony/stimulus-bundle)
++ Webpack Encore / AssetMapper, or a manual `@hotwired/stimulus`
+setup), **the controllers are NOT yet auto-discovered via
+`extra.symfony.controllers`** — that landing is scheduled for v0.2.
+Until then, register them manually in your host's Stimulus
+application:
+
+```js
+// assets/bootstrap.js (or wherever you start Stimulus)
+import { Application } from '@hotwired/stimulus';
+import PolysourceFilterController
+    from '../vendor/polysource/easyadmin-filter-bridge/assets/controllers/polysource_filter_controller.js';
+import FilterModalLayoutController
+    from '../vendor/polysource/filter/assets/controllers/filter_modal_layout_controller.js';
+import FilterChipsController
+    from '../vendor/polysource/filter/assets/controllers/filter_chips_controller.js';
+import FilterSubpanelController
+    from '../vendor/polysource/filter/assets/controllers/filter_subpanel_controller.js';
+
+const app = Application.start();
+app.register('polysource--filter', PolysourceFilterController);
+app.register('polysource--filter-modal-layout', FilterModalLayoutController);
+app.register('polysource--filter-chips', FilterChipsController);
+app.register('polysource--filter-subpanel', FilterSubpanelController);
+```
+
+If your host has **no Stimulus pipeline at all** (classic Webpack
+Encore with manual `.addEntry()` declarations, plain jQuery /
+vanilla JS frontend), interactive features render as visible-but-inert
+buttons — preset / quick-range buttons exist in the DOM but clicking
+them does nothing. The recommended path is to either (a) install
+`@symfony/stimulus-bundle` first and register the controllers as
+above, or (b) opt out of the JS-driven features in your
+`configureFilters()` (skip `presets`, `quick_ranges`, `show_clear`,
+tab/group markers; keep `chipFormatter`, custom filter types,
+chips bar — all server-side).
+
+The bridge does NOT degrade silently — it renders the data
+attributes the controllers expect, so once Stimulus is added
+later, the existing host code starts working without changes.
+
+### CI / version matrix
 
 The bridge advertises **the same constraints as `easycorp/easyadmin-bundle` 4.29**
 (`php: >=8.1`, `symfony/*: ^5.4|^6.0|^7.0|^8.0`) so any host that can install
