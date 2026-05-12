@@ -48,13 +48,38 @@ return [
 ];
 ```
 
-If your app uses `symfony/asset-mapper` and Symfony UX, the two
-Stimulus controllers are auto-registered via the bundle's
-`assets/package.json` `symfony.controllers` manifest. Check that
-`@polysource/filter` resolves to the bundle's `assets` folder in your
-`importmap.php` (Flex usually wires this). If you're not on
-asset-mapper, copy the two `.js` files from
-`packages/filter/assets/controllers/` into your build.
+The bundle ships **three** Stimulus controllers in
+`assets/controllers/`:
+`polysource--filter-modal-layout` (tab + group filter layout),
+`polysource--filter-chips` (chip × close button),
+`polysource--filter-subpanel` (right-anchored slide-in panel mode).
+
+**v0.1.x — manual registration.** Auto-discovery via the standard
+`extra.symfony.controllers` manifest is scheduled for v0.2 (cf. the
+B3a follow-up tracked in `CHANGELOG.md`). For now, register the
+controllers manually in your host's Stimulus application:
+
+```js
+// assets/bootstrap.js (or wherever you start Stimulus)
+import { Application } from '@hotwired/stimulus';
+import FilterModalLayoutController
+    from '../vendor/polysource/filter/assets/controllers/filter_modal_layout_controller.js';
+import FilterChipsController
+    from '../vendor/polysource/filter/assets/controllers/filter_chips_controller.js';
+import FilterSubpanelController
+    from '../vendor/polysource/filter/assets/controllers/filter_subpanel_controller.js';
+
+const app = Application.start();
+app.register('polysource--filter-modal-layout', FilterModalLayoutController);
+app.register('polysource--filter-chips', FilterChipsController);
+app.register('polysource--filter-subpanel', FilterSubpanelController);
+```
+
+**Without Stimulus** the bundle still renders filters server-side
+(SQL `WHERE`, chips bar markup, session persistence) — only the
+client-side widgets (tab layout, chip × button, subpanel mode) go
+inert. See [installation.md](../installation.md) for the full
+Stimulus prerequisite matrix.
 
 ## 2. Declare a filter collection
 
