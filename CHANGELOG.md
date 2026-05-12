@@ -4,7 +4,26 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] — 2026-05-12
+
+**Install fix — please upgrade from v0.1.1.** Under the documented
+happy-path install (`composer require polysource/easyadmin-filter-bridge`
+alone, without `polysource/symfony-bundle`), every EasyAdmin index
+page where any filter was applied crashed at render time with
+`Twig\Error\SyntaxError: Unknown "saved_views_dropdown" function in
+@PolysourceEasyAdminFilterBridge/crud/index.html.twig`. The bug
+affected ALL EA indexes in the host app, not only controllers
+using bridge features — the bridge prepends its `crud/index.html.twig`
+globally into the `@EasyAdmin` namespace.
+
+This release fixes the install blocker, restores the documented
+`Polysource::filter()` flagship fluent chain, hardens the
+`feature-branch → CI` install path (broken in v0.1.1 by the
+path-repo + branch-alias coupling), and adds a bridge-alone smoke
+test that would have caught this class of bug before v0.1.1 tag.
+
+Hosts that pinned `polysource/easyadmin-filter-bridge: ^0.1.1`
+should upgrade. Hosts on `^0.1` automatically pick this up.
 
 ### Fixed
 
