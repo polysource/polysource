@@ -54,26 +54,35 @@ The bundle ships **three** Stimulus controllers in
 `polysource--filter-chips` (chip × close button),
 `polysource--filter-subpanel` (right-anchored slide-in panel mode).
 
-**v0.1.x — manual registration.** Auto-discovery via the standard
-`extra.symfony.controllers` manifest is scheduled for v0.2 (cf. the
-B3a follow-up tracked in `CHANGELOG.md`). For now, register the
-controllers manually in your host's Stimulus application:
+**Auto-discovery is already wired.** The bundle declares the three
+controllers in `assets/package.json symfony.controllers` with
+explicit `name` fields preserving the short identifiers above:
 
-```js
-// assets/bootstrap.js (or wherever you start Stimulus)
-import { Application } from '@hotwired/stimulus';
-import FilterModalLayoutController
-    from '../vendor/polysource/filter/assets/controllers/filter_modal_layout_controller.js';
-import FilterChipsController
-    from '../vendor/polysource/filter/assets/controllers/filter_chips_controller.js';
-import FilterSubpanelController
-    from '../vendor/polysource/filter/assets/controllers/filter_subpanel_controller.js';
+- **Webpack Encore + `@symfony/stimulus-bridge`**: zero-config —
+  `composer require polysource/filter` is enough; the bridge reads
+  `assets/package.json` and auto-registers each controller under
+  its `name`.
+- **AssetMapper + `@symfony/stimulus-bundle`**: add the package to
+  your host's `assets/controllers.json` (one-time until a Flex
+  recipe lands in `symfony/recipes-contrib`):
 
-const app = Application.start();
-app.register('polysource--filter-modal-layout', FilterModalLayoutController);
-app.register('polysource--filter-chips', FilterChipsController);
-app.register('polysource--filter-subpanel', FilterSubpanelController);
-```
+  ```json
+  {
+      "controllers": {
+          "@polysource/filter": {
+              "polysource--filter-modal-layout": { "enabled": true },
+              "polysource--filter-chips":        { "enabled": true },
+              "polysource--filter-subpanel":     { "enabled": true }
+          }
+      }
+  }
+  ```
+
+`@symfony/stimulus-bundle`'s `ControllersMapGenerator` reads
+`symfony.controllers.<key>.name` from the package's
+`assets/package.json` and uses that as the Stimulus identifier —
+so the templates' short `data-controller="polysource--filter-…"`
+just works without any manual identifier override on your side.
 
 **Without Stimulus** the bundle still renders filters server-side
 (SQL `WHERE`, chips bar markup, session persistence) — only the

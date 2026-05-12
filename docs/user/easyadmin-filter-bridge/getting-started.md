@@ -60,43 +60,43 @@ surface does not.
 | Tab + group layout (multi-tab filter modal) | **yes — `polysource--filter-modal-layout`** |
 | Subpanel mode (right-anchored slide-in) | **yes — `polysource--filter-subpanel`** |
 
-If your host has Stimulus configured (via
-[`@symfony/stimulus-bundle`](https://github.com/symfony/stimulus-bundle)
-+ Webpack Encore / AssetMapper, or a manual `@hotwired/stimulus`
-setup), **the controllers are NOT yet auto-discovered via
-`extra.symfony.controllers`** — that landing is scheduled for v0.2.
-Until then, register them manually in your host's Stimulus
-application:
+**Auto-discovery is already wired** — the bridge declares its
+controller in `assets/package.json symfony.controllers` with an
+explicit `name` override that preserves the short identifier
+(`polysource--filter`). Both Symfony UX discovery bundles honor
+this manifest:
 
-```js
-// assets/bootstrap.js (or wherever you start Stimulus)
-import { Application } from '@hotwired/stimulus';
-import PolysourceFilterController
-    from '../vendor/polysource/easyadmin-filter-bridge/assets/controllers/polysource_filter_controller.js';
-import FilterModalLayoutController
-    from '../vendor/polysource/filter/assets/controllers/filter_modal_layout_controller.js';
-import FilterChipsController
-    from '../vendor/polysource/filter/assets/controllers/filter_chips_controller.js';
-import FilterSubpanelController
-    from '../vendor/polysource/filter/assets/controllers/filter_subpanel_controller.js';
+- **Webpack Encore + `@symfony/stimulus-bridge`**: zero-config.
+  `composer require polysource/easyadmin-filter-bridge` is enough.
+- **AssetMapper + `@symfony/stimulus-bundle`**: add the package to
+  your host's `assets/controllers.json` (one-time, until a Flex
+  recipe lands in `symfony/recipes-contrib`):
 
-const app = Application.start();
-app.register('polysource--filter', PolysourceFilterController);
-app.register('polysource--filter-modal-layout', FilterModalLayoutController);
-app.register('polysource--filter-chips', FilterChipsController);
-app.register('polysource--filter-subpanel', FilterSubpanelController);
-```
+  ```json
+  {
+      "controllers": {
+          "@polysource/easyadmin-filter-bridge": {
+              "polysource--filter": { "enabled": true }
+          },
+          "@polysource/filter": {
+              "polysource--filter-modal-layout": { "enabled": true },
+              "polysource--filter-chips":        { "enabled": true },
+              "polysource--filter-subpanel":     { "enabled": true }
+          }
+      }
+  }
+  ```
 
 If your host has **no Stimulus pipeline at all** (classic Webpack
 Encore with manual `.addEntry()` declarations, plain jQuery /
 vanilla JS frontend), interactive features render as visible-but-inert
 buttons — preset / quick-range buttons exist in the DOM but clicking
 them does nothing. The recommended path is to either (a) install
-`@symfony/stimulus-bundle` first and register the controllers as
-above, or (b) opt out of the JS-driven features in your
-`configureFilters()` (skip `presets`, `quick_ranges`, `show_clear`,
-tab/group markers; keep `chipFormatter`, custom filter types,
-chips bar — all server-side).
+`@symfony/stimulus-bundle` or `@symfony/stimulus-bridge`, or
+(b) opt out of the JS-driven features in your `configureFilters()`
+(skip `presets`, `quick_ranges`, `show_clear`, tab/group markers;
+keep `chipFormatter`, custom filter types, chips bar — all
+server-side).
 
 The bridge does NOT degrade silently — it renders the data
 attributes the controllers expect, so once Stimulus is added
