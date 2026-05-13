@@ -34,9 +34,6 @@ return [
         'version' => '5.3.3',
         'type' => 'css',
     ],
-    '@polysource/filter/controllers/filter_modal_layout_controller.js' => [
-        'path' => '@polysource/filter/controllers/filter_modal_layout_controller.js',
-    ],
     '@polysource/search/controllers/cmdk_controller.js' => [
         'path' => '@polysource/search/controllers/cmdk_controller.js',
     ],

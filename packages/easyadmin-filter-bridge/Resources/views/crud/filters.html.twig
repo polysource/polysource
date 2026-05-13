@@ -1,0 +1,212 @@
+{# polysource/easyadmin-filter-bridge — override of
+   `@EasyAdmin/crud/filters.html.twig`.
+
+   EA's filter form is loaded via AJAX after the user opens the
+   `#modal-filters` Bootstrap modal. The upstream template renders
+   the form flat via `form_widget(filters_form)` — every filter as
+   a sibling `.filter-field` div emitted by the `ea_filters_widget`
+   block.
+
+   Polysource lets hosts organise filters into tabs + group
+   accordions via `Polysource::tab(...)` and `Polysource::group(...)`
+   markers (cf. `FilterMarkerProcessor` + each filter's
+   `polysource.tab` / `polysource.group` custom option). Until v0.1.x
+   the bridge translated those markers into a JSON tree consumed by
+   a Stimulus controller (`polysource--filter-modal-layout`) that
+   reshuffled the AJAX-loaded DOM client-side.
+
+   v0.2.0 — per ADR-027 (progressive enhancement: every interactive
+   feature MUST have a server-side baseline) — moves that work
+   server-side. The structured tree is built here from
+   `polysource_filter_tree(...)`, and each tab / group is rendered
+   as a native HTML `<details>` element. Tabs use the
+   `name="polysource-tab"` attribute introduced in HTML Living
+   Standard for mutually-exclusive accordion behaviour (Chrome 120 /
+   Safari 17.2 / Firefox 121 — Dec 2023+). Browsers without `name`
+   support simply allow multiple tabs to be open at once — graceful
+   degradation.
+
+   Zero JS required. The `polysource--filter-modal-layout` Stimulus
+   controller has been removed.
+
+   ── EA per-row markup contract ──
+   Each individual filter is rendered through the `polysource_filter_field`
+   macro below, which mirrors EA's upstream `ea_filters_widget`
+   per-row markup (`<div class="col-12"><div class="filter-field"
+   data-filter-property="X">…`). Preserving this exact markup is
+   load-bearing for:
+   - EA's `app.js` filter-checkbox auto-tick wiring (selector
+     `.filter-field` + `.filter-checkbox`)
+   - The bridge's chips bar (reads `data-filter-property` to compute
+     the active-filter list)
+   - The polysource E2E test suite (waits on `#modal-filters
+     .filter-field` to confirm the AJAX form landed)
+
+   We use the property name as the suffix on `id`s (`filter-content-<property>`)
+   instead of `loop.index` so the IDs stay collision-free when the
+   same form is rendered across multiple tab / group buckets.
+#}
+{# @var ea \EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext #}
+{# @var filters_form \EasyCorp\Bundle\EasyAdminBundle\Form\Type\FiltersFormType #}
+{% form_theme filters_form with ea().crud.formThemes only %}
+
+{% set polysource_tree = polysource_filter_tree(ea().crud ? ea().crud.filtersConfig : null) %}
+
+{# Applied-filter detection — the URL carries the active filter slice
+   under `?filters[propertyName]=...`. Each `filters_form` child also
+   exposes the same property name via `vars.name`. We compute the set
+   of currently-applied property names from the query slice so the
+   tab + group summaries can render a "(N)" counter without any JS. #}
+{% set polysource_applied_filters = app.request.query.all('filters')|default({})|keys %}
+
+{# Per-filter renderer macro — mirrors EA's `ea_filters_widget`
+   per-row markup so the chips bar, EA's filter-checkbox auto-tick
+   wiring, and the E2E test suite all keep working. Keyed on the
+   property name (not loop.index) so the collapse `id`s stay unique
+   even when the same form is split across multiple tab/group
+   buckets. #}
+{% macro polysource_filter_field(field, applied_filters) %}
+    {%- set property = field.vars.name -%}
+    {%- set is_applied = property in applied_filters -%}
+    {%- set has_filter_label = field.vars.label is not same as(false) and field.vars.label is not null and field.vars.label is not same as('') -%}
+    {%- set filter_label = has_filter_label ? field.vars.label : property|humanize -%}
+    <div class="col-12">
+        <div class="filter-field px-3" data-filter-property="{{ property }}">
+            <div class="filter-heading" id="filter-heading-{{ property }}">
+                <input type="checkbox" class="filter-checkbox" {% if is_applied %}checked{% endif %}>
+                <a data-bs-toggle="collapse" href="#filter-content-{{ property }}" aria-expanded="{{ is_applied ? 'true' : 'false' }}" aria-controls="filter-content-{{ property }}"
+                    {% for name, value in field.vars.label_attr|default([]) %}{{ name }}="{{ value|e('html') }}" {% endfor %}>
+                    {{ filter_label|trans(domain: ea().i18n.translationDomain) }}
+                </a>
+            </div>
+            <div id="filter-content-{{ property }}" class="filter-content collapse {% if is_applied %}show{% endif %}" aria-labelledby="filter-heading-{{ property }}">
+                <div class="form-widget">
+                    {{ form_widget(field) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% import _self as polysource_filter %}
+
+{{ form_start(filters_form, {attr: {
+    id: filters_form.vars.id,
+    'data-ea-filters-form-id': filters_form.vars.id,
+}}) }}
+    {# browsers remove the query string when submitting forms using GET;
+       that's why all query string parameters are added as hidden form fields #}
+    {% for paramName, paramValue in form_action_query_string_as_array|ea_flatten_array %}
+        <input type="hidden" name="{{ paramName }}" value="{{ paramValue }}">
+    {% endfor %}
+
+    {# 1. Top-level ungrouped — filters declared without any tab or
+         group marker render flat at the top of the form. #}
+    {% for property in polysource_tree.ungrouped %}
+        {% if filters_form.children[property] is defined %}
+            {{ polysource_filter.polysource_filter_field(filters_form.children[property], polysource_applied_filters) }}
+        {% endif %}
+    {% endfor %}
+
+    {# 2. Top-level groups — filters with a group but no tab render
+         as `<details>` accordions, open by default. #}
+    {% for group in polysource_tree.groups %}
+        {% set group_count = 0 %}
+        {% for property in group.properties %}
+            {% if property in polysource_applied_filters %}{% set group_count = group_count + 1 %}{% endif %}
+        {% endfor %}
+        <details class="polysource-filter-group" open>
+            <summary class="polysource-filter-group__summary">
+                <strong>{{ group.label }}</strong>
+                {% if group_count > 0 %}
+                    <span class="polysource-filter-group__count" aria-label="{{ group_count }} {{ group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ group_count }}</span>
+                {% endif %}
+            </summary>
+            <div class="polysource-filter-group__body">
+                {% for property in group.properties %}
+                    {% if filters_form.children[property] is defined %}
+                        {{ polysource_filter.polysource_filter_field(filters_form.children[property], polysource_applied_filters) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+
+    {# 3. Tabs — `<details name="polysource-tab">` for mutually
+         exclusive accordion behaviour. First tab is opened by
+         default; clicking another summary closes the previous one
+         (native HTML behaviour since Dec 2023). #}
+    {% for tab in polysource_tree.tabs %}
+        {% set tab_count = 0 %}
+        {% for property in tab.ungrouped %}
+            {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for group in tab.groups %}
+            {% for property in group.properties %}
+                {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
+            {% endfor %}
+        {% endfor %}
+        <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
+            <summary class="polysource-filter-tab__summary">
+                {{ tab.label }}
+                {% if tab_count > 0 %}
+                    <span class="polysource-filter-tab__count" aria-label="{{ tab_count }} {{ tab_count > 1 ? 'filters applied' : 'filter applied' }}">{{ tab_count }}</span>
+                {% endif %}
+            </summary>
+            <div class="polysource-filter-tab__pane">
+                {% for property in tab.ungrouped %}
+                    {% if filters_form.children[property] is defined %}
+                        {{ polysource_filter.polysource_filter_field(filters_form.children[property], polysource_applied_filters) }}
+                    {% endif %}
+                {% endfor %}
+                {% for group in tab.groups %}
+                    {% set inner_group_count = 0 %}
+                    {% for property in group.properties %}
+                        {% if property in polysource_applied_filters %}{% set inner_group_count = inner_group_count + 1 %}{% endif %}
+                    {% endfor %}
+                    <details class="polysource-filter-group" open>
+                        <summary class="polysource-filter-group__summary">
+                            <strong>{{ group.label }}</strong>
+                            {% if inner_group_count > 0 %}
+                                <span class="polysource-filter-group__count" aria-label="{{ inner_group_count }} {{ inner_group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ inner_group_count }}</span>
+                            {% endif %}
+                        </summary>
+                        <div class="polysource-filter-group__body">
+                            {% for property in group.properties %}
+                                {% if filters_form.children[property] is defined %}
+                                    {{ polysource_filter.polysource_filter_field(filters_form.children[property], polysource_applied_filters) }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+
+    {# 4. Fallback — any filter property declared in the form but
+         absent from the polysource tree (defensive: shouldn't happen
+         under normal `configureFilters()` flow but protects against
+         host code that bypasses the marker processor). Renders flat
+         at the bottom so the field doesn't silently disappear. #}
+    {% for child in filters_form.children %}
+        {% set property = child.vars.name %}
+        {% set placed = property in polysource_tree.ungrouped %}
+        {% if not placed %}
+            {% for group in polysource_tree.groups %}
+                {% if property in group.properties %}{% set placed = true %}{% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if not placed %}
+            {% for tab in polysource_tree.tabs %}
+                {% if property in tab.ungrouped %}{% set placed = true %}{% endif %}
+                {% for group in tab.groups %}
+                    {% if property in group.properties %}{% set placed = true %}{% endif %}
+                {% endfor %}
+            {% endfor %}
+        {% endif %}
+        {% if not placed %}
+            {{ polysource_filter.polysource_filter_field(child, polysource_applied_filters) }}
+        {% endif %}
+    {% endfor %}
+{{ form_end(filters_form) }}

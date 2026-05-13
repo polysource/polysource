@@ -21,8 +21,7 @@ use ReflectionClass;
  * 1. Our `DateTimeFilterEnhancer::supports()` returns true for a real
  *    EasyAdmin `FilterDto` whose FQCN is `DateTimeFilter::class`.
  * 2. Our `configure()` swaps the formType to `EnhancedDateTimeFilterType`
- *    and adds the `presets` + `show_clear` options without losing whatever
- *    options the upstream filter had set.
+ *    without losing whatever options the upstream filter had set.
  *
  * If this passes, the strategic pivot acted in ADR-012 is technically
  * validated — the `FilterConfiguratorInterface` extension point of

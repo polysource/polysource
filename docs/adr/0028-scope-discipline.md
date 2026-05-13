@@ -14,7 +14,6 @@ fait remonter une **dérive de scope** mesurable :
 
 | Feature ajoutée v0.1.x | Verdict après dogfooding |
 |---|---|
-| `BetweenDateFilter` | Redondant — `comparisons: ['between']` sur DateTimeFilter natif EA fait pareil |
 | `presets` sur DateTimeFilter | Boutons inertes (Stimulus-only, [ADR-027](./0027-progressive-enhancement.md)) + pickers HTML5 natifs font mieux |
 | `show_clear` sur DateTimeFilter | EA expose déjà un "Reset" — duplication |
 | `quick_ranges` sur NumericFilter | Cas d'usage rare, l'hôte peut ajouter ses propres boutons |
@@ -74,10 +73,8 @@ Les features ci-dessous sont *in-scope* et soit déjà livrées, soit
 planifiées sur la roadmap v0.2 → v0.5 :
 
 **Filtres**
-- Types custom qui fillent un gap EA : `InFilter`, `NotNullFilter`,
-  `FullTextSearchFilter`
-- `BetweenDateFilter` est *déprécié post-v0.2* — `comparisons:
-  ['between']` sur DateTimeFilter le couvre
+- Types custom qui fillent un gap EA : `BetweenDateFilter`, `InFilter`,
+  `NotNullFilter`, `FullTextSearchFilter`
 - Chips bar (chip rendering, suppression, formatage cohérent
   table↔chip via `chipFormatter`)
 - Session persistence des filtres
@@ -193,13 +190,25 @@ strictement* — pas une "couche Polysource native" :
   adjacent, il pourra basculer en *accepté* via une ADR ultérieure
   qui amende celle-ci.
 - **Aucun impact sur les contrats publics actuels.** Les retraits
-  v0.2.0 (`BetweenDateFilter`, etc.) sont breaking-changes assumés
-  pré-v1.0 ; ils seront documentés dans le CHANGELOG mais ne
-  déclenchent pas d'ADR séparée — c'est ce document qui les justifie.
+  v0.2.0 (`presets`, `show_clear`, `quick_ranges` + Stimulus
+  controllers associés) sont breaking-changes assumés pré-v1.0 ;
+  ils seront documentés dans le CHANGELOG mais ne déclenchent pas
+  d'ADR séparée — c'est ce document qui les justifie.
 
 ## Historique
 
 - 2026-05-13 — rédigée après la session de dogfooding qui a chiffré
-  la dérive scope (5 features v0.1.x à retirer) et fait remonter la
-  roadmap Tier 1 / Tier 2 / Tier 3 explicite, en référence à
+  la dérive scope et fait remonter la roadmap Tier 1 / Tier 2 / Tier 3
+  explicite, en référence à
   [`project_roadmap_v020_to_v050`](../../README.md).
+- 2026-05-13 — amendée : entrée `BetweenDateFilter` retirée de la
+  liste de simplification v0.2.0. Investigation lors de l'attaque
+  v0.2.0 a montré que la migration `comparisons: ['between']` sur
+  EA's `DateTimeFilter` (a) demande une refacto non-triviale (le
+  whitelisting d'opérateurs via `comparison_type_options` ne
+  s'inherit pas naturellement vers `DateTimeFilterType` /
+  `NumericFilterType` qui utilisent `getParent()` plutôt qu'une
+  vraie inheritance PHP), et (b) ne reproduit pas le UX clé du
+  `BetweenDateFilter` (pas de dropdown vide à "between", juste 2
+  pickers). Le custom filter `BetweenDateFilter` reste *in-scope*
+  comme gap-filler EA. ADR-028 ne prescrit plus son retrait.

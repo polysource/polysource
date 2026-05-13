@@ -1,20 +1,6 @@
 polysource:
     filter:
-        clear: 'Effacer'
         chips:
             heading: 'Filtres actifs :'
             remove: 'Retirer ce filtre'
             clear_all: 'Tout effacer'
-        presets:
-            label: 'Plages prédéfinies'
-        quick_ranges:
-            label: 'Plages rapides'
-        preset:
-            today: "Aujourd'hui"
-            yesterday: 'Hier'
-            last_7_days: '7 derniers jours'
-            last_30_days: '30 derniers jours'
-            this_month: 'Ce mois-ci'
-            last_month: 'Mois dernier'
-            this_year: 'Cette année'
-            custom: 'Personnalisé…'

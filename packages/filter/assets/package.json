@@ -1,6 +1,6 @@
 {
     "name": "@polysource/filter",
-    "description": "Stimulus controllers shipped with polysource/filter — chips bar interactions and subpanel mode.",
+    "description": "Stimulus controller shipped with polysource/filter — chips bar interactions.",
     "license": "MIT",
     "private": true,
     "symfony": {
@@ -8,20 +8,6 @@
             "polysource--filter-chips": {
                 "main": "./controllers/filter_chips_controller.js",
                 "name": "polysource--filter-chips",
-                "fetch": "eager",
-                "enabled": true,
-                "autoimport": {}
-            },
-            "polysource--filter-subpanel": {
-                "main": "./controllers/filter_subpanel_controller.js",
-                "name": "polysource--filter-subpanel",
-                "fetch": "eager",
-                "enabled": true,
-                "autoimport": {}
-            },
-            "polysource--filter-modal-layout": {
-                "main": "./controllers/filter_modal_layout_controller.js",
-                "name": "polysource--filter-modal-layout",
                 "fetch": "eager",
                 "enabled": true,
                 "autoimport": {}

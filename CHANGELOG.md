@@ -4,6 +4,149 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-05-14
+
+**Simplification + progressive enhancement.** Five bridge features
+that required Stimulus to function were either removed (because they
+duplicated an EA-native capability or fell outside the project's
+scope) or rewritten as native HTML (`<details name="...">`) that
+works without any JavaScript. The 5 dependencies on Stimulus that
+hosts had to provide before bridge UIs rendered correctly are down
+to one (chip × removal — slated for the same treatment in v0.3.0).
+
+Two ADRs were ratified before this release to ground every decision:
+[ADR-027 — Progressive enhancement](docs/adr/0027-progressive-enhancement.md)
+("every interactive feature MUST have a server-side baseline; JS is
+enhancement, never a precondition") and
+[ADR-028 — Scope discipline](docs/adr/0028-scope-discipline.md)
+("Polysource is the filter+listing+detail-page UX layer for
+EasyAdmin, not an admin platform alternative").
+
+### Breaking changes
+
+- **`polysource/easyadmin-filter-bridge`** — three FormType options
+  removed:
+  - `presets` and `show_clear` on `EnhancedDateTimeFilterType`
+  - `quick_ranges` on `EnhancedNumericFilterType`
+
+  All three drove Stimulus-rendered preset buttons. Hosts without a
+  Stimulus pipeline saw inert UI (visible-but-non-functional
+  buttons) — a hard violation of [ADR-027](docs/adr/0027-progressive-enhancement.md).
+  Native HTML5 date pickers + EA's built-in Reset cover the same
+  ergonomics. Hosts who relied on these options must drop the
+  `setFormTypeOption('presets', …)` / `('show_clear', …)` /
+  `('quick_ranges', …)` calls — Symfony's OptionsResolver will
+  throw `UndefinedOptionsException` otherwise. No silent
+  back-compatibility shim.
+
+- **`polysource/filter`** — two Stimulus controllers removed:
+  - `polysource--filter-modal-layout` (306 lines + 280-line vitest
+    suite) — used to reorganise EA's AJAX-loaded filter form into
+    tabs and group accordions client-side. The same structure is
+    now rendered server-side by the bridge's new
+    `crud/filters.html.twig` override using native
+    `<details name="polysource-tab">` (HTML Living Standard,
+    Chrome 120 / Safari 17.2 / Firefox 121 — Dec 2023+).
+  - `polysource--filter-subpanel` (111 lines + 111-line vitest
+    suite) — used to toggle a `show` class on the standalone-filter
+    subpanel + a body class + ESC handler + tab switching. The
+    standalone subpanel template is rewritten around a native
+    `<details>` element. Hosts that need ESC-to-close,
+    click-outside-to-close, or focus-trap behaviour can write a
+    small enhancement controller of their own.
+
+### Removed
+
+- `polysource/easyadmin-filter-bridge::EnhancedDateTimeFilterType`:
+  the 5 `PRESET_*` constants, `DEFAULT_PRESETS`, and the entire
+  options machinery for `presets` + `show_clear`. The class is now
+  a thin block-prefix override of EA's `DateTimeFilterType`. The
+  `DateTimeFilterEnhancer` configurator is unchanged in behaviour
+  (still swaps the form type) but no longer mentions the dropped
+  options in its docblock.
+
+- `polysource/easyadmin-filter-bridge::EnhancedNumericFilterType`:
+  the `quick_ranges` option and its array-of-ranges normalizer.
+  `step` (numeric granularity hint) is retained.
+
+- `polysource/easyadmin-filter-bridge::polysource_filter_controller.js`:
+  the three Stimulus action methods `applyPreset` (with its 7-preset
+  date arithmetic), `applyQuickRange`, and `clearValues` plus their
+  private helpers (`#computePresetRange`, `#startOfDay`,
+  `#formatDateForInput`, `#queryInputs`, `#setSelectValue`,
+  `#setInputValue`). The class survives as a value-only Stimulus
+  controller so hosts who extend it from their own JS layer still
+  get the typed `data-polysource--filter-*-value` parsing. Full
+  controller deletion is deferred to v0.2.1 (it would cascade into
+  the form theme template and the functional Twig render tests).
+
+- Translations: `polysource.filter.preset.*` (8 keys),
+  `polysource.filter.presets.label`, `polysource.filter.quick_ranges.label`,
+  `polysource.filter.clear` from
+  `PolysourceEasyAdminFilterBridge.{en,fr}.yaml`.
+  `polysource.filter.cancel` from `PolysourceFilter.{en,fr}.yaml`
+  (the subpanel no longer has a Cancel button — closing is done via
+  the `<details>` summary toggle).
+
+- `polysource/easyadmin-filter-bridge::FilterTreeExtension`: the
+  Twig function `polysource_filter_tree(...)` now returns the
+  structured array directly (was JSON-encoded for the deleted
+  client-side controller). The internal method `renderTree` was
+  renamed `buildTree` to match the new return shape.
+
+### Changed
+
+- The bridge now overrides EA's `@EasyAdmin/crud/filters.html.twig`
+  to server-render the filter form into `<details name="polysource-tab">`
+  tabs + `<details open>` group accordions based on
+  `Polysource::tab(...)` / `Polysource::group(...)` markers. The
+  modal shell template (`crud/includes/_filters_modal.html.twig`)
+  is now identical to upstream — the `data-controller` and JSON
+  tree data attribute are gone.
+
+- `index.html.twig` CSS for tabs: ~80 lines of `.nav.nav-tabs`
+  Bootstrap-styling removed, replaced by ~50 lines of
+  `details.polysource-filter-tab` styling. Same visual outcome
+  (EA-style underlined tabs); no `.nav-tabs` JS dependency.
+
+- The standalone-filter `subpanel.html.twig` is rewritten around
+  `<details>` for the slide-in container + `<details name="...">`
+  for inner tabs. Inline `<style>` block in the same template
+  drives the slide animation (`transform: translateX(100%)` →
+  `translateX(0)` triggered by the `[open]` attribute).
+  ~90 lines of Bootstrap offcanvas markup + Stimulus targets replaced
+  by ~80 lines of native semantic HTML + CSS.
+
+### Migration guide
+
+For hosts upgrading from `0.1.4` to `0.2.0`:
+
+| If you have… | Do this |
+|---|---|
+| `->setFormTypeOption('presets', [...])` on a `DateTimeFilter` | Remove the call. Native HTML5 date picker covers the UX. |
+| `->setFormTypeOption('show_clear', true)` on a `DateTimeFilter` | Remove the call. EA's Reset button is the replacement. |
+| `->setFormTypeOption('quick_ranges', [...])` on a `NumericFilter` | Remove the call. If range shortcuts are critical for that CRUD, add `<button type="submit" formaction="?filter[X]=...">` in a custom CRUD template. |
+| Code referencing `EnhancedDateTimeFilterType::PRESET_*` constants | Remove the references. Constants no longer exist. |
+| Twig templates calling `polysource_filter_tree(filtersConfig)` and expecting a JSON string | Adjust — the function returns the array now. The bridge no longer needs callers to JSON-encode the tree (the in-template iteration consumes the array directly). |
+| Custom JS extending `polysource--filter` and calling `applyPreset` / `applyQuickRange` / `clearValues` | Remove. These actions don't exist anymore. |
+| Custom JS extending `polysource--filter-modal-layout` or `polysource--filter-subpanel` | These controllers are deleted. Layout is now server-rendered — there's nothing to extend. Tab/group rearrangement happens in `crud/filters.html.twig` via Twig overrides. |
+| `polysource.filter.preset.*` / `polysource.filter.cancel` / `polysource.filter.presets.label` / `polysource.filter.quick_ranges.label` / `polysource.filter.clear` translation overrides | Remove the keys from your host translations. They're no longer looked up. |
+
+For hosts that **don't** have Stimulus installed, this release is
+strictly an improvement — tabs, groups, and the subpanel now work
+out of the box where before they rendered as inert or flat layouts.
+For hosts **with** Stimulus, the UX is the same minus three nice-
+to-haves (preset buttons, quick-range buttons, per-tab applied-filter
+count badges) and minus the slide-animation polish on the subpanel
+(native `<details>` is synchronous; no fade-in/out). All four can
+return as v0.3+ progressive-enhancement layers if real usage
+warrants them.
+
+### ADRs
+
+- [ADR-027 — Progressive enhancement](docs/adr/0027-progressive-enhancement.md): every interactive feature MUST have a server-side baseline.
+- [ADR-028 — Scope discipline](docs/adr/0028-scope-discipline.md): Polysource is the filter+listing+detail-page UX layer for EasyAdmin, not an admin platform alternative.
+
 ## [0.1.4] — 2026-05-13
 
 **Architectural fix — `saved_views_dropdown` ownership moves to

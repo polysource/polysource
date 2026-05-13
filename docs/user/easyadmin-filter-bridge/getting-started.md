@@ -54,8 +54,6 @@ surface does not.
 | Session persistence | no |
 | `placeholder` on `EntityFilter` | no (HTML attribute only) |
 | `NumericFilter` `quick_ranges` buttons | **yes — clicks dispatched by `polysource--filter#applyQuickRange`** |
-| `DateTimeFilter` `presets` buttons | **yes — `polysource--filter#applyPreset`** |
-| `DateTimeFilter` `show_clear` button | **yes — `polysource--filter#clearValues`** |
 | Chip × close buttons | **yes — `polysource--filter-chips`** |
 | Tab + group layout (multi-tab filter modal) | **yes — `polysource--filter-modal-layout`** |
 | Subpanel mode (right-anchored slide-in) | **yes — `polysource--filter-subpanel`** |
@@ -89,14 +87,16 @@ this manifest:
 
 If your host has **no Stimulus pipeline at all** (classic Webpack
 Encore with manual `.addEntry()` declarations, plain jQuery /
-vanilla JS frontend), interactive features render as visible-but-inert
-buttons — preset / quick-range buttons exist in the DOM but clicking
-them does nothing. The recommended path is to either (a) install
-`@symfony/stimulus-bundle` or `@symfony/stimulus-bridge`, or
-(b) opt out of the JS-driven features in your `configureFilters()`
-(skip `presets`, `quick_ranges`, `show_clear`, tab/group markers;
-keep `chipFormatter`, custom filter types, chips bar — all
-server-side).
+vanilla JS frontend), some interactive features render as
+visible-but-inert UI — currently the chip × close buttons and the
+tab/group filter modal layout. The recommended path is to install
+`@symfony/stimulus-bundle` or `@symfony/stimulus-bridge`. The
+server-side surface (chips bar render, session persistence, custom
+filter types, chip text formatting) works without Stimulus.
+
+Per ADR-027 v0.2.0+ progressively retrofits the remaining
+interactive features so the baseline works fully server-side — this
+section will eventually report "no Stimulus required".
 
 The bridge does NOT degrade silently — it renders the data
 attributes the controllers expect, so once Stimulus is added
@@ -165,9 +165,6 @@ your existing `setFormTypeOption('label', …)` calls keep working.
 
 | EA filter | Bridge option | What it does |
 |---|---|---|
-| `DateTimeFilter` | `presets: list<string>` | Renders preset buttons (today / yesterday / last 7 days / …). |
-| `DateTimeFilter` | `show_clear: bool` (default true) | Shows a "Clear" button. |
-| `NumericFilter` | `quick_ranges: list<{label, min?, max?}>` | One-click range presets (`< 50€`, `50–200€`, …). |
 | `NumericFilter` | `step: float` | Forwarded to `<input step>`. |
 | `ComparisonFilter` | `comparisons: list<string>` | Whitelists which comparison operators show up. |
 | `BooleanFilter` | `include_null: bool` | Adds a "Null" radio for nullable booleans. |
@@ -184,19 +181,15 @@ Usage example in a `CrudController`:
 ```php
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\NumericFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\ComparisonFilter;
 
 public function configureFilters(Filters $filters): Filters
 {
     return $filters
-        ->add(NumericFilter::new('price')
-            ->setFormTypeOption('quick_ranges', [
-                ['label' => '< 50€',     'min' => null, 'max' => 50],
-                ['label' => '50–200€',   'min' => 50,   'max' => 200],
-                ['label' => '200–400€',  'min' => 200,  'max' => 400],
-            ]))
-        ->add(DateTimeFilter::new('createdAt')
-            ->setFormTypeOption('presets', ['today', 'last_7_days', 'this_month'])
-            ->setFormTypeOption('show_clear', true));
+        ->add(NumericFilter::new('price')->setFormTypeOption('step', 0.01))
+        ->add(ComparisonFilter::new('reorderLevel')
+            ->setFormTypeOption('comparisons', ['=', '>=', '<=']))
+        ->add(DateTimeFilter::new('createdAt'));
 }
 ```
 

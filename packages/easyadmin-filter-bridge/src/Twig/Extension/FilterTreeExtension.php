@@ -11,14 +11,18 @@ use Twig\TwigFunction;
 
 /**
  * Twig extension exposing
- * `polysource_filter_tree(filterConfigDto): string` — returns a
- * JSON string the bridge's `crud/index.html.twig` injects into a
- * `data-polysource--filter-modal-layout-tree-value` attribute on
- * the `#modal-filters` element.
+ * `polysource_filter_tree(filterConfigDto): array` — returns the
+ * structured tree (ungrouped / groups / tabs) the bridge's
+ * `crud/filters.html.twig` override iterates to render server-side
+ * `<details name="polysource-tab">` tabs and `<details>` group
+ * accordions around the EA filter form fields.
  *
- * The Stimulus controller `polysource--filter-modal-layout` reads
- * this JSON and reorganises the EA-rendered filter modal into
- * tabs + group accordions matching the host's customOptions.
+ * Earlier versions (v0.1.x) returned a JSON-encoded string consumed
+ * by the `polysource--filter-modal-layout` Stimulus controller, which
+ * reorganised the AJAX-loaded form client-side. v0.2.0 moved that
+ * work server-side (cf. ADR-027 — every interactive feature MUST
+ * have a server-side baseline), so the function now returns the
+ * native array shape directly.
  */
 final class FilterTreeExtension extends AbstractExtension
 {
@@ -32,17 +36,19 @@ final class FilterTreeExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('polysource_filter_tree', $this->renderTree(...)),
+            new TwigFunction('polysource_filter_tree', $this->buildTree(...)),
         ];
     }
 
-    public function renderTree(?FilterConfigDto $config): string
+    /**
+     * @return array{
+     *     ungrouped: list<string>,
+     *     groups: list<array{label: string, properties: list<string>}>,
+     *     tabs: list<array{label: string, ungrouped: list<string>, groups: list<array{label: string, properties: list<string>}>}>
+     * }
+     */
+    public function buildTree(?FilterConfigDto $config): array
     {
-        $tree = $this->builder->build($config);
-
-        // JSON_THROW_ON_ERROR keeps surprises out of the chain — we
-        // rather error in dev than silently inject malformed JSON
-        // that'd break the Stimulus controller at runtime.
-        return json_encode($tree, \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES);
+        return $this->builder->build($config);
     }
 }

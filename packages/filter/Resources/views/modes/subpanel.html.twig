@@ -1,9 +1,19 @@
-{# Subpanel mode — chips bar above + sliding side panel with tabs.
+{# Subpanel mode — chips bar above + slide-in filter panel anchored
+   to the right edge of the viewport.
 
-   The subpanel is a fixed-position panel anchored to the right edge
-   of the viewport. Multi-group definitions become tabs (one tab per
-   FilterDefinition group). Stimulus handler:
-   `polysource--filter-subpanel#open|close|switchTab`. ESC closes.
+   Since v0.2.0 the panel uses a native HTML `<details>` element as
+   the container — its `<summary>` is the "Filters" toggle button.
+   Multi-group definitions become inner `<details name="...">`
+   accordions for mutually-exclusive expand behaviour (HTML Living
+   Standard, Chrome 120 / Safari 17.2 / Firefox 121 — Dec 2023+).
+
+   Zero JS required (cf. ADR-027). The Stimulus controller
+   `polysource--filter-subpanel` that previously orchestrated the
+   open/close + body-class + tab-switching was deleted in v0.2.0;
+   hosts that want ESC-to-close, click-outside-to-close, or
+   focus-trap behaviour can add a small enhancement controller of
+   their own — Polysource doesn't ship one because it isn't
+   needed for the baseline UX.
 
    Vars expected:
    - filter_form: FilterCollectionType FormView
@@ -16,101 +26,239 @@
 {%- set groups = filter_form.vars.polysource_filter_groups -%}
 {%- set ungrouped = groups['']|default([]) -%}
 {%- set named_groups = groups|filter((_, key) => key != '') -%}
+{%- set form_id = panel_id ~ '-form' -%}
 
-<div class="polysource-filter polysource-filter--subpanel"
-     data-controller="polysource--filter-subpanel"
-     data-polysource--filter-subpanel-panel-id-value="{{ panel_id }}">
+<style>
+    /* Subpanel — native <details>-based slide-in panel.
+       Anchored to the right edge of the viewport, only painted when
+       the wrapping <details> is open. CSS-only; zero JS. */
+    details.polysource-filter-subpanel > summary {
+        list-style: none;
+        cursor: pointer;
+    }
+    details.polysource-filter-subpanel > summary::-webkit-details-marker {
+        display: none;
+    }
+    details.polysource-filter-subpanel > summary::marker {
+        content: '';
+    }
+
+    /* The actual slide-in panel.
+       Native `<details>` collapses its non-summary children to
+       `display: none` when closed (user-agent style), which would
+       skip the transform transition entirely (display changes are
+       not animatable). We override that: the panel is ALWAYS rendered
+       (display: flex), just translated off-screen via transform when
+       closed. Visibility + pointer-events are toggled in step so the
+       offscreen panel doesn't intercept clicks or get read by screen
+       readers — but the transform CAN animate smoothly. */
+    details.polysource-filter-subpanel > .polysource-filter-subpanel__panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(560px, 100vw);
+        background: var(--bs-body-bg, #fff);
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+        display: flex; /* override UA `details:not([open]) > :not(summary) { display: none }` */
+        flex-direction: column;
+        z-index: 1050;
+        transform: translateX(100%);
+        visibility: hidden;
+        pointer-events: none;
+        /* `visibility` transition is delayed until after the transform
+           finishes so the slide-out animation actually plays before the
+           panel is hidden from a11y tree + click targets. On open, we
+           reverse — visibility flips instantly, transform animates. */
+        transition: transform 0.25s ease-out, visibility 0s linear 0.25s;
+    }
+    details.polysource-filter-subpanel[open] > .polysource-filter-subpanel__panel {
+        transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition: transform 0.25s ease-out, visibility 0s linear 0s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        details.polysource-filter-subpanel > .polysource-filter-subpanel__panel {
+            transition: visibility 0s linear 0s;
+        }
+    }
+
+    .polysource-filter-subpanel__header,
+    .polysource-filter-subpanel__footer {
+        flex: 0 0 auto;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    }
+    .polysource-filter-subpanel__footer {
+        border-bottom: 0;
+        border-top: 1px solid var(--bs-border-color, #dee2e6);
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    .polysource-filter-subpanel__body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 1rem 1.25rem;
+    }
+    .polysource-filter-subpanel__title {
+        margin: 0;
+    }
+
+    /* Inner tabs as <details name=...> exclusive accordion. */
+    details.polysource-filter-subpanel__tab {
+        margin: 0 0 0.5rem 0;
+        border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    }
+    details.polysource-filter-subpanel__tab > summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.5rem 0;
+        font-weight: 600;
+        user-select: none;
+    }
+    details.polysource-filter-subpanel__tab > summary::-webkit-details-marker {
+        display: none;
+    }
+    details.polysource-filter-subpanel__tab > summary::marker {
+        content: '';
+    }
+    details.polysource-filter-subpanel__tab > summary::before {
+        content: '';
+        display: inline-block;
+        width: 0.5em;
+        height: 0.5em;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(-45deg);
+        transition: transform 0.2s;
+        margin-right: 0.5rem;
+        opacity: 0.55;
+    }
+    details.polysource-filter-subpanel__tab[open] > summary::before {
+        transform: rotate(45deg);
+    }
+    .polysource-filter-subpanel__tab-pane {
+        padding: 0.5rem 0 0.75rem 0.5rem;
+    }
+
+    /* Mobile: panel fills the viewport. */
+    @media (max-width: 575.98px) {
+        details.polysource-filter-subpanel > .polysource-filter-subpanel__panel {
+            width: 100vw;
+        }
+    }
+</style>
+
+<div class="polysource-filter polysource-filter--subpanel">
 
     <div class="polysource-filter-toolbar d-flex flex-wrap align-items-center gap-2 mb-2">
-        <button type="button"
-                class="btn btn-secondary btn-sm polysource-filter-open"
-                data-action="polysource--filter-subpanel#open">
-            {{ 'polysource.filter.open'|trans({}, 'PolysourceFilter') }}
-        </button>
-
         {{ chips_html|raw }}
     </div>
 
-    <aside class="polysource-filter-subpanel offcanvas offcanvas-end"
-           id="{{ panel_id }}"
-           tabindex="-1"
-           aria-labelledby="{{ panel_id }}-title"
-           data-polysource--filter-subpanel-target="panel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="{{ panel_id }}-title">
-                {{ 'polysource.filter.modal.title'|trans({}, 'PolysourceFilter') }}
-            </h5>
-            <button type="button"
-                    class="btn-close"
-                    aria-label="Close"
-                    data-action="polysource--filter-subpanel#close"></button>
-        </div>
-        <div class="offcanvas-body">
-            {{ form_start(filter_form, {action: apply_url, method: 'GET', attr: {id: 'polysource-filter-subpanel-form'}}) }}
+    <details class="polysource-filter-subpanel" id="{{ panel_id }}">
+        <summary class="polysource-filter-subpanel__trigger btn btn-secondary btn-sm">
+            {{ 'polysource.filter.open'|trans({}, 'PolysourceFilter') }}
+        </summary>
 
-                {%- if named_groups|length > 0 -%}
-                    {# Multi-group → tabs. Active tab = first group. #}
-                    <ul class="nav nav-tabs polysource-filter-subpanel-tabs"
-                        role="tablist"
-                        data-polysource--filter-subpanel-target="tablist">
-                        {%- for groupName, _ in named_groups -%}
-                            {%- set tab_id = panel_id ~ '-tab-' ~ loop.index -%}
-                            <li class="nav-item" role="presentation">
-                                <button type="button"
-                                        class="nav-link {{ loop.first ? 'active' }}"
-                                        id="{{ tab_id }}"
-                                        role="tab"
-                                        aria-controls="{{ tab_id }}-panel"
-                                        aria-selected="{{ loop.first ? 'true' : 'false' }}"
-                                        data-action="polysource--filter-subpanel#switchTab"
-                                        data-polysource--filter-subpanel-target-param="{{ tab_id }}-panel">
-                                    {{ groupName|trans({}, 'PolysourceFilter') }}
-                                </button>
-                            </li>
-                        {%- endfor -%}
-                    </ul>
+        <aside class="polysource-filter-subpanel__panel"
+               role="region"
+               aria-labelledby="{{ panel_id }}-title">
+            <div class="polysource-filter-subpanel__header">
+                <h5 class="polysource-filter-subpanel__title" id="{{ panel_id }}-title">
+                    {{ 'polysource.filter.modal.title'|trans({}, 'PolysourceFilter') }}
+                </h5>
+            </div>
 
-                    <div class="tab-content polysource-filter-subpanel-tabcontent">
+            <div class="polysource-filter-subpanel__body">
+                {{ form_start(filter_form, {action: apply_url, method: 'GET', attr: {id: form_id}}) }}
+
+                    {%- if named_groups|length > 0 -%}
+                        {# Multi-group → inner `<details name>` accordions.
+                           The `name` attribute (HTML Living Standard, Dec 2023+)
+                           makes them mutually exclusive — opening one closes
+                           the previously open one, exactly like tabs. Older
+                           browsers let multiple be open at once, which is
+                           graceful degradation, not breakage. #}
                         {%- for groupName, groupDefs in named_groups -%}
                             {%- set tab_id = panel_id ~ '-tab-' ~ loop.index -%}
-                            <div class="tab-pane fade {{ loop.first ? 'show active' }} pt-3"
-                                 id="{{ tab_id }}-panel"
-                                 role="tabpanel"
-                                 aria-labelledby="{{ tab_id }}"
-                                 data-polysource--filter-subpanel-target="tabpane">
-                                {%- for def in groupDefs -%}
-                                    {{ form_row(filter_form[def.property]) }}
-                                {%- endfor -%}
-                            </div>
+                            <details name="{{ panel_id }}-tab"
+                                     class="polysource-filter-subpanel__tab"
+                                     id="{{ tab_id }}"
+                                     {{ loop.first ? 'open' : '' }}>
+                                <summary class="polysource-filter-subpanel__tab-summary">
+                                    {{ groupName|trans({}, 'PolysourceFilter') }}
+                                </summary>
+                                <div class="polysource-filter-subpanel__tab-pane">
+                                    {%- for def in groupDefs -%}
+                                        {{ form_row(filter_form[def.property]) }}
+                                    {%- endfor -%}
+                                </div>
+                            </details>
                         {%- endfor -%}
-                    </div>
 
-                    {%- if ungrouped|length > 0 -%}
-                        {# Render ungrouped definitions BELOW the tabs. #}
-                        <hr class="my-3">
+                        {%- if ungrouped|length > 0 -%}
+                            <hr class="my-3">
+                            {%- for def in ungrouped -%}
+                                {{ form_row(filter_form[def.property]) }}
+                            {%- endfor -%}
+                        {%- endif -%}
+                    {%- else -%}
+                        {# No named groups — flat layout. #}
                         {%- for def in ungrouped -%}
                             {{ form_row(filter_form[def.property]) }}
                         {%- endfor -%}
                     {%- endif -%}
-                {%- else -%}
-                    {# No named groups — flat layout, just like the
-                       integrated modal. #}
-                    {%- for def in ungrouped -%}
-                        {{ form_row(filter_form[def.property]) }}
-                    {%- endfor -%}
-                {%- endif -%}
 
-            {{ form_end(filter_form) }}
-        </div>
-        <div class="offcanvas-footer p-3 border-top d-flex gap-2 justify-content-end">
-            <button type="button"
-                    class="btn btn-secondary"
-                    data-action="polysource--filter-subpanel#close">
-                {{ 'polysource.filter.cancel'|trans({}, 'PolysourceFilter') }}
-            </button>
-            <button type="submit" form="polysource-filter-subpanel-form" class="btn btn-primary">
-                {{ 'polysource.filter.apply'|trans({}, 'PolysourceFilter') }}
-            </button>
-        </div>
-    </aside>
+                {{ form_end(filter_form) }}
+            </div>
+
+            <div class="polysource-filter-subpanel__footer">
+                <button type="submit" form="{{ form_id }}" class="btn btn-primary">
+                    {{ 'polysource.filter.apply'|trans({}, 'PolysourceFilter') }}
+                </button>
+            </div>
+        </aside>
+    </details>
 </div>
+
+{# Optional enhancement script — adds ESC-to-close + auto-focus on
+   the first form control when the subpanel opens. Pure vanilla JS,
+   ~15 lines, no framework dependency. The baseline UX (clicking the
+   summary to toggle, form submit to apply) works without this
+   script — per ADR-027, JS is enhancement.
+
+   Hosts with strict CSP that disallows inline scripts can remove
+   this block by overriding `@PolysourceFilter/modes/subpanel.html.twig`
+   in their own templates directory and reaching the same baseline UX. #}
+<script>
+    (function () {
+        const root = document.getElementById({{ panel_id|json_encode|raw }});
+        if (!root) return;
+
+        // ESC closes the panel when it's open.
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            if (!root.open) return;
+            root.open = false;
+            const trigger = root.querySelector(':scope > summary');
+            trigger?.focus?.();
+        });
+
+        // When the user opens the panel, move focus to the first
+        // interactive control inside so keyboard users can immediately
+        // start filtering. `toggle` fires on every open/close.
+        root.addEventListener('toggle', function () {
+            if (!root.open) return;
+            const target = root.querySelector(
+                '.polysource-filter-subpanel__body input:not([type="hidden"]):not([disabled]), ' +
+                '.polysource-filter-subpanel__body select:not([disabled]), ' +
+                '.polysource-filter-subpanel__body textarea:not([disabled]), ' +
+                '.polysource-filter-subpanel__body button:not([disabled])'
+            );
+            target?.focus?.();
+        });
+    })();
+</script>

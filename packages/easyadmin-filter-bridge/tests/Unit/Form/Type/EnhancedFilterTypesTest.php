@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Tests\Unit\Form\Type;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Form\Type\BetweenDateFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
@@ -82,36 +81,13 @@ final class EnhancedFilterTypesTest extends TestCase
         self::assertSame('polysource_enhanced_numeric_filter', (new EnhancedNumericFilterType())->getBlockPrefix());
     }
 
-    public function testEnhancedNumericFilterTypeStepAndQuickRangesDefaults(): void
+    public function testEnhancedNumericFilterTypeStepDefault(): void
     {
         $resolver = new OptionsResolver();
         (new EnhancedNumericFilterType())->configureOptions($resolver);
 
         $options = $resolver->resolve();
         self::assertSame(0, $options['step']);
-        self::assertSame([], $options['quick_ranges']);
-    }
-
-    public function testEnhancedNumericFilterTypeAcceptsCustomQuickRanges(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedNumericFilterType())->configureOptions($resolver);
-
-        $ranges = [
-            ['label' => '<100', 'min' => null, 'max' => 100],
-            ['label' => '100-1000', 'min' => 100, 'max' => 1000],
-        ];
-        $options = $resolver->resolve(['quick_ranges' => $ranges]);
-        self::assertSame($ranges, $options['quick_ranges']);
-    }
-
-    public function testEnhancedNumericFilterTypeRejectsQuickRangesWithoutLabel(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedNumericFilterType())->configureOptions($resolver);
-
-        $this->expectException(InvalidArgumentException::class);
-        $resolver->resolve(['quick_ranges' => [['min' => 0, 'max' => 10]]]);
     }
 
     public function testEnhancedNumericFilterTypeRejectsNegativeStep(): void
@@ -123,46 +99,20 @@ final class EnhancedFilterTypesTest extends TestCase
         $resolver->resolve(['step' => -1]);
     }
 
-    public function testEnhancedNumericFilterTypeBuildViewExposesStepAndQuickRanges(): void
+    public function testEnhancedNumericFilterTypeBuildViewExposesStep(): void
     {
         $view = new FormView();
         (new EnhancedNumericFilterType())->buildView(
             $view,
             $this->stubForm(),
-            ['step' => 0.01, 'quick_ranges' => [['label' => '<100']]],
+            ['step' => 0.01],
         );
         self::assertSame(0.01, $view->vars['step']);
-        self::assertSame([['label' => '<100']], $view->vars['quick_ranges']);
     }
 
     public function testEnhancedDateTimeFilterTypeBlockPrefix(): void
     {
         self::assertSame('polysource_enhanced_datetime_filter', (new EnhancedDateTimeFilterType())->getBlockPrefix());
-    }
-
-    public function testEnhancedDateTimeFilterTypePresetsDefault(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedDateTimeFilterType())->configureOptions($resolver);
-
-        $options = $resolver->resolve();
-        $presets = (array) $options['presets'];
-        self::assertContains('today', $presets);
-        self::assertContains('last_7_days', $presets);
-        self::assertContains('this_month', $presets);
-        self::assertTrue($options['show_clear']);
-    }
-
-    public function testEnhancedDateTimeFilterTypeBuildViewExposesPresets(): void
-    {
-        $view = new FormView();
-        (new EnhancedDateTimeFilterType())->buildView(
-            $view,
-            $this->stubForm(),
-            ['presets' => ['today'], 'show_clear' => false],
-        );
-        self::assertSame(['today'], $view->vars['presets']);
-        self::assertFalse($view->vars['show_clear']);
     }
 
     public function testEnhancedBooleanFilterTypeBlockPrefix(): void
