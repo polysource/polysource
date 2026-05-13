@@ -189,17 +189,26 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
 
         // SavedView wiring (cf. ADR-019).
         //
-        // DoctrineSavedViewStorage is the default storage — gated by
-        // `class_exists(EntityManagerInterface)`. Hosts without
-        // Doctrine wire their own SavedViewStorageInterface service
-        // manually (see docs/user/filter/saved-views.md).
+        // The feature requires BOTH:
+        //   - DoctrineBundle (storage backend — DoctrineSavedViewStorage
+        //     needs an EntityManager service; class_exists alone is
+        //     insufficient because the test deps load the Doctrine
+        //     classes without the bundle being registered).
+        //   - SecurityBundle (SavedViewService autowires
+        //     AuthorizationCheckerInterface for owner-scoped voter checks).
         //
-        // SavedViewService + SavedViewExtension + SavedViewVoter are
-        // only registered when a storage alias exists, to avoid a
-        // DI-compilation crash for hosts that haven't wired storage
-        // yet.
+        // Hosts missing either gracefully get no SavedView services —
+        // the Twig function returns an empty string, the controller
+        // route is absent, and host code that opts out cleanly.
         $hasStorage = false;
-        if (interface_exists(\Doctrine\ORM\EntityManagerInterface::class)) {
+        $hasSecurity = \is_array($bundles) && \array_key_exists('SecurityBundle', $bundles);
+        $hasDoctrineBundle = \is_array($bundles) && \array_key_exists('DoctrineBundle', $bundles);
+
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
             $container
                 ->register(\Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class)
                 ->setAutowired(true)
@@ -224,17 +233,6 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->addTag('security.voter')
             ;
 
-            // SavedViewExtension — Twig function `saved_views_dropdown()`.
-            // Requires both Twig (for the function) and the SavedView
-            // service stack (for the data).
-            if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
-                $container
-                    ->register(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
-                    ->setAutowired(true)
-                    ->addTag('twig.extension')
-                ;
-            }
-
             // ClearSavedViewListener — consumes `?clear-view=1` to wipe
             // the session-remembered last-used view + redirect to a
             // clean URL. Without it the dropdown's "Clear current
@@ -246,6 +244,32 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->setAutowired(true)
                 ->addTag('kernel.event_subscriber')
             ;
+        }
+
+        // SavedViewExtension — Twig function `saved_views_dropdown()`.
+        // Registered UNCONDITIONALLY when TwigBundle is loaded, with
+        // the SavedView service stack passed as nullable (cf. the
+        // extension's constructor docblock). When storage isn't
+        // wired the function returns an empty string — templates
+        // that call it unconditionally still parse on bridge-alone
+        // installs, which is the v0.1.4 architectural fix for the
+        // v0.1.1 install-time crash.
+        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+            $extensionDef = $container
+                ->register(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
+                ->addTag('twig.extension')
+            ;
+            if ($hasStorage) {
+                // Autowire the full deps (SavedViewService, Twig
+                // Environment, optional Router + TeamResolver).
+                $extensionDef->setAutowired(true);
+            } else {
+                // Construct with all-null deps so the function is
+                // registered but returns empty when called.
+                // setAutowired stays false so missing services
+                // don't fail DI compilation.
+                $extensionDef->setArguments([null, null, null, null]);
+            }
         }
     }
 

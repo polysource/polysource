@@ -12,6 +12,7 @@ use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryListableReceiver;
 use Polysource\Adapter\Messenger\Tests\Fixture\PlainMessage;
 use Polysource\Adapter\Messenger\Tests\Fixture\SpyMessageBus;
 use Polysource\Bundle\PolysourceBundle;
+use Polysource\Filter\PolysourceFilterBundle;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
@@ -45,6 +46,7 @@ final class TestKernel extends Kernel
         return [
             new FrameworkBundle(),
             new TwigBundle(),
+            new PolysourceFilterBundle(),
             new PolysourceBundle(),
             new PolysourceMessengerBundle(),
         ];

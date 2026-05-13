@@ -7,6 +7,7 @@ namespace Polysource\Bundle\Tests\Functional\App;
 use Polysource\Bundle\PolysourceBundle;
 use Polysource\Bundle\Tests\Fixture\AlwaysGrantPermission;
 use Polysource\Core\Permission\PermissionInterface;
+use Polysource\Filter\PolysourceFilterBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\TwigBundle\TwigBundle;
@@ -33,6 +34,7 @@ class TestKernel extends Kernel
         return [
             new FrameworkBundle(),
             new TwigBundle(),
+            new PolysourceFilterBundle(),
             new PolysourceBundle(),
         ];
     }

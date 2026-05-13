@@ -13,31 +13,31 @@ use Twig\TwigFunction;
 
 /**
  * Twig helpers consumed by the index page to render the active-filter
- * chips bar and the saved-views dropdown. Kept small on purpose:
+ * chips bar. Kept small on purpose:
  *
  * - `polysource_active_filters(context)`        → list<array{name, label, value, removeUrl}>
  * - `polysource_clear_filters_url(context)`     → string
  * - `polysource_apply_filter_url(context, ..)`  → string (form submit target)
- * - `polysource_saved_views_supported()`        → bool — true iff
- *   polysource/filter is installed and its SavedViewExtension is loaded
+ * - `polysource_saved_views_supported()`        → bool — kept for
+ *   backward compat with v0.1.x templates; always returns true since
+ *   polysource/filter is a hard require of this bundle (v0.1.4+).
  *
  * No HTML is produced here — the rendering lives in
  * `@Polysource/_filter_chips.html.twig` and `@Polysource/_filters_form.html.twig`
  * so hosts can override.
+ *
+ * Note: the `saved_views_dropdown()` Twig function is owned by
+ * `polysource/filter::SavedViewExtension` (since v0.1.4). Previously
+ * this bundle owned it with a delegation fallback when filter was
+ * absent, but that design forced bridge-alone installs through a
+ * stub-and-gate workaround. Filter is now a hard dep of this bundle
+ * and a transitive dep of `polysource/easyadmin-filter-bridge`, so
+ * the real function is always reachable from either install path.
  */
 final class PolysourceFilterExtension extends AbstractExtension
 {
-    /**
-     * @param object|null $savedViewExtension Optional polysource/filter
-     *                    SavedViewExtension instance — when present, the
-     *                    bundled `saved_views_dropdown()` Twig function
-     *                    delegates to it. Typed as `object` because the
-     *                    class lives in an optional dependency package
-     *                    that may not be installed.
-     */
     public function __construct(
         private readonly UrlGeneratorInterface $router,
-        private readonly ?object $savedViewExtension = null,
     ) {
     }
 
@@ -46,44 +46,13 @@ final class PolysourceFilterExtension extends AbstractExtension
      */
     public function getFunctions(): array
     {
-        $functions = [
+        return [
             new TwigFunction('polysource_active_filters', $this->activeFilters(...)),
             new TwigFunction('polysource_clear_filters_url', $this->clearFiltersUrl(...)),
             new TwigFunction('polysource_apply_filter_url', $this->applyFilterUrl(...)),
             new TwigFunction('polysource_remove_filter_url', $this->removeFilterUrl(...)),
             new TwigFunction('polysource_saved_views_supported', $this->savedViewsSupported(...)),
         ];
-
-        // `saved_views_dropdown` is exposed by THIS bundle (always
-        // loaded) so the bundled `index.html.twig` always parses.
-        // When polysource/filter is installed AND its
-        // `SavedViewExtension` was wired into our constructor, we
-        // delegate to it for the real dropdown HTML. Otherwise the
-        // function returns an empty string — a no-op fallback that
-        // keeps templates rendering without crashing.
-        $functions[] = new TwigFunction(
-            'saved_views_dropdown',
-            $this->renderSavedViewsDropdown(...),
-            ['is_safe' => ['html']],
-        );
-
-        return $functions;
-    }
-
-    public function renderSavedViewsDropdown(string $resourceName, string $template = ''): string
-    {
-        if (null === $this->savedViewExtension) {
-            return '';
-        }
-        if (!method_exists($this->savedViewExtension, 'renderDropdown')) {
-            return '';
-        }
-
-        $output = '' === $template
-            ? $this->savedViewExtension->renderDropdown($resourceName)
-            : $this->savedViewExtension->renderDropdown($resourceName, $template);
-
-        return \is_string($output) ? $output : '';
     }
 
     /**
@@ -136,10 +105,13 @@ final class PolysourceFilterExtension extends AbstractExtension
 
     public function savedViewsSupported(): bool
     {
-        // Probe both the package class AND the Twig extension presence.
-        // Package can be installed without the bundle being loaded —
-        // require both before claiming the feature is wired.
-        return class_exists(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class);
+        // Since v0.1.4 polysource/filter is a hard require of this
+        // bundle (saved-views is a core admin engine feature, not an
+        // optional plugin). The class is therefore always loadable
+        // when this extension is itself loaded. Kept as a function
+        // so v0.1.x templates that gate on it still parse — the
+        // gate is now trivially true.
+        return true;
     }
 
     /**
