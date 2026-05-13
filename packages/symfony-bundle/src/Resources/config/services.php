@@ -123,15 +123,6 @@ return static function (ContainerConfigurator $container): void {
         ->set(PolysourceFilterExtension::class)
         ->args([
             service(UrlGeneratorInterface::class),
-            // Optional: when polysource/filter is installed AND its
-            // SavedViewExtension is wired (which only happens when
-            // DoctrineBundle is loaded), inject it so
-            // `saved_views_dropdown(resourceName)` returns the real
-            // dropdown HTML. Otherwise the Twig function falls back
-            // to an empty string — keeps templates parsing.
-            class_exists(Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
-                ? service(Polysource\Filter\SavedView\Twig\SavedViewExtension::class)->nullOnInvalid()
-                : null,
         ])
         ->tag('twig.extension')
     ;

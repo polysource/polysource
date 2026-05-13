@@ -4,6 +4,99 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-05-13
+
+**Architectural fix — `saved_views_dropdown` ownership moves to
+where the data model lives.** The v0.1.2 install-blocker fix was a
+band-aid on a real architectural defect: the
+`saved_views_dropdown()` Twig function was owned by
+`polysource/symfony-bundle::PolysourceFilterExtension`, even though
+the SavedView entity, service, voter, and storage adapter all live
+in `polysource/filter`. Bridge-alone installs (the documented
+happy path for `polysource/easyadmin-filter-bridge` users) didn't
+pull symfony-bundle, so the function wasn't registered — hence
+v0.1.1's "Unknown saved_views_dropdown function" crash.
+
+v0.1.2 worked around the symptom by adding a stub registration in
+`polysource/easyadmin-filter-bridge::ChipExtension` (guarded by
+a runtime gate `polysource_saved_views_available()`). v0.1.4
+**relocates the function to its rightful owner**:
+
+- `polysource/filter::SavedViewExtension` now registers
+  `saved_views_dropdown` directly.
+- `polysource/symfony-bundle::PolysourceFilterExtension` no longer
+  registers `saved_views_dropdown` (and no longer needs an
+  optional `?SavedViewExtension $savedViewExtension` constructor
+  argument).
+- `polysource/symfony-bundle` adds `polysource/filter: ^0.1` as a
+  hard `require` — saved-views is a core admin-engine feature, not
+  an optional plugin.
+- `polysource/easyadmin-filter-bridge::ChipExtension` drops the
+  v0.1.2 stub for `saved_views_dropdown` and removes the
+  `polysource_saved_views_available()` gate function entirely.
+  The bridge's `crud/index.html.twig` no longer gates the call —
+  the function is always registered via the transitive
+  `polysource/filter` dep.
+
+Result: hosts using either `polysource/easyadmin-filter-bridge`
+alone OR `polysource/symfony-bundle` get a working
+`saved_views_dropdown()` out of the box. The runtime function
+returns an empty string when the host hasn't wired a
+`SavedViewStorageInterface` (no DoctrineBundle or no
+SecurityBundle present) — graceful degradation without crashes.
+
+### Fixed
+
+- `polysource/easyadmin-filter-bridge::ChipExtension` no longer
+  needs the v0.1.2 stub / gate pattern (the band-aid layer is
+  gone). Adds a regression-guard test ensuring `ChipExtension`
+  exposes only `polysource_chip_value` and never re-registers
+  `saved_views_dropdown` or `polysource_saved_views_available`.
+
+- `polysource/filter::SavedViewExtension` registers
+  `saved_views_dropdown` with graceful degradation: nullable
+  `SavedViewService` and `Twig\Environment` in the constructor,
+  the Twig function returns an empty string when either is unwired.
+
+- `polysource/filter::DependencyInjection::PolysourceFilterExtension`
+  gates SavedView storage on `DoctrineBundle` AND `SecurityBundle`
+  being loaded (not only on `EntityManagerInterface` class existing
+  — the class is loadable in test deps without the bundle, which
+  used to crash DI compilation in tests that boot a minimal
+  kernel). Registers `SavedViewExtension` unconditionally when
+  `TwigBundle` is loaded; full deps are autowired when storage is
+  wired, otherwise constructed with all-null arguments.
+
+### Changed
+
+- `polysource/symfony-bundle` requires `polysource/filter: ^0.1`.
+  Existing v0.1.3 hosts already pull `polysource/filter` transitively
+  via the bridge or via `polysource/audit`; making the dep explicit
+  reflects what the bundle actually needs.
+
+- `polysource/symfony-bundle::PolysourceFilterExtension::savedViewsSupported()`
+  now returns `true` unconditionally. Kept as a backward-compat
+  helper for v0.1.x templates that gate on it; new templates can
+  drop the gate entirely.
+
+- `polysource/twig-theme::templates/index.html.twig` drops the
+  `{% if polysource_saved_views_supported() %}` gate around the
+  `saved_views_dropdown` call. The function is now always
+  registered when the template renders.
+
+### Migration notes
+
+- Hosts on v0.1.3 with the bridge alone: upgrade is transparent —
+  the function is now real (not a stub), so saved views actually
+  render when a storage adapter is wired.
+- Hosts on v0.1.3 with `polysource/symfony-bundle`: upgrade pulls
+  `polysource/filter` explicitly. No behaviour change for hosts
+  that already had filter installed.
+- Hosts that override `polysource/twig-theme::templates/index.html.twig`
+  can drop the `polysource_saved_views_supported()` gate at their
+  convenience — the gate still works (always-true) so the template
+  parses, but it's no longer load-bearing.
+
 ## [0.1.3] — 2026-05-12
 
 **Documentation correction.** The v0.1.2 release notes added a

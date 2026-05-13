@@ -25,20 +25,49 @@ use Twig\Loader\ArrayLoader;
 final class SavedViewExtensionTest extends TestCase
 {
     #[Test]
-    public function exposesSavedViewProbeTwigFunctions(): void
+    public function exposesSavedViewTwigFunctions(): void
     {
-        // Note: `saved_views_dropdown` is owned by polysource/symfony-bundle's
-        // PolysourceFilterExtension (always loaded so templates parse without
-        // polysource/filter installed). When both bundles are wired, the
-        // bundle's function delegates to this extension's renderDropdown().
+        // Since v0.1.4 `saved_views_dropdown` is owned by THIS extension
+        // (not by polysource/symfony-bundle as in v0.1.0 — v0.1.3). The
+        // ownership move is the architectural fix for v0.1.1's
+        // install-time crash on bridge-alone installs: the function now
+        // ships in the same package as the SavedView data model, and
+        // the bridge gets it transitively via `polysource/filter`.
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        self::assertCount(2, $functions);
+        self::assertCount(3, $functions);
 
         $names = array_map(static fn ($f) => $f->getName(), $functions);
+        self::assertContains(
+            'saved_views_dropdown',
+            $names,
+            'saved_views_dropdown must be registered here (v0.1.4 ownership fix). '
+            . 'If you are removing it, ensure the bridge\'s crud/index.html.twig '
+            . 'and twig-theme\'s index.html.twig no longer call it.'
+        );
         self::assertContains('polysource_route_exists', $names);
         self::assertContains('polysource_team_scope_supported', $names);
+    }
+
+    #[Test]
+    public function savedViewsDropdownIsMarkedSafeHtml(): void
+    {
+        // The dropdown renders raw HTML via the configured Twig
+        // template. If the safe flag is dropped, hosts will see
+        // `&lt;div...` escaped in their pages.
+        $extension = $this->makeExtension(visible: [], current: null);
+
+        $function = null;
+        foreach ($extension->getFunctions() as $f) {
+            if ('saved_views_dropdown' === $f->getName()) {
+                $function = $f;
+                break;
+            }
+        }
+
+        self::assertNotNull($function);
+        self::assertContains('html', $function->getSafe(new \Twig\Node\Node()));
     }
 
     #[Test]

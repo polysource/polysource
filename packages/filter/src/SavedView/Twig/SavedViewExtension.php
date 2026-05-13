@@ -40,9 +40,21 @@ final class SavedViewExtension extends AbstractExtension
 {
     public const DEFAULT_TEMPLATE = '@PolysourceFilter/saved_view/dropdown.html.twig';
 
+    /**
+     * Both `$service` and `$twig` are nullable so the extension can
+     * register the `saved_views_dropdown` Twig function unconditionally
+     * — templates parse on every host that has `polysource/filter`
+     * installed, regardless of whether storage / security are wired.
+     *
+     * When either dependency is null (e.g. host has no DoctrineBundle
+     * or no SecurityBundle), `renderDropdown()` returns an empty
+     * string. The function is still callable; it just renders nothing.
+     * This is the "no template-side gate needed" guarantee that the
+     * v0.1.4 architecture provides.
+     */
     public function __construct(
-        private readonly SavedViewService $service,
-        private readonly Environment $twig,
+        private readonly ?SavedViewService $service = null,
+        private readonly ?Environment $twig = null,
         private readonly ?RouterInterface $router = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
@@ -53,18 +65,12 @@ final class SavedViewExtension extends AbstractExtension
      */
     public function getFunctions(): array
     {
-        // NOTE: `saved_views_dropdown` is NOT registered here.
-        // Polysource's `symfony-bundle::PolysourceFilterExtension`
-        // owns that function name (so templates using it always
-        // parse, even when polysource/filter isn't installed) and
-        // delegates rendering to this extension's `renderDropdown()`
-        // when the host wires both bundles.
-        //
-        // Registering it here would collide with the symfony-bundle
-        // stub at Twig boot. The bundle wiring of polysource/filter
-        // injects this instance into PolysourceFilterExtension's
-        // optional `?savedViewExtension` constructor argument.
         return [
+            new TwigFunction(
+                'saved_views_dropdown',
+                $this->renderDropdown(...),
+                ['is_safe' => ['html']],
+            ),
             new TwigFunction(
                 'polysource_route_exists',
                 $this->routeExists(...),
@@ -92,6 +98,15 @@ final class SavedViewExtension extends AbstractExtension
         string $resourceName,
         string $template = self::DEFAULT_TEMPLATE,
     ): string {
+        // Graceful degradation: when the host hasn't wired
+        // a SavedView storage (no DoctrineBundle or no SecurityBundle),
+        // the service is null. Render nothing rather than crashing —
+        // templates that call `saved_views_dropdown()` unconditionally
+        // still parse and the call site sees an empty string.
+        if (null === $this->service || null === $this->twig) {
+            return '';
+        }
+
         $views = $this->service->listVisible($resourceName);
         $current = $this->service->defaultFor($resourceName);
 

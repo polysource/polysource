@@ -14,14 +14,14 @@
         </div>
 
         <div class="d-flex gap-2 flex-wrap align-items-center">
-            {# `saved_views_dropdown` is registered as a no-op stub
-             # by `PolysourceFilterExtension` so the template parses
-             # in apps that don't install polysource/filter. The
-             # filter package's `SavedViewExtension` overrides it
-             # with the real implementation at higher priority. #}
-            {% if polysource_saved_views_supported() %}
-                {{ saved_views_dropdown(resource.name) }}
-            {% endif %}
+            {# `saved_views_dropdown` is owned by
+             # `polysource/filter::SavedViewExtension` (since v0.1.4),
+             # a hard require of `polysource/symfony-bundle`. The
+             # `polysource_saved_views_supported()` gate is kept for
+             # backward compat with v0.1.x templates but always
+             # returns true now — feel free to drop the conditional
+             # in host overrides if you're targeting v0.1.4+ only. #}
+            {{ saved_views_dropdown(resource.name) }}
 
             {# The Filters button + modal markup live in this partial.
              # Rendered here so the trigger sits next to saved-views
