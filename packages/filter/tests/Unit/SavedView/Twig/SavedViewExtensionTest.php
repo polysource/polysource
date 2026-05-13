@@ -67,7 +67,9 @@ final class SavedViewExtensionTest extends TestCase
         }
 
         self::assertNotNull($function);
-        self::assertContains('html', $function->getSafe(new \Twig\Node\Node()));
+        $safe = $function->getSafe(new \Twig\Node\Node());
+        self::assertIsArray($safe);
+        self::assertContains('html', $safe);
     }
 
     #[Test]

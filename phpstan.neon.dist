@@ -22,6 +22,17 @@ parameters:
     treatPhpDocTypesAsCertain: false
 
     # PHPUnit-specific noise: ignore on test classes
+    # Allow ignoreErrors patterns to become stale without failing CI.
+    # The default behavior fails when an `ignoreErrors` entry doesn't
+    # match any reported error — useful for catching unused baseline
+    # entries, but disruptive for cross-PR shifts where tests are
+    # refactored. We tolerate stale entries in exchange for being
+    # able to refactor tests without orchestrating phpstan changes.
+    # Specific entries below remain authoritative for the cases they
+    # were created for; stale entries will be pruned in a dedicated
+    # cleanup pass.
+    reportUnmatchedIgnoredErrors: false
+
     ignoreErrors:
         # EA's lifecycle events are generic over the entity type; constructing
         # them in tests with a non-generic-tagged class triggers
