@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Tests\Unit\Form\Type;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Polysource\EasyAdminFilterBridge\Form\Type\BetweenDateFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;

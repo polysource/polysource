@@ -212,7 +212,6 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-chip-display-value="true"', $html);
     }
 
-
     private function renderWidget(\Symfony\Component\Form\FormInterface $form): string
     {
         return $this->formRenderer->searchAndRenderBlock($form->createView(), 'widget');
@@ -234,5 +233,4 @@ final class FormThemeRenderingTest extends TestCase
         }
         self::fail('Could not locate symfony/twig-bridge under any expected vendor path');
     }
-
 }
