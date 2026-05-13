@@ -73,6 +73,19 @@ final class SavedViewExtensionTest extends TestCase
     }
 
     #[Test]
+    public function renderDropdownReturnsEmptyWhenServiceIsNull(): void
+    {
+        // v0.1.4 graceful-degradation contract: the extension can be
+        // constructed with all-null deps (the DI extension does this
+        // when DoctrineBundle or SecurityBundle is missing). Calling
+        // the Twig function in that state must not crash — it must
+        // return an empty string so templates that call it
+        // unconditionally still render. Without this guarantee the
+        // v0.1.1 install-time crash is one constructor refactor away.
+        self::assertSame('', (new SavedViewExtension())->renderDropdown('any-resource'));
+    }
+
+    #[Test]
     public function rendersTemplateWithVisibleViewsAndCurrent(): void
     {
         $views = [
