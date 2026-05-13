@@ -34,6 +34,38 @@
 
 {% set polysource_tree = polysource_filter_tree(ea().crud ? ea().crud.filtersConfig : null) %}
 
+{# Applied-filter detection — the URL carries the active filter slice
+   under `?filters[propertyName]=...`. Each `filters_form` child also
+   exposes the same property name via `vars.name`. We compute the set
+   of currently-applied property names from the query slice so the
+   tab + group summaries can render a "(N)" counter without any JS.
+   When the request has no filters (initial page load), the set is
+   empty and no counters render. #}
+{% set polysource_applied_filters = app.request.query.all('filters')|default({})|keys %}
+
+{% macro applied_count_for_group(group, applied) %}
+    {%- set count = 0 -%}
+    {%- for property in group.properties -%}
+        {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
+    {%- endfor -%}
+    {{- count -}}
+{% endmacro %}
+
+{% macro applied_count_for_tab(tab, applied) %}
+    {%- set count = 0 -%}
+    {%- for property in tab.ungrouped -%}
+        {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
+    {%- endfor -%}
+    {%- for group in tab.groups -%}
+        {%- for property in group.properties -%}
+            {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
+        {%- endfor -%}
+    {%- endfor -%}
+    {{- count -}}
+{% endmacro %}
+
+{% import _self as polysource_counts %}
+
 {{ form_start(filters_form, {attr: {
     id: filters_form.vars.id,
     'data-ea-filters-form-id': filters_form.vars.id,
@@ -55,9 +87,13 @@
     {# 2. Top-level groups — filters with a group but no tab render
          as `<details>` accordions, open by default. #}
     {% for group in polysource_tree.groups %}
+        {% set group_count = polysource_counts.applied_count_for_group(group, polysource_applied_filters)|trim|number_format %}
         <details class="polysource-filter-group" open>
             <summary class="polysource-filter-group__summary">
                 <strong>{{ group.label }}</strong>
+                {% if group_count > 0 %}
+                    <span class="polysource-filter-group__count" aria-label="{{ group_count }} {{ group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ group_count }}</span>
+                {% endif %}
             </summary>
             <div class="polysource-filter-group__body">
                 {% for property in group.properties %}
@@ -74,8 +110,14 @@
          default; clicking another summary closes the previous one
          (native HTML behaviour since Dec 2023). #}
     {% for tab in polysource_tree.tabs %}
+        {% set tab_count = polysource_counts.applied_count_for_tab(tab, polysource_applied_filters)|trim|number_format %}
         <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
-            <summary class="polysource-filter-tab__summary">{{ tab.label }}</summary>
+            <summary class="polysource-filter-tab__summary">
+                {{ tab.label }}
+                {% if tab_count > 0 %}
+                    <span class="polysource-filter-tab__count" aria-label="{{ tab_count }} {{ tab_count > 1 ? 'filters applied' : 'filter applied' }}">{{ tab_count }}</span>
+                {% endif %}
+            </summary>
             <div class="polysource-filter-tab__pane">
                 {% for property in tab.ungrouped %}
                     {% if filters_form.children[property] is defined %}
@@ -83,9 +125,13 @@
                     {% endif %}
                 {% endfor %}
                 {% for group in tab.groups %}
+                    {% set inner_group_count = polysource_counts.applied_count_for_group(group, polysource_applied_filters)|trim|number_format %}
                     <details class="polysource-filter-group" open>
                         <summary class="polysource-filter-group__summary">
                             <strong>{{ group.label }}</strong>
+                            {% if inner_group_count > 0 %}
+                                <span class="polysource-filter-group__count" aria-label="{{ inner_group_count }} {{ inner_group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ inner_group_count }}</span>
+                            {% endif %}
                         </summary>
                         <div class="polysource-filter-group__body">
                             {% for property in group.properties %}

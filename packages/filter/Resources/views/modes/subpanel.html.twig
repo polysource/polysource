@@ -43,10 +43,15 @@
         content: '';
     }
 
-    /* The actual slide-in panel — hidden by default, revealed when
-       the wrapping <details> is open. We render it always (it's a
-       child of <details>, the browser controls its visibility via
-       the `open` attribute) but position it off-screen until open. */
+    /* The actual slide-in panel.
+       Native `<details>` collapses its non-summary children to
+       `display: none` when closed (user-agent style), which would
+       skip the transform transition entirely (display changes are
+       not animatable). We override that: the panel is ALWAYS rendered
+       (display: flex), just translated off-screen via transform when
+       closed. Visibility + pointer-events are toggled in step so the
+       offscreen panel doesn't intercept clicks or get read by screen
+       readers — but the transform CAN animate smoothly. */
     details.polysource-filter-subpanel > .polysource-filter-subpanel__panel {
         position: fixed;
         top: 0;
@@ -55,14 +60,28 @@
         width: min(560px, 100vw);
         background: var(--bs-body-bg, #fff);
         box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
-        display: flex;
+        display: flex; /* override UA `details:not([open]) > :not(summary) { display: none }` */
         flex-direction: column;
         z-index: 1050;
         transform: translateX(100%);
-        transition: transform 0.25s ease-out;
+        visibility: hidden;
+        pointer-events: none;
+        /* `visibility` transition is delayed until after the transform
+           finishes so the slide-out animation actually plays before the
+           panel is hidden from a11y tree + click targets. On open, we
+           reverse — visibility flips instantly, transform animates. */
+        transition: transform 0.25s ease-out, visibility 0s linear 0.25s;
     }
     details.polysource-filter-subpanel[open] > .polysource-filter-subpanel__panel {
         transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
+        transition: transform 0.25s ease-out, visibility 0s linear 0s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        details.polysource-filter-subpanel > .polysource-filter-subpanel__panel {
+            transition: visibility 0s linear 0s;
+        }
     }
 
     .polysource-filter-subpanel__header,
@@ -204,3 +223,42 @@
         </aside>
     </details>
 </div>
+
+{# Optional enhancement script — adds ESC-to-close + auto-focus on
+   the first form control when the subpanel opens. Pure vanilla JS,
+   ~15 lines, no framework dependency. The baseline UX (clicking the
+   summary to toggle, form submit to apply) works without this
+   script — per ADR-027, JS is enhancement.
+
+   Hosts with strict CSP that disallows inline scripts can remove
+   this block by overriding `@PolysourceFilter/modes/subpanel.html.twig`
+   in their own templates directory and reaching the same baseline UX. #}
+<script>
+    (function () {
+        const root = document.getElementById({{ panel_id|json_encode|raw }});
+        if (!root) return;
+
+        // ESC closes the panel when it's open.
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            if (!root.open) return;
+            root.open = false;
+            const trigger = root.querySelector(':scope > summary');
+            trigger?.focus?.();
+        });
+
+        // When the user opens the panel, move focus to the first
+        // interactive control inside so keyboard users can immediately
+        // start filtering. `toggle` fires on every open/close.
+        root.addEventListener('toggle', function () {
+            if (!root.open) return;
+            const target = root.querySelector(
+                '.polysource-filter-subpanel__body input:not([type="hidden"]):not([disabled]), ' +
+                '.polysource-filter-subpanel__body select:not([disabled]), ' +
+                '.polysource-filter-subpanel__body textarea:not([disabled]), ' +
+                '.polysource-filter-subpanel__body button:not([disabled])'
+            );
+            target?.focus?.();
+        });
+    })();
+</script>
