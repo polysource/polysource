@@ -30,12 +30,34 @@
 #   4. EasyAdmin is also installable alongside (the bridge's
 #      documented target stack).
 #   5. **lint:twig on the bridge's prepended templates parses without
-#      error** — catches B2-style "Unknown function" parse failures
-#      that any guarded function call would trigger.
-#   6. ChipExtension's `polysource_saved_views_available()` Twig
-#      function returns false (no symfony-bundle), and the stub
-#      `saved_views_dropdown` is registered so the gated template
-#      reference parses.
+#      error** — catches B2-style "Unknown function" parse failures.
+#      `debug:twig --filter=saved_views_dropdown` proves the function
+#      is registered (the function is owned by polysource/filter since
+#      v0.1.4, transitive through the bridge).
+#
+# Note — runtime behavior is NOT exercised here:
+#   The graceful-degradation contract (saved_views_dropdown returns
+#   "" when SavedViewService is null) is unit-tested inside the
+#   polysource/filter package itself (cf.
+#   `tests/Unit/SavedView/Twig/SavedViewExtensionTest::renderDropdownReturnsEmptyWhenServiceIsNull`).
+#   It cannot be cleanly retested here because EasyAdmin pulls
+#   DoctrineBundle + SecurityBundle transitively, so the DI gate in
+#   polysource/filter wires the REAL storage path — and rendering
+#   the dropdown then requires either a working PDO driver + an
+#   actual table, or a fresh-install error swallowing strategy that
+#   isn't yet implemented (v0.1.5+ concern).
+#
+# History of step 6 (now removed):
+#   Until v0.1.3 the script asserted the presence of
+#   `polysource_saved_views_available()` — a runtime gate in the
+#   bridge's ChipExtension. v0.1.4 moved ownership of
+#   `saved_views_dropdown` to polysource/filter (a transitive dep of
+#   the bridge), removed the v0.1.2 stub, and dropped the
+#   `polysource_saved_views_available` gate entirely. A v0.1.4
+#   attempt at re-rendering through a stub command failed because EA
+#   pulls Doctrine/Security in, so the real storage path was hit
+#   without a usable DB driver. The behavioral contract is unit-tested
+#   upstream; the smoke focuses on the install-path B2 regression.
 #
 # Usage: ./scripts/smoke-packagist-bridge.sh
 # Optional: VERSION_CONSTRAINT=^0.1 ./scripts/smoke-packagist-bridge.sh
@@ -69,19 +91,19 @@ echo "  Workdir: $SMOKE_DIR"
 echo "=================================================="
 
 echo
-echo "=== [1/6] Bootstrap vanilla Symfony 7.4 skeleton ==="
+echo "=== [1/5] Bootstrap vanilla Symfony 7.4 skeleton ==="
 run_in_container '
     composer create-project symfony/skeleton:^7.4 . --no-interaction --no-progress 2>&1 | tail -3
 '
 
 echo
-echo "=== [2/6] composer require easycorp/easyadmin-bundle (the host stack) ==="
+echo "=== [2/5] composer require easycorp/easyadmin-bundle (the host stack) ==="
 run_in_container '
     composer require easycorp/easyadmin-bundle:^5.0 --no-interaction --no-progress 2>&1 | tail -3
 '
 
 echo
-echo "=== [3/6] composer require polysource/easyadmin-filter-bridge ALONE ==="
+echo "=== [3/5] composer require polysource/easyadmin-filter-bridge ALONE ==="
 echo "    (no symfony-bundle, no manual polysource/filter — bridge pulls filter transitively)"
 run_in_container "
     composer require 'polysource/easyadmin-filter-bridge:${VERSION_CONSTRAINT}' --no-interaction --no-progress 2>&1 | tail -10
@@ -101,7 +123,7 @@ run_in_container "
 "
 
 echo
-echo "=== [4/6] Both bundles auto-registered + cache:clear succeeds ==="
+echo "=== [4/5] Both bundles auto-registered + cache:clear succeeds ==="
 run_in_container '
     grep -q "PolysourceFilterBundle" config/bundles.php \
         || { echo "FAIL: PolysourceFilterBundle missing"; exit 1; }
@@ -113,7 +135,7 @@ run_in_container '
 '
 
 echo
-echo "=== [5/6] lint:twig on bridge templates — B2 regression guard ==="
+echo "=== [5/5] lint:twig on bridge templates — B2 regression guard ==="
 echo "    parses every template the bridge prepends into @EasyAdmin namespace"
 run_in_container '
     # The bridge prepends Resources/views/ into the @EasyAdmin namespace.
@@ -122,28 +144,12 @@ run_in_container '
     # Twig\Error\SyntaxError before runtime ever hits it.
     php bin/console lint:twig vendor/polysource/easyadmin-filter-bridge/Resources/views/ 2>&1 | tail -5
 
-    # Belt-and-braces: actually call the gate function and assert the
-    # stub is wired (proves the v0.1.2 fix is in place).
+    # Belt-and-braces: assert the function is registered (v0.1.4 owns
+    # it in polysource/filter::SavedViewExtension, transitive via the
+    # bridge — the v0.1.1 B2 bug would manifest as this being absent).
     php bin/console debug:twig --filter=saved_views_dropdown 2>&1 | grep -q "saved_views_dropdown" \
         || { echo "FAIL: saved_views_dropdown Twig function is not registered — B2 regression"; exit 1; }
-    echo "OK: saved_views_dropdown stub registered (B2 regression guarded)"
-'
-
-echo
-echo "=== [6/6] polysource_saved_views_available() returns false (no symfony-bundle) ==="
-run_in_container '
-    OUT=$(php -r "
-        require __DIR__.\"/vendor/autoload.php\";
-        \$kernel = new App\Kernel(\"dev\", true);
-        \$kernel->boot();
-        \$twig = \$kernel->getContainer()->get(\"test.service_container\")->get(\"twig\");
-        var_dump(\$twig->render(\"@!Twig/inline.html.twig\", []));
-    " 2>&1 || true)
-
-    # Simpler: invoke via debug:twig (Symfony exposes the function list)
-    php bin/console debug:twig --filter=polysource_saved_views_available 2>&1 | grep -q "polysource_saved_views_available" \
-        || { echo "FAIL: polysource_saved_views_available Twig function missing"; exit 1; }
-    echo "OK: polysource_saved_views_available function exposed"
+    echo "OK: saved_views_dropdown registered (B2 regression guarded)"
 '
 
 echo
