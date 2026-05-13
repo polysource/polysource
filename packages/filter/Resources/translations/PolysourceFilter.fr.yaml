@@ -1,7 +1,6 @@
 polysource:
     filter:
         open: 'Filtres'
-        cancel: 'Annuler'
         apply: 'Appliquer'
 
         modal:
