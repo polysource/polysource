@@ -9,12 +9,12 @@
    - `data-controller="polysource--filter"` so the Stimulus controller
      binds to the wrapper.
    - `data-polysource--filter-{option}-value="…"` for each option the
-     enhanced FormType exposes via `buildView()` (presets, quick_ranges,
-     min_length, step, show_clear, include_null, chip_display,
-     placeholder, comparisons).
-   - Optional appended UI elements (preset buttons, quick-range buttons,
-     clear button) — the controller reads `data-action` on each to
-     dispatch the right handler.
+     enhanced FormType exposes via `buildView()` (quick_ranges,
+     min_length, step, include_null, chip_display, placeholder,
+     comparisons).
+   - Optional appended UI elements (quick-range buttons) — the
+     controller reads `data-action` on each to dispatch the right
+     handler.
 
    By delegating to the upstream blocks, host applications that have
    customized `@EasyAdmin/crud/form_theme.html.twig` (or any of the
@@ -55,32 +55,15 @@
     </div>
 {%- endblock -%}
 
-{# DateTimeFilterType has its own upstream block too. #}
+{# DateTimeFilterType has its own upstream block too. Since v0.2.0
+   no extra UI is appended — the `presets` + `show_clear` options
+   (JS-driven preset buttons + per-filter clear button) were removed
+   per ADR-027 + ADR-028. HTML5 native date pickers + EA's Reset
+   cover the same ground. #}
 {%- block polysource_enhanced_datetime_filter_widget -%}
     <div class="polysource-filter polysource-filter--datetime"
-         data-controller="polysource--filter"
-         data-polysource--filter-show-clear-value="{{ show_clear|default(false) ? 'true' : 'false' }}"
-         data-polysource--filter-presets-value="{{ presets|default([])|json_encode|e('html_attr') }}">
+         data-controller="polysource--filter">
         {{- block('ea_datetime_filter_widget') -}}
-        {%- if presets|default([])|length > 0 -%}
-            <div class="polysource-presets d-flex flex-wrap gap-1 mt-2"
-                 role="group"
-                 aria-label="{{ 'polysource.filter.presets.label'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
-                {%- for preset in presets -%}
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary polysource-preset"
-                            data-action="polysource--filter#applyPreset"
-                            data-polysource--filter-preset-param="{{ preset }}">{{ ('polysource.filter.preset.' ~ preset)|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
-                {%- endfor -%}
-            </div>
-        {%- endif -%}
-        {%- if show_clear|default(false) -%}
-            <button type="button"
-                    class="btn btn-outline-secondary btn-sm polysource-clear mt-2"
-                    data-action="polysource--filter#clearValues">
-                {{ 'polysource.filter.clear'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
-            </button>
-        {%- endif -%}
     </div>
 {%- endblock -%}
 

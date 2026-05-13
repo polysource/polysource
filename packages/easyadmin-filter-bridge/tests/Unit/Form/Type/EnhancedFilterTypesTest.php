@@ -140,31 +140,6 @@ final class EnhancedFilterTypesTest extends TestCase
         self::assertSame('polysource_enhanced_datetime_filter', (new EnhancedDateTimeFilterType())->getBlockPrefix());
     }
 
-    public function testEnhancedDateTimeFilterTypePresetsDefault(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedDateTimeFilterType())->configureOptions($resolver);
-
-        $options = $resolver->resolve();
-        $presets = (array) $options['presets'];
-        self::assertContains('today', $presets);
-        self::assertContains('last_7_days', $presets);
-        self::assertContains('this_month', $presets);
-        self::assertTrue($options['show_clear']);
-    }
-
-    public function testEnhancedDateTimeFilterTypeBuildViewExposesPresets(): void
-    {
-        $view = new FormView();
-        (new EnhancedDateTimeFilterType())->buildView(
-            $view,
-            $this->stubForm(),
-            ['presets' => ['today'], 'show_clear' => false],
-        );
-        self::assertSame(['today'], $view->vars['presets']);
-        self::assertFalse($view->vars['show_clear']);
-    }
-
     public function testEnhancedBooleanFilterTypeBlockPrefix(): void
     {
         self::assertSame('polysource_enhanced_boolean_filter', (new EnhancedBooleanFilterType())->getBlockPrefix());

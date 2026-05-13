@@ -1,6 +1,6 @@
 {
     "name": "polysource/easyadmin-filter-bridge",
-    "description": "Polysource — drop-in package that enriches EasyAdmin v5 filters (date presets, ranges, multi-select, session persistence, chips) without forking EasyAdmin.",
+    "description": "Polysource — drop-in package that enriches EasyAdmin v5 filters (ranges, multi-select, custom filter types, session persistence, chips) without forking EasyAdmin.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [

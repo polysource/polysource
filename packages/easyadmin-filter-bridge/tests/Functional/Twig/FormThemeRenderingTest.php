@@ -124,22 +124,25 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-max-param=""', $html);
     }
 
-    public function testDatetimeFilterWrapsAndRendersPresetsAndClear(): void
+    public function testDatetimeFilterWrapsWithDataController(): void
     {
+        // Since v0.2.0 the datetime filter no longer ships presets or
+        // show_clear options (cf. ADR-027 + ADR-028). The widget just
+        // wraps the upstream `ea_datetime_filter_widget` in a
+        // `data-controller` div so the Stimulus controller can still
+        // bind for non-removed features (subpanel, chip integration).
         $form = $this->formFactory->create(EnhancedDateTimeFilterType::class, null, [
             'value_type' => \Symfony\Component\Form\Extension\Core\Type\DateTimeType::class,
-            'presets' => ['today', 'last_7_days'],
-            'show_clear' => true,
         ]);
 
         $html = $this->renderWidget($form);
 
         self::assertStringContainsString('class="polysource-filter polysource-filter--datetime"', $html);
-        self::assertStringContainsString('data-polysource--filter-show-clear-value="true"', $html);
-        self::assertStringContainsStringCount(2, 'polysource--filter#applyPreset', $html);
-        self::assertStringContainsString('data-polysource--filter-preset-param="today"', $html);
-        self::assertStringContainsString('data-polysource--filter-preset-param="last_7_days"', $html);
-        self::assertStringContainsString('polysource--filter#clearValues', $html);
+        self::assertStringContainsString('data-controller="polysource--filter"', $html);
+        self::assertStringNotContainsString('polysource--filter#applyPreset', $html);
+        self::assertStringNotContainsString('polysource--filter#clearValues', $html);
+        self::assertStringNotContainsString('data-polysource--filter-show-clear-value', $html);
+        self::assertStringNotContainsString('data-polysource--filter-presets-value', $html);
     }
 
     public function testBooleanFilterWrapsChoiceWidget(): void
@@ -212,20 +215,6 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-chip-display-value="true"', $html);
     }
 
-    public function testRendersNoButtonsWhenOptionsEmpty(): void
-    {
-        $form = $this->formFactory->create(EnhancedDateTimeFilterType::class, null, [
-            'value_type' => \Symfony\Component\Form\Extension\Core\Type\DateTimeType::class,
-            'presets' => [],
-            'show_clear' => false,
-        ]);
-
-        $html = $this->renderWidget($form);
-
-        self::assertStringNotContainsString('polysource--filter#applyPreset', $html);
-        self::assertStringNotContainsString('polysource--filter#clearValues', $html);
-        self::assertStringContainsString('data-controller="polysource--filter"', $html);
-    }
 
     private function renderWidget(\Symfony\Component\Form\FormInterface $form): string
     {

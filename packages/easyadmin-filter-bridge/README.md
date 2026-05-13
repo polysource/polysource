@@ -28,7 +28,7 @@ Once installed, EasyAdmin's built-in filters gain richer form types,
 
 | Built-in filter | Enhancement (today) | Visual rendering (Phase 9.7) |
 |---|---|---|
-| `DateTimeFilter` | `presets` option (`today`, `last_7_days`, `last_30_days`, `this_month`, `custom`), `show_clear` flag. | One-click preset buttons rendered next to the date inputs. |
+| `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) so themes can override rendering. | Native HTML5 date pickers (no extra UI). |
 | `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. | Toggle-switch UI variant. |
 | `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). | Mode toggle (exact / starts_with / ends_with / contains) inline. |
 | `NumericFilter` | `step` option (granularity hint), `quick_ranges` option (preset buttons like `<100` / `100-1000` / `1000+`). | Quick-range buttons rendered next to the value inputs. |
@@ -163,7 +163,8 @@ final class ProductCrudController extends AbstractCrudController
 
 After installing this bridge, **the same code** automatically:
 - The `createdAt` filter renders with the enhanced datetime form type
-  (presets + clear button) instead of the stock date picker.
+  (dedicated block prefix for theme overrides) instead of the stock
+  date picker.
 - The `isActive` filter accepts an `include_null` option (default
   `false`) to show a third "Null" radio choice when the column is
   nullable.

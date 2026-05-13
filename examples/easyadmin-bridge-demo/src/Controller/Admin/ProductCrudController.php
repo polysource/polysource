@@ -129,10 +129,7 @@ final class ProductCrudController extends AbstractCrudController
             )
             ->add(NotNullFilter::new('description', 'Description state'))
             ->add(Polysource::group('Dates'))
-            ->add(
-                DateTimeFilter::new('createdAt')
-                    ->setFormTypeOption('show_clear', true),
-            )
+            ->add(DateTimeFilter::new('createdAt'))
             ->add(BetweenDateFilter::new('archivedAt', 'Archived between'))
 
             // ─── Tab "Catalog" without groups (filters render flat in the tab) ───

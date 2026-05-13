@@ -54,8 +54,6 @@ surface does not.
 | Session persistence | no |
 | `placeholder` on `EntityFilter` | no (HTML attribute only) |
 | `NumericFilter` `quick_ranges` buttons | **yes — clicks dispatched by `polysource--filter#applyQuickRange`** |
-| `DateTimeFilter` `presets` buttons | **yes — `polysource--filter#applyPreset`** |
-| `DateTimeFilter` `show_clear` button | **yes — `polysource--filter#clearValues`** |
 | Chip × close buttons | **yes — `polysource--filter-chips`** |
 | Tab + group layout (multi-tab filter modal) | **yes — `polysource--filter-modal-layout`** |
 | Subpanel mode (right-anchored slide-in) | **yes — `polysource--filter-subpanel`** |
