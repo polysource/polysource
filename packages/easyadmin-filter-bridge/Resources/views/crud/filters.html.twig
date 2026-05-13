@@ -43,28 +43,19 @@
    empty and no counters render. #}
 {% set polysource_applied_filters = app.request.query.all('filters')|default({})|keys %}
 
-{% macro applied_count_for_group(group, applied) %}
-    {%- set count = 0 -%}
-    {%- for property in group.properties -%}
-        {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
-    {%- endfor -%}
-    {{- count -}}
-{% endmacro %}
+{# Helpers for the count badges below.
+   `{% set %}` accumulators are used instead of Twig macros because
+   macro return values are always wrapped in `Twig\Markup` (HTML-safe
+   string), which then can't be compared as integers (`> 0`) or
+   numeric-formatted (`|number_format` triggers a Markup→float
+   conversion warning). Inline counters via `{% set %}` keep the
+   running total as a real PHP int.
 
-{% macro applied_count_for_tab(tab, applied) %}
-    {%- set count = 0 -%}
-    {%- for property in tab.ungrouped -%}
-        {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
-    {%- endfor -%}
-    {%- for group in tab.groups -%}
-        {%- for property in group.properties -%}
-            {%- if property in applied -%}{%- set count = count + 1 -%}{%- endif -%}
-        {%- endfor -%}
-    {%- endfor -%}
-    {{- count -}}
-{% endmacro %}
-
-{% import _self as polysource_counts %}
+   Polysource exposes a tiny `_count_properties_in(props, applied)`
+   helper via the wrapping logic of each tab/group block. We don't
+   factor it into a macro for the reason above; we inline the
+   counting loop where it's needed (twice — once per group, once
+   per tab summary). #}
 
 {{ form_start(filters_form, {attr: {
     id: filters_form.vars.id,
@@ -87,7 +78,10 @@
     {# 2. Top-level groups — filters with a group but no tab render
          as `<details>` accordions, open by default. #}
     {% for group in polysource_tree.groups %}
-        {% set group_count = polysource_counts.applied_count_for_group(group, polysource_applied_filters)|trim|number_format %}
+        {% set group_count = 0 %}
+        {% for property in group.properties %}
+            {% if property in polysource_applied_filters %}{% set group_count = group_count + 1 %}{% endif %}
+        {% endfor %}
         <details class="polysource-filter-group" open>
             <summary class="polysource-filter-group__summary">
                 <strong>{{ group.label }}</strong>
@@ -110,7 +104,15 @@
          default; clicking another summary closes the previous one
          (native HTML behaviour since Dec 2023). #}
     {% for tab in polysource_tree.tabs %}
-        {% set tab_count = polysource_counts.applied_count_for_tab(tab, polysource_applied_filters)|trim|number_format %}
+        {% set tab_count = 0 %}
+        {% for property in tab.ungrouped %}
+            {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for group in tab.groups %}
+            {% for property in group.properties %}
+                {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
+            {% endfor %}
+        {% endfor %}
         <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
             <summary class="polysource-filter-tab__summary">
                 {{ tab.label }}
@@ -125,7 +127,10 @@
                     {% endif %}
                 {% endfor %}
                 {% for group in tab.groups %}
-                    {% set inner_group_count = polysource_counts.applied_count_for_group(group, polysource_applied_filters)|trim|number_format %}
+                    {% set inner_group_count = 0 %}
+                    {% for property in group.properties %}
+                        {% if property in polysource_applied_filters %}{% set inner_group_count = inner_group_count + 1 %}{% endif %}
+                    {% endfor %}
                     <details class="polysource-filter-group" open>
                         <summary class="polysource-filter-group__summary">
                             <strong>{{ group.label }}</strong>
