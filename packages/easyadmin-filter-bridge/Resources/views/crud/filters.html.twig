@@ -1,0 +1,128 @@
+{# polysource/easyadmin-filter-bridge — override of
+   `@EasyAdmin/crud/filters.html.twig`.
+
+   EA's filter form is loaded via AJAX after the user opens the
+   `#modal-filters` Bootstrap modal. The upstream template renders
+   the form flat via `form_widget(filters_form)` — every filter as
+   a sibling `.filter-field` div.
+
+   Polysource lets hosts organise filters into tabs + group
+   accordions via `Polysource::tab(...)` and `Polysource::group(...)`
+   markers (cf. `FilterMarkerProcessor` + each filter's
+   `polysource.tab` / `polysource.group` custom option). Until v0.1.x
+   the bridge translated those markers into a JSON tree consumed by
+   a Stimulus controller (`polysource--filter-modal-layout`) that
+   reshuffled the AJAX-loaded DOM client-side.
+
+   v0.2.0 — per ADR-027 (progressive enhancement: every interactive
+   feature MUST have a server-side baseline) — moves that work
+   server-side. The structured tree is built here from
+   `polysource_filter_tree(...)`, and each tab / group is rendered
+   as a native HTML `<details>` element. Tabs use the
+   `name="polysource-tab"` attribute introduced in HTML Living
+   Standard for mutually-exclusive accordion behaviour (Chrome 120 /
+   Safari 17.2 / Firefox 121 — Dec 2023+). Browsers without `name`
+   support simply allow multiple tabs to be open at once — graceful
+   degradation.
+
+   Zero JS required. The `polysource--filter-modal-layout` Stimulus
+   controller has been removed.
+#}
+{# @var ea \EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext #}
+{# @var filters_form \EasyCorp\Bundle\EasyAdminBundle\Form\Type\FiltersFormType #}
+{% form_theme filters_form with ea().crud.formThemes only %}
+
+{% set polysource_tree = polysource_filter_tree(ea().crud ? ea().crud.filtersConfig : null) %}
+
+{{ form_start(filters_form, {attr: {
+    id: filters_form.vars.id,
+    'data-ea-filters-form-id': filters_form.vars.id,
+}}) }}
+    {# browsers remove the query string when submitting forms using GET;
+       that's why all query string parameters are added as hidden form fields #}
+    {% for paramName, paramValue in form_action_query_string_as_array|ea_flatten_array %}
+        <input type="hidden" name="{{ paramName }}" value="{{ paramValue }}">
+    {% endfor %}
+
+    {# 1. Top-level ungrouped — filters declared without any tab or
+         group marker render flat at the top of the form. #}
+    {% for property in polysource_tree.ungrouped %}
+        {% if filters_form.children[property] is defined %}
+            {{ form_row(filters_form.children[property]) }}
+        {% endif %}
+    {% endfor %}
+
+    {# 2. Top-level groups — filters with a group but no tab render
+         as `<details>` accordions, open by default. #}
+    {% for group in polysource_tree.groups %}
+        <details class="polysource-filter-group" open>
+            <summary class="polysource-filter-group__summary">
+                <strong>{{ group.label }}</strong>
+            </summary>
+            <div class="polysource-filter-group__body">
+                {% for property in group.properties %}
+                    {% if filters_form.children[property] is defined %}
+                        {{ form_row(filters_form.children[property]) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+
+    {# 3. Tabs — `<details name="polysource-tab">` for mutually
+         exclusive accordion behaviour. First tab is opened by
+         default; clicking another summary closes the previous one
+         (native HTML behaviour since Dec 2023). #}
+    {% for tab in polysource_tree.tabs %}
+        <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
+            <summary class="polysource-filter-tab__summary">{{ tab.label }}</summary>
+            <div class="polysource-filter-tab__pane">
+                {% for property in tab.ungrouped %}
+                    {% if filters_form.children[property] is defined %}
+                        {{ form_row(filters_form.children[property]) }}
+                    {% endif %}
+                {% endfor %}
+                {% for group in tab.groups %}
+                    <details class="polysource-filter-group" open>
+                        <summary class="polysource-filter-group__summary">
+                            <strong>{{ group.label }}</strong>
+                        </summary>
+                        <div class="polysource-filter-group__body">
+                            {% for property in group.properties %}
+                                {% if filters_form.children[property] is defined %}
+                                    {{ form_row(filters_form.children[property]) }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </details>
+                {% endfor %}
+            </div>
+        </details>
+    {% endfor %}
+
+    {# 4. Fallback — any filter property declared in the form but
+         absent from the polysource tree (defensive: shouldn't happen
+         under normal `configureFilters()` flow but protects against
+         host code that bypasses the marker processor). Renders flat
+         at the bottom so the field doesn't silently disappear. #}
+    {% for child in filters_form.children %}
+        {% set property = child.vars.name %}
+        {% set placed = property in polysource_tree.ungrouped %}
+        {% if not placed %}
+            {% for group in polysource_tree.groups %}
+                {% if property in group.properties %}{% set placed = true %}{% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if not placed %}
+            {% for tab in polysource_tree.tabs %}
+                {% if property in tab.ungrouped %}{% set placed = true %}{% endif %}
+                {% for group in tab.groups %}
+                    {% if property in group.properties %}{% set placed = true %}{% endif %}
+                {% endfor %}
+            {% endfor %}
+        {% endif %}
+        {% if not placed %}
+            {{ form_row(child) }}
+        {% endif %}
+    {% endfor %}
+{{ form_end(filters_form) }}

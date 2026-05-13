@@ -130,66 +130,60 @@
             padding: 1rem 1.25rem !important;
         }
 
-        /* ─── EA-style tabs (underline, no boxes) ─── */
-        .polysource-filter-tabs {
-            margin: 0 0 1rem 0;
-        }
-        .polysource-filter-tabs > .nav.nav-tabs {
-            border: 0;
-            border-bottom: 1px solid var(--bs-border-color, #dee2e6);
-            margin: 0 0 1rem 0;
-            padding: 0;
-            gap: 1.5rem;
-            background: transparent;
-        }
-        .polysource-filter-tabs > .nav.nav-tabs .nav-item {
+        /* ─── EA-style tabs (underline, no boxes) — server-rendered
+             via `<details name="polysource-tab">` exclusive accordion
+             (HTML Living Standard, Chrome 120+ / Safari 17.2+ /
+             Firefox 121+ since Dec 2023). Older browsers gracefully
+             fall back to "every tab independently expandable". ─── */
+        details.polysource-filter-tab {
             margin: 0;
-        }
-        .polysource-filter-tabs > .nav.nav-tabs .nav-link {
-            background: transparent;
             border: 0;
-            border-radius: 0;
+            background: transparent;
+        }
+        details.polysource-filter-tab > summary {
+            list-style: none;
+            cursor: pointer;
             padding: 0.5rem 0;
-            margin: 0 0 -1px 0;
+            margin: 0;
+            display: inline-block;
             color: var(--bs-secondary-color, #6c757d);
             font-weight: 500;
             border-bottom: 2px solid transparent;
             transition: color 0.15s, border-color 0.15s;
-            cursor: pointer;
+            user-select: none;
             line-height: 1.5;
         }
-        .polysource-filter-tabs > .nav.nav-tabs .nav-link:hover {
-            color: var(--bs-emphasis-color, #212529);
-            border-bottom-color: transparent;
+        details.polysource-filter-tab > summary::-webkit-details-marker {
+            display: none;
         }
-        /* Active state: same font-weight as inactive (avoids baseline
-           shift between weights), differentiated by color + underline. */
-        .polysource-filter-tabs > .nav.nav-tabs .nav-link.active {
+        details.polysource-filter-tab > summary::marker {
+            content: '';
+        }
+        details.polysource-filter-tab > summary:hover {
+            color: var(--bs-emphasis-color, #212529);
+        }
+        /* Open state: same font-weight as closed (avoids baseline shift),
+           differentiated by color + underline — matches EA's flat-tab look. */
+        details.polysource-filter-tab[open] > summary {
             color: var(--bs-primary, #4f46e5);
             border-bottom-color: var(--bs-primary, #4f46e5);
-            font-weight: 500;
-            background: transparent;
         }
-        /* Per-tab applied-filter counter — JS appends a span after
-           the tab label only when at least one filter inside the
-           tab is currently applied (its .filter-checkbox is :checked).
-           Pill in primary color so the user sees at a glance which
-           tabs hold active filters without clicking through them. */
-        .polysource-filter-tabs > .nav.nav-tabs .nav-link .polysource-filter-tab-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 1.125rem;
-            height: 1.125rem;
-            padding: 0 0.375rem;
-            margin-left: 0.5rem;
-            border-radius: 999px;
-            background: var(--bs-primary, #4f46e5);
-            color: #fff;
-            font-size: 0.6875rem;
-            font-weight: 700;
-            line-height: 1;
-            vertical-align: middle;
+        /* Stack all tab summaries inline at the top of the form via
+           an explicit grid of tabs. The `<details>` elements are
+           siblings, so we use a flex container around them — see the
+           `.polysource-filter-tabs-strip` wrapper below if needed.
+           For now we let the summaries lay out inline-block; the
+           browser preserves source order. */
+        details.polysource-filter-tab + details.polysource-filter-tab > summary {
+            margin-left: 1.5rem;
+        }
+        /* Group of consecutive tab summaries → underline strip across
+           the whole row. Sibling tabs sit under a shared border-bottom
+           via the form's flexbox layout (see `.tab-pane` rule below). */
+        details.polysource-filter-tab > .polysource-filter-tab__pane {
+            padding: 1rem 0 0 0.25rem;
+            margin-top: 0.5rem;
+            border-top: 1px solid var(--bs-border-color, #dee2e6);
         }
 
         /* ─── Group sections (subtle, EA-aligned) ─── */
@@ -234,15 +228,6 @@
             letter-spacing: 0.06em;
             flex: 1;
         }
-        /* Badge — only emitted by JS when at least one filter inside
-           the group is currently applied. Bold + count, primary color. */
-        details.polysource-filter-group > summary > .polysource-filter-group__count {
-            color: var(--bs-primary, #4f46e5);
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0;
-            background: transparent;
-        }
         details.polysource-filter-group .polysource-filter-group__body {
             padding-left: 0.25rem;
         }
@@ -251,14 +236,9 @@
              top border (the EA filter form theme sets one between
              siblings; we strip it on the first child to avoid a
              double line right under the group header). ─── */
-        .tab-pane > .filter-field:first-child,
+        .polysource-filter-tab__pane > .filter-field:first-child,
         .polysource-filter-group__body > .filter-field:first-child {
             border-top: 0 !important;
-        }
-
-        /* Tab pane content: vertical breathing room. */
-        .tab-pane.show.active {
-            padding-left: 0.25rem;
         }
     </style>
 {% endblock %}
