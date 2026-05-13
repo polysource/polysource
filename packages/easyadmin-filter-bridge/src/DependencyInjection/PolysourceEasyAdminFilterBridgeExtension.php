@@ -250,6 +250,31 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
                 ->setAutowired(true)
             ;
         }
+
+        // ColumnPreferenceController — POST /admin/polysource/column-preferences/{resource}
+        // (v0.3.0). Gated on the SAME conditions as the filter
+        // package's service registration: the class exists, the
+        // DoctrineBundle is loaded, the SecurityBundle is loaded.
+        // Without those the upstream service isn't registered and
+        // autowiring the controller would crash DI compile.
+        $bundles = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        $hasDoctrineBundle = \is_array($bundles) && \array_key_exists('DoctrineBundle', $bundles);
+        $hasSecurity = \is_array($bundles) && \array_key_exists('SecurityBundle', $bundles);
+        if (
+            class_exists(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
+            && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+        }
     }
 
     public function getAlias(): string

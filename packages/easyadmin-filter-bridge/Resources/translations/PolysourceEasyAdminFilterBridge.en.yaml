@@ -4,3 +4,6 @@ polysource:
             heading: 'Active filters:'
             remove: 'Remove this filter'
             clear_all: 'Clear all'
+    columns:
+        toggle: 'Columns'
+        apply: 'Apply'
