@@ -34,6 +34,8 @@
 | [ADR-024](./0024-bulk-async-mercure.md) | Bulk async + Mercure (Phase 16) | Accepté |
 | [ADR-025](./0025-showcase-demo.md) | Showcase demo "ShopCo SaaS" + hero du launch v0.1.0 (Phase 23) | Accepté |
 | [ADR-026](./0026-monorepo-split-and-packagist-mirrors.md) | Monorepo unique + 16 mirrors Packagist via subtree split + GitHub App | Accepté |
+| [ADR-027](./0027-progressive-enhancement.md) | Progressive enhancement : tout interactif a un fallback serveur | Accepté |
+| [ADR-028](./0028-scope-discipline.md) | Scope discipline : couche UX filter+listing, pas une plateforme d'admin | Accepté |
 
 ## Convention
 
