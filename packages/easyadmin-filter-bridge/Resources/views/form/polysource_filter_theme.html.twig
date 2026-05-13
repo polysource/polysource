@@ -9,12 +9,8 @@
    - `data-controller="polysource--filter"` so the Stimulus controller
      binds to the wrapper.
    - `data-polysource--filter-{option}-value="…"` for each option the
-     enhanced FormType exposes via `buildView()` (quick_ranges,
-     min_length, step, include_null, chip_display, placeholder,
-     comparisons).
-   - Optional appended UI elements (quick-range buttons) — the
-     controller reads `data-action` on each to dispatch the right
-     handler.
+     enhanced FormType exposes via `buildView()` (min_length, step,
+     include_null, chip_display, placeholder, comparisons).
 
    By delegating to the upstream blocks, host applications that have
    customized `@EasyAdmin/crud/form_theme.html.twig` (or any of the
@@ -32,26 +28,15 @@
 {%- endblock -%}
 
 {# NumericFilterType has a dedicated upstream block that already handles
-   the value2 d-none toggle — we just wrap it. #}
+   the value2 d-none toggle — we just wrap it. The `quick_ranges` option
+   (Stimulus-driven preset buttons) was removed in v0.2.0 per ADR-027 +
+   ADR-028 — hosts that need range shortcuts can add buttons in their
+   own CRUD-specific template. #}
 {%- block polysource_enhanced_numeric_filter_widget -%}
     <div class="polysource-filter polysource-filter--numeric"
          data-controller="polysource--filter"
-         data-polysource--filter-step-value="{{ step|default(0) }}"
-         data-polysource--filter-quick-ranges-value="{{ quick_ranges|default([])|json_encode|e('html_attr') }}">
+         data-polysource--filter-step-value="{{ step|default(0) }}">
         {{- block('ea_numeric_filter_widget') -}}
-        {%- if quick_ranges|default([])|length > 0 -%}
-            <div class="polysource-quick-ranges d-flex flex-wrap gap-1 mt-2"
-                 role="group"
-                 aria-label="{{ 'polysource.filter.quick_ranges.label'|trans({}, 'PolysourceEasyAdminFilterBridge') }}">
-                {%- for range in quick_ranges -%}
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary polysource-quick-range"
-                            data-action="polysource--filter#applyQuickRange"
-                            data-polysource--filter-min-param="{{ range.min is defined and range.min is not null ? range.min : '' }}"
-                            data-polysource--filter-max-param="{{ range.max is defined and range.max is not null ? range.max : '' }}">{{ range.label|trans({}, 'PolysourceEasyAdminFilterBridge') }}</button>
-                {%- endfor -%}
-            </div>
-        {%- endif -%}
     </div>
 {%- endblock -%}
 

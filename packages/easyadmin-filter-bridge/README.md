@@ -31,7 +31,7 @@ Once installed, EasyAdmin's built-in filters gain richer form types,
 | `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) so themes can override rendering. | Native HTML5 date pickers (no extra UI). |
 | `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. | Toggle-switch UI variant. |
 | `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). | Mode toggle (exact / starts_with / ends_with / contains) inline. |
-| `NumericFilter` | `step` option (granularity hint), `quick_ranges` option (preset buttons like `<100` / `100-1000` / `1000+`). | Quick-range buttons rendered next to the value inputs. |
+| `NumericFilter` | `step` option (granularity hint, e.g. `0.01` for currency). | Native HTML5 number input with step attribute. |
 | `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. | Inline pills rendering. |
 | `ComparisonFilter` | `comparisons` option — whitelist of operators to expose in the dropdown (default `[]` = all). | Restricted operator dropdown. |
 | `ArrayFilter` | `chip_display` option — selected items as removable chips instead of multi-line list. | Chips rendering. |

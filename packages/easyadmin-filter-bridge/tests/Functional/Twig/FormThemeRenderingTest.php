@@ -102,26 +102,23 @@ final class FormThemeRenderingTest extends TestCase
         self::assertStringContainsString('data-polysource--filter-min-length-value="3"', $html);
     }
 
-    public function testNumericFilterWrapsAndRendersQuickRangeButtons(): void
+    public function testNumericFilterWrapsWithStepAttribute(): void
     {
+        // Since v0.2.0 the numeric filter no longer ships quick_ranges
+        // (cf. ADR-027 + ADR-028). The widget exposes `step` as the
+        // sole option-driven data attribute; hosts who need range
+        // shortcuts add them in their own CRUD template.
         $form = $this->formFactory->create(EnhancedNumericFilterType::class, null, [
             'value_type' => NumberType::class,
             'step' => 0.5,
-            'quick_ranges' => [
-                ['label' => 'cheap', 'min' => null, 'max' => 50],
-                ['label' => 'expensive', 'min' => 200, 'max' => null],
-            ],
         ]);
 
         $html = $this->renderWidget($form);
 
         self::assertStringContainsString('class="polysource-filter polysource-filter--numeric"', $html);
         self::assertStringContainsString('data-polysource--filter-step-value="0.5"', $html);
-        self::assertStringContainsStringCount(2, 'polysource--filter#applyQuickRange', $html);
-        self::assertStringContainsString('data-polysource--filter-min-param=""', $html);
-        self::assertStringContainsString('data-polysource--filter-max-param="50"', $html);
-        self::assertStringContainsString('data-polysource--filter-min-param="200"', $html);
-        self::assertStringContainsString('data-polysource--filter-max-param=""', $html);
+        self::assertStringNotContainsString('polysource--filter#applyQuickRange', $html);
+        self::assertStringNotContainsString('polysource-quick-range', $html);
     }
 
     public function testDatetimeFilterWrapsWithDataController(): void
@@ -238,13 +235,4 @@ final class FormThemeRenderingTest extends TestCase
         self::fail('Could not locate symfony/twig-bridge under any expected vendor path');
     }
 
-    private static function assertStringContainsStringCount(int $expected, string $needle, string $haystack): void
-    {
-        $count = substr_count($haystack, $needle);
-        self::assertSame(
-            $expected,
-            $count,
-            \sprintf('Expected %d occurrences of "%s" in rendered output, found %d', $expected, $needle, $count),
-        );
-    }
 }

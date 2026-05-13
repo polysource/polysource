@@ -4,5 +4,3 @@ polysource:
             heading: 'Filtres actifs :'
             remove: 'Retirer ce filtre'
             clear_all: 'Tout effacer'
-        quick_ranges:
-            label: 'Plages rapides'

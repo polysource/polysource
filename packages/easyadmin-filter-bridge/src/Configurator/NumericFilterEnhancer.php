@@ -15,10 +15,9 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 /**
  * Swap EasyAdmin's built-in `NumericFilter` formType for our enhanced one.
  *
- * Defaults are conservative (step=0, quick_ranges=[]) so the bridge
- * install is non-breaking. Host apps opt in per resource by passing
- * `formTypeOptions(['step' => 0.01, 'quick_ranges' => [...]])` in
- * their `configureFilters()`.
+ * Defaults are conservative (step=0) so the bridge install is
+ * non-breaking. Host apps opt in per resource by passing
+ * `formTypeOptions(['step' => 0.01])` in their `configureFilters()`.
  *
  * @see \EasyCorp\Bundle\EasyAdminBundle\Factory\FilterFactory::create()
  */

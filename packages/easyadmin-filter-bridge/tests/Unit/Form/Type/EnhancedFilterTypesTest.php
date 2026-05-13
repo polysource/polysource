@@ -82,36 +82,13 @@ final class EnhancedFilterTypesTest extends TestCase
         self::assertSame('polysource_enhanced_numeric_filter', (new EnhancedNumericFilterType())->getBlockPrefix());
     }
 
-    public function testEnhancedNumericFilterTypeStepAndQuickRangesDefaults(): void
+    public function testEnhancedNumericFilterTypeStepDefault(): void
     {
         $resolver = new OptionsResolver();
         (new EnhancedNumericFilterType())->configureOptions($resolver);
 
         $options = $resolver->resolve();
         self::assertSame(0, $options['step']);
-        self::assertSame([], $options['quick_ranges']);
-    }
-
-    public function testEnhancedNumericFilterTypeAcceptsCustomQuickRanges(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedNumericFilterType())->configureOptions($resolver);
-
-        $ranges = [
-            ['label' => '<100', 'min' => null, 'max' => 100],
-            ['label' => '100-1000', 'min' => 100, 'max' => 1000],
-        ];
-        $options = $resolver->resolve(['quick_ranges' => $ranges]);
-        self::assertSame($ranges, $options['quick_ranges']);
-    }
-
-    public function testEnhancedNumericFilterTypeRejectsQuickRangesWithoutLabel(): void
-    {
-        $resolver = new OptionsResolver();
-        (new EnhancedNumericFilterType())->configureOptions($resolver);
-
-        $this->expectException(InvalidArgumentException::class);
-        $resolver->resolve(['quick_ranges' => [['min' => 0, 'max' => 10]]]);
     }
 
     public function testEnhancedNumericFilterTypeRejectsNegativeStep(): void
@@ -123,16 +100,15 @@ final class EnhancedFilterTypesTest extends TestCase
         $resolver->resolve(['step' => -1]);
     }
 
-    public function testEnhancedNumericFilterTypeBuildViewExposesStepAndQuickRanges(): void
+    public function testEnhancedNumericFilterTypeBuildViewExposesStep(): void
     {
         $view = new FormView();
         (new EnhancedNumericFilterType())->buildView(
             $view,
             $this->stubForm(),
-            ['step' => 0.01, 'quick_ranges' => [['label' => '<100']]],
+            ['step' => 0.01],
         );
         self::assertSame(0.01, $view->vars['step']);
-        self::assertSame([['label' => '<100']], $view->vars['quick_ranges']);
     }
 
     public function testEnhancedDateTimeFilterTypeBlockPrefix(): void
