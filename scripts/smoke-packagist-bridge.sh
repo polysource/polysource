@@ -135,14 +135,16 @@ run_in_container '
 '
 
 echo
-echo "=== [5/6] Routes auto-register (regression guard for v0.5.4 fix) ==="
-echo "    a fresh install must show the 8 polysource routes WITHOUT host action"
+echo "=== [5/6] Routes auto-register WITH controllers (v0.5.4 + v0.5.6 guards) ==="
+echo "    a fresh install must show 8 polysource routes AND each must have a _controller default"
 run_in_container '
-    # Without the v0.5.4 Bundle::boot() auto-import, hosts had to
-    # manually add `@PolysourceEasyAdminFilterBridge/config/routes.php`
-    # to config/routes.yaml — silently breaking every helper URL.
-    # Guard the regression here: 8 polysource_* routes MUST appear
-    # in debug:router on a fresh install with no manual import.
+    # v0.5.4 introduced the Bundle::boot() auto-route loader.
+    # v0.5.6 fixed a CRITICAL follow-up: the v0.5.4 loader registered
+    # routes WITHOUT a `_controller` default — `debug:router` listed
+    # them but every request 404'\''d because Symfony had nothing to
+    # invoke. Two-part regression guard:
+    #   (a) >= 8 polysource routes in debug:router
+    #   (b) every polysource route has _controller default
     count=$(php bin/console debug:router 2>&1 | grep -c "^ *polysource_")
     if [ "$count" -lt 8 ]; then
         echo "FAIL: only $count polysource routes registered, expected >= 8."
@@ -150,7 +152,18 @@ run_in_container '
         php bin/console debug:router 2>&1 | grep polysource_ || true
         exit 1
     fi
-    echo "OK: $count polysource routes auto-registered (v0.5.4 regression guarded)"
+    echo "OK: $count polysource routes auto-registered (v0.5.4 guarded)"
+
+    missing_controller=$(php bin/console debug:router --show-controllers 2>&1 \
+        | grep "^ *polysource_" \
+        | grep -vc "Polysource\\\\EasyAdminFilterBridge\\\\Controller" || true)
+    if [ "$missing_controller" -gt 0 ]; then
+        echo "FAIL: $missing_controller polysource routes have no _controller default."
+        echo "      v0.5.6 AttributeRouteControllerLoader must be in use."
+        php bin/console debug:router --show-controllers 2>&1 | grep "^ *polysource_" || true
+        exit 1
+    fi
+    echo "OK: every polysource route has a Polysource\\EasyAdminFilterBridge\\Controller default (v0.5.6 guarded)"
 '
 
 echo
