@@ -32,6 +32,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -226,6 +227,16 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // "active filters?" probe and the "clear filters URL" CTA.
         $container
             ->register(EmptyStateExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // QuickFilterRowExtension (v0.4.0) — `polysource_quick_filter_row(...)`.
+        // Renders a tiny GET form per column header that submits to
+        // the current URL preserving every other query param (other
+        // filters, sort, page). Server-side baseline; no JS.
+        $container
+            ->register(QuickFilterRowExtension::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
