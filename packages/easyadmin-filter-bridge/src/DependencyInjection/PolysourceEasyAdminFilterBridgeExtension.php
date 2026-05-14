@@ -30,6 +30,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
@@ -215,6 +216,16 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // filter slices preserving the existing query.
         $container
             ->register(CellFilterMenuExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // EmptyStateExtension (v0.4.0) — Twig helpers for the
+        // empty-state design system. Autowires RequestStack to
+        // read the current `?filters[...]` slice for the
+        // "active filters?" probe and the "clear filters URL" CTA.
+        $container
+            ->register(EmptyStateExtension::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
