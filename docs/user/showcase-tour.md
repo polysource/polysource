@@ -293,29 +293,65 @@ column with its neighbour. Order persists on the user's
 drag-and-drop layer their own Stimulus controller on top of the
 same persistence backend.
 
-## 27 · Backend-only v0.5.0 features (no screenshot — they're API surfaces)
+## 27 · Recently viewed records widget — `polysource/filter` (v0.5.0 #6)
 
-Three v0.5.0 features ship behind API surfaces hosts integrate
-in their own controllers / templates and have no canonical
-screenshot to capture:
+![Recently viewed orders widget on the home dashboard](./screenshots/27-recently-viewed-widget.png)
 
-- **Toast notifications** (v0.5.0 #4) —
-  `polysource_toasts()` rendered top-right; the screenshot would
-  be empty when no flash message is active. Captured indirectly
-  through bulk-action workflows.
-- **Bulk action history** (v0.5.0 #8) —
-  `BulkActionHistoryService::record()` / `recentForResource()`.
-  Append-only audit log; admins query it via a host-specific
-  endpoint (the showcase doesn't render the log itself).
-- **Recently viewed records** (v0.5.0 #6) —
-  `RecentRecordsService::recordView()` /
-  `recentForCurrentUser()`. The OrderCrudController detail/edit
-  actions upsert the MRU list; hosts surface it in a sidebar or
-  command palette.
-- **Filter-aware export + matching count** (v0.5.0 #9) —
-  the export CSV / XLSX buttons in #21 already exercise the
-  filter-aware export. The `MatchingCountController` JSON
-  endpoint is a programmatic API; no rendered UI to capture.
+A "Recently viewed orders" card on the home dashboard listing
+the current user's MRU records. Powered by
+`RecentRecordsService::recentForCurrentUser('orders', 8)` —
+each detail / edit view of an order upserts the
+`(user, "orders", recordId)` triplet in
+`polysource_recent_records` via `RecentRecordsService::recordView()`
+(wired in `OrderCrudController::detail()` + `edit()`). Seeded
+by `RecentRecordsStory` so a fresh fixtures load shows 8 entries
+out of the box.
+
+## 28 · Bulk action history audit log — `polysource/filter` (v0.5.0 #8)
+
+![Bulk action history admin page — 40 entries across 4 resources](./screenshots/28-bulk-action-history.png)
+
+A read-only EA CrudController over the
+`polysource_bulk_action_history` table. Every bulk action the
+admin runs (e.g. "Mark as cancelled" on the Orders index) writes
+a row here via `BulkActionHistoryService::record()` with
+`(user, resource, action, count, occurredAt, metadata)`.
+Append-only by design — the storage contract exposes only
+`append()` + `recent()`, so the showcase disables new/edit/delete
+to preserve the audit trail. Hosts wire their own retention via
+a periodic `DELETE WHERE occurred_at < NOW() - INTERVAL '90 days'`
+cron.
+
+## 29 · Matching count preview — `polysource/easyadmin-filter-bridge` (v0.5.0 #9)
+
+![Bulk action preview page showing count + 10 sample rows](./screenshots/29-matching-count-preview.png)
+
+A "Preview bulk count" action on the orders index links to this
+page (`/admin/showcase/matching-count-preview/orders`) which
+calls `UrlFilterApplier` the same way the JSON
+`MatchingCountController` does — and renders the result
+server-side as a page with the count + first 10 sample rows.
+Production hosts wire the JSON endpoint to a modal opened via a
+tiny JS controller; the server-rendered showcase page captures
+the feature without requiring JS modal infrastructure.
+
+## 30 · Toast notifications — `polysource/easyadmin-filter-bridge` (v0.5.0 #4)
+
+![Three Bootstrap alerts pinned top-right after the toast-demo redirect](./screenshots/30-toast-notifications.png)
+
+`polysource_toasts()` reads the Symfony flash bag and renders
+any pending messages as Bootstrap alerts positioned top-right.
+The showcase ships an EA `flash_messages.html.twig` override
+that delegates rendering entirely to `polysource_toasts()`
+(EA's stock template otherwise consumes the bag first and
+the toast helper finds it empty). A `/admin/showcase/toast-demo`
+debug route flashes one of each variant (success / warning /
+info) and redirects to `/admin/order` so the feature is
+deterministically captureable.
+
+In production, the bulk-action handlers
+(`OrderCrudController::bulkMarkCancelled`) emit the success
+flash that lands here automatically.
 
 ## Regenerate this tour
 
