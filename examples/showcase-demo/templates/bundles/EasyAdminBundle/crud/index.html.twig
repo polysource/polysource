@@ -80,6 +80,31 @@
 
     {{ parent() }}
 
+    {# v0.5.0 #3 — Compact density CSS. EA emits its own
+       `<table class="table datagrid">` markup in `parent()` above
+       — we can't splice the helper's `table-sm` class into the
+       element from outside the parent block. Instead we emit a
+       small CSS block that REPLICATES Bootstrap's `.table-sm`
+       rules onto EA's `.datagrid` class when ?density=compact is
+       active. Pure server-side per ADR-027 — no JS shipped.
+
+       Bootstrap's `.table-sm` is just smaller cell padding +
+       slightly tighter font size — see
+       https://getbootstrap.com/docs/5.3/content/tables/#small-tables
+
+       The data-polysource-density attribute on <body> below is
+       the canonical hook hosts (and tests) read to verify the
+       active density without relying on the `.table-sm` class
+       (which Bootstrap reserves for <table> elements the host
+       owns directly).
+    #}
+    {% if 'compact' == polysource_row_density_current() %}
+        <style>
+            table.datagrid { font-size: 0.875rem; }
+            table.datagrid > :not(caption) > * > * { padding: 0.25rem 0.25rem; }
+        </style>
+    {% endif %}
+
     {# v0.5.0 #5 — Keyboard-shortcut cheat sheet. Native <details>
        collapsed by default; the user opens via the <summary>. The
        actual key bindings are a host-side concern (no Stimulus

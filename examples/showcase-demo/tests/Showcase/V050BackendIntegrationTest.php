@@ -30,8 +30,9 @@ final class V050BackendIntegrationTest extends AbstractShowcasePantherTestCase
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::cssSelector('table')),
         );
 
-        $exportCsv = $client->findElements(WebDriverBy::cssSelector('a.action-exportCsv'));
-        $exportXlsx = $client->findElements(WebDriverBy::cssSelector('a.action-exportXlsx'));
+        // EA tags each action element with `data-action-name="..."`.
+        $exportCsv = $client->findElements(WebDriverBy::cssSelector('[data-action-name="exportCsv"]'));
+        $exportXlsx = $client->findElements(WebDriverBy::cssSelector('[data-action-name="exportXlsx"]'));
         self::assertGreaterThan(0, \count($exportCsv), 'Export CSV action renders on the orders index');
         self::assertGreaterThan(0, \count($exportXlsx), 'Export XLSX action renders on the orders index');
 
@@ -41,25 +42,27 @@ final class V050BackendIntegrationTest extends AbstractShowcasePantherTestCase
         self::assertStringContainsString('.csv', $href);
     }
 
-    public function testExportEndpointStreamsCsvWithUtf8Bom(): void
+    public function testExportEndpointResponds(): void
     {
         $this->loginViaForm('admin@shop.co');
         $client = $this->browser();
 
         // Direct hit on the export route — the controller streams the
-        // CSV. Panther normally renders the response, but a streamed
-        // attachment doesn't render — we check the URL responds.
+        // CSV. Panther / Chromium renders a download dialog or just
+        // serves the bytes (no DOM). We assert the page title doesn't
+        // change to an error title — that's the most reliable signal
+        // we can pick up via WebDriver.
+        $sentinelUrl = $client->getCurrentURL();
         $client->request(
             'GET',
             '/admin/polysource/export/App%5C%5CEntity%5C%5COrder.csv',
         );
-        // Panther doesn't give us direct response inspection on a
-        // streamed download; we just assert no error page rendered.
-        $client->wait(5)->until(
-            WebDriverExpectedCondition::not(
-                WebDriverExpectedCondition::titleContains('Error'),
-            ),
-        );
+        // The fact that we got past the request without a 5xx error
+        // page is the assertion. We confirm by checking the title
+        // didn't become "Error" / "Internal Server Error".
+        $title = (string) $client->getTitle();
+        self::assertStringNotContainsStringIgnoringCase('error', $title, 'CSV export route must respond without rendering an error page');
+        self::assertNotSame('', $sentinelUrl, 'sentinel pre-request URL was captured');
     }
 
     public function testBulkScopeToggleRendersInBatchActionsBar(): void

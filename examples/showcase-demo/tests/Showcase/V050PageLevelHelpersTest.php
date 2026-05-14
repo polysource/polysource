@@ -48,20 +48,42 @@ final class V050PageLevelHelpersTest extends AbstractShowcasePantherTestCase
         );
     }
 
-    public function testCompactDensityAppliesTableSmClass(): void
+    public function testCompactDensityAppliesTighterCellPadding(): void
     {
         $this->loginViaForm('admin@shop.co');
         $client = $this->browser();
-        $client->request('GET', '/admin/order?density=compact');
 
+        // Capture the cell padding rendered at default (normal) density.
+        $client->request('GET', '/admin/order');
         $client->wait(8)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::cssSelector('table'),
-            ),
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::cssSelector('table.datagrid tbody td')),
+        );
+        $normalPadding = (string) $client->executeScript(
+            'return getComputedStyle(document.querySelector("table.datagrid tbody td")).paddingTop;',
+            [],
         );
 
-        $tableClass = (string) $client->findElement(WebDriverBy::cssSelector('table.table'))->getAttribute('class');
-        self::assertStringContainsString('table-sm', $tableClass, '?density=compact must add table-sm to <table>');
+        // Now visit ?density=compact and capture again. The bridge's
+        // helper output a <style> block that overrides EA's default
+        // padding with a tighter value (Bootstrap's .table-sm rule).
+        // Pure server-side per ADR-027 — no JS toggles the density.
+        $client->request('GET', '/admin/order?density=compact');
+        $client->wait(8)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::cssSelector('table.datagrid tbody td')),
+        );
+        $compactPadding = (string) $client->executeScript(
+            'return getComputedStyle(document.querySelector("table.datagrid tbody td")).paddingTop;',
+            [],
+        );
+
+        // Comparing pixel-precise values is brittle; what matters is
+        // that compact density yields STRICTLY tighter padding than
+        // normal. Bootstrap defaults to ~8px; compact target is ~4px.
+        $normalPx = (float) $normalPadding;
+        $compactPx = (float) $compactPadding;
+        self::assertGreaterThan(0, $normalPx, 'normal density renders some top padding');
+        self::assertGreaterThan(0, $compactPx, 'compact density renders some top padding');
+        self::assertLessThan($normalPx, $compactPx, '?density=compact must produce tighter padding than default');
     }
 
     public function testKeyboardShortcutsCheatSheetRendersAsDetailsElement(): void
