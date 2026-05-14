@@ -33,6 +33,7 @@
         "league/flysystem-memory": "^3.0",
         "meilisearch/meilisearch-php": "^1.0",
         "nyholm/psr7": "^1.8",
+        "openspout/openspout": "^4.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",

@@ -143,6 +143,44 @@ final class SavedViewController
         return $this->redirectToReferrer($request);
     }
 
+    /**
+     * Mark/unmark the target view as the current user's personal
+     * default for its resource. Toggles the flag — if the view is
+     * already the user's default, this clears it; otherwise it sets
+     * it (and clears the flag on every other personal-default view
+     * the same user owns for the same resource).
+     *
+     * The semantics distinguish *personal* default (this endpoint —
+     * any authenticated user can set their own) from *role* default
+     * (admin-configured, written to storage directly via fixtures or
+     * the admin UI). Role defaults have a non-null `roleAsDefault`
+     * and are left untouched by this endpoint.
+     *
+     * @since 0.3.0
+     */
+    #[Route('/admin/saved-views/{id}/default', name: 'polysource_saved_view_toggle_default', methods: ['POST'])]
+    public function toggleDefault(string $id, Request $request): RedirectResponse
+    {
+        $view = $this->service->load($id);
+        if (null === $view) {
+            throw new AccessDeniedHttpException('You are not authorized to mark this view as default.');
+        }
+
+        try {
+            if ($view->isDefault && null === $view->roleAsDefault) {
+                $this->service->unmarkAsDefault($id);
+                $this->flash($request, 'success', 'View unmarked as default.');
+            } else {
+                $this->service->markAsDefault($id);
+                $this->flash($request, 'success', 'View marked as default.');
+            }
+        } catch (SavedViewAccessDeniedException) {
+            throw new AccessDeniedHttpException('You are not authorized to mark this view as default.');
+        }
+
+        return $this->redirectToReferrer($request);
+    }
+
     private function redirectToReferrer(Request $request): RedirectResponse
     {
         $referrer = (string) $request->headers->get('referer', '/admin');

@@ -35,3 +35,7 @@ polysource:
         delete:
             label: 'Supprimer la vue "%name%"'
             confirm: 'Supprimer la vue "%name%" ? Action irréversible.'
+
+        default:
+            mark: 'Définir "%name%" comme ma vue par défaut'
+            unmark: 'Retirer "%name%" de mes vues par défaut'

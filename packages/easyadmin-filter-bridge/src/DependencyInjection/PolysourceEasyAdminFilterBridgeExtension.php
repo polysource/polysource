@@ -13,11 +13,13 @@ use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\SavedViewApplySubscriber;
+use Polysource\EasyAdminFilterBridge\Export\Exporter;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -28,6 +30,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -196,6 +199,14 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             ->setAutoconfigured(true)
         ;
 
+        // RowClassExtension — Twig function `polysource_row_class(...)`
+        // exposing a property-to-CSS-class map for table row colouring.
+        // Stateless: no constructor args, autoconfigured as a twig.extension.
+        $container
+            ->register(RowClassExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
         // Filter tree builder + Twig function — consumed by
         // `crud/includes/_filters_modal.html.twig` to inject the
         // groups/tabs JSON tree on `#modal-filters` so the
@@ -248,6 +259,59 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
                 ->register(SavedViewApplySubscriber::class)
                 ->setAutoconfigured(true)
                 ->setAutowired(true)
+            ;
+        }
+
+        // Exporter — stateless streaming CSV/XLSX writer (v0.3.0).
+        // Always registered (no deps beyond php standard lib). The XLSX
+        // backend self-gates on openspout availability at runtime.
+        $container
+            ->register(Exporter::class)
+            ->setAutowired(true)
+            ->setPublic(true)
+        ;
+
+        // ExportController — GET /admin/polysource/export/{resource}.{format}
+        // (v0.3.0). Gated on DoctrineBundle being loaded (it needs an
+        // EntityManager). Hosts without Doctrine get no route.
+        $bundlesForExport = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && \is_array($bundlesForExport)
+            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+        ) {
+            $container
+                ->register(ExportController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+        }
+
+        // ColumnPreferenceController — POST /admin/polysource/column-preferences/{resource}
+        // (v0.3.0). Gated on the SAME conditions as the filter
+        // package's service registration: the class exists, the
+        // DoctrineBundle is loaded, the SecurityBundle is loaded.
+        // Without those the upstream service isn't registered and
+        // autowiring the controller would crash DI compile.
+        $bundles = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        $hasDoctrineBundle = \is_array($bundles) && \array_key_exists('DoctrineBundle', $bundles);
+        $hasSecurity = \is_array($bundles) && \array_key_exists('SecurityBundle', $bundles);
+        if (
+            class_exists(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
+            && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
             ;
         }
     }

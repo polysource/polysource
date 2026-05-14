@@ -375,8 +375,88 @@
        returns an empty string and the wrapper div stays
        harmlessly empty. #}
     {% if ea is defined and ea.crud is not null %}
-        <div class="ea-filter-saved-views-bar">
+        <div class="ea-filter-saved-views-bar d-flex flex-wrap gap-2 align-items-center mb-2">
             {{ saved_views_dropdown(ea.crud.entityFqcn) }}
+
+            {# Column-visibility toggle (v0.3.0).
+               Renders a dropdown with one checkbox per column. Submitting
+               POSTs to /admin/polysource/column-preferences/{resource}.
+
+               The column list is computed from the first entity's fields
+               (EA exposes the per-row FieldDto collection). If no entities
+               are visible (empty table) the dropdown is omitted — without
+               an entity row the field list isn't reachable.
+
+               The dropdown is gracefully hidden by CSS when the bridge's
+               ColumnPreferenceController isn't wired (no DoctrineBundle /
+               no SecurityBundle) — the controller's route returns 404,
+               and the dropdown wouldn't be useful anyway. Hosts in that
+               state see no UI clutter. #}
+            {% if entities is defined and entities|length > 0 %}
+                {% set polysource_first_entity = entities|first %}
+                {% set polysource_resource_key = ea.crud.entityFqcn %}
+                {% set polysource_hidden = polysource_hidden_columns(polysource_resource_key) %}
+
+                <div class="dropdown ea-column-visibility">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            type="button"
+                            id="polysource-column-visibility-toggle"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false">
+                        {# Unicode glyph instead of an EA-shipped icon —
+                           EA's icon set varies across versions and
+                           doesn't reliably ship `internal:columns`. The
+                           character is decorative; the label provides
+                           the screen-reader-readable text. #}
+                        <span aria-hidden="true">⊞</span>
+                        {{ 'polysource.columns.toggle'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+                        {% if polysource_hidden|length > 0 %}
+                            <span class="badge bg-primary ms-1">{{ polysource_hidden|length }}</span>
+                        {% endif %}
+                    </button>
+                    <form method="post"
+                          action="{{ path('polysource_column_preferences_update', {resource: polysource_resource_key}) }}"
+                          class="dropdown-menu p-3 ea-column-visibility__menu"
+                          aria-labelledby="polysource-column-visibility-toggle">
+                        <input type="hidden" name="_token" value="{{ csrf_token('polysource_column_preferences_' ~ polysource_resource_key) }}">
+                        {% for field in polysource_first_entity.fields %}
+                            {% set property = field.property %}
+                            {% set is_hidden = property in polysource_hidden %}
+                            <div class="form-check">
+                                <input type="hidden" name="columns[]" value="{{ property }}">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="visible[]"
+                                       value="{{ property }}"
+                                       id="polysource-col-{{ property }}"
+                                       {% if not is_hidden %}checked{% endif %}>
+                                <label class="form-check-label" for="polysource-col-{{ property }}">
+                                    {{ field.label|default(property|humanize) }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                        <div class="d-flex justify-content-end gap-2 mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                {{ 'polysource.columns.apply'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {# Server-rendered CSS that hides cells for each property
+                   in the user's hidden list. EA emits `[data-column="X"]`
+                   on every <th> and <td>, so a single selector per
+                   hidden column blanks the entire column without
+                   touching EA's table iteration. #}
+                {% if polysource_hidden|length > 0 %}
+                    <style>
+                        {% for property in polysource_hidden %}
+                        [data-column="{{ property|e('css') }}"] { display: none !important; }
+                        {% endfor %}
+                    </style>
+                {% endif %}
+            {% endif %}
         </div>
     {% endif %}
 

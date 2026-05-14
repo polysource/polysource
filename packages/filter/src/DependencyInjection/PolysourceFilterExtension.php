@@ -104,6 +104,13 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                             'prefix' => 'Polysource\\Filter\\SavedView\\Storage\\Doctrine',
                             'alias' => 'PolysourceFilterSavedView',
                         ],
+                        'PolysourceFilterColumnPreference' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/ColumnPreference/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\ColumnPreference\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterColumnPreference',
+                        ],
                     ],
                 ],
             ]);
@@ -269,6 +276,54 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 // setAutowired stays false so missing services
                 // don't fail DI compilation.
                 $extensionDef->setArguments([null, null, null, null]);
+            }
+        }
+
+        // ColumnPreference wiring (v0.3.0, parallel to SavedView).
+        //
+        // Gated on the same DoctrineBundle + SecurityBundle pair: the
+        // service needs an EntityManager to persist + a TokenStorage
+        // to resolve the current user.
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\Filter\ColumnPreference\Storage\DoctrineColumnPreferenceStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\ColumnPreference\Storage\ColumnPreferenceStorageInterface::class,
+                \Polysource\Filter\ColumnPreference\Storage\DoctrineColumnPreferenceStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // ColumnPreferenceExtension — Twig functions
+        // `polysource_column_hidden(...)` and `polysource_hidden_columns(...)`.
+        // Same nullable-service pattern as SavedViewExtension: the
+        // extension is always registered when TwigBundle is loaded so
+        // templates parse on bridge-alone installs; the service is
+        // null when storage isn't wired, in which case the functions
+        // return safe defaults (false / []).
+        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+            $extensionDef = $container
+                ->register(\Polysource\Filter\ColumnPreference\Twig\ColumnPreferenceExtension::class)
+                ->addTag('twig.extension')
+            ;
+            if (
+                interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+                && $hasDoctrineBundle
+                && $hasSecurity
+            ) {
+                $extensionDef->setAutowired(true);
+            } else {
+                $extensionDef->setArguments([null]);
             }
         }
     }
