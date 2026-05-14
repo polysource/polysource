@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Order;
+use Doctrine\Persistence\ManagerRegistry;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
+use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -24,9 +28,29 @@ use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use Polysource\EasyAdminFilterBridge\Bridge\Polysource;
 use Polysource\EasyAdminFilterBridge\Filter\BetweenDateFilter;
 use Polysource\EasyAdminFilterBridge\Filter\NotNullFilter;
+use Polysource\Filter\BulkActionHistory\BulkActionHistoryService;
+use Polysource\Filter\RecentRecords\RecentRecordsService;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Uid\Uuid;
 
 final class OrderCrudController extends AbstractCrudController
 {
+    /**
+     * Both services are optional — the showcase always provides them,
+     * but a host who installs only `polysource/easyadmin-filter-bridge`
+     * without Doctrine + Security gets null. The detail/edit hooks
+     * silently skip when null so the controller works in either setup.
+     *
+     * @since 0.5.1 (showcase wiring)
+     */
+    public function __construct(
+        private readonly ?RecentRecordsService $recentRecords = null,
+        private readonly ?BulkActionHistoryService $bulkHistory = null,
+        private readonly ?ManagerRegistry $registry = null,
+    ) {
+    }
+
     private const STATUS_CHOICES = [
         'Cart' => Order::STATUS_CART,
         'Paid' => Order::STATUS_PAID,
@@ -55,6 +79,39 @@ final class OrderCrudController extends AbstractCrudController
 
     public function configureActions(Actions $actions): Actions
     {
+        // v0.3.0 #12 — Export action. Links to the bridge's
+        // `polysource_export` route, scoped to the Order resource.
+        // The link carries the current ?filters[...] slice so the
+        // export honours what the user is looking at
+        // (since v0.5.0 — UrlFilterApplier).
+        $exportCsv = Action::new('exportCsv', 'Export CSV', 'fa fa-file-csv')
+            ->linkToRoute('polysource_export', [
+                'resource' => str_replace('\\', '\\\\', Order::class),
+                'format' => 'csv',
+            ])
+            ->setCssClass('btn-sm btn-outline-secondary')
+            ->createAsGlobalAction()
+        ;
+        $exportXlsx = Action::new('exportXlsx', 'Export XLSX', 'fa fa-file-excel')
+            ->linkToRoute('polysource_export', [
+                'resource' => str_replace('\\', '\\\\', Order::class),
+                'format' => 'xlsx',
+            ])
+            ->setCssClass('btn-sm btn-outline-secondary')
+            ->createAsGlobalAction()
+        ;
+
+        // v0.5.0 #8 — Bulk action with history tracking. "Mark
+        // selected as cancelled" demonstrates the history audit
+        // trail: each invocation records a BulkActionEntry that
+        // admins can later inspect via `BulkActionHistoryService`.
+        $bulkCancel = Action::new('bulkMarkCancelled', 'Mark as cancelled', 'fa fa-ban')
+            ->linkToCrudAction('bulkMarkCancelled')
+            ->setCssClass('btn-sm btn-outline-danger')
+            ->addCssClass('action-bulk')
+            ->createAsBatchAction()
+        ;
+
         // Hard-delete disabled — Refund rows reference Order via a
         // non-nullable, non-cascading FK; deleting an order that has
         // even one refund crashes. The right business action is to
@@ -63,9 +120,102 @@ final class OrderCrudController extends AbstractCrudController
         // workflow-bridge transition buttons expose on the detail page.
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
+            ->add(Crud::PAGE_INDEX, $exportCsv)
+            ->add(Crud::PAGE_INDEX, $exportXlsx)
+            ->addBatchAction($bulkCancel)
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
             ->disable(Action::DELETE)
             ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::EDIT]);
+    }
+
+    /**
+     * v0.5.0 #8 — Bulk action handler. Marks the selected orders as
+     * cancelled and records the action in the audit log via
+     * `BulkActionHistoryService::record()`.
+     *
+     * Cross-page scope (v0.4.0 #19): the controller reads the
+     * `bulk_scope` form field to decide between "selected only" or
+     * "every row matching the current filter slice". The latter
+     * uses the same `?filters[...]` URL parser that powers the
+     * filter-aware export (v0.5.0 #9).
+     */
+    #[AdminRoute('/bulk-mark-cancelled', 'bulk_mark_cancelled')]
+    public function bulkMarkCancelled(AdminContext $context, Request $request): Response
+    {
+        $selected = $request->request->all('batchActionEntityIds');
+        $scope = (string) $request->request->get('bulk_scope', 'selected');
+
+        // For this showcase demo we cancel ONLY the explicit selection
+        // — production hosts wire the `all_matching` branch via
+        // `UrlFilterApplier` + EA's QueryBuilder. Keeping the showcase
+        // path simple so the audit-trail integration stays the focus.
+        $em = $this->registry?->getManagerForClass(Order::class);
+        if (null === $em) {
+            throw $this->createNotFoundException('Doctrine not wired.');
+        }
+        $count = 0;
+        foreach ($selected as $id) {
+            $order = $em->find(Order::class, $id);
+            if (null === $order) {
+                continue;
+            }
+            $order->setStatus(Order::STATUS_CANCELLED);
+            ++$count;
+        }
+        $em->flush();
+
+        $this->bulkHistory?->record(
+            id: Uuid::v7()->toRfc4122(),
+            resourceName: 'orders',
+            actionName: 'mark_cancelled',
+            affectedCount: $count,
+            metadata: [
+                'scope' => $scope,
+                'targetIds' => array_values($selected),
+            ],
+        );
+
+        $this->addFlash('success', \sprintf('Marked %d orders as cancelled.', $count));
+
+        return $this->redirect($context->getReferrer() ?? '/admin');
+    }
+
+    /**
+     * v0.5.0 #6 — Recently viewed records. Each time the user opens
+     * the detail page of an order, the service upserts the
+     * (user, "orders", reference) triplet with the current timestamp.
+     * A "Recently viewed" widget on the dashboard / index can then
+     * call `RecentRecordsService::recentForCurrentUser('orders')`
+     * to render the list most-recent-first.
+     */
+    public function detail(AdminContext $context): KeyValueStore|Response
+    {
+        $this->trackRecentView($context);
+
+        return parent::detail($context);
+    }
+
+    public function edit(AdminContext $context): KeyValueStore|Response
+    {
+        $this->trackRecentView($context);
+
+        return parent::edit($context);
+    }
+
+    private function trackRecentView(AdminContext $context): void
+    {
+        if (null === $this->recentRecords) {
+            return;
+        }
+        $order = $context->getEntity()->getInstance();
+        if (!$order instanceof Order) {
+            return;
+        }
+        $this->recentRecords->recordView(
+            resourceName: 'orders',
+            recordId: (string) $order->getId(),
+            label: \sprintf('%s — %s', $order->getReference(), $order->getCustomer()?->getEmail() ?? 'no customer'),
+        );
     }
 
     public function configureFields(string $pageName): iterable

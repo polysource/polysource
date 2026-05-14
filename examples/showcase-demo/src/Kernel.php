@@ -36,6 +36,18 @@ final class Kernel extends BaseKernel
                     $this->projectDir . '/templates/polysource',
                     'Polysource',
                 ]);
+
+                // Showcase EA index override (Sprint A+B of v0.5.0 gap
+                // closure). The bridge's DI extension prepends its own
+                // `Resources/views/` to the @EasyAdmin namespace —
+                // putting it AT THE HEAD of the chain. Host paths added
+                // via the `templates/bundles/EasyAdminBundle/` convention
+                // are appended AFTER, so they lose every lookup.
+                // prependPath() at index 0 makes our override win.
+                $loader->addMethodCall('prependPath', [
+                    $this->projectDir . '/templates/bundles/EasyAdminBundle',
+                    'EasyAdmin',
+                ]);
             }
         });
     }

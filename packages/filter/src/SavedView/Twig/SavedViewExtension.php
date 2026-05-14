@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\SavedView\Twig;
 
+use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -79,7 +80,28 @@ final class SavedViewExtension extends AbstractExtension
                 'polysource_team_scope_supported',
                 $this->teamScopeSupported(...),
             ),
+            new TwigFunction(
+                'polysource_active_saved_view',
+                $this->activeSavedView(...),
+            ),
         ];
+    }
+
+    /**
+     * Resolve the SavedView active for the given resource — honours
+     * `?view=<id>`, user personal default, then role default
+     * (delegates to {@see SavedViewService::defaultFor}).
+     *
+     * Returns `null` when no view applies OR when the service isn't
+     * wired (host without Doctrine + Security bundles) — templates
+     * that depend on the active view (e.g. column widths) gracefully
+     * degrade to the host's defaults.
+     *
+     * @since 0.5.1
+     */
+    public function activeSavedView(string $resourceName): ?SavedView
+    {
+        return $this->service?->defaultFor($resourceName);
     }
 
     /**
