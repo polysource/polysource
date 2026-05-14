@@ -91,19 +91,19 @@ echo "  Workdir: $SMOKE_DIR"
 echo "=================================================="
 
 echo
-echo "=== [1/5] Bootstrap vanilla Symfony 7.4 skeleton ==="
+echo "=== [1/6] Bootstrap vanilla Symfony 7.4 skeleton ==="
 run_in_container '
     composer create-project symfony/skeleton:^7.4 . --no-interaction --no-progress 2>&1 | tail -3
 '
 
 echo
-echo "=== [2/5] composer require easycorp/easyadmin-bundle (the host stack) ==="
+echo "=== [2/6] composer require easycorp/easyadmin-bundle (the host stack) ==="
 run_in_container '
     composer require easycorp/easyadmin-bundle:^5.0 --no-interaction --no-progress 2>&1 | tail -3
 '
 
 echo
-echo "=== [3/5] composer require polysource/easyadmin-filter-bridge ALONE ==="
+echo "=== [3/6] composer require polysource/easyadmin-filter-bridge ALONE ==="
 echo "    (no symfony-bundle, no manual polysource/filter — bridge pulls filter transitively)"
 run_in_container "
     composer require 'polysource/easyadmin-filter-bridge:${VERSION_CONSTRAINT}' --no-interaction --no-progress 2>&1 | tail -10
@@ -123,7 +123,7 @@ run_in_container "
 "
 
 echo
-echo "=== [4/5] Both bundles auto-registered + cache:clear succeeds ==="
+echo "=== [4/6] Both bundles auto-registered + cache:clear succeeds ==="
 run_in_container '
     grep -q "PolysourceFilterBundle" config/bundles.php \
         || { echo "FAIL: PolysourceFilterBundle missing"; exit 1; }
@@ -135,7 +135,26 @@ run_in_container '
 '
 
 echo
-echo "=== [5/5] lint:twig on bridge templates — B2 regression guard ==="
+echo "=== [5/6] Routes auto-register (regression guard for v0.5.4 fix) ==="
+echo "    a fresh install must show the 8 polysource routes WITHOUT host action"
+run_in_container '
+    # Without the v0.5.4 Bundle::boot() auto-import, hosts had to
+    # manually add `@PolysourceEasyAdminFilterBridge/config/routes.php`
+    # to config/routes.yaml — silently breaking every helper URL.
+    # Guard the regression here: 8 polysource_* routes MUST appear
+    # in debug:router on a fresh install with no manual import.
+    count=$(php bin/console debug:router 2>&1 | grep -c "^ *polysource_")
+    if [ "$count" -lt 8 ]; then
+        echo "FAIL: only $count polysource routes registered, expected >= 8."
+        echo "      v0.5.4 Bundle::boot() auto-import must be working."
+        php bin/console debug:router 2>&1 | grep polysource_ || true
+        exit 1
+    fi
+    echo "OK: $count polysource routes auto-registered (v0.5.4 regression guarded)"
+'
+
+echo
+echo "=== [6/6] lint:twig on bridge templates — B2 regression guard ==="
 echo "    parses every template the bridge prepends into @EasyAdmin namespace"
 run_in_container '
     # The bridge prepends Resources/views/ into the @EasyAdmin namespace.
