@@ -4,6 +4,141 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] — 2026-05-14
+
+**Backend feature UIs in the showcase.** Closes the gap left by
+v0.5.1's tour stop 27 which claimed 4 backend features had "no
+UI to capture". Each now has a concrete, visible UI in the
+showcase + dedicated screenshot.
+
+### Added — `examples/showcase-demo/`
+
+#### Recently viewed records widget (v0.5.0 #6)
+
+"Recently viewed orders" card on the home dashboard. Fetched via
+a custom Twig function (`app_recently_viewed_orders(limit)`) at
+render time to bypass the `Polysource\Widgets` registry's
+boot-time caching of Dashboard instances (user-scoped widgets
+can't go through the standard pipeline without forking the
+bundle — documented limitation).
+
+#### Bulk action history admin page (v0.5.0 #8)
+
+Read-only EA `CrudController` on `polysource_bulk_action_history`.
+Disables new/edit/delete to preserve the audit trail (append-only
+contract). New `BulkActionHistoryStory` seeds 40 entries across
+4 resources with realistic actor + metadata mix.
+
+#### Matching count preview page (v0.5.0 #9)
+
+`MatchingCountPreviewController` — server-rendered analogue of
+the JSON `MatchingCountController` endpoint. Calls
+`UrlFilterApplier` directly, renders count + 10 sample rows.
+Linked from the Orders index Actions bar ("Preview bulk count").
+
+#### Toast notifications (v0.5.0 #4)
+
+Showcase EA `flash_messages.html.twig` override deferring
+rendering entirely to `polysource_toasts()` (EA's stock template
+otherwise consumes the bag first and the toast helper finds it
+empty — documented mutual exclusivity). New
+`/admin/showcase/toast-demo` debug route for deterministic
+screenshot capture.
+
+### Documentation
+
+- `docs/user/showcase-tour.md` — stops 17-26 split into one
+  dedicated stop per feature (was previously merged sections
+  17-23 without embeds). Plus 4 new stops 27-30 for the
+  backend-feature UIs built in this release.
+- 30/30 screenshots green. 4 new captures (27-30) added.
+
+## [0.5.1] — 2026-05-14
+
+**Showcase + E2E + docs catch-up for v0.3-v0.5.** Closes the gap
+flagged by the maintainer: none of the host-side helpers shipped
+in v0.3, v0.4, v0.5 were wired into the showcase, and the docs /
+screenshots / E2E coverage hadn't caught up.
+
+### Added — `polysource/filter`
+
+#### `polysource_active_saved_view(resourceName)` Twig function
+
+Resolves the currently-active `SavedView` for a resource
+(delegates to `SavedViewService::defaultFor()`, honours
+`?view=<id>` then user / role defaults). Closes the v0.5.0 API
+gap: `polysource_column_width_style()` needed a `SavedView` but
+no template-side helper existed to fetch the active one.
+Graceful null when the service isn't wired.
+
+### Added — `examples/showcase-demo/`
+
+#### Comprehensive showcase EA index override
+
+`templates/bundles/EasyAdminBundle/crud/index.html.twig` —
+single override demonstrating 14+ host-side helpers across v0.3,
+v0.4, v0.5 in their canonical placement:
+
+- `table_head` block — per-`<th>`: reorder ← → buttons (v0.5.0 #1),
+  frozen sticky-left/right (v0.5.0 #2), saved-view column-width
+  style (v0.5.0 #10). Second `<tr>` with per-column quick filter
+  inputs (v0.4.0 #17).
+- `table_body_row` block — `polysource_row_class()` colouring
+  for Order status (v0.3.0 #14), frozen-left/right cells (v0.5.0
+  #2), `polysource_cell_filter_menu()` on status/reference
+  (v0.4.0 #16).
+- `main` block — row density toggle (v0.5.0 #3), filter share
+  button (v0.5.0 #7), toasts (v0.5.0 #4), kbd shortcuts cheat
+  sheet (v0.5.0 #5). Bulk scope toggle inlined (v0.4.0 #19).
+
+#### OrderCrudController v0.5.0 wiring
+
+- Injects `RecentRecordsService`, `BulkActionHistoryService`,
+  `ManagerRegistry` (all nullable for graceful degradation).
+- `detail()` + `edit()` overrides call
+  `RecentRecordsService::recordView()` — every order view
+  upserts the user's MRU list (v0.5.0 #6).
+- `configureActions()` adds Export CSV/XLSX actions (v0.3.0 #12,
+  filter-aware since v0.5.0 #9) + bulk "Mark as cancelled"
+  audit-trail demo (v0.5.0 #8).
+
+### Added — E2E coverage
+
+4 new Panther test files / 14+ scenarios:
+- `V050PageLevelHelpersTest` — density toggle, toasts, kbd
+  shortcuts, share button.
+- `V050TableHelpersTest` — frozen columns, column reorder,
+  quick filter row, row colouring, cell filter menu.
+- `V050BackendIntegrationTest` — export actions, export
+  endpoint, bulk scope toggle, recent records tracking.
+- `V050ColumnVisibilityTest` — retroactive v0.3.0 coverage.
+
+### Documentation + screenshots
+
+- `docs/user/easyadmin-filter-bridge/whats-new.md` — adds
+  "What v0.2.0 → v0.5.0 added on top" section indexing 25
+  features grouped per version.
+- `docs/user/showcase-tour.md` — 7 new tour stops (17-23).
+- `README.md` — Status block updated to v0.5.0 with per-version
+  highlights.
+- **26 screenshots regenerated** (16 refreshed + 10 new for
+  v0.3-v0.5 features). Pipeline fixes: `scrollIntoView` before
+  click, `Kernel::prependPath` for showcase Twig precedence.
+
+### Fixed (EA 5.x compatibility on showcase)
+
+- `OrderCrudController::detail()` / `edit()` signatures —
+  return `KeyValueStore|Response`.
+- `Action::linkToRoute()` — pass array params (not Closure).
+- Custom CRUD action `bulkMarkCancelled` decorated with
+  `#[AdminRoute('/bulk-mark-cancelled', 'bulk_mark_cancelled')]`.
+- Bulk scope toggle inlined in `main` (not the JS-driven
+  `batch_actions` block which is hidden until row selection).
+- Showcase template extends
+  `@PolysourceEasyAdminFilterBridge/crud/index.html.twig`
+  directly (NOT `@EasyAdmin/...` — that would resolve to itself
+  via the new `prependPath` and PHP-infinite-recurse).
+
 ## [0.5.0] — 2026-05-14
 
 **Simplification + polish sprint.** Ten new features across
