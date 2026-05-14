@@ -8,6 +8,30 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Column widths on saved views (Task #10)
+
+The `SavedView` value object gains an optional
+`columnWidths: array<string, int>` map — column property →
+pixel width. Stored on a new nullable
+`polysource_saved_views.column_widths_json` column (text,
+JSON-encoded). Backward-compatible: pre-v0.5.0 rows decode as
+an empty map. The model invariant rejects widths for unselected
+columns or non-positive pixel values.
+
+`polysource_column_width_style(view, property)` Twig helper
+emits the `style="width: Xpx"` attribute for `<th>` or `<col>`
+elements. `polysource_column_width(view, property)` returns the
+raw int (or null) for hosts who need branching logic.
+
+Hosts running production setups apply the v0.5.0
+`ALTER TABLE polysource_saved_views ADD column_widths_json TEXT`
+migration; see `docs/user/filter/saved-views.md`. Note: explicit
+column **ordering** was already supported by the existing
+`columns: list<string>` field (lists preserve order) — v0.5.0
+formalises that in the docblock.
+
+See `docs/user/easyadmin-filter-bridge/saved-column-configurations.md`.
+
 #### Toast notifications (Task #4)
 
 `polysource_toasts()` Twig helper. Renders Symfony flash

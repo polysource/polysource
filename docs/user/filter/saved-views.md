@@ -76,11 +76,24 @@ The resulting table:
 | `page_size` | `integer` nullable | Reserved for v0.2 |
 | `is_default` | `bool` | Reserved for v0.2 (per-role default) |
 | `role_as_default` | `string` nullable | Reserved for v0.2 |
+| `column_widths_json` | `text` nullable | Map column → pixel width override (since v0.5.0) |
 
 The columns/sort/page-size/is-default fields are persisted today
 but the dropdown UI only reads `filters`. Hosts experimenting
 with column-visibility persistence can populate them; the v0.1
 contract does not expose them in the dropdown yet.
+
+### v0.5.0 migration (column widths)
+
+The `column_widths_json` column was added in v0.5.0. Existing
+deployments need a one-shot `ALTER TABLE`:
+
+```sql
+ALTER TABLE polysource_saved_views ADD column_widths_json TEXT DEFAULT NULL;
+```
+
+The column is nullable — pre-v0.5.0 rows decode as an empty
+width map and continue to behave like before.
 
 ## 2. Render the dropdown
 

@@ -33,6 +33,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\BulkScopeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnWidthExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
@@ -275,6 +276,14 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         $container
             ->register(RowDensityExtension::class)
             ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // ColumnWidthExtension (v0.5.0) — `polysource_column_width_style(view, property)`
+        // emits the `style="width: Xpx"` attribute from the saved
+        // view's columnWidths map. Stateless.
+        $container
+            ->register(ColumnWidthExtension::class)
             ->setAutoconfigured(true)
         ;
 

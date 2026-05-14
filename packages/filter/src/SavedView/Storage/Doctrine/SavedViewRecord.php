@@ -68,4 +68,14 @@ class SavedViewRecord
 
     #[ORM\Column(name: 'role_as_default', type: 'string', length: 64, nullable: true)]
     public ?string $roleAsDefault = null;
+
+    /**
+     * JSON map<string, int> — column property → pixel width override.
+     * Nullable so existing rows pre-v0.5.0 stay valid without backfill;
+     * the storage decodes a null/missing value as an empty map.
+     *
+     * @since 0.5.0
+     */
+    #[ORM\Column(name: 'column_widths_json', type: 'text', nullable: true)]
+    public ?string $columnWidthsJson = null;
 }
