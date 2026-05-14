@@ -8,6 +8,30 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Filter URL deep linking via short token (Task #7)
+
+New `polysource/filter` slice — short shareable URLs for filter
+slices. `FilterUrlToken` VO + `FilterUrlTokenService` +
+Doctrine/InMemory storage. 12-hex-char tokens (`[a-f0-9]{12}`,
+collision space 2^48) with retry-on-collision (capped at 8
+attempts). New `polysource_filter_url_tokens` table.
+
+Bridge layer:
+- `FilterUrlTokenController` exposes
+  `GET /admin/polysource/f/{token}` — looks up the slice,
+  redirects to `index + ?filters[...]`. Open-redirect-safe
+  (index path must start with `/`).
+- `polysource_filter_short_url(resource)` Twig helper — returns
+  the short URL for the current request's filter slice (empty
+  when no filters).
+- `polysource_filter_share_button(resource, label)` — pre-
+  rendered Bootstrap button with `data-polysource-share-url`
+  attribute for host-side clipboard wiring.
+
+Showcase migration `Version20260515000005`; canonical SQL +
+TTL pruning snippet documented in
+`docs/user/easyadmin-filter-bridge/filter-deep-linking.md`.
+
 #### Recently viewed records (Task #6)
 
 New `polysource/filter` slice — per-user "most recently

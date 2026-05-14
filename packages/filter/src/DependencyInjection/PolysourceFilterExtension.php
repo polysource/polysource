@@ -125,6 +125,13 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                             'prefix' => 'Polysource\\Filter\\RecentRecords\\Storage\\Doctrine',
                             'alias' => 'PolysourceFilterRecentRecords',
                         ],
+                        'PolysourceFilterFilterUrlToken' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/FilterUrlToken/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\FilterUrlToken\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterFilterUrlToken',
+                        ],
                     ],
                 ],
             ]);
@@ -356,6 +363,27 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             );
             $container
                 ->register(\Polysource\Filter\RecentRecords\RecentRecordsService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // FilterUrlToken wiring (v0.5.0). Doctrine-only — no
+        // Security dependency: tokens are user-agnostic by design.
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+        ) {
+            $container
+                ->register(\Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\FilterUrlToken\Storage\FilterUrlTokenStorageInterface::class,
+                \Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
                 ->setAutowired(true)
                 ->setPublic(true)
             ;

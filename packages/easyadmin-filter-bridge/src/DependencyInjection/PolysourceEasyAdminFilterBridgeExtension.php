@@ -15,6 +15,7 @@ use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Controller\ColumnOrderController;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
+use Polysource\EasyAdminFilterBridge\Controller\FilterUrlTokenController;
 use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
@@ -37,6 +38,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnReorderExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnWidthExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterShortUrlExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\KeyboardShortcutsExtension;
@@ -406,6 +408,30 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
                 ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')
+            ;
+        }
+
+        // FilterUrlToken (v0.5.0) — controller + Twig helpers for
+        // short shareable filter URLs. Gated on the filter
+        // package's FilterUrlTokenService being available
+        // (registered when Doctrine is loaded).
+        if (
+            class_exists(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
+            && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && \is_array($bundlesForExport)
+            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+        ) {
+            $container
+                ->register(FilterUrlTokenController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+
+            $container
+                ->register(FilterShortUrlExtension::class)
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
             ;
         }
 
