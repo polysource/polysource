@@ -223,8 +223,6 @@ NULL` emits the bare predicate with no parameter.
 
 ### Out of scope (deferred to v0.6)
 
-- Backfilling CHANGELOG entries for v0.5.3 → v0.5.6 (each shipped
-  as a tagged PR; commit messages remain authoritative for now).
 - `polysource:doctor` console command — would detect schema drift,
   missing Stimulus pipeline, missing migrations and print actionable
   warnings.
@@ -234,6 +232,109 @@ NULL` emits the bare predicate with no parameter.
 - Official `symfony/recipes-contrib` recipes for `polysource/filter`
   and `polysource/easyadmin-filter-bridge` (today both use Flex
   auto-generated recipes, no scaffolded `config/packages/*.yaml`).
+
+## [0.5.6] — 2026-05-14
+
+**Auto-loaded routes had no `_controller` default — every endpoint 404'd despite appearing in `debug:router`.** Continuation of dogfooding round 2 after v0.5.5 shipped.
+
+### Fixed — `polysource/easyadmin-filter-bridge`
+
+#### Auto-loaded routes wire to a real controller (PR #27)
+
+v0.5.4's `BundleRouteLoader` used a bare `AttributeClassLoader` subclass with an empty `configureRoute()` body. Symfony's `AttributeClassLoader` is abstract — `_controller` is set by the concrete subclass's `configureRoute()`. Overriding it as a no-op wiped the only link between the route URL and its controller class.
+
+`debug:router` showed the 8 polysource routes correctly, but `Defaults` was `NONE` for each. Every POST/GET 404'd at the ControllerResolver level.
+
+Fix: swap the bare anonymous subclass for the framework-bundle's `Symfony\Bundle\FrameworkBundle\Routing\AttributeRouteControllerLoader`, which correctly sets `_controller` to `ClassName::method`. One-line change in `BundleRouteLoader::loadAll()`.
+
+### Tests
+
+- `scripts/smoke-packagist-bridge.sh` phase 5 extended — also asserts every polysource route has a `Polysource\EasyAdminFilterBridge\Controller\…` `_controller` default. The future regression of this specific bug class is now caught.
+
+## [0.5.5] — 2026-05-14
+
+**Two more dogfood-round-2 frictions: export route greedy regex + kernel boot crash on missing dotenv + Bootstrap modal silently dead on backslashed DOM ids.**
+
+### Fixed — `polysource/easyadmin-filter-bridge`
+
+#### Export route regex no longer greedy on FQCNs (PR #26)
+
+The `polysource_export` route pattern was `/admin/polysource/export/{resource}.{format}` with `resource: '[A-Za-z0-9_\\:.-]+'`. The `.` in the resource character class made the matcher greedy: it consumed `App\Entity\Item.csv` as a single `resource` segment, leaving nothing for `{format}`. Every export URL 404'd.
+
+Fix: drop `.` from the resource character class. The matcher now splits cleanly at the last dot.
+
+#### `Bundle::boot()` survives missing DEFAULT_URI env var
+
+v0.5.4's `Bundle::boot()` auto-route-importer calls `$container->get('router')`. The Router service constructor reads `framework.router.default_uri` — typically resolved from `DEFAULT_URI` in the host's `.env`. Scripts that boot the kernel WITHOUT loading dotenv (`php -r`, broken CLI tools, some test harnesses) miss this env and `EnvNotFoundException` killed the entire kernel boot.
+
+Fix: wrap router resolution in a try/catch. If it throws for any reason, skip the auto-import gracefully — the manual `routes.yaml` import remains the documented fallback.
+
+### Fixed — `polysource/filter`
+
+#### Saved-view modal DOM ids are CSS-selector-safe
+
+The save-view modal's `id` and trigger's `data-bs-target` interpolated the resource_name (EA entity FQCN) directly: `#polysource-save-view-modal-App\Entity\Item`. Bootstrap resolves modal targets via `document.querySelector(targetAttribute)` — `\E…` is parsed as a CSS escape sequence. The selector became invalid, `querySelector` returned null, and Bootstrap silently never opened the modal.
+
+Affected every host on every entity (all FQCNs have backslashes). Silent UI failure — button click did nothing.
+
+Fix: slug `resource_name` via `replace({'\\': '-'})` before using it in DOM ids. `App\Entity\Item` → `App-Entity-Item`. Valid HTML5 id + valid CSS selector. Applied to `save_modal.html.twig` (4 id refs) and `dropdown.html.twig` (1 data-bs-target ref).
+
+## [0.5.4] — 2026-05-14
+
+**Route auto-import via `Bundle::boot()` — fresh installs no longer need a manual `routes.yaml` step + 3 dogfood-round-2 bugs.**
+
+### Added — `polysource/easyadmin-filter-bridge`
+
+#### `Bundle::boot()` auto-imports the 8 polysource routes (PR #25)
+
+A fresh `composer require polysource/easyadmin-filter-bridge` left every host helper that generates a URL via the router (export, column-prefs, saved-view modal, filter-url-token, matching-count, column-order) silently broken — the documented manual import was easy to miss:
+
+```yaml
+# config/routes.yaml
+polysource_easyadmin_filter_bridge:
+    resource: '@PolysourceEasyAdminFilterBridge/config/routes.php'
+    type: php
+```
+
+The new `BundleRouteLoader` walks the bridge's `#[Route]`-attributed controllers and splices the route collection into the host router at runtime via `Bundle::boot()`. Idempotent: probes `polysource_export` and short-circuits if the host has already imported.
+
+Works on every Symfony version the bridge supports (5.4 LTS through 8.x) — `Bundle::boot()` is universal; `AbstractBundle::configureRoutes()` doesn't exist until Sf 7.5.
+
+### Fixed — `polysource/easyadmin-filter-bridge`
+
+#### Defensive `polysource_route_exists()` gate on the column-visibility dropdown
+
+The bridge's auto-prepended `crud/index.html.twig` called `path('polysource_column_preferences_update', …)` at template render time. Without the routes (pre-v0.5.4 installs without the manual import), EVERY ADMIN INDEX PAGE 500'd with "Unable to generate a URL for the named route".
+
+Fix: gate the dropdown markup on `polysource_route_exists('polysource_column_preferences_update')`. Same pattern as filter's saved-view dropdown already used for the default-toggle route. Belt-and-braces alongside the auto-import: if routes go missing for whatever reason, the page renders without the dropdown rather than 500.
+
+#### `polysource_row_class()` accepts null entity
+
+The v0.3.0 helper declared a non-nullable `object` parameter type, throwing `Argument #1 ($entity) must be of type object, null given` when templates passed a null entity (deleted row, soft-hidden, EA loading state, custom iteration with optional rows). Now returns the `$default` symmetric with the existing null-property branch.
+
+### Tests
+
+- `scripts/smoke-packagist-bridge.sh` extended to 6 phases — phase 5 asserts ≥ 8 polysource routes appear in `debug:router` on a fresh install. The auto-route regression is now guarded loud.
+
+## [0.5.3] — 2026-05-14
+
+**Critical packaging fix — fresh `composer require polysource/easyadmin-filter-bridge:^0.5` install resolved sibling packages to `v0.1.4` instead of `v0.5.x`.**
+
+### Fixed — `polysource/*` (14 packages)
+
+#### Inter-package constraints union both lineages (PR #24)
+
+Every package declared its `polysource/*` dependencies with `"^0.1"`. After tagging v0.5.x across the monorepo, sibling packages had no clue they should resolve to v0.5.x — Composer pulled the latest `v0.1.x` of each dep.
+
+User-facing symptom: every v0.3.0 / v0.4.0 / v0.5.0 / v0.5.1 / v0.5.2 host-side helper that depends on filter package services (ColumnPreferenceService, BulkActionHistoryService, RecentRecordsService, FilterUrlTokenService) was silently absent. Twig functions were undefined at render time; the DI gate quietly skipped controllers.
+
+Fix: switch every inter-polysource constraint to `^0.1 || ^0.5` (union). Hosts staying on v0.1.x keep their old behaviour; hosts moving to v0.5.x get the matching minor of each dep resolved.
+
+Touched 14 `composer.json` files. composer validate clean, CS clean.
+
+### Process guard
+
+New memory entry `feedback_inter_package_constraints.md` — when tagging a new minor lineage of polysource, audit + bump inter-polysource constraints BEFORE pushing the tag. Pre-flight check belongs in the release-pipeline checklist.
 
 ## [0.5.2] — 2026-05-14
 
