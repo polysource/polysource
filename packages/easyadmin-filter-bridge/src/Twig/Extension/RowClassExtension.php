@@ -59,11 +59,17 @@ final class RowClassExtension extends AbstractExtension
      * @param array<string|int|bool, string> $classMap value → css class
      */
     public function rowClass(
-        object $entity,
+        ?object $entity,
         string $property,
         array $classMap,
         string $default = '',
     ): string {
+        // Templates may pass a null entity (deleted row, soft-hidden,
+        // EA loading state). Return the default class rather than
+        // crashing — surfaced 2026-05-14 dogfooding round 2.
+        if (null === $entity) {
+            return $default;
+        }
         $value = $this->readProperty($entity, $property);
         if (null === $value) {
             return $default;
