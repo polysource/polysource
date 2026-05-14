@@ -4,7 +4,26 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.0] — 2026-05-14
+
+**Simplification + polish sprint.** Ten new features across
+`polysource/filter` and `polysource/easyadmin-filter-bridge` —
+all server-side per ADR-027 progressive enhancement, all in
+scope per ADR-028 (filter+listing UX layer for EA, NOT a
+generic admin platform). Pays the technical debt left by v0.3.0
+(unfiltered export) and v0.4.0 (bulk dry-run no count) up front,
+then layers ten ergonomics features that match the listing UX
+of modern admin tools (Looker, Metabase, Airtable).
+
+Five new database tables (`polysource_bulk_action_history`,
+`polysource_recent_records`, `polysource_filter_url_tokens`)
++ two column additions on existing tables
+(`polysource_saved_views.column_widths_json`,
+`polysource_column_preferences.column_order_json`). All
+backward-compatible: new fields are nullable, pre-v0.5.0 rows
+keep behaving like before. Showcase migrations
+`Version20260515000001`-`000005` ship the schema; canonical
+SQL + GDPR cleanup snippets documented per slice.
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
