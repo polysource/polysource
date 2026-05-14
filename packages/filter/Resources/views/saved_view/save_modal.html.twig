@@ -27,8 +27,22 @@
 {%- set _form_action = polysource_route_exists(_create_route)
     ? path(_create_route, {resource: resource_name})
     : '#' -%}
+{# CSS-selector-safe DOM id derived from resource_name.
+
+   EA entity FQCNs (e.g. `App\Entity\Item`) contain backslashes
+   which are valid HTML5 IDs but Bootstrap's data-bs-target
+   resolves them via `document.querySelector('#…')`, where `\E`
+   triggers a CSS escape sequence and the modal fails to open.
+   Surfaced 2026-05-14 by dogfooding round 2.
+
+   `replace({'\\': '-'})` slugs the FQCN into a unique, CSS-safe
+   string. Collisions between FQCNs that differ only in
+   backslash placement are theoretical but extremely unlikely
+   (would require, e.g., `App\Entity\Item` and `App-Entity\Item`
+   coexisting as resource names). #}
+{%- set _safe_resource_id = resource_name|replace({'\\': '-'})|escape('html_attr') -%}
 <div class="modal fade polysource-save-view-modal"
-     id="polysource-save-view-modal-{{ resource_name|escape('html_attr') }}"
+     id="polysource-save-view-modal-{{ _safe_resource_id }}"
      tabindex="-1"
      aria-hidden="true">
     <div class="modal-dialog">
@@ -45,21 +59,21 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label" for="polysource-save-view-name-{{ resource_name|escape('html_attr') }}">
+                        <label class="form-label" for="polysource-save-view-name-{{ _safe_resource_id }}">
                             {{ 'polysource.saved_views.modal.name'|trans({}, 'PolysourceFilter') }}
                         </label>
                         <input type="text"
                                class="form-control"
-                               id="polysource-save-view-name-{{ resource_name|escape('html_attr') }}"
+                               id="polysource-save-view-name-{{ _safe_resource_id }}"
                                name="name"
                                required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="polysource-save-view-scope-{{ resource_name|escape('html_attr') }}">
+                        <label class="form-label" for="polysource-save-view-scope-{{ _safe_resource_id }}">
                             {{ 'polysource.saved_views.modal.scope'|trans({}, 'PolysourceFilter') }}
                         </label>
                         <select class="form-select"
-                                id="polysource-save-view-scope-{{ resource_name|escape('html_attr') }}"
+                                id="polysource-save-view-scope-{{ _safe_resource_id }}"
                                 name="scope">
                             <option value="private" selected>
                                 {{ 'polysource.saved_views.scope.private'|trans({}, 'PolysourceFilter') }}

@@ -117,10 +117,17 @@
 
         <li><hr class="dropdown-divider"></li>
         <li>
+            {# CSS-selector-safe DOM id — matches the `_safe_resource_id`
+               computed in save_modal.html.twig. Bootstrap's
+               `data-bs-target` resolves via `document.querySelector('#…')`,
+               and backslashes in EA entity FQCNs (`App\Entity\Item`)
+               trigger CSS escape sequences (`\E…`) → modal fails to
+               open. Slug to `App-Entity-Item` instead. Surfaced
+               2026-05-14 by dogfooding round 2. #}
             <button type="button"
                     class="dropdown-item polysource-saved-views__save"
                     data-bs-toggle="modal"
-                    data-bs-target="#polysource-save-view-modal-{{ resource_name|escape('html_attr') }}">
+                    data-bs-target="#polysource-save-view-modal-{{ resource_name|replace({'\\': '-'})|escape('html_attr') }}">
                 {{ 'polysource.saved_views.dropdown.save_current'|trans({}, 'PolysourceFilter') }}
             </button>
         </li>
