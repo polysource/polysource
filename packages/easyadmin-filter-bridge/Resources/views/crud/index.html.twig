@@ -144,34 +144,40 @@
              round 3 (friction C4): with 4 tabs declared, the subpanel
              rendered them one per row instead of side-by-side.
 
-             Fix — flex container on the form, `display: contents` on
-             the `<details>` so its `<summary>` + pane act as direct
-             children of the flex parent. The summaries lay out in a
-             horizontal row (via inline-block + auto-wrap); the open
-             tab's pane wraps to a full-width new row via
-             `flex-basis: 100%; order: 999;`. Closed tabs' panes stay
-             hidden via the native `<details>:not([open])` selector.
+             Fix (v0.5.7 / C4-bis) — split the strip from the panes
+             in the template. Tabs render as `<details>` with summary
+             only (no pane inside) inside `.polysource-filter-tabs-strip`.
+             Panes render as siblings of the strip, inside
+             `.polysource-filter-tab-panes`. CSS `:has()` selectors
+             generated per-tab in filters.html.twig pair the i-th
+             tab[open] with the i-th pane.
 
-             Zero JS — works on browsers that support
-             `<details name="">` (mutual exclusion); falls back to
-             "every tab independently expandable" on older browsers
-             with the same horizontal strip layout. ─── */
-        /* Scope the flex layout to the tab strip only — applying it
-           to the whole form would break the col-12 row layout of the
-           ungrouped filters above the tabs. */
+             Why not `display: contents` on the `<details>`? Tried
+             that first — Safari (17 too) treats `<details>` as
+             non-transparent for layout in some cases, so siblings
+             didn't flow as flex children of the strip. The split-
+             container approach is bulletproof: each container is
+             a plain block, every browser agrees on the layout.
+
+             Zero JS — `<details name="polysource-tab">` provides
+             mutual exclusion natively; `:has()` is supported in
+             Safari 15.4+, Chrome 105+, Firefox 121+ (Dec 2023+).
+             Browsers without `:has()` see all panes always visible
+             (graceful degradation: every tab acts as its own
+             accordion). ─── */
         .polysource-filter-tabs-strip {
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-start;
+            align-items: flex-end;
+            column-gap: 1.5rem;
             row-gap: 0;
+            border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+            margin-bottom: 0.5rem;
+        }
+        .polysource-filter-tab-panes {
+            padding: 1rem 0 0 0.25rem;
         }
         details.polysource-filter-tab {
-            /* `display: contents` removes the `<details>` from the
-               layout tree so its children participate in the form's
-               flex layout directly. The native open/close toggle on
-               summary click is HTML-level, not CSS-level, so it
-               keeps working. */
-            display: contents;
             margin: 0;
             border: 0;
             background: transparent;
@@ -226,27 +232,10 @@
             line-height: 1;
             vertical-align: middle;
         }
-        /* Sibling tabs separated horizontally. The `+` selector
-           targets a summary whose `<details>` is preceded by another
-           `<details>` tab — i.e. every tab except the first.
-           Because both `<details>` are `display: contents`, their
-           summaries are flex siblings in the form, so the adjacent
-           selector matches across the (collapsed) details boundary. */
-        details.polysource-filter-tab + details.polysource-filter-tab > summary {
-            margin-left: 1.5rem;
-        }
-        /* Open pane → wraps to its own full-width row below the
-           tab strip via `flex-basis: 100%`. `order: 999` pins it
-           after every summary regardless of source order. Underline
-           strip separating tabs from content sits on the pane's
-           top border. */
-        details.polysource-filter-tab > .polysource-filter-tab__pane {
-            flex: 0 0 100%;
-            order: 999;
-            padding: 1rem 0 0 0.25rem;
-            margin-top: 0.5rem;
-            border-top: 1px solid var(--bs-border-color, #dee2e6);
-        }
+        /* Tab→tab horizontal gap is handled by the strip's
+           `column-gap: 1.5rem` (set above on
+           `.polysource-filter-tabs-strip`). No per-summary margin
+           needed under the split-container layout. */
 
         /* ─── Group sections (subtle, EA-aligned) ─── */
         details.polysource-filter-group {
