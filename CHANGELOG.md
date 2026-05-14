@@ -8,6 +8,19 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Row density toggle (Task #3)
+
+3 Twig helpers — `polysource_row_density_class()`,
+`polysource_row_density_current()`,
+`polysource_row_density_toggle()` — implementing a 2-state
+compact/normal table density toggle. State lives in the URL
+(`?density=X`); the toggle is a pair of anchor links — no JS,
+no cookies. Compact uses Bootstrap's `table-sm`; normal stays
+on the default `.table`. Query-parameter preservation: every
+other slice (filters, sort, page) survives the toggle.
+
+See `docs/user/easyadmin-filter-bridge/row-density.md`.
+
 #### Frozen / sticky columns (Task #2)
 
 `polysource_frozen_column(side, offset)` Twig helper. Pins a

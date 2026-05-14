@@ -38,6 +38,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\RowDensityExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -262,6 +263,17 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // server-side, no JS, no external CSS pipeline. Stateless.
         $container
             ->register(FrozenColumnExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // RowDensityExtension (v0.5.0) — 2-state row density toggle
+        // (compact ↔ normal). Reads `?density=X` from the URL, emits
+        // either `table-sm` or empty for the `<table>` class, and
+        // renders a 2-anchor Bootstrap btn-group toggle preserving
+        // every other query param.
+        $container
+            ->register(RowDensityExtension::class)
+            ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
 
