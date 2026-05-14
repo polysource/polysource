@@ -4,6 +4,133 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-05-14
+
+**The 4 originals.** Four host-facing features hosts can drop in on
+top of an existing EA bridge install:
+
+1. **Column visibility toggle** — per-user, persisted server-side.
+2. **Default saved view per user** — flag one of your own saved views
+   as your personal default; clean URLs auto-apply it.
+3. **Row conditional styles** — Twig helper mapping a property value
+   to a CSS class on the table row.
+4. **Export current view (CSV / XLSX)** — streaming export endpoint.
+   Unfiltered baseline (filter-awareness on the v0.4.0 roadmap).
+
+All features are server-rendered first per ADR-027 (progressive
+enhancement). No new Stimulus controllers shipped by Polysource.
+
+### Added
+
+#### Column visibility toggle (Task #11)
+
+- `polysource/filter::ColumnPreference\Model\ColumnPreference` —
+  immutable VO carrying (ownerId, resourceName, hiddenColumns).
+
+- `ColumnPreferenceStorageInterface` + `DoctrineColumnPreferenceStorage`
+  + `InMemoryColumnPreferenceStorage` — VO↔record pattern mirroring
+  SavedView. Composite primary key (owner_id, resource_name).
+
+- `ColumnPreferenceService` — TokenStorage-resolved owner; silently
+  no-ops for anonymous users.
+
+- `ColumnPreferenceExtension` (Twig) — `polysource_column_hidden(...)`
+  + `polysource_hidden_columns(...)`. Safe defaults for anonymous
+  users and unwired storage.
+
+- `polysource/easyadmin-filter-bridge::ColumnPreferenceController`
+  — POST `/admin/polysource/column-preferences/{resource}` with CSRF.
+
+- EA index template integration: toolbar dropdown + server-rendered
+  `[data-column="X"] { display: none }` CSS for each hidden column.
+
+- Docs: `docs/user/filter/column-preferences.md` (migration SQL +
+  UX flow).
+
+#### Default saved view per user (Task #13)
+
+- `SavedView::withDefault(bool)` immutable updater.
+
+- Constructor invariant relaxed: `isDefault=true` no longer requires
+  `roleAsDefault`. New semantic — *personal* default
+  (`roleAsDefault === null`) vs *role* default
+  (`roleAsDefault !== null`). The reverse invariant
+  (`roleAsDefault` without `isDefault`) stays rejected.
+
+- `SavedViewService::markAsDefault()` / `unmarkAsDefault()` —
+  owner-EDIT-protected. `mark` enforces exclusivity (clears the
+  flag on every other personal-default view of the same user for
+  the same resource); role defaults left alone.
+
+- `SavedViewService::defaultFor()` now returns the personal default
+  on a clean URL (no `?view=` or `?filters[...]`) before falling
+  back to the role default.
+
+- `SavedViewController::toggleDefault` — POST
+  `/admin/saved-views/{id}/default`. Dropdown template renders a
+  ★/☆ button for owner-owned non-role-default views; hidden if the
+  route isn't registered.
+
+- Translations `polysource.saved_views.default.{mark,unmark}` (en + fr).
+
+#### Row conditional styles (Task #14)
+
+- `polysource/easyadmin-filter-bridge::Twig\Extension\RowClassExtension`
+  exposing `polysource_row_class(entity, property, classMap, default)`.
+  Resolves via reflection (try `getX()`, `isX()`, public property).
+  Handles scalars, bools, `BackedEnum` (`->value`), `UnitEnum`
+  (`->name`).
+
+- Docs: `docs/user/easyadmin-filter-bridge/row-styles.md`.
+
+#### Streaming export (Task #12, v0.3.0 baseline)
+
+- `Polysource\EasyAdminFilterBridge\Export\Exporter` — stateless
+  service. `streamCsv()` + `streamXlsx()` return `StreamedResponse`.
+  Memory-bounded.
+
+- `ExportController` — GET `/admin/polysource/export/{resource}.{format}`.
+  Doctrine `toIterable()` in array-hydration mode.
+
+- CSV: PHP built-in `fputcsv`, no external dep, UTF-8 BOM.
+
+- XLSX: requires `openspout/openspout` ^4.0 (declared as `suggest`).
+  Throws actionable `RuntimeException` when missing.
+
+- Value coercion + filename sanitisation (CR/LF/quote/null stripped).
+
+- Docs: `docs/user/easyadmin-filter-bridge/export.md`.
+
+### Known limitations
+
+- **Export is unfiltered in v0.3.0.** Every row of the resource is
+  exported; URL `?filters[...]` slice NOT applied. Filter-aware
+  export is on the v0.4.0 roadmap. Hosts who need it today override
+  `ExportController` and apply the filter slice themselves.
+
+### Migration
+
+For hosts upgrading from `0.2.0` to `0.3.0`:
+
+| Feature | Wiring |
+|---|---|
+| Column visibility | Run the migration in `docs/user/filter/column-preferences.md` (creates the `polysource_column_preferences` table). |
+| Default saved view | No new wiring — toggle appears automatically on owner-owned views in the dropdown. |
+| Row conditional styles | Optional. Host overrides the EA index template to call `polysource_row_class(...)`. |
+| Export CSV | No new wiring beyond loading the bridge routes (same resource as saved-views + column-preferences). |
+| Export XLSX | `composer require openspout/openspout` |
+
+If you've serialised `SavedView` objects with `isDefault=true` and
+no `roleAsDefault` previously, those would have been rejected by
+the old invariant — no migration friction for existing data.
+
+### ADRs
+
+Continues to honour [ADR-027](docs/adr/0027-progressive-enhancement.md)
+(every interactive feature has a server-side baseline) and
+[ADR-028](docs/adr/0028-scope-discipline.md) (Polysource is the
+filter+listing+detail-page UX layer).
+
 ## [0.2.0] — 2026-05-14
 
 **Simplification + progressive enhancement.** Five bridge features
