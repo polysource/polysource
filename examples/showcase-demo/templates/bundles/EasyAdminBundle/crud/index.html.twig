@@ -22,18 +22,42 @@
    records require controller-side wiring (not template) — see the
    showcase's OrderCrudController / dashboard.
 #}
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{# We extend the bridge's index directly via its dedicated namespace
+   `@PolysourceEasyAdminFilterBridge`. The bridge ships its views
+   under that namespace (in addition to splicing them into @EasyAdmin),
+   so we can reference them without infinite-recursion risk.
+
+   Why not `@EasyAdmin/crud/index.html.twig`? Because the showcase's
+   own template path (this file) is prepended to that namespace
+   too, so an extends-from-self-via-@EasyAdmin loops back here →
+   PHP infinite recursion. Use the bridge's own namespace alias to
+   make the inheritance explicit and loop-free.
+
+   `parent()` in `block main` therefore gives us the bridge's
+   saved-views bar + v0.3.0 column-visibility dropdown + v0.4.0
+   chips bar; we wrap our v0.5.0 page-level helpers around it.
+#}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block main %}
     {% set polysource_resource = ea is defined and ea.crud is not null ? ea.crud.entityFqcn : '' %}
     {% set polysource_active_view = polysource_resource ? polysource_active_saved_view(polysource_resource) : null %}
-    {% set polysource_column_list = entities is defined and entities|length > 0
-        ? (entities|filter(e => e.isAccessible)|first.fields|default([])|map(f => f.property)|list)
-        : [] %}
+    {# Compute the ordered list of field properties for the v0.5.0
+       column-reorder helper. `|map` returns a Twig sequence which is
+       iterable but not array_values-coerced — assemble a plain list
+       via a {% for %} accumulator. #}
+    {% set polysource_column_list = [] %}
+    {% if entities is defined and entities|length > 0 %}
+        {% for field in entities|filter(e => e.isAccessible)|first.fields ?? [] %}
+            {% set polysource_column_list = polysource_column_list|merge([field.property]) %}
+        {% endfor %}
+    {% endif %}
 
+    {# v0.5.0 #3 + #7 — Row density toggle + filter share button.
+       Rendered before parent() so they sit at the top of the page
+       above the bridge's saved-views bar. #}
     {% if polysource_resource %}
-        <div class="ea-filter-saved-views-bar d-flex flex-wrap gap-2 align-items-center mb-2">
-            {{ saved_views_dropdown(polysource_resource) }}
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
             {{ polysource_row_density_toggle() }}
             {{ polysource_filter_share_button(polysource_resource) }}
         </div>
@@ -44,10 +68,15 @@
        EA's built-in bulk-action success/warning flashes automatically. #}
     {{ polysource_toasts() }}
 
-    {% set applied_filters = ea.request.query.all['filters']|default([]) %}
-    {{ include('@EasyAdmin/crud/_chips_bar.html.twig', {
-        applied_filters: applied_filters,
-    }) }}
+    {# v0.4.0 #19 — Bulk scope toggle. Inlined here (not the
+       batch_actions block, which is only visible after JS-driven
+       row selection in EA 5) so the toggle is reachable from the
+       page on all index views. #}
+    {% if has_batch_actions ?? false %}
+        <div class="polysource-bulk-scope-bar mb-2">
+            {{ polysource_bulk_scope_toggle('Apply to all matching rows') }}
+        </div>
+    {% endif %}
 
     {{ parent() }}
 
@@ -240,13 +269,3 @@
     {% endif %}
 {% endblock table_body_row %}
 
-{# v0.4.0 #19 — Bulk scope toggle. We append the helper to the
-   batch_actions block (EA's bulk-action toolbar). When the user
-   ticks "Apply to all matching", subsequent bulk POST requests
-   carry the `bulk_scope=all_matching` field — host code reads it
-   and runs the action across the filtered set instead of the
-   visible selection. #}
-{% block batch_actions %}
-    {{ parent() }}
-    {{ polysource_bulk_scope_toggle('Apply to all matching rows') }}
-{% endblock batch_actions %}

@@ -77,3 +77,4 @@ Desktop.ini
 # never published verbatim; per session memory the public repo
 # stays clean of pre-launch sensitivity.
 /.launch-drafts/
+examples/showcase-demo/.claude-flow/

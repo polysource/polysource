@@ -10,6 +10,8 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Config\KeyValueStore;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
@@ -83,7 +85,7 @@ final class OrderCrudController extends AbstractCrudController
         // export honours what the user is looking at
         // (since v0.5.0 — UrlFilterApplier).
         $exportCsv = Action::new('exportCsv', 'Export CSV', 'fa fa-file-csv')
-            ->linkToRoute('polysource_export', static fn (): array => [
+            ->linkToRoute('polysource_export', [
                 'resource' => str_replace('\\', '\\\\', Order::class),
                 'format' => 'csv',
             ])
@@ -91,7 +93,7 @@ final class OrderCrudController extends AbstractCrudController
             ->createAsGlobalAction()
         ;
         $exportXlsx = Action::new('exportXlsx', 'Export XLSX', 'fa fa-file-excel')
-            ->linkToRoute('polysource_export', static fn (): array => [
+            ->linkToRoute('polysource_export', [
                 'resource' => str_replace('\\', '\\\\', Order::class),
                 'format' => 'xlsx',
             ])
@@ -137,6 +139,7 @@ final class OrderCrudController extends AbstractCrudController
      * uses the same `?filters[...]` URL parser that powers the
      * filter-aware export (v0.5.0 #9).
      */
+    #[AdminRoute('/bulk-mark-cancelled', 'bulk_mark_cancelled')]
     public function bulkMarkCancelled(AdminContext $context, Request $request): Response
     {
         $selected = $request->request->all('batchActionEntityIds');
@@ -185,14 +188,14 @@ final class OrderCrudController extends AbstractCrudController
      * call `RecentRecordsService::recentForCurrentUser('orders')`
      * to render the list most-recent-first.
      */
-    public function detail(AdminContext $context)
+    public function detail(AdminContext $context): KeyValueStore|Response
     {
         $this->trackRecentView($context);
 
         return parent::detail($context);
     }
 
-    public function edit(AdminContext $context)
+    public function edit(AdminContext $context): KeyValueStore|Response
     {
         $this->trackRecentView($context);
 

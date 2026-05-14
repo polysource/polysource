@@ -80,6 +80,39 @@ final class ShowcaseScreenshotsCommand extends Command
         // injected by the AJAX `/admin/<resource>/render-filters` call —
         // otherwise we capture the modal mid-load (Bootstrap spinner only).
         ['slug' => '16-filters-modal-tabs', 'path' => '/admin/order', 'wait' => '[data-bs-target="#modal-filters"]', 'click' => '[data-bs-target="#modal-filters"]', 'waitAfterClick' => '#modal-filters.show .filter-field'],
+
+        // === v0.3.0 → v0.5.0 captures ===
+        // Auto-rendered by the bridge + Sprint A/B showcase wiring.
+
+        // v0.3.0 #11 — Column visibility toggle dropdown.
+        ['slug' => '17-column-visibility-toggle', 'path' => '/admin/order', 'wait' => '.ea-column-visibility', 'click' => '.ea-column-visibility .dropdown-toggle', 'waitAfterClick' => '.ea-column-visibility__menu.show', 'assertMinRows' => 5],
+
+        // v0.3.0 #14 — Row class colouring (filter to paid for the table-info class to appear).
+        ['slug' => '18-row-conditional-styles', 'path' => '/admin/order?filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D%5B0%5D=paid', 'wait' => 'tbody tr.table-info', 'assertMinRows' => 1],
+
+        // v0.4.0 #16 — Cell filter menu dropdown.
+        ['slug' => '19-cell-filter-menu', 'path' => '/admin/order', 'wait' => '.polysource-cell-filter-menu', 'click' => '.polysource-cell-filter-menu__trigger', 'waitAfterClick' => '.polysource-cell-filter-menu__list.show', 'assertMinRows' => 5],
+
+        // v0.4.0 #17 — Quick filter row.
+        ['slug' => '20-quick-filter-row', 'path' => '/admin/order', 'wait' => 'tr.polysource-quick-filter-row input', 'assertMinRows' => 5],
+
+        // v0.4.0 #19 — Bulk scope toggle (rendered inline in showcase, not behind row-selection JS).
+        ['slug' => '21-bulk-scope-toggle', 'path' => '/admin/order', 'wait' => 'input[name="bulk_scope"]', 'assertMinRows' => 5],
+
+        // v0.5.0 #2 — Frozen columns (visible in standard view).
+        ['slug' => '22-frozen-columns', 'path' => '/admin/order', 'wait' => 'thead .polysource-frozen-column', 'assertMinRows' => 5],
+
+        // v0.5.0 #3 — Row density compact mode.
+        ['slug' => '23-density-compact', 'path' => '/admin/order?density=compact', 'wait' => 'table.table-sm', 'assertMinRows' => 5],
+
+        // v0.5.0 #5 — Keyboard shortcuts cheat sheet (opened).
+        ['slug' => '24-kbd-shortcuts', 'path' => '/admin/order', 'wait' => '.polysource-keyboard-shortcuts', 'click' => '.polysource-keyboard-shortcuts > summary', 'waitAfterClick' => '.polysource-keyboard-shortcuts__table'],
+
+        // v0.5.0 #7 — Filter share button (visible only with active filters).
+        ['slug' => '25-filter-share-button', 'path' => '/admin/order?filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D%5B0%5D=paid', 'wait' => '.polysource-filter-share', 'assertMinRows' => 1],
+
+        // v0.5.0 #1 — Column reorder buttons (anchor pairs).
+        ['slug' => '26-column-reorder-buttons', 'path' => '/admin/order', 'wait' => '.polysource-column-reorder', 'assertMinRows' => 5],
     ];
 
     /** @var list<string> Warnings collected during the run; printed at the end + return non-zero. */
@@ -287,6 +320,17 @@ final class ShowcaseScreenshotsCommand extends Command
         }
         try {
             $element = $client->findElement(WebDriverBy::cssSelector($page['click']));
+            // Scroll the target into view before clicking — Chromium
+            // refuses to click on elements outside the viewport with
+            // "element click intercepted" errors. Captures like the
+            // keyboard-shortcut cheat sheet (rendered at the bottom
+            // of the page) need this.
+            $client->executeScript(
+                'arguments[0].scrollIntoView({behavior: "instant", block: "center"});',
+                [$element],
+            );
+            // Tiny settle so the scroll animation completes before the click.
+            usleep(200_000);
             $element->click();
 
             return true;
