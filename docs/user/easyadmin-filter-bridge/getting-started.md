@@ -157,6 +157,66 @@ and you should already see:
 
 No CRUD code change required.
 
+### 2a. Multi-kernel apps
+
+If your app boots multiple Symfony kernels from one composer
+project (typical "shared backend + per-API gateway" layouts) and
+only one of them loads EasyAdmin, the bridge is **safe to keep
+registered globally** — since v0.5.7, the bundle's
+`Extension::load()`, `prepend()` and `Bundle::boot()` all
+short-circuit on kernels where `EasyAdminBundle` isn't loaded.
+Services are only registered where they can wire.
+
+If your kernel layout uses per-app `bundles.php` files (e.g.
+`apps/<name>/config/bundles.php`), you can still scope the bridge
+to just the EA-aware kernel if you prefer — both styles are
+supported:
+
+```php
+// apps/backend/config/bundles.php  (channel-scoped)
+return [
+    // …
+    Polysource\Filter\PolysourceFilterBundle::class               => ['all' => true],
+    Polysource\EasyAdminFilterBridge\PolysourceEasyAdminFilterBridgeBundle::class => ['all' => true],
+];
+```
+
+### 2b. Multi-tenant route prefixes (e.g. `/{channel}/admin`)
+
+If your host mounts EA under a non-default prefix (typically
+multi-tenant apps where every admin URL is channel-scoped like
+`/{channel}/admin/...`), the bridge's controllers — which
+hard-code `#[Route('/admin/...')]` — must be imported under
+your prefix, not at the bare `/admin/...` root. Otherwise
+generated links (export, matching-count, column preferences,
+filter share, …) would escape the tenant namespace.
+
+**Opt out of auto-registration** and import the routes
+manually under your own prefix:
+
+```yaml
+# config/packages/polysource_easyadmin_filter_bridge.yaml
+polysource_easyadmin_filter_bridge:
+    auto_register_routes: false
+```
+
+```yaml
+# config/routes/polysource.yaml
+polysource_easyadmin_filter_bridge:
+    resource: '@PolysourceEasyAdminFilterBridgeBundle/Resources/config/routes.php'
+    type: php
+    prefix: '/%channel%'   # wherever EA is mounted in your host
+```
+
+After cache clear, `debug:router` should now show:
+
+```
+polysource_export   GET  /{channel}/admin/polysource/export/{resource}.{format}
+```
+
+Single-tenant installs (the common case) need none of this —
+the default `auto_register_routes: true` keeps zero-config working.
+
 ## 3. The 8 enhancers — what they upgrade
 
 The bridge replaces the form type of EA's built-in filters with a

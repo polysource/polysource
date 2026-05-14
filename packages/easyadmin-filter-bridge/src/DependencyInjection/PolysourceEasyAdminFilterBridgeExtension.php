@@ -79,6 +79,17 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             return;
         }
 
+        // Multi-kernel apps register the bridge globally but only
+        // load EasyAdminBundle on one kernel. Splicing our views
+        // into `@EasyAdmin` on a kernel where EA isn't loaded poisons
+        // the @EasyAdmin namespace with templates that reference
+        // EA-only Twig globals (`ea`, …) and crashes lint:twig /
+        // cache:warmup. Short-circuit when EA is absent.
+        // Surfaced 2026-05-14 by dogfooding round 3 (friction C1).
+        if (!\array_key_exists('EasyAdminBundle', $bundles)) {
+            return;
+        }
+
         // 1) Register our form theme so the enhanced widgets render
         //    without any host-side Twig config.
         $container->prependExtensionConfig('twig', [
@@ -103,6 +114,31 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
     public function load(array $configs, ContainerBuilder $container): void
     {
+        // Process bundle config (currently: `auto_register_routes`).
+        // Stored as a container parameter so Bundle::boot() can read
+        // it without having to re-parse the config tree.
+        $config = $this->processConfiguration(new Configuration(), $configs);
+        $container->setParameter(
+            'polysource_easyadmin_filter_bridge.auto_register_routes',
+            (bool) ($config['auto_register_routes'] ?? true),
+        );
+
+        // C1 guard — bridge bootstraps no services on EA-less kernels.
+        // Hosts that register the bundle globally (the Flex recipe
+        // default) on a multi-kernel app would otherwise see DI
+        // autowire fail when non-EA kernels try to compile
+        // `ChipValueFormatter` (type-hints EA's
+        // `AdminContextProviderInterface`). With this guard the
+        // bundle is harmless to load everywhere; services only
+        // appear where they can actually wire.
+        // Surfaced 2026-05-14 by dogfooding round 3.
+        $bundlesForEaGate = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        if (!\is_array($bundlesForEaGate) || !\array_key_exists('EasyAdminBundle', $bundlesForEaGate)) {
+            return;
+        }
+
         $container
             ->register(EnhancedDateTimeFilterType::class)
             ->setAutoconfigured(true)

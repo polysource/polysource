@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
  * `config/routes.yaml`:
  *
  *     polysource_easyadmin_filter_bridge:
- *         resource: '@PolysourceEasyAdminFilterBridge/config/routes.php'
+ *         resource: '@PolysourceEasyAdminFilterBridgeBundle/Resources/config/routes.php'
  *         type: php
  *
  * This wires:

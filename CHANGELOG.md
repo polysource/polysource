@@ -4,6 +4,90 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7] — 2026-05-14
+
+**Multi-kernel + multi-tenant install safety.** Two install-time
+frictions surfaced by dogfooding round 3 (existing client app with
+4 kernels and a `/{channel}/admin` EA mount). The bridge now stays
+out of the way when EA isn't loaded on a kernel, and offers an
+opt-out for hosts mounting EA under a non-default prefix.
+
+### Added — `polysource/easyadmin-filter-bridge`
+
+#### Bundle config: `auto_register_routes` (C2)
+
+New (and so far only) bundle config knob — opt-out for hosts that
+mount EA under a custom URL prefix (typically multi-tenant apps
+with `/{channel}/admin`). The bridge's controllers hard-code
+`#[Route('/admin/...')]`; auto-importing them in a tenant-prefixed
+host would splice routes OUTSIDE the tenant namespace, leaking
+links out of channel scope.
+
+```yaml
+# config/packages/polysource_easyadmin_filter_bridge.yaml
+polysource_easyadmin_filter_bridge:
+    auto_register_routes: false
+```
+
+Then import the routes yourself, mounted wherever you need them:
+
+```yaml
+# config/routes/polysource.yaml
+polysource_easyadmin_filter_bridge:
+    resource: '@PolysourceEasyAdminFilterBridgeBundle/Resources/config/routes.php'
+    type: php
+    prefix: '/%channel%'   # or wherever EA lives in your host
+```
+
+Default `true` — zero-config single-tenant install (the common
+case) is unchanged.
+
+### Fixed — `polysource/easyadmin-filter-bridge`
+
+#### Bridge is a no-op on EA-less kernels (C1)
+
+Multi-kernel Symfony apps register the bundle globally via Flex
+but only load EasyAdmin on one kernel. Previously, non-EA
+kernels would fail to compile DI because `ChipValueFormatter`
+type-hints EA's `AdminContextProviderInterface` unconditionally:
+
+```
+Cannot autowire service "Polysource\EasyAdminFilterBridge\Chip\ChipValueFormatter":
+argument "$adminContextProvider" of method "__construct()"
+references interface "EasyCorp\Bundle\EasyAdminBundle\Provider\AdminContextProviderInterface"
+but no such service exists.
+```
+
+Both `Extension::load()` and `Bundle::boot()` now short-circuit
+when `EasyAdminBundle` isn't in `kernel.bundles`, and `prepend()`
+skips splicing views into `@EasyAdmin`. The bundle is harmless
+to register globally — services only appear where they can
+actually wire.
+
+### Documentation
+
+- `docs/user/easyadmin-filter-bridge/getting-started.md` — new
+  "Multi-kernel apps" + "Multi-tenant route prefixes" sections
+  documenting both install patterns.
+
+### Tests
+
+- `ConfigurationTest` — pins the bundle config shape (default
+  `auto_register_routes: true`, opt-out works, non-bool rejected).
+- `PolysourceEasyAdminFilterBridgeBundleTest` — 4 cases on
+  `Bundle::boot()` route auto-import: EA-kernel default,
+  non-EA kernel, opt-out flag, idempotency probe.
+- `PrependFormThemeTest` — extended with the EA-absent no-op
+  assertion.
+- `BridgeAutoConfigurationTest` — setUp now seeds
+  `kernel.bundles` with EasyAdminBundle so the existing
+  autoconfig assertions still hold under the new C1 guard.
+
+### Out of scope (deferred)
+
+- Backfilling CHANGELOG entries for v0.5.3 → v0.5.6 (each shipped
+  as a tagged PR; commit messages remain authoritative for now).
+
 ## [0.5.2] — 2026-05-14
 
 **Backend feature UIs in the showcase.** Closes the gap left by

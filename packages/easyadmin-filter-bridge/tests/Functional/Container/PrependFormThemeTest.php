@@ -72,6 +72,31 @@ final class PrependFormThemeTest extends TestCase
         );
     }
 
+    /**
+     * C1 guard (v0.5.7) — bridge bootstraps no twig config on
+     * non-EA kernels, so multi-kernel hosts can register the bundle
+     * globally without polluting EA-less kernels' @EasyAdmin
+     * namespace with templates that reference EA-only Twig globals.
+     */
+    public function testPrependIsANoopWhenEasyAdminBundleIsAbsent(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.bundles', [
+            'FrameworkBundle' => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
+            'TwigBundle' => 'Symfony\\Bundle\\TwigBundle\\TwigBundle',
+            // No EasyAdminBundle — e.g. a non-admin kernel in a
+            // multi-kernel app that registers the bridge globally
+            // via Flex.
+        ]);
+
+        (new PolysourceEasyAdminFilterBridgeExtension())->prepend($container);
+
+        self::assertEmpty(
+            $container->getExtensionConfig('twig'),
+            'prepend() must skip the twig config injection when EasyAdminBundle is absent — the bridge is meaningless without EA and must stay invisible on non-EA kernels',
+        );
+    }
+
     public function testFormThemeTemplateFileExists(): void
     {
         $absolute = \dirname(__DIR__, 3) . '/Resources/views/form/polysource_filter_theme.html.twig';
