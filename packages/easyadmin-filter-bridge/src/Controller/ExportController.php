@@ -102,8 +102,19 @@ final class ExportController
      */
     private function iterateEntities(string $entityClass, array $fieldNames, Request $request): iterable
     {
+        // Select each scalar field individually rather than the entity
+        // alias (`select('e')`). Doctrine ORM 2.x has a known
+        // limitation: `toIterable()` + `HYDRATE_ARRAY` + full-entity
+        // select silently yields ZERO rows — the iterator exits
+        // immediately because the array hydrator can't stream
+        // entity objects, only flat scalar rows. ORM 3.x relaxed
+        // this, but we support 2.x. Surfaced 2026-05-14 dogfooding
+        // round 3 (friction C7): export endpoint produced a CSV
+        // with only the header row regardless of how many entities
+        // matched.
+        $select = implode(', ', array_map(static fn (string $f): string => 'e.' . $f, $fieldNames));
         $qb = $this->em->createQueryBuilder()
-            ->select('e')
+            ->select($select)
             ->from($entityClass, 'e')
         ;
 
@@ -118,10 +129,10 @@ final class ExportController
             'e',
         );
 
-        // Doctrine ORM 2.x: ->toIterable() yields one entity at a time.
-        // ORM 3.x: same API. We use the array hydration mode to skip
-        // Symfony entity hydration overhead — we only need scalar
-        // columns for export.
+        // With scalar field selects, ARRAY hydration yields a flat
+        // associative row per record where keys = field names —
+        // exactly what the CSV writer expects. Streaming-safe under
+        // ORM 2.x AND 3.x.
         $query = $qb->getQuery();
         $query->setHydrationMode(\Doctrine\ORM\Query::HYDRATE_ARRAY);
 
@@ -158,9 +169,13 @@ final class ExportController
             throw new NotFoundHttpException(\sprintf('Unknown entity class "%s".', $entityClass));
         }
 
-        if (!$this->em->getMetadataFactory()->hasMetadataFor($entityClass)
-            && !$this->em->getMetadataFactory()->isTransient($entityClass)
-        ) {
+        // Same inverted-boolean trap as MatchingCountController had
+        // (friction C5, 2026-05-14): the old code combined
+        // `!hasMetadataFor && !isTransient` which threw on valid
+        // mapped entities whose metadata wasn't yet loaded in the
+        // current request. `isTransient()` alone is the authoritative
+        // "not mapped" signal regardless of metadata-cache state.
+        if ($this->em->getMetadataFactory()->isTransient($entityClass)) {
             // Doctrine has no mapping for it — refuse rather than crash
             // on getClassMetadata().
             throw new NotFoundHttpException(\sprintf('Entity "%s" is not mapped by Doctrine.', $entityClass));

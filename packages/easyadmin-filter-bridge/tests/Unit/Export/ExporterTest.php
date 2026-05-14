@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Tests\Unit\Export;
 
+use DateTime;
+use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +65,36 @@ final class ExporterTest extends TestCase
         // Skip the BOM + header line
         $lines = explode("\n", trim(substr($body, 3)));
         self::assertSame('plain,,"[""a"",""b""]",active,Active', $lines[1]);
+    }
+
+    #[Test]
+    public function streamCsvFormatsDateTimeAsIso8601(): void
+    {
+        // Friction C8 (v0.5.7) — DateTime values previously fell
+        // through the stringify chain to the empty-string default,
+        // every datetime column came out blank in exports. ISO 8601
+        // (DateTimeInterface::ATOM) is the universal text-sortable
+        // format that Excel + every date library understands.
+        $exporter = new Exporter();
+        $rows = [
+            [
+                'mutable' => new DateTime('2026-03-31 08:52:54', new DateTimeZone('Europe/Paris')),
+                'immutable' => new DateTimeImmutable('2026-04-21 17:37:21', new DateTimeZone('UTC')),
+            ],
+        ];
+
+        $response = $exporter->streamCsv($rows, ['mutable', 'immutable']);
+
+        ob_start();
+        $response->sendContent();
+        $body = (string) ob_get_clean();
+
+        $dataLine = explode("\n", trim(substr($body, 3)))[1];
+        self::assertSame(
+            '2026-03-31T08:52:54+02:00,2026-04-21T17:37:21+00:00',
+            $dataLine,
+            'DateTime + DateTimeImmutable must render as ISO 8601 in CSV — never as empty strings',
+        );
     }
 
     #[Test]

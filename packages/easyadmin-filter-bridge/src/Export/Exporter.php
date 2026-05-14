@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Export;
 
 use BackedEnum;
+use DateTimeInterface;
 use RuntimeException;
 use Stringable;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -55,9 +56,16 @@ final class Exporter
             // BOM so Excel opens UTF-8 CSVs correctly.
             fwrite($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, $headers);
+            // PHP 8.4 deprecated `fputcsv()` without an explicit
+            // `$escape` argument — the default `\\` will change in
+            // PHP 9. We pass `""` (no escape character) so output
+            // is RFC 4180 strict: quote fields containing the
+            // delimiter/quote, no other escaping. Empty $escape is
+            // the modern PHP recommendation. Surfaced 2026-05-14
+            // dogfooding round 3 (friction C6).
+            fputcsv($handle, $headers, ',', '"', '');
             foreach ($rows as $row) {
-                fputcsv($handle, array_map($this->stringify(...), $row));
+                fputcsv($handle, array_map($this->stringify(...), $row), ',', '"', '');
             }
 
             fclose($handle);
@@ -128,6 +136,15 @@ final class Exporter
         }
         if ($value instanceof Stringable) {
             return (string) $value;
+        }
+        if ($value instanceof DateTimeInterface) {
+            // ISO 8601 / RFC 3339 — universal date format, sorts as
+            // text, opens correctly in Excel, parses cleanly with
+            // every modern date library. The bridge previously fell
+            // through to the empty-string default for DateTime
+            // values — every datetime column came out blank.
+            // Surfaced 2026-05-14 dogfooding round 3 (friction C8).
+            return $value->format(DateTimeInterface::ATOM);
         }
         if (\is_array($value)) {
             $json = json_encode($value, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES);
