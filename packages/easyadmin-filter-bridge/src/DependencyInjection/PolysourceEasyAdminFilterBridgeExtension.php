@@ -28,6 +28,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
@@ -204,6 +205,17 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // Stateless: no constructor args, autoconfigured as a twig.extension.
         $container
             ->register(RowClassExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // CellFilterMenuExtension (v0.4.0) — Twig functions
+        // `polysource_cell_filter_menu(...)` and `polysource_cell_filter_url(...)`
+        // for the "filter from cell value" UX. Autowires
+        // RequestStack so it can read the current URL and build
+        // filter slices preserving the existing query.
+        $container
+            ->register(CellFilterMenuExtension::class)
+            ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
 
