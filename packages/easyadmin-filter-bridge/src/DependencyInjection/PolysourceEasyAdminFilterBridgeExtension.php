@@ -28,6 +28,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -193,6 +194,14 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         $container
             ->register(ChipExtension::class)
             ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // RowClassExtension — Twig function `polysource_row_class(...)`
+        // exposing a property-to-CSS-class map for table row colouring.
+        // Stateless: no constructor args, autoconfigured as a twig.extension.
+        $container
+            ->register(RowClassExtension::class)
             ->setAutoconfigured(true)
         ;
 
