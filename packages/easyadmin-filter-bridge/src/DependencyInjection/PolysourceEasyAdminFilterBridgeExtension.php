@@ -39,6 +39,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnWidthExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\KeyboardShortcutsExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowDensityExtension;
@@ -286,6 +287,14 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // view's columnWidths map. Stateless.
         $container
             ->register(ColumnWidthExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // KeyboardShortcutsExtension (v0.5.0) — renders a
+        // server-side cheat sheet of the recommended shortcuts via
+        // `polysource_keyboard_shortcuts_help()`. Stateless.
+        $container
+            ->register(KeyboardShortcutsExtension::class)
             ->setAutoconfigured(true)
         ;
 

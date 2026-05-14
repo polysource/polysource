@@ -8,6 +8,28 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Keyboard shortcuts help cheat sheet (Task #5)
+
+`polysource_keyboard_shortcuts_help()` Twig helper — renders a
+native HTML `<details>` cheat sheet listing the recommended
+shortcuts (j/k navigate rows, `/` focus search, `f` open
+filters, `?` toggle help, Esc close panels, etc.) along with
+their scope. Server-rendered, keyboard-accessible by default.
+
+`polysource_keyboard_shortcuts_list()` returns the canonical
+list as `{key, label, scope}` triplets — useful for hosts who
+render their own help UI or pass the list as JSON to a JS
+controller.
+
+The bundle deliberately does NOT ship a Stimulus controller —
+per ADR-028, keyboard navigation overlaps with browser-level
+accessibility (tab + enter) and hardcoding selectors for
+"focused row" would conflict with host UX choices. A reference
+Stimulus controller stub is documented for hosts who want
+turnkey wiring.
+
+See `docs/user/easyadmin-filter-bridge/keyboard-shortcuts.md`.
+
 #### Bulk action history audit log (Task #8)
 
 New `polysource/filter` slice — append-only audit log for
