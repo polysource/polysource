@@ -28,8 +28,12 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\BulkScopeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -204,6 +208,48 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // Stateless: no constructor args, autoconfigured as a twig.extension.
         $container
             ->register(RowClassExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // CellFilterMenuExtension (v0.4.0) — Twig functions
+        // `polysource_cell_filter_menu(...)` and `polysource_cell_filter_url(...)`
+        // for the "filter from cell value" UX. Autowires
+        // RequestStack so it can read the current URL and build
+        // filter slices preserving the existing query.
+        $container
+            ->register(CellFilterMenuExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // EmptyStateExtension (v0.4.0) — Twig helpers for the
+        // empty-state design system. Autowires RequestStack to
+        // read the current `?filters[...]` slice for the
+        // "active filters?" probe and the "clear filters URL" CTA.
+        $container
+            ->register(EmptyStateExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // QuickFilterRowExtension (v0.4.0) — `polysource_quick_filter_row(...)`.
+        // Renders a tiny GET form per column header that submits to
+        // the current URL preserving every other query param (other
+        // filters, sort, page). Server-side baseline; no JS.
+        $container
+            ->register(QuickFilterRowExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // BulkScopeExtension (v0.4.0) — Twig helpers for cross-page
+        // selection + bulk dry-run. Renders the "apply to all matching"
+        // checkbox + builds the dry-run URL. The host's bulk-action
+        // endpoint reads the `bulk_scope` request body field and
+        // branches on `?dry_run=1` to return a JSON preview.
+        $container
+            ->register(BulkScopeExtension::class)
+            ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
 

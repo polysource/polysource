@@ -4,6 +4,110 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] — 2026-05-14
+
+**Tier 1 game-changers.** Five host-facing UX features inspired by
+the listing ergonomics of modern admin tools (Looker, Metabase,
+Airtable). All ship as composable Twig helpers — hosts integrate
+in their own EA index template overrides; Polysource doesn't
+prescribe layout. Server-rendered first per ADR-027.
+
+### Added
+
+#### Filter from cell value (Task #16)
+
+`polysource_cell_filter_menu(property, value, label)` Twig helper.
+Renders a Bootstrap dropdown next to a cell with three actions:
+
+- "Filter where {label} = this" → adds `?filters[X]=value`
+- "Exclude {label} = this" → `?filters[X][comparison]=!=&[value]=...`
+- "Show only this {label}" → replaces query, keeping only this slice
+
+Each item is a plain `<a href>` — pure server-side, no JS for the
+feature to work. Companion helper `polysource_cell_filter_url(...)`
+exposes the URL builder for hosts that want custom UI.
+
+Stringification: scalars, bools (0/1), `BackedEnum` (`->value`),
+`UnitEnum` (`->name`), Stringable. Empty values produce no menu.
+
+#### Per-column quick filter row (Task #17)
+
+`polysource_quick_filter_row(property, placeholder)` Twig helper.
+Renders a small `<form method="GET">` per column header containing
+an `<input name="filters[X]">` + hidden inputs preserving every
+other query param (other filter slices, sort, page). User types +
+Enter submits → page reloads with the filter slice applied.
+
+Hidden-input dance preserves nested filter shapes
+(`filters[X][value]`, list-style multi-select).
+
+#### Saved column configurations / "perspective" (Task #18)
+
+Documentation-only — `SavedView::columnsJson` (shipped in v0.1.0)
+already persists the user's column selection alongside filters +
+sort. The combined save = the perspective concept. New doc explains
+the wiring pattern + why no parallel "PolysourceColumnConfig"
+entity (ADR-028 scope discipline).
+
+#### Cross-page selection + bulk dry-run (Task #19)
+
+Three Twig helpers shaping the UX vocabulary:
+
+- `polysource_bulk_scope_toggle(label)` — checkbox switching the
+  bulk action from "selected rows on this page" to "all rows
+  matching the current filter slice". Submits via `name="bulk_scope"`.
+- `polysource_bulk_scope_active()` — true when the request carries
+  the flag (use for `checked` state + controller branching).
+- `polysource_bulk_dry_run_url(actionUrl)` — appends `?dry_run=1`.
+  Endpoint contract: returns JSON `{count, samples}` instead of
+  executing.
+
+Polysource doesn't ship the count logic (filter-aware QueryBuilder
+integration deferred to v0.5+). Hosts implement the dry-run
+endpoint per resource.
+
+#### Empty state design system (Task #20)
+
+Three Twig helpers for contextual empty-state UX when a filtered
+listing yields zero results:
+
+- `polysource_has_active_filters()` — distinguishes "no results
+  match your filters" (true) from "no data yet" (false).
+- `polysource_clear_filters_url()` — current page URL with every
+  `filters[...]` / `filter[...]` key stripped (CTA href).
+- `polysource_active_filters_summary()` — flat `list<{property, value}>`
+  description of the applied slice. Handles three URL shapes
+  (scalar, expanded `{value, comparison}`, list/multi-select).
+
+Polysource ships no opinionated layout — hosts compose the message
++ CTAs themselves in their own EA empty-row override.
+
+### Known limitations / deferred to v0.5+
+
+- **Filter-aware export count.** Both the v0.3.0 export endpoint
+  and the v0.4.0 bulk-scope dry-run helper are unfiltered. Hosts
+  who need filter-aware counting / export today override the
+  controllers and apply the filter slice themselves on the
+  QueryBuilder. A generic integration with EA's filter-aware
+  QueryBuilder is on the v0.5+ roadmap.
+
+- **Column width + explicit ordering** on saved column configs.
+  Current `columns_json` is a flat ordered list; per-column width
+  + reordering independent of declaration order land in v0.5+.
+
+### Migration
+
+No host-side wiring beyond loading the bridge routes (same as
+v0.3.0). The new helpers are all Twig-only — hosts opt in by
+calling them in their templates. No new entities, no migrations.
+
+### ADRs
+
+Continues to honour [ADR-027](docs/adr/0027-progressive-enhancement.md)
+(every interactive feature has a server-side baseline) and
+[ADR-028](docs/adr/0028-scope-discipline.md) (Polysource is the
+filter+listing+detail-page UX layer).
+
 ## [0.3.0] — 2026-05-14
 
 **The 4 originals.** Four host-facing features hosts can drop in on
