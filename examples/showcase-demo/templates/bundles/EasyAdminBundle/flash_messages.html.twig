@@ -1,0 +1,18 @@
+{# Showcase EA flash-messages override.
+
+   EA's stock template reads `app.flashes` which consumes the
+   flash bag. The showcase's `crud/index.html.twig` then calls
+   `polysource_toasts()` in `block main` — but the bag is
+   already empty, so the v0.5.0 #4 toast helper renders nothing.
+
+   Empty this template: defer flash rendering entirely to
+   `polysource_toasts()`. Hosts that prefer EA's inline flash UI
+   simply DON'T install this override; they get EA's default
+   rendering and `polysource_toasts()` becomes a no-op (which
+   is fine — `peek_all` semantics would create duplicates).
+
+   Documented gap acknowledged: the helper and EA's flash UI
+   are mutually exclusive. Showcase picks the toast version
+   because the top-right placement demonstrates v0.5.0 #4
+   visually.
+#}

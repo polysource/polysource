@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bulk action preview — ShopCo admin{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h1 class="h3 mb-2">Bulk action preview</h1>
+    <p class="text-muted">
+        Showcase of v0.5.0 #9 — filter-aware
+        <code>MatchingCountController</code>. Renders the count of
+        orders matching the current URL filter slice + a sample of
+        the first 10 rows. The same logic powers a dry-run modal
+        on production hosts; we show it here as a server-rendered
+        page so the feature is visible without JS.
+    </p>
+
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <strong class="me-2">{{ count }}</strong>
+        order{{ count == 1 ? '' : 's' }} would be touched by a bulk action with the current filter slice.
+    </div>
+
+    {% if filters|length > 0 %}
+        <h2 class="h6 mt-4">Active filter slice</h2>
+        <pre class="small bg-light p-2 rounded">{{ filters|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    {% else %}
+        <p class="text-muted small">No filter slice applied — the count above is the full table size.</p>
+    {% endif %}
+
+    <h2 class="h6 mt-4">Sample (first 10 rows)</h2>
+    {% if samples|length == 0 %}
+        <p class="text-muted small">No matching orders.</p>
+    {% else %}
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in samples %}
+                    <tr>
+                        <td>
+                            <a href="/admin/order/{{ order.id }}">
+                                {{ order.reference }}
+                            </a>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ order.status }}</span></td>
+                        <td>{{ order.totalCents / 100 }} €</td>
+                        <td>{{ order.createdAt|date('Y-m-d H:i') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="/admin/order" class="btn btn-outline-secondary btn-sm">
+            ← Back to orders
+        </a>
+    </div>
+</div>
+{% endblock %}

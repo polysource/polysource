@@ -189,7 +189,9 @@ EntityFilter), and four custom filter types
 group filters by domain so the modal stays scannable on resources
 with 15+ filterable columns.
 
-## 17 · Column visibility + saved view defaults — `polysource/easyadmin-filter-bridge` (v0.3.0)
+## 17 · Column visibility toggle — `polysource/easyadmin-filter-bridge` (v0.3.0)
+
+![Column visibility dropdown with one checkbox per field](./screenshots/17-column-visibility-toggle.png)
 
 Each EA index page ships a column-visibility dropdown (the `⊞`
 trigger next to the saved-views chip). Per-user, per-resource
@@ -198,74 +200,158 @@ across sessions. The same dropdown exposes the saved-views star
 (`★`) for setting a personal default that auto-applies on a
 clean URL — distinct from role defaults that admins pre-configure.
 
-## 18 · Streaming export + filter awareness — `polysource/easyadmin-filter-bridge` (v0.3.0 + v0.5.0)
+## 18 · Row conditional styles — `polysource/easyadmin-filter-bridge` (v0.3.0)
 
-On the Orders index, two "Export CSV / XLSX" action buttons
-stream the filtered slice through `polysource_export`. Since
-v0.5.0 the export honours the current `?filters[...]` URL
-parameters — exporting a page filtered to `status=paid`
-exports ONLY paid orders. Memory stays bounded via Doctrine
-`toIterable()` even on 100k-row tables.
-
-## 19 · Row colouring + cell filter menu — `polysource/easyadmin-filter-bridge` (v0.3.0 + v0.4.0)
+![Order rows coloured by status — paid rows highlighted](./screenshots/18-row-conditional-styles.png)
 
 Order rows get coloured by status (`paid` → blue, `cancelled` →
 red, `refunded` → yellow, `delivered` → green) via
-`polysource_row_class()`. A `⋮` icon next to scalar cells on the
-`status` / `reference` columns opens a "Filter where = this /
-Exclude / Show only this" dropdown — server-side anchors, no
-JS required.
+`polysource_row_class()`. The Twig helper takes the entity
+instance + a property + a property-to-class map and emits the
+matching Bootstrap utility class on each `<tr>`.
 
-## 20 · Per-column quick filter row + column reorder — `polysource/easyadmin-filter-bridge` (v0.4.0 + v0.5.0)
+## 19 · Filter from cell value — `polysource/easyadmin-filter-bridge` (v0.4.0)
+
+![Cell filter dropdown opened on a status cell](./screenshots/19-cell-filter-menu.png)
+
+A `⋮` icon next to scalar cells on the `status` / `reference`
+columns opens a "Filter where = this / Exclude / Show only this"
+dropdown — server-side anchors, no JS required. Each item is a
+plain `<a href>` that navigates to the filtered URL.
+
+## 20 · Per-column quick filter row — `polysource/easyadmin-filter-bridge` (v0.4.0)
+
+![Per-column quick filter inputs below the table headers](./screenshots/20-quick-filter-row.png)
 
 A second header row carries one `<input name="filters[X]">` per
-column with Enter-to-submit. Next to each header label, two ← →
-buttons (anchor links to
-`/admin/polysource/column-order/{resource}/move`) reorder
-columns. Both features are pure server-side; hosts who want
-drag-and-drop layer their own Stimulus controller on top of
-the same persistence backend.
+column with Enter-to-submit. The helper renders a tiny
+`<form method="GET">` per column with hidden inputs preserving
+every other query parameter, so the user's existing filter slice,
+sort, page, and search survive the new input.
 
-## 21 · Bulk action history + cross-page scope — `polysource/easyadmin-filter-bridge` (v0.4.0 + v0.5.0)
+## 21 · Cross-page bulk scope toggle — `polysource/easyadmin-filter-bridge` (v0.4.0)
 
-Selecting rows reveals EA's batch-actions toolbar, augmented
-with an "Apply to all matching" toggle (cross-page scope). The
-custom "Mark as cancelled" bulk action records each invocation
-in `polysource_bulk_action_history` with user + count +
-metadata (selected ids + scope). Hosts surface this log via
-`BulkActionHistoryService::recentForResource()` for an audit
-view.
+![Bulk scope toggle pinned above the rows](./screenshots/21-bulk-scope-toggle.png)
 
-## 22 · Density toggle, frozen columns, share URL, toast notifications — v0.5.0 ergonomics
+A small "Apply to all matching rows" toggle sits above the table
+on every bulk-action-enabled index. When ticked, subsequent
+bulk-action POST requests carry `bulk_scope=all_matching` — host
+code reads it and runs the action across the full filtered set
+instead of just the visible selection. The custom "Mark as
+cancelled" bulk action records each invocation in
+`polysource_bulk_action_history` for the audit trail (v0.5.0 #8).
 
-Four UX polish helpers wired into the index header:
+## 22 · Frozen columns + saved-view column widths — `polysource/easyadmin-filter-bridge` (v0.5.0 #2 + #10)
 
-- **Density toggle** — 2-state compact/normal (anchor pair,
-  preserves every other query param).
-- **Frozen columns** — first column + actions column stay
-  visible during horizontal scroll (`position: sticky`, pure
-  CSS, no JS).
-- **Filter share button** — appears only when filters are
-  active; mints a 12-hex token resolving back via
-  `/admin/polysource/f/{token}`. Users copy the link without
-  the URL-length pain of raw `?filters[...]` slices.
-- **Toast notifications** — Bootstrap alerts pinned top-right,
-  reading the Symfony flash bag. The bulk-cancel action's
-  success message lands here automatically.
+![Frozen first column visible during horizontal scroll](./screenshots/22-frozen-columns.png)
 
-## 23 · Recently viewed records + keyboard shortcuts cheat sheet — v0.5.0
+The first visible column AND the actions column stay visible
+during horizontal scroll via CSS `position: sticky` — useful on
+wide listings. The `polysource_column_width_style(view, property)`
+helper applies pixel widths persisted on the active SavedView
+(via `polysource_active_saved_view()`).
 
-Every order detail/edit view upserts a row in
-`polysource_recent_records` via
-`RecentRecordsService::recordView()`. Hosts render the MRU
-list in a sidebar or command palette via
-`recentForCurrentUser('orders', 10)`.
+## 23 · Row density toggle — `polysource/easyadmin-filter-bridge` (v0.5.0 #3)
 
-The footer carries a native `<details>` cheat sheet listing the
-recommended shortcuts (j/k navigate rows, `/` focus search, `?`
-toggle help, Esc close panels, etc.). Bindings are host-side
-via Stimulus; the cheat sheet displays whether or not the
-controller is loaded.
+![Compact density rendering — tighter cell padding](./screenshots/23-density-compact.png)
+
+A 2-state compact / normal toggle (anchor pair, preserves every
+other query param). Compact reduces cell padding via a
+server-side `<style>` block that replicates Bootstrap's
+`.table-sm` rules on EA's `.datagrid` class — pure CSS, no JS
+(ADR-027).
+
+## 24 · Keyboard shortcuts cheat sheet — `polysource/easyadmin-filter-bridge` (v0.5.0 #5)
+
+![Native <details> cheat sheet listing recommended shortcuts](./screenshots/24-kbd-shortcuts.png)
+
+A native `<details>` element at the bottom of every index page,
+collapsed by default. Lists the recommended shortcuts (j/k
+navigate rows, `/` focus search, `?` toggle help, Esc close
+panels, etc.) with `<kbd>` markup. Bindings are host-side via
+Stimulus; the cheat sheet displays whether or not the controller
+is loaded.
+
+## 25 · Filter URL deep linking — `polysource/easyadmin-filter-bridge` (v0.5.0 #7)
+
+![Filter share button rendered only when filters are active](./screenshots/25-filter-share-button.png)
+
+When filters are active, a "Copy share link" button appears in
+the header. The href points at the bridge's
+`/admin/polysource/f/{token}` redirect — a 12-hex token resolving
+back to the full filter slice. Users copy the link without the
+URL-length pain of raw `?filters[...]` slices.
+
+## 26 · Column reordering — `polysource/easyadmin-filter-bridge` (v0.5.0 #1)
+
+![Per-header ← → buttons for column reordering](./screenshots/26-column-reorder-buttons.png)
+
+Next to each column header label, two ← → buttons (anchor links
+to `/admin/polysource/column-order/{resource}/move`) swap the
+column with its neighbour. Order persists on the user's
+`ColumnPreference` record. Pure server-side; hosts who want
+drag-and-drop layer their own Stimulus controller on top of the
+same persistence backend.
+
+## 27 · Recently viewed records widget — `polysource/filter` (v0.5.0 #6)
+
+![Recently viewed orders widget on the home dashboard](./screenshots/27-recently-viewed-widget.png)
+
+A "Recently viewed orders" card on the home dashboard listing
+the current user's MRU records. Powered by
+`RecentRecordsService::recentForCurrentUser('orders', 8)` —
+each detail / edit view of an order upserts the
+`(user, "orders", recordId)` triplet in
+`polysource_recent_records` via `RecentRecordsService::recordView()`
+(wired in `OrderCrudController::detail()` + `edit()`). Seeded
+by `RecentRecordsStory` so a fresh fixtures load shows 8 entries
+out of the box.
+
+## 28 · Bulk action history audit log — `polysource/filter` (v0.5.0 #8)
+
+![Bulk action history admin page — 40 entries across 4 resources](./screenshots/28-bulk-action-history.png)
+
+A read-only EA CrudController over the
+`polysource_bulk_action_history` table. Every bulk action the
+admin runs (e.g. "Mark as cancelled" on the Orders index) writes
+a row here via `BulkActionHistoryService::record()` with
+`(user, resource, action, count, occurredAt, metadata)`.
+Append-only by design — the storage contract exposes only
+`append()` + `recent()`, so the showcase disables new/edit/delete
+to preserve the audit trail. Hosts wire their own retention via
+a periodic `DELETE WHERE occurred_at < NOW() - INTERVAL '90 days'`
+cron.
+
+## 29 · Matching count preview — `polysource/easyadmin-filter-bridge` (v0.5.0 #9)
+
+![Bulk action preview page showing count + 10 sample rows](./screenshots/29-matching-count-preview.png)
+
+A "Preview bulk count" action on the orders index links to this
+page (`/admin/showcase/matching-count-preview/orders`) which
+calls `UrlFilterApplier` the same way the JSON
+`MatchingCountController` does — and renders the result
+server-side as a page with the count + first 10 sample rows.
+Production hosts wire the JSON endpoint to a modal opened via a
+tiny JS controller; the server-rendered showcase page captures
+the feature without requiring JS modal infrastructure.
+
+## 30 · Toast notifications — `polysource/easyadmin-filter-bridge` (v0.5.0 #4)
+
+![Three Bootstrap alerts pinned top-right after the toast-demo redirect](./screenshots/30-toast-notifications.png)
+
+`polysource_toasts()` reads the Symfony flash bag and renders
+any pending messages as Bootstrap alerts positioned top-right.
+The showcase ships an EA `flash_messages.html.twig` override
+that delegates rendering entirely to `polysource_toasts()`
+(EA's stock template otherwise consumes the bag first and
+the toast helper finds it empty). A `/admin/showcase/toast-demo`
+debug route flashes one of each variant (success / warning /
+info) and redirects to `/admin/order` so the feature is
+deterministically captureable.
+
+In production, the bulk-action handlers
+(`OrderCrudController::bulkMarkCancelled`) emit the success
+flash that lands here automatically.
 
 ## Regenerate this tour
 

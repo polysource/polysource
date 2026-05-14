@@ -26,5 +26,33 @@
     {# render_dashboard outputs its own h1 from Dashboard::title.
        We keep the toolbar above it instead of doubling the heading. #}
     {{ render_dashboard('home') }}
+
+    {# v0.5.0 #6 — Recently viewed orders.
+
+       Fetched at render time via `app_recently_viewed_orders()`
+       (custom Twig function backed by `RecentRecordsService`)
+       rather than the Polysource\Widgets pipeline, which caches
+       its Dashboard instances at boot (the recent-records widget
+       depends on the current user — not known at compile time). #}
+    {% set recent_orders = app_recently_viewed_orders(8) %}
+    {% if recent_orders|length > 0 %}
+        <div class="card polysource-widget polysource-widget-list mt-3" id="widget-recently-viewed-orders">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-3 text-muted">Recently viewed orders</h6>
+                <ul class="list-unstyled mb-0">
+                    {% for entry in recent_orders %}
+                        <li class="d-flex align-items-center mb-2">
+                            <a href="/admin/order/{{ entry.recordId }}" class="text-decoration-none">
+                                {{ entry.label ?: entry.recordId }}
+                            </a>
+                            <span class="ms-2 text-muted small">
+                                {{ entry.viewedAt|date('Y-m-d H:i') }}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

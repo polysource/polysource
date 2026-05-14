@@ -63,6 +63,7 @@ final class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(CustomerCrudController::class, 'Customers', 'fa fa-user')->setAction('index');
 
         yield MenuItem::section('Polysource Standalone');
+        yield MenuItem::linkTo(BulkActionHistoryCrudController::class, 'Bulk action history', 'fa fa-history')->setAction('index');
         yield MenuItem::linkToUrl('Failed messages', 'fa fa-bug', '/admin/polysource/failed-messages');
         yield MenuItem::linkToUrl('Login attempts', 'fa fa-key', '/admin/polysource/login-attempts');
         yield MenuItem::linkToUrl('Audit log', 'fa fa-clipboard-list', '/admin/polysource/audit-log');

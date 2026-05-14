@@ -113,6 +113,30 @@ final class ShowcaseScreenshotsCommand extends Command
 
         // v0.5.0 #1 — Column reorder buttons (anchor pairs).
         ['slug' => '26-column-reorder-buttons', 'path' => '/admin/order', 'wait' => '.polysource-column-reorder', 'assertMinRows' => 5],
+
+        // v0.5.0 #6 — Recently viewed orders widget on the home
+        // dashboard. Seeded by RecentRecordsStory so admin's MRU
+        // list has 8 entries on a fresh fixtures load.
+        ['slug' => '27-recently-viewed-widget', 'path' => '/', 'wait' => '#widget-recently-viewed-orders'],
+
+        // v0.5.0 #8 — Bulk action history audit log. CrudController
+        // on the polysource_bulk_action_history table, populated by
+        // BulkActionHistoryStory (40 entries across 4 resources).
+        ['slug' => '28-bulk-action-history', 'path' => '/admin/bulk-action-history', 'wait' => 'tbody tr', 'assertMinRows' => 5],
+
+        // v0.5.0 #9 — Filter-aware matching count preview.
+        // Server-rendered analogue of the JSON
+        // MatchingCountController endpoint — shows count + 10
+        // sample rows for the current filter slice.
+        ['slug' => '29-matching-count-preview', 'path' => '/admin/showcase/matching-count-preview/orders?filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D%5B0%5D=paid', 'wait' => '.alert-info'],
+
+        // v0.5.0 #4 — Toast notifications. The showcase
+        // ToastDemoController flashes 3 messages (success +
+        // warning + info) and redirects to /admin/order, where
+        // `polysource_toasts()` reads + consumes them. The
+        // capture lands on the redirected page with the alerts
+        // visible top-right.
+        ['slug' => '30-toast-notifications', 'path' => '/admin/showcase/toast-demo', 'wait' => '.polysource-toast-container .alert-success', 'assertMinRows' => 5],
     ];
 
     /** @var list<string> Warnings collected during the run; printed at the end + return non-zero. */

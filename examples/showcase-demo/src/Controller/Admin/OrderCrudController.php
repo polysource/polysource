@@ -101,6 +101,17 @@ final class OrderCrudController extends AbstractCrudController
             ->createAsGlobalAction()
         ;
 
+        // v0.5.0 #9 — Preview bulk count. Lands on the showcase
+        // dry-run preview page that calls `UrlFilterApplier` the
+        // same way the JSON `MatchingCountController` does — but
+        // renders the result server-side so the feature is visible
+        // in a screenshot without JS modal wiring.
+        $previewCount = Action::new('previewBulkCount', 'Preview bulk count', 'fa fa-eye')
+            ->linkToRoute('showcase_matching_count_preview_orders')
+            ->setCssClass('btn-sm btn-outline-info')
+            ->createAsGlobalAction()
+        ;
+
         // v0.5.0 #8 — Bulk action with history tracking. "Mark
         // selected as cancelled" demonstrates the history audit
         // trail: each invocation records a BulkActionEntry that
@@ -122,6 +133,7 @@ final class OrderCrudController extends AbstractCrudController
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_INDEX, $exportCsv)
             ->add(Crud::PAGE_INDEX, $exportXlsx)
+            ->add(Crud::PAGE_INDEX, $previewCount)
             ->addBatchAction($bulkCancel)
             ->update(Crud::PAGE_INDEX, Action::EDIT, static fn (Action $a) => $a->setIcon('fa fa-pen'))
             ->disable(Action::DELETE)

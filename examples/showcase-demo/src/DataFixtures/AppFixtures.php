@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Story\AuditEntriesStory;
+use App\Story\BulkActionHistoryStory;
 use App\Story\BulkJobsStory;
 use App\Story\CatalogStory;
 use App\Story\CustomersStory;
 use App\Story\DefaultUsersStory;
 use App\Story\LoginAttemptsStory;
 use App\Story\OrdersStory;
+use App\Story\RecentRecordsStory;
 use App\Story\SavedViewsStory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -29,6 +31,8 @@ final class AppFixtures extends Fixture
         OrdersStory::load();
         LoginAttemptsStory::load();
         AuditEntriesStory::load();
+        BulkActionHistoryStory::load();
+        RecentRecordsStory::load();
         BulkJobsStory::load();
         SavedViewsStory::load();
     }
