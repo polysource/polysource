@@ -14,12 +14,14 @@ use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
+use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\SavedViewApplySubscriber;
 use Polysource\EasyAdminFilterBridge\Export\Exporter;
+use Polysource\EasyAdminFilterBridge\Filter\UrlFilterApplier;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -317,9 +319,13 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             ->setPublic(true)
         ;
 
-        // ExportController — GET /admin/polysource/export/{resource}.{format}
-        // (v0.3.0). Gated on DoctrineBundle being loaded (it needs an
-        // EntityManager). Hosts without Doctrine get no route.
+        // ExportController + MatchingCountController — GET endpoints
+        // gated on DoctrineBundle being loaded (they need an
+        // EntityManager). Hosts without Doctrine get no routes.
+        //
+        // UrlFilterApplier (v0.5.0) is the shared service both
+        // controllers depend on for the `?filters[...]` URL slice
+        // → Doctrine WHERE translation.
         $bundlesForExport = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
@@ -329,7 +335,20 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             && \array_key_exists('DoctrineBundle', $bundlesForExport)
         ) {
             $container
+                ->register(UrlFilterApplier::class)
+                ->setAutowired(true)
+                ->setPublic(false)
+            ;
+
+            $container
                 ->register(ExportController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+
+            $container
+                ->register(MatchingCountController::class)
                 ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')

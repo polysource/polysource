@@ -4,6 +4,38 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — `polysource/easyadmin-filter-bridge`
+
+#### Filter-aware export + bulk dry-run count (Task #9)
+
+`UrlFilterApplier` — a lean translator from the EA `?filters[...]`
+URL slice to Doctrine `WHERE` clauses. Pays the technical debt
+called out in the v0.3.0 and v0.4.0 CHANGELOGs (export was
+unfiltered; bulk dry-run had a URL helper but no count endpoint).
+
+- `ExportController` (GET `/admin/polysource/export/{resource}.{format}`)
+  now applies the URL filter slice before streaming rows. CSV/XLSX
+  exports launched from a filtered listing now export only the
+  matching rows.
+- `MatchingCountController` (GET `/admin/polysource/matching-count/{resource}`)
+  — new JSON endpoint returning `{count, samples}` for bulk dry-run
+  previews. Honours the same URL slice; `?samples=N` controls the
+  preview size (capped at 50).
+
+Supported filter shapes: scalar equality, expanded
+`{value, comparison}` (`=`, `!=`, `<`, `<=`, `>`, `>=`, `between`,
+`like`, `not like`), list-style multi-select (`IN`). Boolean
+strings are coerced to PHP booleans. Properties not mapped on the
+entity are silently dropped — no DQL injection risk.
+
+Coverage limitations vs. EA's full QueryBuilder are documented;
+hosts who need relation joins / FullTextSearch / custom filters
+wire a custom EA Action and call the `Exporter` service directly
+with EA's filter-aware QueryBuilder. See
+`docs/user/easyadmin-filter-bridge/filter-aware-export.md`.
+
 ## [0.4.0] — 2026-05-14
 
 **Tier 1 game-changers.** Five host-facing UX features inspired by
