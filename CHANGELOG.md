@@ -8,6 +8,20 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Frozen / sticky columns (Task #2)
+
+`polysource_frozen_column(side, offset)` Twig helper. Pins a
+table column to the left or right edge of its scroll container
+via CSS `position: sticky`. Pure server-side, no JS, no external
+stylesheet — the helper emits `class="..." style="..."`
+attributes inline. Pinning falls back gracefully under strict CSP
+(table renders without the freeze effect; rules can be lifted to
+a stylesheet — documented). Stacking multiple frozen columns is
+supported via the `offset` argument. Z-index sits at 2: above
+table content, below modals and dropdowns.
+
+See `docs/user/easyadmin-filter-bridge/frozen-columns.md`.
+
 #### Filter-aware export + bulk dry-run count (Task #9)
 
 `UrlFilterApplier` — a lean translator from the EA `?filters[...]`

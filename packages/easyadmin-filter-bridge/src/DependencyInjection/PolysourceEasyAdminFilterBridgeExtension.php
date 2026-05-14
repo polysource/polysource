@@ -35,6 +35,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
@@ -252,6 +253,15 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         $container
             ->register(BulkScopeExtension::class)
             ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // FrozenColumnExtension (v0.5.0) — `polysource_frozen_column(side, offset)`
+        // emits `class="..." style="..."` attributes pinning a table
+        // cell to the left or right edge via `position: sticky`. Pure
+        // server-side, no JS, no external CSS pipeline. Stateless.
+        $container
+            ->register(FrozenColumnExtension::class)
             ->setAutoconfigured(true)
         ;
 
