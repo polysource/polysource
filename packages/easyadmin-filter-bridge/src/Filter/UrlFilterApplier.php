@@ -136,7 +136,12 @@ final class UrlFilterApplier
         mixed $value,
         mixed $value2,
     ): bool {
-        $normalised = match ($comparison) {
+        // Accept comparisons case-insensitively — EA's InFilter emits
+        // upper-case 'IN'/'NOT IN' (via `HiddenType` empty_data) but
+        // hand-written URLs may use lower-case. Normalising here
+        // keeps the match arms small.
+        $cmp = strtolower($comparison);
+        $normalised = match ($cmp) {
             '=', 'eq' => '=',
             '!=', '<>', 'neq' => '!=',
             '<', 'lt' => '<',
@@ -146,11 +151,48 @@ final class UrlFilterApplier
             'between' => 'between',
             'like' => 'like',
             'not like', 'not_like' => 'not like',
+            'in' => 'in',
+            'not in', 'not_in' => 'not in',
+            'is null', 'is_null', 'null' => 'is null',
+            'is not null', 'is_not_null', 'not_null' => 'is not null',
             default => null,
         };
 
         if (null === $normalised) {
             return false;
+        }
+
+        // IS NULL / IS NOT NULL — value is irrelevant (the predicate
+        // is the data). EA's NotNullFilter submits these so the chips
+        // bar and the WHERE clause must both honour them.
+        // Surfaced 2026-05-14 dogfooding round 3 (friction C10).
+        if ('is null' === $normalised || 'is not null' === $normalised) {
+            $op = 'is null' === $normalised ? 'IS NULL' : 'IS NOT NULL';
+            $qb->andWhere(\sprintf('%s %s', $fullProperty, $op));
+
+            return true;
+        }
+
+        // IN / NOT IN — value is an array (EA's InFilter emits
+        // `filters[X][value][]=v1&filters[X][value][]=v2` alongside
+        // `filters[X][comparison]=IN`). Without this branch the
+        // expanded-shape code path silently dropped these filters
+        // (the scalar guard below rejected the array value), so
+        // every IN query returned ALL rows. Surfaced 2026-05-14
+        // dogfooding round 3 (friction C10).
+        if ('in' === $normalised || 'not in' === $normalised) {
+            $values = \is_array($value) ? array_values(array_filter(
+                $value,
+                static fn ($v): bool => \is_scalar($v) && '' !== (string) $v,
+            )) : [];
+            if ([] === $values) {
+                return false;
+            }
+            $op = 'in' === $normalised ? 'IN' : 'NOT IN';
+            $qb->andWhere(\sprintf('%s %s (:%s)', $fullProperty, $op, $paramName));
+            $qb->setParameter($paramName, $values);
+
+            return true;
         }
 
         if ('between' === $normalised) {
