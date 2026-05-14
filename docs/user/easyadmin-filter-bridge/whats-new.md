@@ -246,6 +246,39 @@ visible-but-non-functional UI in hosts without a Stimulus pipeline.
 Each feature has a dedicated doc page under this directory
 (except #6 and #8 which live under `filter/`).
 
+### v0.5.1 → v0.5.7 — Dogfooding-driven hardening (no new features)
+
+Six consecutive patch releases between v0.5.0 and v0.6, each shipped
+within hours of a frictions surfacing on real client integrations.
+No new feature, no breaking change — every release is install/runtime
+polish.
+
+- **v0.5.1** — Showcase + E2E + docs catch-up for v0.3–v0.5.
+- **v0.5.2** — Backend feature UIs in the showcase (the 4 features
+  that previously had "no UI to capture" now have concrete demos).
+- **v0.5.3** — Critical packaging fix: inter-package constraints
+  union (`^0.1 || ^0.5`) so `composer require` resolves siblings
+  to v0.5.x.
+- **v0.5.4** — `Bundle::boot()` auto-imports the 8 polysource routes
+  on every kernel boot. Fresh installs no longer need a manual
+  `routes.yaml` step.
+- **v0.5.5** — Export route regex de-greedied (was eating
+  `Item.csv` as a single segment), `Bundle::boot` survives missing
+  `DEFAULT_URI` env, saved-view modal DOM ids slugged to be CSS-safe
+  (Bootstrap modals silently failed on backslashed FQCNs).
+- **v0.5.6** — Auto-loaded routes now carry their `_controller`
+  default (the v0.5.4 loader registered URLs only — every request
+  404'd at ControllerResolver).
+- **v0.5.7** — 10 fixes in one PR from a deep multi-tenant
+  dogfooding session: bridge no-op on EA-less kernels, opt-out
+  config for non-default EA mounts, saved-view query degrades
+  on stale schema, horizontal filter tab strip, entity resolution
+  on cold metadata cache, `fputcsv()` PHP 8.4 deprecation, export
+  streaming on Doctrine 2.x, DateTime as ISO 8601, redirect
+  fallback for multi-tenant, IN/NOT IN/IS [NOT] NULL DQL applier.
+
+Full per-release detail in [`CHANGELOG.md`](../../../CHANGELOG.md).
+
 ## Honest summary of what's **not** in v0.1
 
 - **No JS for `min_length`, `inline`, `chip_display`, `placeholder`.** The
