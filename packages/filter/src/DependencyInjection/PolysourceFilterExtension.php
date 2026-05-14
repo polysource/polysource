@@ -111,6 +111,13 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                             'prefix' => 'Polysource\\Filter\\ColumnPreference\\Storage\\Doctrine',
                             'alias' => 'PolysourceFilterColumnPreference',
                         ],
+                        'PolysourceFilterBulkActionHistory' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/BulkActionHistory/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\BulkActionHistory\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterBulkActionHistory',
+                        ],
                     ],
                 ],
             ]);
@@ -299,6 +306,28 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             );
             $container
                 ->register(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // BulkActionHistory wiring (v0.5.0).
+        // Same gating as ColumnPreference: needs Doctrine + Security.
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\BulkActionHistory\Storage\BulkActionHistoryStorageInterface::class,
+                \Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\BulkActionHistory\BulkActionHistoryService::class)
                 ->setAutowired(true)
                 ->setPublic(true)
             ;

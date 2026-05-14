@@ -8,6 +8,26 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Bulk action history audit log (Task #8)
+
+New `polysource/filter` slice — append-only audit log for
+bulk actions. `BulkActionEntry` VO + `BulkActionHistoryService`
++ Doctrine/InMemory storage backends. Logs who ran what action
+on how many rows of which resource, with optional free-form
+metadata for action-specific payload. Per-user view
+(`recentForCurrentUser`) for index widgets; admin view
+(`recentForResource`) for all-users audit — caller gates the
+latter behind their own admin firewall.
+
+New `polysource_bulk_action_history` table with indexes on
+`resource_name`, `owner_id`, `occurred_at`. Showcase migration
+`Version20260515000003` ships the schema; canonical SQL
+documented in `docs/user/filter/bulk-action-history.md`.
+
+Rollback is **not** in scope for v0.5.0 — each action knows
+how to undo itself in host-specific terms. Polysource preserves
+the trail; hosts wire the rollback UI on top.
+
 #### Column reordering (Task #1)
 
 Per-user persistent column ordering for the EA index page.
