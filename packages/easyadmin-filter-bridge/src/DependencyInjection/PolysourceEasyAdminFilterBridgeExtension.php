@@ -39,6 +39,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowDensityExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ToastExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -273,6 +274,17 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // every other query param.
         $container
             ->register(RowDensityExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // ToastExtension (v0.5.0) — `polysource_toasts()` renders
+        // Symfony flash messages as Bootstrap-styled alerts pinned
+        // top-right (toast-style placement, alert markup so they
+        // render without JS per ADR-027). Auto-picks up EA's own
+        // bulk-action success/warning flashes.
+        $container
+            ->register(ToastExtension::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;

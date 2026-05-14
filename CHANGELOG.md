@@ -8,6 +8,21 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Toast notifications (Task #4)
+
+`polysource_toasts()` Twig helper. Renders Symfony flash
+messages as Bootstrap `.alert` components positioned top-right
+of the page (toast-like UX, alert markup so they render without
+JS per ADR-027). Maps `success`/`error`/`danger`/`warning`/
+`info`/`notice` flash types to the matching Bootstrap variants;
+unknown types fall back to `alert-info`. XSS-safe: messages are
+HTML-escaped. Auto-discovers EA's own bulk-action flashes — no
+host integration required beyond dropping the helper call into
+the layout. Optional host-side auto-dismiss via the
+`polysource-toast` class hook.
+
+See `docs/user/easyadmin-filter-bridge/toasts.md`.
+
 #### Row density toggle (Task #3)
 
 3 Twig helpers — `polysource_row_density_class()`,
