@@ -29,12 +29,13 @@ final class SavedView
      * @param string                $ownerId        User identifier (string-cast — the host's user model field)
      * @param SavedViewScope        $scope          Visibility level
      * @param FilterCollection      $filters        Persisted criteria
-     * @param list<string>          $columns        Selected columns (empty = host's vanilla default)
+     * @param list<string>          $columns        Selected columns in display order (empty = host's vanilla default)
      * @param array<string, string> $sort           Column → 'asc'|'desc' direction map
      * @param ?int                  $pageSize       Override host's vanilla page size; null keeps the default
      * @param ?string               $teamId         Required when scope = TEAM
      * @param bool                  $isDefault      If true, applied automatically on clean URL — personal default for the owner when roleAsDefault is null, role default for the matching role otherwise
      * @param ?string               $roleAsDefault  Symfony role this view defaults for (optional — null means a personal default of the owner)
+     * @param array<string, int>    $columnWidths   Map column property → pixel width override; columns not in the map render at the host's default width. Keys must be a subset of {@see SavedView::$columns}. Since v0.5.0.
      */
     public function __construct(
         public readonly string $id,
@@ -49,6 +50,7 @@ final class SavedView
         public readonly ?string $teamId = null,
         public readonly bool $isDefault = false,
         public readonly ?string $roleAsDefault = null,
+        public readonly array $columnWidths = [],
     ) {
         if ('' === $id) {
             throw new InvalidArgumentException('SavedView id cannot be empty.');
@@ -101,6 +103,22 @@ final class SavedView
         if (null !== $pageSize && $pageSize <= 0) {
             throw new InvalidArgumentException('SavedView pageSize, when provided, must be positive.');
         }
+
+        // Validate column widths (since v0.5.0). Keys MUST be non-empty
+        // strings declared in `$columns` — widths for columns that
+        // aren't selected are silently meaningless and indicate a host
+        // bug; surface it loud. Values must be positive pixel ints.
+        foreach ($columnWidths as $column => $width) {
+            if (!\is_string($column) || '' === $column) {
+                throw new InvalidArgumentException('SavedView columnWidths keys must be non-empty strings.');
+            }
+            if (!\in_array($column, $columns, true)) {
+                throw new InvalidArgumentException(\sprintf('SavedView columnWidths references column "%s" not in the columns list.', $column));
+            }
+            if (!\is_int($width) || $width <= 0) {
+                throw new InvalidArgumentException(\sprintf('SavedView columnWidths value for "%s" must be a positive int (pixels).', $column));
+            }
+        }
     }
 
     /**
@@ -142,6 +160,7 @@ final class SavedView
             teamId: $this->teamId,
             isDefault: $isDefault,
             roleAsDefault: $isDefault ? $this->roleAsDefault : null,
+            columnWidths: $this->columnWidths,
         );
     }
 }

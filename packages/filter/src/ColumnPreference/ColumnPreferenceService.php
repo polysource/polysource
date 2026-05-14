@@ -73,13 +73,82 @@ final class ColumnPreferenceService
             return;
         }
 
+        // Preserve the existing `orderedColumns` override (since v0.5.0)
+        // — flipping visibility shouldn't lose the user's reorder choice.
+        $existing = $this->storage->find($ownerId, $resourceName);
+        $orderedColumns = null === $existing ? null : $existing->orderedColumns;
+
         $pref = new ColumnPreference(
             ownerId: $ownerId,
             resourceName: $resourceName,
             hiddenColumns: array_values(array_unique($hiddenColumns)),
+            orderedColumns: $orderedColumns,
         );
 
         $this->storage->save($pref);
+    }
+
+    /**
+     * Return the current user's column order override for the
+     * resource, or `null` when none is saved (caller falls back to
+     * the host's default order).
+     *
+     * @return ?list<string>
+     *
+     * @since 0.5.0
+     */
+    public function orderedColumns(string $resourceName): ?array
+    {
+        $pref = $this->findForCurrentUser($resourceName);
+
+        return null === $pref ? null : $pref->orderedColumns;
+    }
+
+    /**
+     * Resolve the host's default column list through the user's
+     * explicit order override (if any). Convenience for
+     * `$service->findForCurrentUser($resource)?->applyOrder($defaults)
+     * ?? $defaults`.
+     *
+     * @param list<string> $defaultColumns
+     *
+     * @return list<string>
+     *
+     * @since 0.5.0
+     */
+    public function applyOrder(string $resourceName, array $defaultColumns): array
+    {
+        $pref = $this->findForCurrentUser($resourceName);
+
+        return null === $pref ? array_values($defaultColumns) : $pref->applyOrder($defaultColumns);
+    }
+
+    /**
+     * Replace the current user's column order for the resource.
+     * No-op for anonymous users. Pass `null` to clear the override.
+     *
+     * @param ?list<string> $orderedColumns
+     *
+     * @since 0.5.0
+     */
+    public function setColumnOrder(string $resourceName, ?array $orderedColumns): void
+    {
+        $ownerId = $this->resolveOwnerId();
+        if (null === $ownerId) {
+            return;
+        }
+
+        $existing = $this->storage->find($ownerId, $resourceName);
+        $hidden = null === $existing ? [] : $existing->hiddenColumns;
+
+        $next = new ColumnPreference(
+            ownerId: $ownerId,
+            resourceName: $resourceName,
+            hiddenColumns: $hidden,
+            orderedColumns: null === $orderedColumns ? null : array_values(array_unique($orderedColumns)),
+        );
+
+        $this->storage->save($next);
     }
 
     /**

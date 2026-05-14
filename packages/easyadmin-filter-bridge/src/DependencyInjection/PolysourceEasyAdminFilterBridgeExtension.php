@@ -13,13 +13,17 @@ use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Controller\ColumnOrderController;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
+use Polysource\EasyAdminFilterBridge\Controller\FilterUrlTokenController;
+use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\SavedViewApplySubscriber;
 use Polysource\EasyAdminFilterBridge\Export\Exporter;
+use Polysource\EasyAdminFilterBridge\Filter\UrlFilterApplier;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -31,10 +35,17 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\BulkScopeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnReorderExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnWidthExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterShortUrlExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\FrozenColumnExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\KeyboardShortcutsExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\QuickFilterRowExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\RowDensityExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ToastExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -253,6 +264,53 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             ->setAutoconfigured(true)
         ;
 
+        // FrozenColumnExtension (v0.5.0) — `polysource_frozen_column(side, offset)`
+        // emits `class="..." style="..."` attributes pinning a table
+        // cell to the left or right edge via `position: sticky`. Pure
+        // server-side, no JS, no external CSS pipeline. Stateless.
+        $container
+            ->register(FrozenColumnExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // RowDensityExtension (v0.5.0) — 2-state row density toggle
+        // (compact ↔ normal). Reads `?density=X` from the URL, emits
+        // either `table-sm` or empty for the `<table>` class, and
+        // renders a 2-anchor Bootstrap btn-group toggle preserving
+        // every other query param.
+        $container
+            ->register(RowDensityExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // ColumnWidthExtension (v0.5.0) — `polysource_column_width_style(view, property)`
+        // emits the `style="width: Xpx"` attribute from the saved
+        // view's columnWidths map. Stateless.
+        $container
+            ->register(ColumnWidthExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // KeyboardShortcutsExtension (v0.5.0) — renders a
+        // server-side cheat sheet of the recommended shortcuts via
+        // `polysource_keyboard_shortcuts_help()`. Stateless.
+        $container
+            ->register(KeyboardShortcutsExtension::class)
+            ->setAutoconfigured(true)
+        ;
+
+        // ToastExtension (v0.5.0) — `polysource_toasts()` renders
+        // Symfony flash messages as Bootstrap-styled alerts pinned
+        // top-right (toast-style placement, alert markup so they
+        // render without JS per ADR-027). Auto-picks up EA's own
+        // bulk-action success/warning flashes.
+        $container
+            ->register(ToastExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
         // Filter tree builder + Twig function — consumed by
         // `crud/includes/_filters_modal.html.twig` to inject the
         // groups/tabs JSON tree on `#modal-filters` so the
@@ -317,9 +375,13 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             ->setPublic(true)
         ;
 
-        // ExportController — GET /admin/polysource/export/{resource}.{format}
-        // (v0.3.0). Gated on DoctrineBundle being loaded (it needs an
-        // EntityManager). Hosts without Doctrine get no route.
+        // ExportController + MatchingCountController — GET endpoints
+        // gated on DoctrineBundle being loaded (they need an
+        // EntityManager). Hosts without Doctrine get no routes.
+        //
+        // UrlFilterApplier (v0.5.0) is the shared service both
+        // controllers depend on for the `?filters[...]` URL slice
+        // → Doctrine WHERE translation.
         $bundlesForExport = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
@@ -329,10 +391,47 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             && \array_key_exists('DoctrineBundle', $bundlesForExport)
         ) {
             $container
+                ->register(UrlFilterApplier::class)
+                ->setAutowired(true)
+                ->setPublic(false)
+            ;
+
+            $container
                 ->register(ExportController::class)
                 ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')
+            ;
+
+            $container
+                ->register(MatchingCountController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+        }
+
+        // FilterUrlToken (v0.5.0) — controller + Twig helpers for
+        // short shareable filter URLs. Gated on the filter
+        // package's FilterUrlTokenService being available
+        // (registered when Doctrine is loaded).
+        if (
+            class_exists(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
+            && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && \is_array($bundlesForExport)
+            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+        ) {
+            $container
+                ->register(FilterUrlTokenController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+
+            $container
+                ->register(FilterShortUrlExtension::class)
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
             ;
         }
 
@@ -355,6 +454,23 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         ) {
             $container
                 ->register(\Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+
+            // ColumnReorderExtension + ColumnOrderController (v0.5.0).
+            // Same gating as ColumnPreferenceController: depend on
+            // ColumnPreferenceService which itself is registered only
+            // when the host has Doctrine + Security bundles.
+            $container
+                ->register(ColumnReorderExtension::class)
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
+            ;
+
+            $container
+                ->register(ColumnOrderController::class)
                 ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')

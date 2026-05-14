@@ -4,6 +4,238 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-05-14
+
+**Simplification + polish sprint.** Ten new features across
+`polysource/filter` and `polysource/easyadmin-filter-bridge` —
+all server-side per ADR-027 progressive enhancement, all in
+scope per ADR-028 (filter+listing UX layer for EA, NOT a
+generic admin platform). Pays the technical debt left by v0.3.0
+(unfiltered export) and v0.4.0 (bulk dry-run no count) up front,
+then layers ten ergonomics features that match the listing UX
+of modern admin tools (Looker, Metabase, Airtable).
+
+Five new database tables (`polysource_bulk_action_history`,
+`polysource_recent_records`, `polysource_filter_url_tokens`)
++ two column additions on existing tables
+(`polysource_saved_views.column_widths_json`,
+`polysource_column_preferences.column_order_json`). All
+backward-compatible: new fields are nullable, pre-v0.5.0 rows
+keep behaving like before. Showcase migrations
+`Version20260515000001`-`000005` ship the schema; canonical
+SQL + GDPR cleanup snippets documented per slice.
+
+### Added — `polysource/easyadmin-filter-bridge`
+
+#### Filter URL deep linking via short token (Task #7)
+
+New `polysource/filter` slice — short shareable URLs for filter
+slices. `FilterUrlToken` VO + `FilterUrlTokenService` +
+Doctrine/InMemory storage. 12-hex-char tokens (`[a-f0-9]{12}`,
+collision space 2^48) with retry-on-collision (capped at 8
+attempts). New `polysource_filter_url_tokens` table.
+
+Bridge layer:
+- `FilterUrlTokenController` exposes
+  `GET /admin/polysource/f/{token}` — looks up the slice,
+  redirects to `index + ?filters[...]`. Open-redirect-safe
+  (index path must start with `/`).
+- `polysource_filter_short_url(resource)` Twig helper — returns
+  the short URL for the current request's filter slice (empty
+  when no filters).
+- `polysource_filter_share_button(resource, label)` — pre-
+  rendered Bootstrap button with `data-polysource-share-url`
+  attribute for host-side clipboard wiring.
+
+Showcase migration `Version20260515000005`; canonical SQL +
+TTL pruning snippet documented in
+`docs/user/easyadmin-filter-bridge/filter-deep-linking.md`.
+
+#### Recently viewed records (Task #6)
+
+New `polysource/filter` slice — per-user "most recently
+viewed records" log. `RecentRecord` VO +
+`RecentRecordsService` + Doctrine/InMemory storage. The
+storage upserts by `(owner, resource, recordId)`: the same
+record viewed N times yields one row with the latest
+timestamp, not N rows. Anonymous users get a no-op.
+
+New `polysource_recent_records` table with composite PK on
+`(owner_id, resource_name, record_id)` + index on `viewed_at`.
+Showcase migration `Version20260515000004` ships the schema;
+canonical SQL + GDPR clean-up snippet documented.
+
+Powers a "Recently viewed" widget on the resource index page
+or a command palette MRU section. Hosts call
+`$service->recordView(resource, recordId, label)` from their
+detail/edit actions; render the list via
+`$service->recentForCurrentUser(resource, limit)`.
+
+#### Keyboard shortcuts help cheat sheet (Task #5)
+
+`polysource_keyboard_shortcuts_help()` Twig helper — renders a
+native HTML `<details>` cheat sheet listing the recommended
+shortcuts (j/k navigate rows, `/` focus search, `f` open
+filters, `?` toggle help, Esc close panels, etc.) along with
+their scope. Server-rendered, keyboard-accessible by default.
+
+`polysource_keyboard_shortcuts_list()` returns the canonical
+list as `{key, label, scope}` triplets — useful for hosts who
+render their own help UI or pass the list as JSON to a JS
+controller.
+
+The bundle deliberately does NOT ship a Stimulus controller —
+per ADR-028, keyboard navigation overlaps with browser-level
+accessibility (tab + enter) and hardcoding selectors for
+"focused row" would conflict with host UX choices. A reference
+Stimulus controller stub is documented for hosts who want
+turnkey wiring.
+
+See `docs/user/easyadmin-filter-bridge/keyboard-shortcuts.md`.
+
+#### Bulk action history audit log (Task #8)
+
+New `polysource/filter` slice — append-only audit log for
+bulk actions. `BulkActionEntry` VO + `BulkActionHistoryService`
++ Doctrine/InMemory storage backends. Logs who ran what action
+on how many rows of which resource, with optional free-form
+metadata for action-specific payload. Per-user view
+(`recentForCurrentUser`) for index widgets; admin view
+(`recentForResource`) for all-users audit — caller gates the
+latter behind their own admin firewall.
+
+New `polysource_bulk_action_history` table with indexes on
+`resource_name`, `owner_id`, `occurred_at`. Showcase migration
+`Version20260515000003` ships the schema; canonical SQL
+documented in `docs/user/filter/bulk-action-history.md`.
+
+Rollback is **not** in scope for v0.5.0 — each action knows
+how to undo itself in host-specific terms. Polysource preserves
+the trail; hosts wire the rollback UI on top.
+
+#### Column reordering (Task #1)
+
+Per-user persistent column ordering for the EA index page.
+Adds an optional `orderedColumns: ?list<string>` field to the
+`ColumnPreference` VO (nullable for BC — pre-v0.5.0 rows
+decode as "no override"). New `column_order_json` column on
+`polysource_column_preferences`; migration documented in
+`docs/user/easyadmin-filter-bridge/column-reorder.md`.
+
+API:
+- `ColumnPreferenceService::setColumnOrder()` — persist a new
+  override (or `null` to clear).
+- `ColumnPreferenceService::applyOrder()` — resolve effective
+  order: override layered on top of host's defaults, with
+  defaults not in the override appended at the end.
+- `ColumnPreferenceService::orderedColumns()` — read the
+  current override or null.
+
+UI:
+- `polysource_column_reorder_buttons(resource, property, columns)`
+  Twig helper — renders ← → anchor pair per header.
+- `ColumnOrderController` — GET
+  `/admin/polysource/column-order/{resource}/move` endpoint
+  with CSRF protection. Pure server-side baseline per ADR-027;
+  hosts who want drag-and-drop layer their own Stimulus
+  controller on the same persistence backend.
+
+See `docs/user/easyadmin-filter-bridge/column-reorder.md`.
+
+#### Column widths on saved views (Task #10)
+
+The `SavedView` value object gains an optional
+`columnWidths: array<string, int>` map — column property →
+pixel width. Stored on a new nullable
+`polysource_saved_views.column_widths_json` column (text,
+JSON-encoded). Backward-compatible: pre-v0.5.0 rows decode as
+an empty map. The model invariant rejects widths for unselected
+columns or non-positive pixel values.
+
+`polysource_column_width_style(view, property)` Twig helper
+emits the `style="width: Xpx"` attribute for `<th>` or `<col>`
+elements. `polysource_column_width(view, property)` returns the
+raw int (or null) for hosts who need branching logic.
+
+Hosts running production setups apply the v0.5.0
+`ALTER TABLE polysource_saved_views ADD column_widths_json TEXT`
+migration; see `docs/user/filter/saved-views.md`. Note: explicit
+column **ordering** was already supported by the existing
+`columns: list<string>` field (lists preserve order) — v0.5.0
+formalises that in the docblock.
+
+See `docs/user/easyadmin-filter-bridge/saved-column-configurations.md`.
+
+#### Toast notifications (Task #4)
+
+`polysource_toasts()` Twig helper. Renders Symfony flash
+messages as Bootstrap `.alert` components positioned top-right
+of the page (toast-like UX, alert markup so they render without
+JS per ADR-027). Maps `success`/`error`/`danger`/`warning`/
+`info`/`notice` flash types to the matching Bootstrap variants;
+unknown types fall back to `alert-info`. XSS-safe: messages are
+HTML-escaped. Auto-discovers EA's own bulk-action flashes — no
+host integration required beyond dropping the helper call into
+the layout. Optional host-side auto-dismiss via the
+`polysource-toast` class hook.
+
+See `docs/user/easyadmin-filter-bridge/toasts.md`.
+
+#### Row density toggle (Task #3)
+
+3 Twig helpers — `polysource_row_density_class()`,
+`polysource_row_density_current()`,
+`polysource_row_density_toggle()` — implementing a 2-state
+compact/normal table density toggle. State lives in the URL
+(`?density=X`); the toggle is a pair of anchor links — no JS,
+no cookies. Compact uses Bootstrap's `table-sm`; normal stays
+on the default `.table`. Query-parameter preservation: every
+other slice (filters, sort, page) survives the toggle.
+
+See `docs/user/easyadmin-filter-bridge/row-density.md`.
+
+#### Frozen / sticky columns (Task #2)
+
+`polysource_frozen_column(side, offset)` Twig helper. Pins a
+table column to the left or right edge of its scroll container
+via CSS `position: sticky`. Pure server-side, no JS, no external
+stylesheet — the helper emits `class="..." style="..."`
+attributes inline. Pinning falls back gracefully under strict CSP
+(table renders without the freeze effect; rules can be lifted to
+a stylesheet — documented). Stacking multiple frozen columns is
+supported via the `offset` argument. Z-index sits at 2: above
+table content, below modals and dropdowns.
+
+See `docs/user/easyadmin-filter-bridge/frozen-columns.md`.
+
+#### Filter-aware export + bulk dry-run count (Task #9)
+
+`UrlFilterApplier` — a lean translator from the EA `?filters[...]`
+URL slice to Doctrine `WHERE` clauses. Pays the technical debt
+called out in the v0.3.0 and v0.4.0 CHANGELOGs (export was
+unfiltered; bulk dry-run had a URL helper but no count endpoint).
+
+- `ExportController` (GET `/admin/polysource/export/{resource}.{format}`)
+  now applies the URL filter slice before streaming rows. CSV/XLSX
+  exports launched from a filtered listing now export only the
+  matching rows.
+- `MatchingCountController` (GET `/admin/polysource/matching-count/{resource}`)
+  — new JSON endpoint returning `{count, samples}` for bulk dry-run
+  previews. Honours the same URL slice; `?samples=N` controls the
+  preview size (capped at 50).
+
+Supported filter shapes: scalar equality, expanded
+`{value, comparison}` (`=`, `!=`, `<`, `<=`, `>`, `>=`, `between`,
+`like`, `not like`), list-style multi-select (`IN`). Boolean
+strings are coerced to PHP booleans. Properties not mapped on the
+entity are silently dropped — no DQL injection risk.
+
+Coverage limitations vs. EA's full QueryBuilder are documented;
+hosts who need relation joins / FullTextSearch / custom filters
+wire a custom EA Action and call the `Exporter` service directly
+with EA's filter-aware QueryBuilder. See
+`docs/user/easyadmin-filter-bridge/filter-aware-export.md`.
+
 ## [0.4.0] — 2026-05-14
 
 **Tier 1 game-changers.** Five host-facing UX features inspired by

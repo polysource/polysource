@@ -6,6 +6,7 @@ namespace Polysource\EasyAdminFilterBridge\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\EasyAdminFilterBridge\Export\Exporter;
+use Polysource\EasyAdminFilterBridge\Filter\UrlFilterApplier;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -15,28 +16,32 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Generic export endpoint — given a resource FQCN + a format
- * (`csv` or `xlsx`), iterates every row of the entity via Doctrine
- * and streams the result.
+ * (`csv` or `xlsx`), iterates rows of the entity via Doctrine and
+ * streams the result.
  *
- * Filter-awareness: v0.3.0 ships the *unfiltered* export only —
- * every row of the resource is exported. Filter + sort + selection
- * awareness is on the v0.4.0 roadmap (it requires integrating with
- * EA's index QueryBuilder construction, which is non-trivial). Hosts
- * who need filter-aware export today should override this controller
- * and apply the filter slice on the QueryBuilder themselves.
+ * Filter-awareness (since v0.5.0): the controller reads the URL's
+ * `?filters[...]` slice (the same one EA's index page uses) and
+ * applies it via {@see UrlFilterApplier}. Supported shapes: scalar
+ * equality, expanded `{value, comparison}` with `=`/`!=`/`<`/`<=`/
+ * `>`/`>=`/`between`/`like`, and list-style multi-select. Hosts who
+ * need richer filter support (relation joins, FullTextSearch,
+ * NotNull) wire a custom EA Action on their CrudController and call
+ * the {@see Exporter} service directly with EA's filter-aware
+ * QueryBuilder — see `docs/user/easyadmin-filter-bridge/filter-aware-export.md`.
  *
  * Security: hosts MUST gate the route behind their EA firewall /
  * voters — the controller does NOT do its own access checks (it
  * trusts the host's security configuration to deny anonymous /
  * unauthorised requests upstream).
  *
- * @since 0.3.0
+ * @since 0.3.0 (unfiltered), 0.5.0 (filter-aware via UrlFilterApplier)
  */
 final class ExportController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Exporter $exporter,
+        private readonly UrlFilterApplier $filterApplier,
     ) {
     }
 
@@ -60,7 +65,7 @@ final class ExportController
         // Stream rows lazily via Doctrine's iterate-style API. Keeps
         // memory bounded even on 100k-row tables; the writer flushes
         // on every row.
-        $rows = $this->iterateEntities($entityClass, $fieldNames);
+        $rows = $this->iterateEntities($entityClass, $fieldNames, $request);
 
         $filename = \sprintf(
             '%s-%s.%s',
@@ -88,12 +93,23 @@ final class ExportController
      *
      * @return iterable<array<string, mixed>>
      */
-    private function iterateEntities(string $entityClass, array $fieldNames): iterable
+    private function iterateEntities(string $entityClass, array $fieldNames, Request $request): iterable
     {
         $qb = $this->em->createQueryBuilder()
             ->select('e')
             ->from($entityClass, 'e')
         ;
+
+        // Apply the `?filters[...]` URL slice (since v0.5.0). Only
+        // properties mapped by Doctrine are honoured; unknown ones
+        // are silently dropped by UrlFilterApplier — no DQL injection
+        // risk.
+        $this->filterApplier->apply(
+            $qb,
+            $request->query->all(),
+            $this->em->getClassMetadata($entityClass),
+            'e',
+        );
 
         // Doctrine ORM 2.x: ->toIterable() yields one entity at a time.
         // ORM 3.x: same API. We use the array hydration mode to skip

@@ -121,6 +121,9 @@ final class DoctrineSavedViewStorage implements SavedViewStorageInterface
         $record->teamId = $view->teamId;
         $record->isDefault = $view->isDefault;
         $record->roleAsDefault = $view->roleAsDefault;
+        $record->columnWidthsJson = [] === $view->columnWidths
+            ? null
+            : $this->encodeJson($view->columnWidths);
     }
 
     private function toView(SavedViewRecord $record): SavedView
@@ -138,7 +141,40 @@ final class DoctrineSavedViewStorage implements SavedViewStorageInterface
             teamId: $record->teamId,
             isDefault: $record->isDefault,
             roleAsDefault: $record->roleAsDefault,
+            columnWidths: $this->decodeColumnWidths($record->columnWidthsJson),
         );
+    }
+
+    /**
+     * Decode the `column_widths_json` text column into a map. Returns
+     * an empty array when the column is null (pre-v0.5.0 rows) or the
+     * payload is malformed — the model invariant rejects unsafe values
+     * downstream.
+     *
+     * @return array<string, int>
+     */
+    private function decodeColumnWidths(?string $json): array
+    {
+        if (null === $json || '' === $json) {
+            return [];
+        }
+        $raw = $this->decodeJson($json);
+        if (!\is_array($raw)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($raw as $column => $width) {
+            if (!\is_string($column) || '' === $column) {
+                continue;
+            }
+            if (!\is_int($width) || $width <= 0) {
+                continue;
+            }
+            $map[$column] = $width;
+        }
+
+        return $map;
     }
 
     /**

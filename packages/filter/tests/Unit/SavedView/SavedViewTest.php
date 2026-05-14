@@ -33,6 +33,64 @@ final class SavedViewTest extends TestCase
         self::assertNull($view->teamId);
         self::assertFalse($view->isDefault);
         self::assertNull($view->roleAsDefault);
+        self::assertSame([], $view->columnWidths);
+    }
+
+    #[Test]
+    public function storesPositiveColumnWidthsAsAMap(): void
+    {
+        $view = $this->makeView(
+            columns: ['reference', 'status'],
+            columnWidths: ['reference' => 240, 'status' => 80],
+        );
+
+        self::assertSame(['reference' => 240, 'status' => 80], $view->columnWidths);
+    }
+
+    #[Test]
+    public function rejectsColumnWidthsForUnselectedColumns(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('not in the columns list');
+        $this->makeView(
+            columns: ['reference'],
+            columnWidths: ['status' => 80],
+        );
+    }
+
+    #[Test]
+    public function rejectsNonPositiveColumnWidths(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('positive int');
+        $this->makeView(
+            columns: ['reference'],
+            columnWidths: ['reference' => 0],
+        );
+    }
+
+    #[Test]
+    public function rejectsEmptyKeyInColumnWidths(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('non-empty strings');
+        $this->makeView(
+            columns: ['reference'],
+            columnWidths: ['' => 100],
+        );
+    }
+
+    #[Test]
+    public function withDefaultPreservesColumnWidths(): void
+    {
+        $view = $this->makeView(
+            columns: ['reference'],
+            columnWidths: ['reference' => 240],
+        );
+
+        $flipped = $view->withDefault(true);
+
+        self::assertSame(['reference' => 240], $flipped->columnWidths);
     }
 
     #[Test]
@@ -191,8 +249,9 @@ final class SavedViewTest extends TestCase
     }
 
     /**
-     * @param list<string>           $columns
-     * @param array<string, string>  $sort
+     * @param list<string>          $columns
+     * @param array<string, string> $sort
+     * @param array<string, int>    $columnWidths
      */
     private function makeView(
         string $id = 'view-1',
@@ -206,6 +265,7 @@ final class SavedViewTest extends TestCase
         ?string $teamId = null,
         bool $isDefault = false,
         ?string $roleAsDefault = null,
+        array $columnWidths = [],
     ): SavedView {
         return new SavedView(
             id: $id,
@@ -222,6 +282,7 @@ final class SavedViewTest extends TestCase
             teamId: $teamId,
             isDefault: $isDefault,
             roleAsDefault: $roleAsDefault,
+            columnWidths: $columnWidths,
         );
     }
 }

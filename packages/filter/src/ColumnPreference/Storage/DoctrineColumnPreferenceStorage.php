@@ -53,6 +53,13 @@ final class DoctrineColumnPreferenceStorage implements ColumnPreferenceStorageIn
             \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES,
         );
 
+        $record->columnOrderJson = null === $preference->orderedColumns
+            ? null
+            : json_encode(
+                $preference->orderedColumns,
+                \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_SLASHES,
+            );
+
         $this->em->flush();
     }
 
@@ -74,10 +81,25 @@ final class DoctrineColumnPreferenceStorage implements ColumnPreferenceStorageIn
         /** @var list<string> $hidden */
         $hidden = json_decode($record->hiddenColumnsJson, true, flags: \JSON_THROW_ON_ERROR);
 
+        $ordered = null;
+        if (null !== $record->columnOrderJson && '' !== $record->columnOrderJson) {
+            $raw = json_decode($record->columnOrderJson, true, flags: \JSON_THROW_ON_ERROR);
+            if (\is_array($raw)) {
+                $list = [];
+                foreach ($raw as $item) {
+                    if (\is_string($item) && '' !== $item) {
+                        $list[] = $item;
+                    }
+                }
+                $ordered = $list;
+            }
+        }
+
         return new ColumnPreference(
             ownerId: $record->ownerId,
             resourceName: $record->resourceName,
             hiddenColumns: $hidden,
+            orderedColumns: $ordered,
         );
     }
 }

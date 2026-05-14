@@ -111,6 +111,27 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                             'prefix' => 'Polysource\\Filter\\ColumnPreference\\Storage\\Doctrine',
                             'alias' => 'PolysourceFilterColumnPreference',
                         ],
+                        'PolysourceFilterBulkActionHistory' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/BulkActionHistory/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\BulkActionHistory\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterBulkActionHistory',
+                        ],
+                        'PolysourceFilterRecentRecords' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/RecentRecords/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\RecentRecords\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterRecentRecords',
+                        ],
+                        'PolysourceFilterFilterUrlToken' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/FilterUrlToken/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\FilterUrlToken\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterFilterUrlToken',
+                        ],
                     ],
                 ],
             ]);
@@ -299,6 +320,70 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             );
             $container
                 ->register(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // BulkActionHistory wiring (v0.5.0).
+        // Same gating as ColumnPreference: needs Doctrine + Security.
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\BulkActionHistory\Storage\BulkActionHistoryStorageInterface::class,
+                \Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\BulkActionHistory\BulkActionHistoryService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // RecentRecords wiring (v0.5.0).
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\RecentRecords\Storage\RecentRecordsStorageInterface::class,
+                \Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\RecentRecords\RecentRecordsService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // FilterUrlToken wiring (v0.5.0). Doctrine-only — no
+        // Security dependency: tokens are user-agnostic by design.
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+        ) {
+            $container
+                ->register(\Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\FilterUrlToken\Storage\FilterUrlTokenStorageInterface::class,
+                \Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
                 ->setAutowired(true)
                 ->setPublic(true)
             ;
