@@ -404,7 +404,12 @@
                             data-bs-toggle="dropdown"
                             data-bs-auto-close="outside"
                             aria-expanded="false">
-                        <twig:ea:Icon name="internal:columns" />
+                        {# Unicode glyph instead of an EA-shipped icon —
+                           EA's icon set varies across versions and
+                           doesn't reliably ship `internal:columns`. The
+                           character is decorative; the label provides
+                           the screen-reader-readable text. #}
+                        <span aria-hidden="true">⊞</span>
                         {{ 'polysource.columns.toggle'|trans({}, 'PolysourceEasyAdminFilterBridge') }}
                         {% if polysource_hidden|length > 0 %}
                             <span class="badge bg-primary ms-1">{{ polysource_hidden|length }}</span>
