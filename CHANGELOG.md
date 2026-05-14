@@ -42,6 +42,31 @@ polysource_easyadmin_filter_bridge:
 Default `true` — zero-config single-tenant install (the common
 case) is unchanged.
 
+### Fixed — `polysource/filter`
+
+#### Saved-view dropdown degrades on stale Doctrine schema (C3)
+
+When the host has `polysource/filter` wired with Doctrine storage
+but the underlying `saved_view` table is out-of-date (missing
+table, missing column, read-only replica without DDL parity),
+the bridge's auto-prepended `crud/index.html.twig` previously
+500'd every EA index page because it calls `saved_views_dropdown()`
+unconditionally and the DB query inside it propagated the
+`SQLSTATE[42S22]: Column not found` error all the way up to the
+template renderer.
+
+`SavedViewExtension::renderDropdown()` and
+`SavedViewExtension::activeSavedView()` now catch any `Throwable`
+from the storage query and degrade silently — the dropdown
+disappears, the host's pages keep working, and the host gets
+the freedom to discover the migration gap on their own schedule.
+Symmetric with the existing null-service guard.
+
+Surfaced 2026-05-14 by dogfooding round 3: a host upgraded from
+v0.1.x to v0.5.x without running polysource migrations hit
+"Unknown column `p0_.column_widths_json`" on every admin page
+the moment the v0.5 saved-view dropdown was rendered.
+
 ### Fixed — `polysource/easyadmin-filter-bridge`
 
 #### Bridge is a no-op on EA-less kernels (C1)

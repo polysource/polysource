@@ -101,7 +101,19 @@ final class SavedViewExtension extends AbstractExtension
      */
     public function activeSavedView(string $resourceName): ?SavedView
     {
-        return $this->service?->defaultFor($resourceName);
+        if (null === $this->service) {
+            return null;
+        }
+
+        // Same defensive contract as renderDropdown(): a stale Doctrine
+        // schema (e.g. host on a pre-v0.5.0 saved_view table without
+        // `column_widths_json`) must NOT 500 every admin page render.
+        // Surfaced 2026-05-14 by dogfooding round 3 (friction C3).
+        try {
+            return $this->service->defaultFor($resourceName);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -120,7 +132,7 @@ final class SavedViewExtension extends AbstractExtension
         string $resourceName,
         string $template = self::DEFAULT_TEMPLATE,
     ): string {
-        // Graceful degradation: when the host hasn't wired
+        // Graceful degradation #1: when the host hasn't wired
         // a SavedView storage (no DoctrineBundle or no SecurityBundle),
         // the service is null. Render nothing rather than crashing —
         // templates that call `saved_views_dropdown()` unconditionally
@@ -129,8 +141,29 @@ final class SavedViewExtension extends AbstractExtension
             return '';
         }
 
-        $views = $this->service->listVisible($resourceName);
-        $current = $this->service->defaultFor($resourceName);
+        // Graceful degradation #2: storage IS wired but the underlying
+        // Doctrine schema is stale or missing. Common cases:
+        //
+        //  - Host installed the bundle but never ran polysource
+        //    migrations → `saved_view` table doesn't exist.
+        //  - Host on an older lineage of the schema (pre-v0.5.0)
+        //    where `column_widths_json` doesn't exist yet.
+        //  - Read-only replica without DDL parity.
+        //
+        // ANY Doctrine failure here would 500 every EA index page
+        // in the host because the bridge's auto-prepended
+        // `crud/index.html.twig` calls `saved_views_dropdown()`
+        // unconditionally. Catch + degrade silently — the dropdown
+        // disappears, the host's pages keep working, and the host
+        // gets a chance to notice the migration gap on their own
+        // schedule (cf. `doctrine:migrations:diff`).
+        // Surfaced 2026-05-14 by dogfooding round 3 (friction C3).
+        try {
+            $views = $this->service->listVisible($resourceName);
+            $current = $this->service->defaultFor($resourceName);
+        } catch (Throwable) {
+            return '';
+        }
 
         return $this->twig->render($template, [
             'resource_name' => $resourceName,
