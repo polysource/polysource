@@ -135,7 +135,18 @@
     {# 3. Tabs — `<details name="polysource-tab">` for mutually
          exclusive accordion behaviour. First tab is opened by
          default; clicking another summary closes the previous one
-         (native HTML behaviour since Dec 2023). #}
+         (native HTML behaviour since Dec 2023).
+
+         The `polysource-filter-tabs-strip` wrapper makes the tab
+         summaries lay out HORIZONTALLY (otherwise each `<details>`
+         is block-level and stacks vertically). The wrapper is a
+         flexbox row; tabs use `display: contents` so their summary
+         + pane participate as direct flex siblings — summaries on
+         row 1 inline, open pane wraps to a full-width row 2 below.
+         Surfaced 2026-05-14 dogfooding round 3 (friction C4). #}
+    {% if polysource_tree.tabs|length > 0 %}
+    <div class="polysource-filter-tabs-strip">
+    {% endif %}
     {% for tab in polysource_tree.tabs %}
         {% set tab_count = 0 %}
         {% for property in tab.ungrouped %}
@@ -183,6 +194,9 @@
             </div>
         </details>
     {% endfor %}
+    {% if polysource_tree.tabs|length > 0 %}
+    </div>{# /polysource-filter-tabs-strip #}
+    {% endif %}
 
     {# 4. Fallback — any filter property declared in the form but
          absent from the polysource tree (defensive: shouldn't happen

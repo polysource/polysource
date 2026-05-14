@@ -134,8 +134,44 @@
              via `<details name="polysource-tab">` exclusive accordion
              (HTML Living Standard, Chrome 120+ / Safari 17.2+ /
              Firefox 121+ since Dec 2023). Older browsers gracefully
-             fall back to "every tab independently expandable". ─── */
+             fall back to "every tab independently expandable".
+
+             Layout — horizontal tab strip + pane below.
+
+             Each `<details>` is block-level by default, so multiple
+             siblings stack vertically — that's NOT what an EA-style
+             tab strip looks like. Surfaced 2026-05-14 dogfooding
+             round 3 (friction C4): with 4 tabs declared, the subpanel
+             rendered them one per row instead of side-by-side.
+
+             Fix — flex container on the form, `display: contents` on
+             the `<details>` so its `<summary>` + pane act as direct
+             children of the flex parent. The summaries lay out in a
+             horizontal row (via inline-block + auto-wrap); the open
+             tab's pane wraps to a full-width new row via
+             `flex-basis: 100%; order: 999;`. Closed tabs' panes stay
+             hidden via the native `<details>:not([open])` selector.
+
+             Zero JS — works on browsers that support
+             `<details name="">` (mutual exclusion); falls back to
+             "every tab independently expandable" on older browsers
+             with the same horizontal strip layout. ─── */
+        /* Scope the flex layout to the tab strip only — applying it
+           to the whole form would break the col-12 row layout of the
+           ungrouped filters above the tabs. */
+        .polysource-filter-tabs-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            row-gap: 0;
+        }
         details.polysource-filter-tab {
+            /* `display: contents` removes the `<details>` from the
+               layout tree so its children participate in the form's
+               flex layout directly. The native open/close toggle on
+               summary click is HTML-level, not CSS-level, so it
+               keeps working. */
+            display: contents;
             margin: 0;
             border: 0;
             background: transparent;
@@ -190,19 +226,23 @@
             line-height: 1;
             vertical-align: middle;
         }
-        /* Stack all tab summaries inline at the top of the form via
-           an explicit grid of tabs. The `<details>` elements are
-           siblings, so we use a flex container around them — see the
-           `.polysource-filter-tabs-strip` wrapper below if needed.
-           For now we let the summaries lay out inline-block; the
-           browser preserves source order. */
+        /* Sibling tabs separated horizontally. The `+` selector
+           targets a summary whose `<details>` is preceded by another
+           `<details>` tab — i.e. every tab except the first.
+           Because both `<details>` are `display: contents`, their
+           summaries are flex siblings in the form, so the adjacent
+           selector matches across the (collapsed) details boundary. */
         details.polysource-filter-tab + details.polysource-filter-tab > summary {
             margin-left: 1.5rem;
         }
-        /* Group of consecutive tab summaries → underline strip across
-           the whole row. Sibling tabs sit under a shared border-bottom
-           via the form's flexbox layout (see `.tab-pane` rule below). */
+        /* Open pane → wraps to its own full-width row below the
+           tab strip via `flex-basis: 100%`. `order: 999` pins it
+           after every summary regardless of source order. Underline
+           strip separating tabs from content sits on the pane's
+           top border. */
         details.polysource-filter-tab > .polysource-filter-tab__pane {
+            flex: 0 0 100%;
+            order: 999;
             padding: 1rem 0 0 0.25rem;
             margin-top: 0.5rem;
             border-top: 1px solid var(--bs-border-color, #dee2e6);
