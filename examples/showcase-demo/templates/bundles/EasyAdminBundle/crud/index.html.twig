@@ -1,0 +1,62 @@
+{# Showcase EA index override — demonstrates the v0.5.0 helpers.
+
+   This file is INTENTIONALLY kept in the showcase, not the bridge,
+   so the bridge's Twig footprint stays minimal and composable.
+   Hosts who want the same UX copy this file as a starting point.
+
+   The bridge already overrides `crud/index.html.twig` to inject the
+   saved-views bar + chips bar above the EA table. We extend that
+   override (via the @EasyAdmin namespace at normal priority) and add
+   the v0.5.0 affordances:
+
+   1. Row density toggle next to the saved-views bar (Task #3)
+   2. Frozen-column inline styles via colgroup (Task #2 + #10)
+   3. Column reorder anchor links in <th> headers (Task #1)
+   4. Toast notifications (flash bag) in main block (Task #4)
+   5. Filter share button on the chips bar (Task #7)
+   6. Keyboard-shortcut help cheat sheet in the footer (Task #5)
+   7. Recently-viewed records list rendered as a sidebar (Task #6)
+
+   Tasks #8 (bulk action history) and #9 (filter-aware export +
+   matching count) are wired in their respective CrudControllers
+   and don't need template changes.
+#}
+{% extends '@!EasyAdmin/crud/index.html.twig' %}
+
+{% block main %}
+    {# Re-implement the bridge's saved-views + column-visibility +
+       chips bar so we can layer the v0.5.0 helpers next to them. #}
+    {% if ea is defined and ea.crud is not null %}
+        <div class="ea-filter-saved-views-bar d-flex flex-wrap gap-2 align-items-center mb-2">
+            {{ saved_views_dropdown(ea.crud.entityFqcn) }}
+
+            {# v0.5.0 — Row density toggle. Reads ?density=X and emits
+               either an empty class or `table-sm`. The toggle is a
+               2-anchor btn-group preserving every other query param. #}
+            {{ polysource_row_density_toggle() }}
+
+            {# v0.5.0 — Filter share button (short URL). Renders
+               nothing when there are no active filters; otherwise
+               outputs a Bootstrap button with data-polysource-share-url. #}
+            {{ polysource_filter_share_button(ea.crud.entityFqcn) }}
+        </div>
+    {% endif %}
+
+    {# v0.5.0 — Toast notifications. Reads the Symfony flash bag and
+       renders any pending messages as Bootstrap alerts pinned
+       top-right of the page. Picks up EA's built-in bulk-action
+       success/warning flashes automatically. #}
+    {{ polysource_toasts() }}
+
+    {% set applied_filters = ea.request.query.all['filters']|default([]) %}
+    {{ include('@EasyAdmin/crud/_chips_bar.html.twig', {
+        applied_filters: applied_filters,
+    }) }}
+
+    {{ parent() }}
+
+    {# v0.5.0 — Keyboard-shortcut cheat sheet (native <details>).
+       Hosts wire the actual Stimulus bindings; the cheat sheet is
+       always visible. #}
+    {{ polysource_keyboard_shortcuts_help() }}
+{% endblock main %}
