@@ -4,13 +4,26 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.7] — 2026-05-14
+## [0.5.7] — 2026-05-15
 
-**Multi-kernel + multi-tenant install safety.** Two install-time
-frictions surfaced by dogfooding round 3 (existing client app with
-4 kernels and a `/{channel}/admin` EA mount). The bridge now stays
-out of the way when EA isn't loaded on a kernel, and offers an
-opt-out for hosts mounting EA under a non-default prefix.
+**Ten install + runtime + UX fixes from dogfooding round 3.** Driving
+the bridge through an existing client app (4 kernels, multi-tenant
+`/{channel}/admin` EA mount, stale polysource schema, real-world
+filter URLs) surfaced 10 distinct bugs in one afternoon. All fixed
+with regression tests + docs in this single release.
+
+| # | Severity | Subsystem | Symptom |
+|---|---|---|---|
+| C1 | DX | install / DI | Multi-kernel apps fail autowire on EA-less kernels |
+| C2 | bug | install / routing | Multi-tenant `/{channel}/admin` hosts can't use auto-routes |
+| C3 | bug | runtime / saved-views | Stale schema 500s every EA index page |
+| C4 | UX | rendering / tabs | Filter tabs stacked vertically instead of horizontal strip |
+| C5 | bug | controller / Doctrine | Valid mapped entities 404'd on cold metadata cache |
+| C6 | bug | export / PHP 8.4 | `fputcsv()` deprecation on every CSV row |
+| C7 | bug | export / Doctrine 2.x | `toIterable+HYDRATE_ARRAY+select('e')` yields 0 rows |
+| C8 | bug | export / formatting | DateTime values exported as empty strings |
+| C9 | bug | redirect / routing | Hardcoded `/admin` Referer fallback breaks multi-tenant |
+| C10 | bug | filter / DQL | IN / NOT IN / IS [NOT] NULL silently dropped |
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
@@ -95,23 +108,132 @@ actually wire.
   "Multi-kernel apps" + "Multi-tenant route prefixes" sections
   documenting both install patterns.
 
+#### Filter tabs render as horizontal strip (C4 + C4-bis)
+
+The bridge's `Polysource::tab(...)` markers organise filters into
+tabs inside the modal/subpanel. With 4 tabs declared, the previous
+template stacked each `<details>` vertically (block layout) or, after
+a first fix attempt with `display: contents`, left the open tab's
+pane squeezed to the left with siblings floating to its right (Safari
+doesn't fully respect `display: contents` on `<details>`).
+
+Final fix restructures the rendered HTML — strip and panes live in
+two separate sibling containers. CSS `:has()` + `:nth-of-type` pair
+the i-th tab[open] with the i-th pane. Both containers are plain
+blocks; every browser agrees on the layout. Mutual exclusion stays
+handled by `<details name="polysource-tab">` (zero JS). Graceful
+degradation on browsers without `:has()` (pre-Safari 15.4, pre-Chrome
+105) → every pane visible (= accordion fallback).
+
+#### Entity-class resolution survives cold metadata cache (C5)
+
+`MatchingCountController::resolveEntityClass()` and `ExportController`
+combined `!hasMetadataFor && !isTransient` to detect non-mapped
+entities. Inverted semantics: `hasMetadataFor` is true ONLY if
+metadata has been LOADED in the current request — for a fresh
+endpoint hit on a valid mapped entity whose metadata hasn't been
+warmed yet, the condition fired and the endpoint 404'd. Fix:
+just `if ($factory->isTransient($class)) throw` — `isTransient`
+is the authoritative "this class is/isn't a Doctrine entity" probe
+regardless of cache state.
+
+#### `fputcsv()` PHP 8.4 deprecation (C6)
+
+Pass an explicit `$escape = ''` argument to follow the PHP 8.4+
+recommendation. Output is now RFC 4180 strict; PHP 9's eventual
+default change can't affect us.
+
+#### Export streaming yields zero rows on Doctrine ORM 2.x (C7)
+
+`Exporter` and `MatchingCountController::buildSamplesQuery` used
+`$qb->select('e')->getQuery()->toIterable()` with `HYDRATE_ARRAY`.
+Doctrine ORM 2.x's ArrayHydrator can't stream full entities — the
+iterator exits immediately. ORM 3.x relaxed this, but the bridge
+supports both. Fix: select scalar fields individually so the
+hydrator gets flat scalar rows.
+
+Result: every export endpoint produced a CSV with only the header
+row regardless of how many entities matched; matching-count's
+`?samples=N` returned an empty list with the right `count`. Both
+now stream correctly.
+
+#### `Exporter::stringify()` handles DateTime (C8)
+
+DateTime values previously fell through the stringify chain to the
+empty-string default — every `createdAt`/`updatedAt` column came
+out blank in exports. Added a `DateTimeInterface` branch returning
+ISO 8601 / RFC 3339 (`DateTimeInterface::ATOM`): universal text-
+sortable, opens correctly in Excel, parses cleanly with every
+date library.
+
+#### Post-action redirects no longer assume `/admin` mount (C9)
+
+Three controllers (`ColumnPreferenceController`,
+`ColumnOrderController`, `SavedViewController`) used
+`$request->headers->get('Referer', '/admin')` as the post-action
+redirect target. The hardcoded `/admin` 404s on multi-tenant hosts
+(`/{channel}/admin`) and apps with a custom EA mount prefix. Browser
+form submits — the standard call path — always have a Referer, so
+the fallback rarely triggers. Fix: fall back to `/` (host root,
+always valid) rather than a mount-specific path.
+
+#### `UrlFilterApplier` handles IN / NOT IN / IS [NOT] NULL (C10)
+
+The DQL applier's comparison `match` block previously only knew
+scalar operators (`=`, `!=`, `<`, …). The bridge's own `InFilter`
+(multi-select choice picker) submits `comparison=IN` + `value[]=…`;
+the `NotNullFilter` (Any / Has value / Empty) submits
+`comparison=IS NULL` or `IS NOT NULL` with no value. Both fell
+through to default→null and were silently dropped — every IN /
+NULL-state filter on URL was a no-op, queries returned ALL rows.
+
+Fix: extended `match` to normalise `in`, `not in`, `not_in`,
+`is null`, `is_null`, `null`, `is not null`, `is_not_null`,
+`not_null` (all case-insensitively). Two new branches generate the
+DQL: `IN` / `NOT IN` accepts an array value, `IS NULL` / `IS NOT
+NULL` emits the bare predicate with no parameter.
+
+### Documentation
+
+- `docs/user/easyadmin-filter-bridge/getting-started.md` — new
+  `2a. Multi-kernel apps`, `2b. Multi-tenant route prefixes`, and
+  `2c. Database schema` sections. The schema section lists all 5
+  tables polysource v0.5 expects, walks through `doctrine:migrations:diff`
+  + `migrations:migrate`, and flags the MySQL implicit-commit-on-DDL
+  gotcha that bit the dogfood host (`migrations:migrate` reports
+  success but the transaction rolls back; workaround: direct
+  `dbal:run-sql` per statement).
+
 ### Tests
 
-- `ConfigurationTest` — pins the bundle config shape (default
-  `auto_register_routes: true`, opt-out works, non-bool rejected).
-- `PolysourceEasyAdminFilterBridgeBundleTest` — 4 cases on
-  `Bundle::boot()` route auto-import: EA-kernel default,
-  non-EA kernel, opt-out flag, idempotency probe.
-- `PrependFormThemeTest` — extended with the EA-absent no-op
-  assertion.
-- `BridgeAutoConfigurationTest` — setUp now seeds
-  `kernel.bundles` with EasyAdminBundle so the existing
-  autoconfig assertions still hold under the new C1 guard.
+7 new test classes / cases:
+- `ConfigurationTest` (3) — bundle config tree, default, opt-out, type rejection.
+- `PolysourceEasyAdminFilterBridgeBundleTest` (4) — `Bundle::boot()`
+  route auto-import on EA kernel, non-EA kernel, opt-out flag, idempotency.
+- `PrependFormThemeTest` (+1) — EA-absent no-op.
+- `BridgeAutoConfigurationTest` (refactor) — setUp seeds `kernel.bundles`
+  so existing autoconfig assertions hold under the new C1 guard.
+- `SavedViewExtensionTest` (+2) — `Throwable` from storage degrades silently.
+- `ExporterTest` (+1) — DateTime + DateTimeImmutable + non-UTC timezones
+  format as ISO 8601.
+- `UrlFilterApplierTest` (+4) — IN, NOT IN, IS NULL, IS NOT NULL DQL
+  generation.
 
-### Out of scope (deferred)
+304 tests / 686 assertions GREEN. PHPStan: clean. CS: clean.
+
+### Out of scope (deferred to v0.6)
 
 - Backfilling CHANGELOG entries for v0.5.3 → v0.5.6 (each shipped
   as a tagged PR; commit messages remain authoritative for now).
+- `polysource:doctor` console command — would detect schema drift,
+  missing Stimulus pipeline, missing migrations and print actionable
+  warnings.
+- Symfony UX `extra.symfony.controllers` advertisement in the bridge's
+  composer.json so AssetMapper auto-discovers the bridge's Stimulus
+  controllers without manual `controllers.json` registration.
+- Official `symfony/recipes-contrib` recipes for `polysource/filter`
+  and `polysource/easyadmin-filter-bridge` (today both use Flex
+  auto-generated recipes, no scaffolded `config/packages/*.yaml`).
 
 ## [0.5.2] — 2026-05-14
 
