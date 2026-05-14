@@ -36,7 +36,10 @@ final class SavedViewExtensionTest extends TestCase
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        self::assertCount(3, $functions);
+        // 4 functions since v0.5.1: saved_views_dropdown,
+        // polysource_route_exists, polysource_team_scope_supported,
+        // polysource_active_saved_view.
+        self::assertCount(4, $functions);
 
         $names = array_map(static fn ($f) => $f->getName(), $functions);
         self::assertContains(
@@ -47,6 +50,7 @@ final class SavedViewExtensionTest extends TestCase
             . 'and twig-theme\'s index.html.twig no longer call it.'
         );
         self::assertContains('polysource_route_exists', $names);
+        self::assertContains('polysource_active_saved_view', $names);
         self::assertContains('polysource_team_scope_supported', $names);
     }
 

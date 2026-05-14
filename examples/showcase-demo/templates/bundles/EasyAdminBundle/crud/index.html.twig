@@ -1,51 +1,47 @@
-{# Showcase EA index override — demonstrates the v0.5.0 helpers.
+{# Showcase EA index override — demonstrates Polysource v0.3.0,
+   v0.4.0, and v0.5.0 helpers in their canonical placement.
 
    This file is INTENTIONALLY kept in the showcase, not the bridge,
    so the bridge's Twig footprint stays minimal and composable.
    Hosts who want the same UX copy this file as a starting point.
 
-   The bridge already overrides `crud/index.html.twig` to inject the
-   saved-views bar + chips bar above the EA table. We extend that
-   override (via the @EasyAdmin namespace at normal priority) and add
-   the v0.5.0 affordances:
+   Helpers demonstrated here:
+   - v0.3.0 #14: `polysource_row_class()` — colours table rows by status
+   - v0.4.0 #16: `polysource_cell_filter_menu()` — filter-from-cell dropdown
+   - v0.4.0 #17: `polysource_quick_filter_row()` — per-column quick filter row
+   - v0.4.0 #19: `polysource_bulk_scope_toggle()` — cross-page selection
+   - v0.5.0 #1:  `polysource_column_reorder_buttons()` — header arrows
+   - v0.5.0 #2:  `polysource_frozen_column()` — sticky first + last column
+   - v0.5.0 #3:  `polysource_row_density_toggle()` — compact/normal toggle
+   - v0.5.0 #4:  `polysource_toasts()` — flash bag → top-right alerts
+   - v0.5.0 #5:  `polysource_keyboard_shortcuts_help()` — cheat sheet
+   - v0.5.0 #7:  `polysource_filter_share_button()` — short shareable URL
+   - v0.5.0 #10: `polysource_column_width_style()` — pixel widths from saved view
 
-   1. Row density toggle next to the saved-views bar (Task #3)
-   2. Frozen-column inline styles via colgroup (Task #2 + #10)
-   3. Column reorder anchor links in <th> headers (Task #1)
-   4. Toast notifications (flash bag) in main block (Task #4)
-   5. Filter share button on the chips bar (Task #7)
-   6. Keyboard-shortcut help cheat sheet in the footer (Task #5)
-   7. Recently-viewed records list rendered as a sidebar (Task #6)
-
-   Tasks #8 (bulk action history) and #9 (filter-aware export +
-   matching count) are wired in their respective CrudControllers
-   and don't need template changes.
+   v0.3.0 export action, v0.5.0 bulk action history, and v0.5.0 recent
+   records require controller-side wiring (not template) — see the
+   showcase's OrderCrudController / dashboard.
 #}
 {% extends '@!EasyAdmin/crud/index.html.twig' %}
 
 {% block main %}
-    {# Re-implement the bridge's saved-views + column-visibility +
-       chips bar so we can layer the v0.5.0 helpers next to them. #}
-    {% if ea is defined and ea.crud is not null %}
+    {% set polysource_resource = ea is defined and ea.crud is not null ? ea.crud.entityFqcn : '' %}
+    {% set polysource_active_view = polysource_resource ? polysource_active_saved_view(polysource_resource) : null %}
+    {% set polysource_column_list = entities is defined and entities|length > 0
+        ? (entities|filter(e => e.isAccessible)|first.fields|default([])|map(f => f.property)|list)
+        : [] %}
+
+    {% if polysource_resource %}
         <div class="ea-filter-saved-views-bar d-flex flex-wrap gap-2 align-items-center mb-2">
-            {{ saved_views_dropdown(ea.crud.entityFqcn) }}
-
-            {# v0.5.0 — Row density toggle. Reads ?density=X and emits
-               either an empty class or `table-sm`. The toggle is a
-               2-anchor btn-group preserving every other query param. #}
+            {{ saved_views_dropdown(polysource_resource) }}
             {{ polysource_row_density_toggle() }}
-
-            {# v0.5.0 — Filter share button (short URL). Renders
-               nothing when there are no active filters; otherwise
-               outputs a Bootstrap button with data-polysource-share-url. #}
-            {{ polysource_filter_share_button(ea.crud.entityFqcn) }}
+            {{ polysource_filter_share_button(polysource_resource) }}
         </div>
     {% endif %}
 
-    {# v0.5.0 — Toast notifications. Reads the Symfony flash bag and
-       renders any pending messages as Bootstrap alerts pinned
-       top-right of the page. Picks up EA's built-in bulk-action
-       success/warning flashes automatically. #}
+    {# v0.5.0 #4 — Toasts. Reads the Symfony flash bag and renders any
+       pending messages as Bootstrap alerts pinned top-right. Picks up
+       EA's built-in bulk-action success/warning flashes automatically. #}
     {{ polysource_toasts() }}
 
     {% set applied_filters = ea.request.query.all['filters']|default([]) %}
@@ -55,8 +51,202 @@
 
     {{ parent() }}
 
-    {# v0.5.0 — Keyboard-shortcut cheat sheet (native <details>).
-       Hosts wire the actual Stimulus bindings; the cheat sheet is
-       always visible. #}
+    {# v0.5.0 #5 — Keyboard-shortcut cheat sheet. Native <details>
+       collapsed by default; the user opens via the <summary>. The
+       actual key bindings are a host-side concern (no Stimulus
+       shipped). #}
     {{ polysource_keyboard_shortcuts_help() }}
 {% endblock main %}
+
+{# v0.4.0 #17 + v0.5.0 #1, #2, #10 — Per-column helpers.
+
+   We override `table_head` to add (in this order):
+     1. The reorder ← → buttons (v0.5.0 #1) per <th>.
+     2. The frozen `position: sticky` style on the FIRST visible
+        column (typically id / reference) — pinned to the left edge.
+     3. The saved-view column-width override on each <th> when an
+        active SavedView carries widths.
+     4. A SECOND <tr> below the headers carrying the quick-filter
+        row inputs (v0.4.0 #17).
+#}
+{% block table_head %}
+    <tr>
+        {% if has_batch_actions %}
+            <th>
+                <div class="form-check">
+                    <span><input type="checkbox" class="form-check-input form-batch-checkbox-all" id="form-batch-checkbox-all"></span>
+                </div>
+            </th>
+        {% endif %}
+
+        {% set ea_sort_asc = constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Option\\SortOrder::ASC') %}
+        {% set ea_sort_desc = constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Option\\SortOrder::DESC') %}
+        {% for field in entities|filter(e => e.isAccessible)|first.fields ?? [] %}
+            {% set is_searchable = null == ea.crud.searchFields or field.property in ea.crud.searchFields %}
+            {% set is_sorting_field = ea.search.isSortingField(field.property) %}
+            {% set next_sort_direction = is_sorting_field ? (ea.search.sortDirection(field.property) == ea_sort_desc ? ea_sort_asc : ea_sort_desc) : ea_sort_desc %}
+            {% set column_icon = is_sorting_field ? (next_sort_direction == ea_sort_desc ? 'internal:sort-arrow-up' : 'internal:sort-arrow-down') : 'internal:sort-arrows' %}
+            {% set is_first_column = loop.first %}
+            {# Frozen-column attrs go on the first visible column only
+               (typical "ID stays visible while scrolling" UX). The helper
+               returns `class="..." style="..."` — to avoid the
+               "two class attrs on one element" HTML pitfall, we splice
+               it BEFORE the EA-emitted class/data attrs and rely on the
+               browser merging the two style attributes (last one wins,
+               so our z-index sits on top). #}
+            <th data-column="{{ field.property }}"
+                {% if is_first_column %}{{ polysource_frozen_column() }}{% else %}{{ polysource_column_width_style(polysource_active_view, field.property) }}{% endif %}
+                class="{{ field.cssClass }} {{ is_searchable ? 'searchable' }} {{ is_sorting_field ? 'sorted' }} {{ field.isVirtual ? 'field-virtual' }} header-for-{{ field.cssClass|split(' ')|filter(class => class starts with 'field-')|join('') }} text-{{ field.textAlign }}"
+                dir="{{ ea.i18n.textDirection }}">
+                {% if field.isSortable %}
+                    {% set sortable_url = ea_url().setController(ea.request.attributes.get('crudControllerFqcn')).setAction('index').set('page', 1).set('sort', {(field.property): next_sort_direction}) %}
+                    <a href="{{ sortable_url }}">
+                        {{ field.label|trans|raw }} <twig:ea:Icon name="{{ column_icon }}" />
+                    </a>
+                {% else %}
+                    <span>{{ field.label|trans|raw }}</span>
+                {% endif %}
+
+                {# v0.5.0 #1 — Reorder buttons. The helper emits a tiny
+                   ← → anchor pair; on click the page reloads with the
+                   column swapped one step left/right via the bridge's
+                   ColumnOrderController. #}
+                {{ polysource_column_reorder_buttons(polysource_resource, field.property, polysource_column_list) }}
+            </th>
+        {% endfor %}
+
+        {# Last column (the actions column) gets frozen-right so action
+           buttons stay visible during horizontal scroll on wide tables. #}
+        <th {{ polysource_frozen_column('right') }} class="{{ ea.crud.showEntityActionsAsDropdown ? 'actions-as-dropdown-table-head' }}" dir="{{ ea.i18n.textDirection }}">
+            <span class="visually-hidden">{{ t('action.entity_actions', ea.i18n.translationParameters, 'EasyAdminBundle')|trans }}</span>
+        </th>
+    </tr>
+
+    {# v0.4.0 #17 — Quick filter row. A SECOND <tr> inside <thead>
+       containing one input per column (when configured). The helper
+       renders a tiny `<form method="GET">` with hidden inputs
+       preserving every other query param — Enter submits, page
+       reloads with the filter slice applied. Empty <th> for the
+       batch-actions checkbox column + the actions column. #}
+    <tr class="polysource-quick-filter-row">
+        {% if has_batch_actions %}<th></th>{% endif %}
+        {% for field in entities|filter(e => e.isAccessible)|first.fields ?? [] %}
+            <th data-column="{{ field.property }}">
+                {{ polysource_quick_filter_row(field.property, field.label|trans) }}
+            </th>
+        {% endfor %}
+        <th></th>
+    </tr>
+{% endblock table_head %}
+
+{# v0.3.0 #14 — Row conditional styles + v0.5.0 #2 frozen first/last
+   cells per row. We override `table_body_row` so each <tr> carries
+   the row_class helper output AND each <td> for the first/last
+   columns gets the frozen-column style.
+
+   `polysource_row_class()` takes the entity instance + a property +
+   a property-to-class map. Hosts customise the map per resource
+   via a Twig variable injected from the CrudController, or hardcode
+   per-resource here. We default to a sensible map keyed on
+   `status` (orders) — other resources see no row colouring.
+#}
+{% block table_body_row %}
+    {% if entity.isAccessible %}
+        {% set polysource_row_color = ea.crud.entityFqcn == 'App\\Entity\\Order'
+            ? polysource_row_class(entity.instance, 'status', {
+                cancelled: 'table-danger',
+                refunded: 'table-warning',
+                delivered: 'table-success',
+                paid: 'table-info',
+            })
+            : '' %}
+        <tr data-id="{{ entity.primaryKeyValueAsString }}"
+            class="{{ polysource_row_color }} {% if entity.defaultActionUrl %}ea-clickable-row{% endif %}"
+            {% if entity.defaultActionUrl %}data-default-action-url="{{ entity.defaultActionUrl }}" role="link" tabindex="0"{% endif %}>
+            {% if has_batch_actions %}
+                <td class="batch-actions-selector">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input form-batch-checkbox" id="form-batch-checkbox-{{ loop.index0 }}" value="{{ entity.primaryKeyValue }}">
+                    </div>
+                </td>
+            {% endif %}
+
+            {% for field in entity.fields %}
+                {% set is_searchable = null == ea.crud.searchFields or field.property in ea.crud.searchFields %}
+                {% set is_first_column = loop.first %}
+                <td data-column="{{ field.property }}"
+                    data-label="{{ field.label|trans|e('html') }}"
+                    {% if is_first_column %}{{ polysource_frozen_column() }}{% else %}{{ polysource_column_width_style(polysource_active_view, field.property) }}{% endif %}
+                    class="{{ is_searchable ? 'searchable' }} {{ field.property == sort_field_name ? 'sorted' }} text-{{ field.textAlign }} {{ field.cssClass }}"
+                    dir="{{ ea.i18n.textDirection }}"
+                    {% for name, value in field.htmlAttributes %}{{ name }}="{{ value|e('html_attr') }}" {% endfor %}>
+                    {{ include(field.templatePath, {field: field, entity: entity}, with_context: false) }}
+
+                    {# v0.4.0 #16 — Filter-from-cell dropdown. We render
+                       the cell-filter trigger next to scalar cell content
+                       only for textual fields on the Order resource —
+                       this keeps the UI clean. Production hosts add the
+                       helper per-field as part of their CrudController
+                       configureFields. #}
+                    {% if ea.crud.entityFqcn == 'App\\Entity\\Order' and field.property in ['status', 'reference'] %}
+                        {{ polysource_cell_filter_menu(field.property, field.value, field.label|trans) }}
+                    {% endif %}
+                </td>
+            {% endfor %}
+
+            {# Last cell — actions column. Re-emit EA's <td class="actions">
+               with the frozen-right style. #}
+            <td {{ polysource_frozen_column('right') }} class="actions {{ ea.crud.showEntityActionsAsDropdown ? 'actions-as-dropdown' }}">
+                {% if entity.actions.count > 0 %}
+                    {% if ea.crud.showEntityActionsAsDropdown %}
+                        {% set hasAnyActionWithIcon = entity.actions|filter(item => item.isActionGroup ? false : item.icon is not null)|length > 0 %}
+                        <twig:ea:ActionMenu class="dropdown-actions">
+                            <twig:ea:ActionMenu:Button withoutDropdownToggleMarker>
+                                <twig:ea:Icon name="internal:dots-horizontal" />
+                            </twig:ea:ActionMenu:Button>
+                            <twig:ea:ActionMenu:Overlay>
+                                <twig:ea:ActionMenu:ActionList hasSubmenus="{{ entity.actions|filter(item => item.isActionGroup)|length > 0 }}">
+                                    {% for item in entity.actions %}
+                                        {% if item.isActionGroup %}
+                                            <twig:ea:ActionMenu:ActionList:ItemGroup
+                                                group="{{ item }}"
+                                                showBlankIcons="{{ hasAnyActionWithIcon }}"
+                                                entity="{{ entity }}" />
+                                        {% else %}
+                                            <twig:ea:ActionMenu:ActionList:Item
+                                                class="{{ item.cssClass }} dropdown-item-variant-{{ item.variant.value }}" url="{{ item.linkUrl }}"
+                                                icon="{{ item.icon }}" icon:class="action-icon"
+                                                htmlAttributes="{{ item.htmlAttributes|ea_html_attrs }}"
+                                                renderAsForm="{{ item.isRenderedAsForm }}"
+                                                label="{{ item.label|trans }}" label:class="action-label" renderLabelRaw
+                                                showBlankIcons="{{ hasAnyActionWithIcon }}" />
+                                        {% endif %}
+                                    {% endfor %}
+                                </twig:ea:ActionMenu:ActionList>
+                            </twig:ea:ActionMenu:Overlay>
+                        </twig:ea:ActionMenu>
+                    {% else %}
+                        {% for action in entity.actions %}
+                            {% if action.isActionGroup %}
+                                {{ include(action.templatePath, {group: action, entity: entity}, with_context: false) }}
+                            {% else %}
+                                {{ include(action.templatePath, {action: action, entity: entity, isIncludedInDropdown: ea.crud.showEntityActionsAsDropdown}, with_context: false) }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endif %}
+{% endblock table_body_row %}
+
+{# v0.4.0 #19 — Bulk scope toggle. We append the helper to the
+   batch_actions block (EA's bulk-action toolbar). When the user
+   ticks "Apply to all matching", subsequent bulk POST requests
+   carry the `bulk_scope=all_matching` field — host code reads it
+   and runs the action across the filtered set instead of the
+   visible selection. #}
+{% block batch_actions %}
+    {{ parent() }}
+    {{ polysource_bulk_scope_toggle('Apply to all matching rows') }}
+{% endblock batch_actions %}
