@@ -50,7 +50,14 @@ final class ExportController
         name: 'polysource_export',
         methods: ['GET'],
         requirements: [
-            'resource' => '[A-Za-z0-9_\\\\:.-]+',
+            // The resource regex MUST NOT include `.` because the URL
+            // pattern uses `{resource}.{format}` with the dot as
+            // separator. Including `.` makes the matcher greedy: it
+            // consumes `Item.csv` as a single resource segment and
+            // leaves nothing for `{format}`, yielding 404. Surfaced
+            // 2026-05-14 by dogfooding round 2 against a fresh
+            // `composer require polysource/easyadmin-filter-bridge:^0.5`.
+            'resource' => '[A-Za-z0-9_\\\\:-]+',
             'format' => 'csv|xlsx',
         ],
     )]

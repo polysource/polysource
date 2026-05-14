@@ -12,6 +12,7 @@ use Polysource\EasyAdminFilterBridge\Routing\BundleRouteLoader;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\Routing\Router;
+use Throwable;
 
 /**
  * Symfony bundle entry point for the EasyAdmin filter bridge.
@@ -79,7 +80,20 @@ final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements Admi
         if (!$this->container->has('router')) {
             return;
         }
-        $router = $this->container->get('router');
+        // Resolving the router constructs its RequestContext which
+        // reads `framework.router.default_uri` — typically resolved
+        // from the host's `.env` (`DEFAULT_URI` env var). Scripts
+        // that boot the kernel without loading dotenv (`php -r`,
+        // some test harnesses, broken CLI tools) miss this env and
+        // the resolution throws an EnvNotFoundException. Defensively
+        // catch any throwable here so kernel boot survives — route
+        // auto-import is best-effort, manual host import remains
+        // the fallback. Surfaced 2026-05-14 dogfooding round 2.
+        try {
+            $router = $this->container->get('router');
+        } catch (Throwable) {
+            return;
+        }
         if (!$router instanceof Router) {
             return;
         }
