@@ -13,11 +13,13 @@ use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterFormThemeRegistrationSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterMarkerProcessor;
 use Polysource\EasyAdminFilterBridge\EventListener\FilterSessionPersistenceSubscriber;
 use Polysource\EasyAdminFilterBridge\EventListener\SavedViewApplySubscriber;
+use Polysource\EasyAdminFilterBridge\Export\Exporter;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedArrayFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedChoiceFilterType;
@@ -257,6 +259,34 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
                 ->register(SavedViewApplySubscriber::class)
                 ->setAutoconfigured(true)
                 ->setAutowired(true)
+            ;
+        }
+
+        // Exporter — stateless streaming CSV/XLSX writer (v0.3.0).
+        // Always registered (no deps beyond php standard lib). The XLSX
+        // backend self-gates on openspout availability at runtime.
+        $container
+            ->register(Exporter::class)
+            ->setAutowired(true)
+            ->setPublic(true)
+        ;
+
+        // ExportController — GET /admin/polysource/export/{resource}.{format}
+        // (v0.3.0). Gated on DoctrineBundle being loaded (it needs an
+        // EntityManager). Hosts without Doctrine get no route.
+        $bundlesForExport = $container->hasParameter('kernel.bundles')
+            ? $container->getParameter('kernel.bundles')
+            : [];
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && \is_array($bundlesForExport)
+            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+        ) {
+            $container
+                ->register(ExportController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
             ;
         }
 
