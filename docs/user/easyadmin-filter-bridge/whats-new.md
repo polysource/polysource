@@ -155,6 +155,97 @@ the last applied filters automatically. No URL noise.
 Cleared via the upstream EA "Reset" button (which the bridge
 intercepts and translates to a `FilterService::clear()` call).
 
+## What v0.2.0 → v0.5.0 added on top
+
+The matrix above documents the v0.1 baseline. Subsequent releases
+layered the following capabilities — each one is documented on its
+own page; the summary below is the index.
+
+### v0.2.0 — Simplification + progressive enhancement
+
+Two ADRs ratified: [ADR-027 progressive enhancement](../../adr/0027-progressive-enhancement.md)
++ [ADR-028 scope discipline](../../adr/0028-scope-discipline.md).
+Stimulus controllers `polysource--filter-modal-layout` (-306 lines)
+and `polysource--filter-subpanel` (-111 lines) replaced by native
+`<details name="...">` (Chrome 120 / Safari 17.2 / Firefox 121).
+Removed FormType options `presets`, `show_clear`, `quick_ranges` —
+visible-but-non-functional UI in hosts without a Stimulus pipeline.
+
+### v0.3.0 — The 4 originals
+
+- **Column visibility toggle** — per-user, per-resource preference
+  via `polysource_column_preferences` table. Auto-rendered by the
+  bridge's `crud/index.html.twig`.
+- **Default saved view per user** — flag a `SavedView` as the
+  personal default (the `★` button in the dropdown), auto-applied
+  on a clean URL. Distinct from role defaults.
+- **Row conditional styles** — `polysource_row_class(entity,
+  property, map)` Twig helper for colouring `<tr>` by a single
+  property value.
+- **Streaming CSV/XLSX export** —
+  `GET /admin/polysource/export/{resource}.{format}`. OpenSpout
+  for XLSX (suggested dep). Memory-bounded via
+  `Doctrine::toIterable()`. Filter-aware since v0.5.0.
+
+### v0.4.0 — Tier 1 game-changers
+
+- **Filter from cell** — `polysource_cell_filter_menu(property,
+  value, label)` renders a `⋮` dropdown next to a cell with
+  "Filter where = / Exclude / Show only this" — pure anchors,
+  no JS.
+- **Per-column quick filter row** — `polysource_quick_filter_row(
+  property, placeholder)` renders a tiny `<form method="GET">`
+  per header with `<input name="filters[X]">` + hidden inputs
+  preserving the rest of the query.
+- **Saved column configurations / "perspective"** — `SavedView`
+  already persists `columns: list<string>` (since v0.1.0). v0.4.0
+  documented the contract so hosts know they can store
+  column selections on views.
+- **Cross-page selection + bulk dry-run** —
+  `polysource_bulk_scope_toggle()`,
+  `polysource_bulk_scope_active()`,
+  `polysource_bulk_dry_run_url(actionUrl)`. Host's bulk endpoint
+  reads `bulk_scope` field; v0.5.0 ships
+  `MatchingCountController` for the dry-run preview JSON.
+- **Empty state design system** —
+  `polysource_has_active_filters()`,
+  `polysource_clear_filters_url()`,
+  `polysource_active_filters_summary()`. Auto-rendered by the
+  bridge's chips bar.
+
+### v0.5.0 — Simplification + polish (10 features)
+
+- #1 Column reordering — `polysource_column_reorder_buttons(
+  resource, property, columns)` + `ColumnOrderController`. Pure
+  anchor-based baseline; hosts layer drag-and-drop.
+- #2 Frozen / sticky columns — `polysource_frozen_column(side,
+  offset)` emits `position: sticky` inline-style attrs.
+- #3 Row density toggle — `polysource_row_density_*()` 3 helpers
+  for a 2-state compact ↔ normal toggle (URL `?density=X`).
+- #4 Toast notifications — `polysource_toasts()` reads the
+  Symfony flash bag → Bootstrap alerts pinned top-right.
+- #5 Keyboard shortcuts cheat sheet —
+  `polysource_keyboard_shortcuts_help()` renders a native
+  `<details>` with recommended bindings.
+- #6 Recently viewed records — `RecentRecordsService::recordView()` +
+  `recentForCurrentUser()` (new `polysource_recent_records` table).
+- #7 Filter URL deep linking — `polysource_filter_share_button(
+  resource)` mints a 12-hex token resolved by
+  `FilterUrlTokenController`.
+- #8 Bulk action history — `BulkActionHistoryService::record()` +
+  `recentForCurrentUser()` / `recentForResource()` (new
+  `polysource_bulk_action_history` table).
+- #9 Filter-aware export + matching count — `UrlFilterApplier`
+  translates `?filters[...]` to Doctrine WHERE clauses;
+  `MatchingCountController` returns `{count, samples}` JSON.
+- #10 Column widths on saved views — new `columnWidths` field on
+  `SavedView`; `polysource_column_width_style(view, property)`
+  helper; `polysource_active_saved_view(resource)` helper for
+  fetching the active view.
+
+Each feature has a dedicated doc page under this directory
+(except #6 and #8 which live under `filter/`).
+
 ## Honest summary of what's **not** in v0.1
 
 - **No JS for `min_length`, `inline`, `chip_display`, `placeholder`.** The

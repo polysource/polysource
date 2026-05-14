@@ -189,11 +189,89 @@ EntityFilter), and four custom filter types
 group filters by domain so the modal stays scannable on resources
 with 15+ filterable columns.
 
+## 17 · Column visibility + saved view defaults — `polysource/easyadmin-filter-bridge` (v0.3.0)
+
+Each EA index page ships a column-visibility dropdown (the `⊞`
+trigger next to the saved-views chip). Per-user, per-resource
+preferences live in `polysource_column_preferences` and survive
+across sessions. The same dropdown exposes the saved-views star
+(`★`) for setting a personal default that auto-applies on a
+clean URL — distinct from role defaults that admins pre-configure.
+
+## 18 · Streaming export + filter awareness — `polysource/easyadmin-filter-bridge` (v0.3.0 + v0.5.0)
+
+On the Orders index, two "Export CSV / XLSX" action buttons
+stream the filtered slice through `polysource_export`. Since
+v0.5.0 the export honours the current `?filters[...]` URL
+parameters — exporting a page filtered to `status=paid`
+exports ONLY paid orders. Memory stays bounded via Doctrine
+`toIterable()` even on 100k-row tables.
+
+## 19 · Row colouring + cell filter menu — `polysource/easyadmin-filter-bridge` (v0.3.0 + v0.4.0)
+
+Order rows get coloured by status (`paid` → blue, `cancelled` →
+red, `refunded` → yellow, `delivered` → green) via
+`polysource_row_class()`. A `⋮` icon next to scalar cells on the
+`status` / `reference` columns opens a "Filter where = this /
+Exclude / Show only this" dropdown — server-side anchors, no
+JS required.
+
+## 20 · Per-column quick filter row + column reorder — `polysource/easyadmin-filter-bridge` (v0.4.0 + v0.5.0)
+
+A second header row carries one `<input name="filters[X]">` per
+column with Enter-to-submit. Next to each header label, two ← →
+buttons (anchor links to
+`/admin/polysource/column-order/{resource}/move`) reorder
+columns. Both features are pure server-side; hosts who want
+drag-and-drop layer their own Stimulus controller on top of
+the same persistence backend.
+
+## 21 · Bulk action history + cross-page scope — `polysource/easyadmin-filter-bridge` (v0.4.0 + v0.5.0)
+
+Selecting rows reveals EA's batch-actions toolbar, augmented
+with an "Apply to all matching" toggle (cross-page scope). The
+custom "Mark as cancelled" bulk action records each invocation
+in `polysource_bulk_action_history` with user + count +
+metadata (selected ids + scope). Hosts surface this log via
+`BulkActionHistoryService::recentForResource()` for an audit
+view.
+
+## 22 · Density toggle, frozen columns, share URL, toast notifications — v0.5.0 ergonomics
+
+Four UX polish helpers wired into the index header:
+
+- **Density toggle** — 2-state compact/normal (anchor pair,
+  preserves every other query param).
+- **Frozen columns** — first column + actions column stay
+  visible during horizontal scroll (`position: sticky`, pure
+  CSS, no JS).
+- **Filter share button** — appears only when filters are
+  active; mints a 12-hex token resolving back via
+  `/admin/polysource/f/{token}`. Users copy the link without
+  the URL-length pain of raw `?filters[...]` slices.
+- **Toast notifications** — Bootstrap alerts pinned top-right,
+  reading the Symfony flash bag. The bulk-cancel action's
+  success message lands here automatically.
+
+## 23 · Recently viewed records + keyboard shortcuts cheat sheet — v0.5.0
+
+Every order detail/edit view upserts a row in
+`polysource_recent_records` via
+`RecentRecordsService::recordView()`. Hosts render the MRU
+list in a sidebar or command palette via
+`recentForCurrentUser('orders', 10)`.
+
+The footer carries a native `<details>` cheat sheet listing the
+recommended shortcuts (j/k navigate rows, `/` focus search, `?`
+toggle help, Esc close panels, etc.). Bindings are host-side
+via Stimulus; the cheat sheet displays whether or not the
+controller is loaded.
+
 ## Regenerate this tour
 
 ```bash
-make showcase            # if not already running
-make screenshots         # captures all 16 PNGs into docs/user/screenshots/
+make showcase                    # if not already running
+make showcase-screenshots        # captures all PNGs into docs/user/screenshots/
 ```
 
 The pipeline is committed to the repo so the doc and the code never
