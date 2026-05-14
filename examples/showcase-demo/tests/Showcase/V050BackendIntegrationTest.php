@@ -37,9 +37,13 @@ final class V050BackendIntegrationTest extends AbstractShowcasePantherTestCase
         self::assertGreaterThan(0, \count($exportXlsx), 'Export XLSX action renders on the orders index');
 
         // The export link must carry the polysource_export route.
+        // EA's `linkToRoute()` wraps the target in its admin URL
+        // generator: `/admin?routeName=polysource_export&routeParams[...]=...`.
+        // We assert both halves (route name + format param).
         $href = (string) $exportCsv[0]->getAttribute('href');
-        self::assertStringContainsString('/admin/polysource/export/', $href);
-        self::assertStringContainsString('.csv', $href);
+        self::assertStringContainsString('polysource_export', $href, 'href carries the export route name');
+        self::assertStringContainsString('format', $href, 'href includes the format param');
+        self::assertStringContainsString('csv', $href, 'href targets CSV format');
     }
 
     public function testExportEndpointResponds(): void
