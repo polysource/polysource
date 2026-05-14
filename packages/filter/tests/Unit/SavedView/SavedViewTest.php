@@ -81,12 +81,16 @@ final class SavedViewTest extends TestCase
     }
 
     #[Test]
-    public function isDefaultRequiresRoleAsDefault(): void
+    public function isDefaultIsAllowedWithoutRoleAsDefaultSinceV030(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('isDefault requires a non-empty roleAsDefault');
+        // Personal default semantic (v0.3.0+): `isDefault=true` with
+        // `roleAsDefault=null` means the owning user wants this view
+        // applied automatically on a clean URL. Distinct from role
+        // defaults which carry a non-null `roleAsDefault`.
+        $view = $this->makeView(isDefault: true);
 
-        $this->makeView(isDefault: true);
+        self::assertTrue($view->isDefault);
+        self::assertNull($view->roleAsDefault);
     }
 
     #[Test]
@@ -95,6 +99,31 @@ final class SavedViewTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $this->makeView(isDefault: false, roleAsDefault: 'ROLE_USER');
+    }
+
+    #[Test]
+    public function withDefaultReturnsNewInstanceAndClearsRoleWhenFalse(): void
+    {
+        $view = $this->makeView(isDefault: true, roleAsDefault: 'ROLE_ADMIN');
+
+        $cleared = $view->withDefault(false);
+
+        self::assertFalse($cleared->isDefault);
+        self::assertNull($cleared->roleAsDefault);
+        // Source instance untouched (immutable)
+        self::assertTrue($view->isDefault);
+        self::assertSame('ROLE_ADMIN', $view->roleAsDefault);
+    }
+
+    #[Test]
+    public function withDefaultPreservesRoleWhenStayingDefault(): void
+    {
+        $view = $this->makeView(isDefault: true, roleAsDefault: 'ROLE_ADMIN');
+
+        $stillDefault = $view->withDefault(true);
+
+        self::assertTrue($stillDefault->isDefault);
+        self::assertSame('ROLE_ADMIN', $stillDefault->roleAsDefault);
     }
 
     #[Test]

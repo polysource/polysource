@@ -73,6 +73,26 @@
                             </small>
                         {%- endif -%}
                     </a>
+                    {# Default toggle — only owners can mark their view
+                       as their personal default (since v0.3.0). Role
+                       defaults (with `roleAsDefault`) are admin policy
+                       and don't expose the toggle to end-users — the
+                       form is hidden in that case. A filled star means
+                       this is the user's current personal default. #}
+                    {%- if is_owner and view.roleAsDefault is null and polysource_route_exists('polysource_saved_view_toggle_default') -%}
+                            <form method="post"
+                                  action="{{ path('polysource_saved_view_toggle_default', {id: view.id}) }}"
+                                  class="polysource-saved-views__default-form me-1">
+                                <button type="submit"
+                                        class="btn btn-sm btn-link polysource-saved-views__default {{ view.isDefault ? 'text-warning' : 'text-muted' }}"
+                                        title="{{ (view.isDefault ? 'polysource.saved_views.default.unmark' : 'polysource.saved_views.default.mark')|trans({'%name%': view.name}, 'PolysourceFilter') }}"
+                                        aria-label="{{ (view.isDefault ? 'polysource.saved_views.default.unmark' : 'polysource.saved_views.default.mark')|trans({'%name%': view.name}, 'PolysourceFilter') }}"
+                                        aria-pressed="{{ view.isDefault ? 'true' : 'false' }}">
+                                    {{ view.isDefault ? '★' : '☆' }}
+                                </button>
+                            </form>
+                    {%- endif -%}
+
                     {# Delete trigger — only owners can delete (the voter
                        enforces it server-side too). The form POSTs to
                        polysource_saved_view_delete; route is host-defined

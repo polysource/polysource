@@ -33,8 +33,8 @@ final class SavedView
      * @param array<string, string> $sort           Column → 'asc'|'desc' direction map
      * @param ?int                  $pageSize       Override host's vanilla page size; null keeps the default
      * @param ?string               $teamId         Required when scope = TEAM
-     * @param bool                  $isDefault      If true, applied automatically on first visit per role
-     * @param ?string               $roleAsDefault  Symfony role this view defaults for (required when isDefault)
+     * @param bool                  $isDefault      If true, applied automatically on clean URL — personal default for the owner when roleAsDefault is null, role default for the matching role otherwise
+     * @param ?string               $roleAsDefault  Symfony role this view defaults for (optional — null means a personal default of the owner)
      */
     public function __construct(
         public readonly string $id,
@@ -68,8 +68,13 @@ final class SavedView
         if (SavedViewScope::TEAM !== $scope && null !== $teamId) {
             throw new InvalidArgumentException(\sprintf('SavedView with scope %s must not carry a teamId — that field is reserved for TEAM scope.', $scope->value));
         }
-        if ($isDefault && (null === $roleAsDefault || '' === $roleAsDefault)) {
-            throw new InvalidArgumentException('SavedView marked isDefault requires a non-empty roleAsDefault.');
+        // Since v0.3.0 — `isDefault` is valid both with `roleAsDefault`
+        // (a role-based default the admin pre-configures) and without
+        // it (a personal default the owner sets for themselves). The
+        // remaining invariant: `roleAsDefault` without `isDefault` is
+        // nonsensical and stays rejected.
+        if (null !== $roleAsDefault && '' === $roleAsDefault) {
+            throw new InvalidArgumentException('SavedView roleAsDefault, when provided, cannot be the empty string.');
         }
         if (!$isDefault && null !== $roleAsDefault) {
             throw new InvalidArgumentException('SavedView with roleAsDefault set must also have isDefault=true.');
@@ -112,5 +117,31 @@ final class SavedView
             SavedViewScope::TEAM => null !== $teamId && $this->teamId === $teamId,
             SavedViewScope::PUBLIC => true,
         };
+    }
+
+    /**
+     * Immutable update — returns a new SavedView with `isDefault`
+     * flipped to the given value. Clears `roleAsDefault` when the
+     * flag goes to false (the constructor enforces that
+     * `roleAsDefault` without `isDefault` is invalid).
+     *
+     * @since 0.3.0
+     */
+    public function withDefault(bool $isDefault): self
+    {
+        return new self(
+            id: $this->id,
+            name: $this->name,
+            resourceName: $this->resourceName,
+            ownerId: $this->ownerId,
+            scope: $this->scope,
+            filters: $this->filters,
+            columns: $this->columns,
+            sort: $this->sort,
+            pageSize: $this->pageSize,
+            teamId: $this->teamId,
+            isDefault: $isDefault,
+            roleAsDefault: $isDefault ? $this->roleAsDefault : null,
+        );
     }
 }

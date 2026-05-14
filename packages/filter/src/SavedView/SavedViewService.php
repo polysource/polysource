@@ -161,6 +161,83 @@ final class SavedViewService
     }
 
     /**
+     * Mark the target view as the current user's personal default for
+     * its resource. Personal default is distinct from role default:
+     *
+     *   - personal: `isDefault === true && roleAsDefault === null`
+     *     (the owning user wants this view applied on a clean URL)
+     *   - role:     `isDefault === true && roleAsDefault === <role>`
+     *     (org admin pre-configures a default per role)
+     *
+     * Exclusivity is enforced within (ownerId, resourceName) — at most
+     * one personal-default view per user per resource. Setting a new
+     * default clears the flag on every other view of the same user
+     * for the same resource.
+     *
+     * EDIT permission required on the target view (a user can only
+     * mark *their own* view as their default).
+     *
+     * @since 0.3.0
+     */
+    public function markAsDefault(string $id): void
+    {
+        $view = $this->storage->find($id);
+        if (null === $view) {
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::EDIT, savedViewId: $id, message: \sprintf('Cannot mark unknown saved view "%s" as default.', $id));
+        }
+
+        if (!$this->authChecker->isGranted(SavedViewVoter::EDIT, $view)) {
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::EDIT, savedViewId: $id, message: \sprintf('Not authorized to mark saved view "%s" as default.', $id));
+        }
+
+        // Clear isDefault on every OTHER view owned by the same user
+        // for the same resource that is a *personal* default (we
+        // leave role-defaults alone — those are an admin policy).
+        foreach ($this->storage->listVisible($view->resourceName, $view->ownerId) as $sibling) {
+            if ($sibling->id === $view->id) {
+                continue;
+            }
+            if ($sibling->ownerId !== $view->ownerId) {
+                continue;
+            }
+            if (null !== $sibling->roleAsDefault) {
+                continue; // role default — admin policy, leave alone
+            }
+            if ($sibling->isDefault) {
+                $this->storage->save($sibling->withDefault(false));
+            }
+        }
+
+        if (!$view->isDefault) {
+            $this->storage->save($view->withDefault(true));
+        }
+    }
+
+    /**
+     * Clear the personal-default flag on the target view. No-op when
+     * the view is not currently the user's personal default. EDIT
+     * permission required.
+     *
+     * @since 0.3.0
+     */
+    public function unmarkAsDefault(string $id): void
+    {
+        $view = $this->storage->find($id);
+        if (null === $view) {
+            return;
+        }
+
+        if (!$this->authChecker->isGranted(SavedViewVoter::EDIT, $view)) {
+            throw new SavedViewAccessDeniedException(attribute: SavedViewVoter::EDIT, savedViewId: $id, message: \sprintf('Not authorized to unmark saved view "%s" as default.', $id));
+        }
+
+        // Only clear personal defaults — leave role defaults alone.
+        if ($view->isDefault && null === $view->roleAsDefault) {
+            $this->storage->save($view->withDefault(false));
+        }
+    }
+
+    /**
      * Returns the view considered "currently applied" for the
      * resource. The dropdown uses this to mark one entry as active.
      *
@@ -203,7 +280,27 @@ final class SavedViewService
             return null;
         }
 
-        // 3. Role default (admin-configured). Independent of session
+        // 3. User's personal default (since v0.3.0). The owner has
+        //    flagged this view as their default for the resource —
+        //    distinct from role defaults (those have a non-null
+        //    `roleAsDefault`). Resolution is owner-scoped so a
+        //    user only ever sees their own personal default.
+        $userId = $this->currentUserId();
+        if (null !== $userId) {
+            foreach ($this->listVisible($resourceName) as $view) {
+                if (!$view->isDefault || null !== $view->roleAsDefault) {
+                    continue;
+                }
+                if ($view->ownerId !== $userId) {
+                    continue;
+                }
+                $this->rememberAsLastUsed($view);
+
+                return $view;
+            }
+        }
+
+        // 4. Role default (admin-configured). Independent of session
         //    history — reflects an org policy.
         foreach ($this->listVisible($resourceName) as $view) {
             if (!$view->isDefault || null === $view->roleAsDefault) {
@@ -214,7 +311,7 @@ final class SavedViewService
             }
         }
 
-        // 4. Otherwise null. The session-stored last-used is
+        // 5. Otherwise null. The session-stored last-used is
         //    preserved (so a future click on the dropdown can
         //    recover it quickly) but not displayed as `current`,
         //    because the rendered table doesn't reflect it.

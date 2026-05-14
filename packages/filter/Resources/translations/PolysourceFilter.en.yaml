@@ -35,3 +35,7 @@ polysource:
         delete:
             label: 'Delete saved view "%name%"'
             confirm: 'Delete the saved view "%name%"? This cannot be undone.'
+
+        default:
+            mark: 'Mark "%name%" as my default view'
+            unmark: 'Remove "%name%" as my default view'
