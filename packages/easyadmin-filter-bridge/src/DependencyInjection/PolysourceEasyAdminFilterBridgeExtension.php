@@ -28,6 +28,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedDateTimeFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedNumericFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\BulkScopeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
@@ -237,6 +238,17 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // filters, sort, page). Server-side baseline; no JS.
         $container
             ->register(QuickFilterRowExtension::class)
+            ->setAutowired(true)
+            ->setAutoconfigured(true)
+        ;
+
+        // BulkScopeExtension (v0.4.0) — Twig helpers for cross-page
+        // selection + bulk dry-run. Renders the "apply to all matching"
+        // checkbox + builds the dry-run URL. The host's bulk-action
+        // endpoint reads the `bulk_scope` request body field and
+        // branches on `?dry_run=1` to return a JSON preview.
+        $container
+            ->register(BulkScopeExtension::class)
             ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
