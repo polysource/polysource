@@ -217,6 +217,57 @@ polysource_export   GET  /{channel}/admin/polysource/export/{resource}.{format}
 Single-tenant installs (the common case) need none of this —
 the default `auto_register_routes: true` keeps zero-config working.
 
+### 2c. Database schema (REQUIRED if Doctrine is wired)
+
+The bridge stores 5 things in your database when those features are
+used:
+
+| Table | Feature | Since |
+|---|---|---|
+| `polysource_saved_views` | Saved views dropdown | v0.1.0 |
+| `polysource_column_preferences` | Per-user column visibility & order | v0.3.0 |
+| `polysource_bulk_action_history` | Bulk-action audit log | v0.5.0 |
+| `polysource_recent_records` | "Recently viewed" widget | v0.5.0 |
+| `polysource_filter_url_tokens` | Short shareable filter URLs | v0.5.0 |
+
+The bundle ships the Doctrine Entity classes; **your app owns the
+migrations**. Run them like any other schema change in your app:
+
+```bash
+# Generate a migration from the new entities
+php bin/console doctrine:migrations:diff
+
+# Apply it
+php bin/console doctrine:migrations:migrate
+```
+
+Or, in a demo / dev sandbox, push the schema directly:
+
+```bash
+php bin/console doctrine:schema:update --force --complete
+```
+
+**MySQL caveat — DDL implicit commit.** If `doctrine:migrations:migrate`
+reports success but the tables don't actually appear, you're hitting
+the MySQL implicit-commit-on-DDL issue (the migration transaction is
+rolled back but the in-memory state thinks it succeeded). Two fixes:
+
+1. Run the SQL directly via `dbal:run-sql` (paste each statement from
+   `doctrine:schema:update --dump-sql`), or
+2. Set `transactional: false` on the affected migration via
+   `protected function isTransactional(): bool { return false; }`.
+
+Upgrading from an older polysource lineage? Run
+`doctrine:migrations:diff` again — it picks up only the new columns
+and tables, doesn't recreate what's already there.
+
+### Graceful degradation when the schema is missing
+
+If you skip the migration step, the bridge's saved-views dropdown
+silently disappears from EA index pages rather than 500'ing every
+admin page (since v0.5.7). This is a SAFETY NET — the bundle isn't
+meant to be used without the schema. Run the migration.
+
 ## 3. The 8 enhancers — what they upgrade
 
 The bridge replaces the form type of EA's built-in filters with a
