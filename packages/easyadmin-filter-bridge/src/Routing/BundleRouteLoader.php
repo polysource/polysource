@@ -10,9 +10,7 @@ use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\FilterUrlTokenController;
 use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
-use ReflectionClass;
-use ReflectionMethod;
-use Symfony\Component\Routing\Loader\AttributeClassLoader;
+use Symfony\Bundle\FrameworkBundle\Routing\AttributeRouteControllerLoader;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
@@ -41,14 +39,14 @@ final class BundleRouteLoader
 
     public function loadAll(): RouteCollection
     {
-        // phpcs:disable
-        /** @phpstan-ignore-next-line class.implementsConfigureRoute */
-        $loader = new class extends AttributeClassLoader {
-            protected function configureRoute(\Symfony\Component\Routing\Route $route, ReflectionClass $class, ReflectionMethod $method, object $annot): void
-            {
-            }
-        };
-        // phpcs:enable
+        // Use Symfony's own framework-bundle AttributeRouteControllerLoader
+        // which properly populates the `_controller` default via
+        // `Class::method` strings. Our v0.5.4 prototype used a bare
+        // AttributeClassLoader subclass with an empty `configureRoute`
+        // — that loaded the URL pattern but left `_controller` unset,
+        // so every route 404'd despite appearing in `debug:router`.
+        // Surfaced 2026-05-14 by continued dogfooding round 2.
+        $loader = new AttributeRouteControllerLoader();
 
         $collection = new RouteCollection();
         foreach (self::CONTROLLERS as $class) {

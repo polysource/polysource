@@ -49,19 +49,6 @@ parameters:
             identifier: offsetAccess.nonOffsetAccessible
             paths:
                 - packages/*/tests/*
-        # The bridge's BundleRouteLoader extends Symfony's
-        # AttributeClassLoader anonymously; its parent declares
-        # `configureRoute(ReflectionClass $class, ...)` without a
-        # generic spec, so any narrowing in the child violates LSP
-        # and any non-narrowing triggers missingType.generics. The
-        # method body is a no-op (default behaviour is fine — the
-        # parent's load() does the route population). Suppress the
-        # warning for this specific file.
-        -
-            identifier: missingType.generics
-            paths:
-                - packages/easyadmin-filter-bridge/src/Routing/BundleRouteLoader.php
-
     # Inline strict-rules level (cf. phpstan/phpstan-strict-rules)
     # Provided by phpstan/extension-installer auto-loading
     bootstrapFiles: []
