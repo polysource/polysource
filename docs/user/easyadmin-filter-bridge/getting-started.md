@@ -157,6 +157,117 @@ and you should already see:
 
 No CRUD code change required.
 
+### 2a. Multi-kernel apps
+
+If your app boots multiple Symfony kernels from one composer
+project (typical "shared backend + per-API gateway" layouts) and
+only one of them loads EasyAdmin, the bridge is **safe to keep
+registered globally** — since v0.5.7, the bundle's
+`Extension::load()`, `prepend()` and `Bundle::boot()` all
+short-circuit on kernels where `EasyAdminBundle` isn't loaded.
+Services are only registered where they can wire.
+
+If your kernel layout uses per-app `bundles.php` files (e.g.
+`apps/<name>/config/bundles.php`), you can still scope the bridge
+to just the EA-aware kernel if you prefer — both styles are
+supported:
+
+```php
+// apps/backend/config/bundles.php  (channel-scoped)
+return [
+    // …
+    Polysource\Filter\PolysourceFilterBundle::class               => ['all' => true],
+    Polysource\EasyAdminFilterBridge\PolysourceEasyAdminFilterBridgeBundle::class => ['all' => true],
+];
+```
+
+### 2b. Multi-tenant route prefixes (e.g. `/{channel}/admin`)
+
+If your host mounts EA under a non-default prefix (typically
+multi-tenant apps where every admin URL is channel-scoped like
+`/{channel}/admin/...`), the bridge's controllers — which
+hard-code `#[Route('/admin/...')]` — must be imported under
+your prefix, not at the bare `/admin/...` root. Otherwise
+generated links (export, matching-count, column preferences,
+filter share, …) would escape the tenant namespace.
+
+**Opt out of auto-registration** and import the routes
+manually under your own prefix:
+
+```yaml
+# config/packages/polysource_easyadmin_filter_bridge.yaml
+polysource_easyadmin_filter_bridge:
+    auto_register_routes: false
+```
+
+```yaml
+# config/routes/polysource.yaml
+polysource_easyadmin_filter_bridge:
+    resource: '@PolysourceEasyAdminFilterBridgeBundle/Resources/config/routes.php'
+    type: php
+    prefix: '/%channel%'   # wherever EA is mounted in your host
+```
+
+After cache clear, `debug:router` should now show:
+
+```
+polysource_export   GET  /{channel}/admin/polysource/export/{resource}.{format}
+```
+
+Single-tenant installs (the common case) need none of this —
+the default `auto_register_routes: true` keeps zero-config working.
+
+### 2c. Database schema (REQUIRED if Doctrine is wired)
+
+The bridge stores 5 things in your database when those features are
+used:
+
+| Table | Feature | Since |
+|---|---|---|
+| `polysource_saved_views` | Saved views dropdown | v0.1.0 |
+| `polysource_column_preferences` | Per-user column visibility & order | v0.3.0 |
+| `polysource_bulk_action_history` | Bulk-action audit log | v0.5.0 |
+| `polysource_recent_records` | "Recently viewed" widget | v0.5.0 |
+| `polysource_filter_url_tokens` | Short shareable filter URLs | v0.5.0 |
+
+The bundle ships the Doctrine Entity classes; **your app owns the
+migrations**. Run them like any other schema change in your app:
+
+```bash
+# Generate a migration from the new entities
+php bin/console doctrine:migrations:diff
+
+# Apply it
+php bin/console doctrine:migrations:migrate
+```
+
+Or, in a demo / dev sandbox, push the schema directly:
+
+```bash
+php bin/console doctrine:schema:update --force --complete
+```
+
+**MySQL caveat — DDL implicit commit.** If `doctrine:migrations:migrate`
+reports success but the tables don't actually appear, you're hitting
+the MySQL implicit-commit-on-DDL issue (the migration transaction is
+rolled back but the in-memory state thinks it succeeded). Two fixes:
+
+1. Run the SQL directly via `dbal:run-sql` (paste each statement from
+   `doctrine:schema:update --dump-sql`), or
+2. Set `transactional: false` on the affected migration via
+   `protected function isTransactional(): bool { return false; }`.
+
+Upgrading from an older polysource lineage? Run
+`doctrine:migrations:diff` again — it picks up only the new columns
+and tables, doesn't recreate what's already there.
+
+### Graceful degradation when the schema is missing
+
+If you skip the migration step, the bridge's saved-views dropdown
+silently disappears from EA index pages rather than 500'ing every
+admin page (since v0.5.7). This is a SAFETY NET — the bundle isn't
+meant to be used without the schema. Run the migration.
+
 ## 3. The 8 enhancers — what they upgrade
 
 The bridge replaces the form type of EA's built-in filters with a

@@ -132,27 +132,44 @@
         </details>
     {% endfor %}
 
-    {# 3. Tabs — `<details name="polysource-tab">` for mutually
-         exclusive accordion behaviour. First tab is opened by
-         default; clicking another summary closes the previous one
-         (native HTML behaviour since Dec 2023). #}
-    {% for tab in polysource_tree.tabs %}
-        {% set tab_count = 0 %}
-        {% for property in tab.ungrouped %}
-            {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
-        {% endfor %}
-        {% for group in tab.groups %}
-            {% for property in group.properties %}
+    {# 3. Tabs — split rendering so tab summaries and tab panes live in
+         SEPARATE containers. Layout-wise the previous structure
+         (`<details>` containing both `<summary>` and the pane) made each
+         tab a block-level box that stacked vertically OR sat as a wide
+         flex item when open, breaking nav-tabs "horizontal strip +
+         full-width pane below" expectations. Surfaced 2026-05-14
+         dogfooding round 3 (friction C4 first attempt, then C4-bis).
+
+         The redesigned structure pairs each tab summary with its pane
+         via `:nth-of-type` — the i-th `<details>` in the strip drives
+         the i-th `<div>` in the panes container. Mutual exclusion
+         stays handled by native `<details name="polysource-tab">`.
+         Pane visibility is computed via CSS `:has()` (Safari 15.4+,
+         Chrome 105+, Firefox 121+). Zero JS. #}
+    {% if polysource_tree.tabs|length > 0 %}
+    <div class="polysource-filter-tabs-strip">
+        {% for tab in polysource_tree.tabs %}
+            {% set tab_count = 0 %}
+            {% for property in tab.ungrouped %}
                 {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
             {% endfor %}
+            {% for group in tab.groups %}
+                {% for property in group.properties %}
+                    {% if property in polysource_applied_filters %}{% set tab_count = tab_count + 1 %}{% endif %}
+                {% endfor %}
+            {% endfor %}
+            <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
+                <summary class="polysource-filter-tab__summary">
+                    {{ tab.label }}
+                    {% if tab_count > 0 %}
+                        <span class="polysource-filter-tab__count" aria-label="{{ tab_count }} {{ tab_count > 1 ? 'filters applied' : 'filter applied' }}">{{ tab_count }}</span>
+                    {% endif %}
+                </summary>
+            </details>
         {% endfor %}
-        <details name="polysource-tab" class="polysource-filter-tab"{{ loop.first ? ' open' : '' }}>
-            <summary class="polysource-filter-tab__summary">
-                {{ tab.label }}
-                {% if tab_count > 0 %}
-                    <span class="polysource-filter-tab__count" aria-label="{{ tab_count }} {{ tab_count > 1 ? 'filters applied' : 'filter applied' }}">{{ tab_count }}</span>
-                {% endif %}
-            </summary>
+    </div>
+    <div class="polysource-filter-tab-panes">
+        {% for tab in polysource_tree.tabs %}
             <div class="polysource-filter-tab__pane">
                 {% for property in tab.ungrouped %}
                     {% if filters_form.children[property] is defined %}
@@ -181,8 +198,21 @@
                     </details>
                 {% endfor %}
             </div>
-        </details>
-    {% endfor %}
+        {% endfor %}
+    </div>
+    {# Per-tab pane visibility rules. Generated inline because CSS
+       can't loop, and we want them scoped to the polysource tab count
+       declared in this controller. Each rule pairs the i-th tab in
+       the strip with the i-th pane via :nth-of-type, gated by :has()
+       on the [open] attribute. Hosts with > 12 tabs are likely
+       making a UX mistake; we cap there. #}
+    <style>
+        .polysource-filter-tab-panes > .polysource-filter-tab__pane { display: none; }
+        {% for i in 1..(polysource_tree.tabs|length) %}
+        .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type({{ i }})[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type({{ i }}) { display: block; }
+        {% endfor %}
+    </style>
+    {% endif %}
 
     {# 4. Fallback — any filter property declared in the form but
          absent from the polysource tree (defensive: shouldn't happen

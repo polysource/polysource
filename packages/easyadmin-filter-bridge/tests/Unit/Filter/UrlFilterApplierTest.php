@@ -172,6 +172,83 @@ final class UrlFilterApplierTest extends TestCase
         );
     }
 
+    #[Test]
+    public function appliesExpandedShapeWithUpperCaseInComparison(): void
+    {
+        // Friction C10 (v0.5.7) — EA's `InFilter` form submits
+        // `filters[X][comparison]=IN` + `filters[X][value][]=v1` shape.
+        // The applier's match block previously only knew about scalar
+        // comparison operators (`=`, `!=`, `<`, …), so every IN-shape
+        // submission fell through to default→null and was silently
+        // dropped. Result: every `InFilter` query returned ALL rows.
+        $qb = $this->mockQb(
+            expectedAndWheres: ['e.status IN (:polysource_f_0)'],
+            expectedParams: [['polysource_f_0', ['draft', 'archived']]],
+        );
+        $applier = new UrlFilterApplier();
+
+        $applier->apply(
+            $qb,
+            ['filters' => ['status' => ['comparison' => 'IN', 'value' => ['draft', 'archived']]]],
+            $this->stubMetadata(['status']),
+            'e',
+        );
+    }
+
+    #[Test]
+    public function appliesExpandedShapeWithNotInComparison(): void
+    {
+        $qb = $this->mockQb(
+            expectedAndWheres: ['e.status NOT IN (:polysource_f_0)'],
+            expectedParams: [['polysource_f_0', ['archived']]],
+        );
+        $applier = new UrlFilterApplier();
+
+        $applier->apply(
+            $qb,
+            ['filters' => ['status' => ['comparison' => 'NOT IN', 'value' => ['archived']]]],
+            $this->stubMetadata(['status']),
+            'e',
+        );
+    }
+
+    #[Test]
+    public function appliesExpandedShapeWithIsNullComparison(): void
+    {
+        // NotNullFilter (the bridge's tri-state Any/Has value/Empty)
+        // submits `comparison=IS NULL` with no value. Same C10 bug
+        // dropped these silently.
+        $qb = $this->mockQb(
+            expectedAndWheres: ['e.deletedAt IS NULL'],
+            expectedParams: [],
+        );
+        $applier = new UrlFilterApplier();
+
+        $applier->apply(
+            $qb,
+            ['filters' => ['deletedAt' => ['comparison' => 'IS NULL']]],
+            $this->stubMetadata(['deletedAt']),
+            'e',
+        );
+    }
+
+    #[Test]
+    public function appliesExpandedShapeWithIsNotNullComparison(): void
+    {
+        $qb = $this->mockQb(
+            expectedAndWheres: ['e.deletedAt IS NOT NULL'],
+            expectedParams: [],
+        );
+        $applier = new UrlFilterApplier();
+
+        $applier->apply(
+            $qb,
+            ['filters' => ['deletedAt' => ['comparison' => 'IS NOT NULL']]],
+            $this->stubMetadata(['deletedAt']),
+            'e',
+        );
+    }
+
     /**
      * @return iterable<string, array{string, string}>
      */

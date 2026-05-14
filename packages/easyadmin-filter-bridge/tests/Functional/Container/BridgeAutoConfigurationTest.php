@@ -51,6 +51,16 @@ final class BridgeAutoConfigurationTest extends TestCase
     {
         $this->container = new ContainerBuilder();
 
+        // Simulate a kernel where EasyAdmin IS loaded — the bridge
+        // bootstraps no services otherwise (C1 guard, v0.5.7). We
+        // deliberately do NOT include Doctrine / Security in this
+        // map to keep the existing Configurator/FormType assertions
+        // hermetic (those tests don't need the Doctrine-gated
+        // controllers — those are covered in a dedicated suite).
+        $this->container->setParameter('kernel.bundles', [
+            'EasyAdminBundle' => 'EasyCorp\\Bundle\\EasyAdminBundle\\EasyAdminBundle',
+        ]);
+
         // Replicate exactly what EasyAdmin's EasyAdminExtension::load() does
         // (cf. EasyAdminExtension.php:47-48):
         $this->container

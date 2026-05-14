@@ -14,10 +14,12 @@ use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Storage\InMemorySavedViewStorage;
 use Polysource\Filter\SavedView\Twig\SavedViewExtension;
+use RuntimeException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\User\InMemoryUser;
+use Throwable;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
@@ -87,6 +89,95 @@ final class SavedViewExtensionTest extends TestCase
         // unconditionally still render. Without this guarantee the
         // v0.1.1 install-time crash is one constructor refactor away.
         self::assertSame('', (new SavedViewExtension())->renderDropdown('any-resource'));
+    }
+
+    #[Test]
+    public function renderDropdownReturnsEmptyWhenStorageThrowsDbalException(): void
+    {
+        // v0.5.7 graceful-degradation contract: storage IS wired but
+        // the underlying Doctrine schema is stale (missing column,
+        // missing table, read-only replica with no DDL parity, …).
+        // ANY Doctrine failure must NOT 500 every EA index page in
+        // the host — the bridge's auto-prepended `crud/index.html.twig`
+        // calls `saved_views_dropdown()` unconditionally.
+        // Surfaced 2026-05-14 dogfooding round 3 (friction C3): pre-v0.5
+        // host upgraded to v0.5.x with stale saved_view table, missing
+        // `column_widths_json` column → 500 on every admin page.
+        $extension = $this->makeExtensionWithThrowingStorage(
+            // Mirrors the dogfood symptom: "Unknown column" SQLSTATE
+            // surfacing as a PDO/Doctrine error. Our catch is broad
+            // (`Throwable`) so a plain RuntimeException pins the
+            // behaviour without pulling a DBAL dependency into the test.
+            new RuntimeException('SQLSTATE[42S22]: Column not found: 1054 Unknown column "p0_.column_widths_json"'),
+        );
+
+        self::assertSame(
+            '',
+            $extension->renderDropdown('products', 'inline'),
+            'Doctrine exceptions from saved-view storage must degrade silently so EA index pages keep rendering on schema drift',
+        );
+    }
+
+    #[Test]
+    public function activeSavedViewReturnsNullWhenStorageThrowsDbalException(): void
+    {
+        $extension = $this->makeExtensionWithThrowingStorage(
+            new RuntimeException('Stale schema — saved_view.column_widths_json missing'),
+        );
+
+        self::assertNull(
+            $extension->activeSavedView('products'),
+            'Doctrine exceptions from defaultFor() must NOT propagate — host templates depending on the active view degrade to defaults',
+        );
+    }
+
+    private function makeExtensionWithThrowingStorage(Throwable $throwable): SavedViewExtension
+    {
+        $storage = new class($throwable) implements \Polysource\Filter\SavedView\Storage\SavedViewStorageInterface {
+            public function __construct(private readonly Throwable $throwable)
+            {
+            }
+
+            public function save(SavedView $view): void
+            {
+                throw $this->throwable;
+            }
+
+            public function find(string $id): ?SavedView
+            {
+                throw $this->throwable;
+            }
+
+            public function listVisible(string $resourceName, string $ownerId, ?string $teamId = null): iterable
+            {
+                throw $this->throwable;
+            }
+
+            public function delete(string $id): void
+            {
+                throw $this->throwable;
+            }
+        };
+
+        $authChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authChecker->method('isGranted')->willReturn(true);
+
+        $tokenStorage = new TokenStorage();
+        $user = new InMemoryUser('alice', null, ['ROLE_USER']);
+        $tokenStorage->setToken(new UsernamePasswordToken($user, 'main', $user->getRoles()));
+
+        $service = new SavedViewService(
+            storage: $storage,
+            authChecker: $authChecker,
+            tokenStorage: $tokenStorage,
+            requestStack: new \Symfony\Component\HttpFoundation\RequestStack(),
+        );
+
+        $twig = new Environment(new ArrayLoader([
+            'inline' => 'never-reached',
+        ]));
+
+        return new SavedViewExtension($service, $twig);
     }
 
     #[Test]

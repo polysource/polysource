@@ -102,8 +102,17 @@ final class MatchingCountController
     private function buildSamplesQuery(string $entityClass, Request $request, int $limit): array
     {
         $metadata = $this->em->getClassMetadata($entityClass);
+        $fieldNames = array_values($metadata->getFieldNames());
+
+        // Select scalar fields individually rather than the entity
+        // alias — Doctrine ORM 2.x's `toIterable()` + `HYDRATE_ARRAY`
+        // + `select('e')` combo silently yields zero rows. Same fix
+        // as ExportController (friction C7, 2026-05-14 dogfood
+        // round 3): without this, `?samples=N` returned an empty
+        // list regardless of how many entities matched.
+        $select = implode(', ', array_map(static fn (string $f): string => 'e.' . $f, $fieldNames));
         $qb = $this->em->createQueryBuilder()
-            ->select('e')
+            ->select($select)
             ->from($entityClass, 'e')
             ->setMaxResults($limit)
         ;
@@ -116,8 +125,6 @@ final class MatchingCountController
 
         $query = $qb->getQuery();
         $query->setHydrationMode(\Doctrine\ORM\Query::HYDRATE_ARRAY);
-
-        $fieldNames = array_values($metadata->getFieldNames());
         $out = [];
         foreach ($query->toIterable() as $row) {
             if (!\is_array($row)) {
@@ -144,9 +151,15 @@ final class MatchingCountController
             throw new NotFoundHttpException(\sprintf('Unknown entity class "%s".', $entityClass));
         }
 
-        if (!$this->em->getMetadataFactory()->hasMetadataFor($entityClass)
-            && !$this->em->getMetadataFactory()->isTransient($entityClass)
-        ) {
+        // isTransient() returns TRUE for non-mapped classes — the only
+        // signal that's authoritative regardless of whether the
+        // metadata cache has been warmed. The previous logic combined
+        // `!hasMetadataFor && !isTransient` which inverted the
+        // semantics: for valid mapped entities whose metadata wasn't
+        // YET loaded in the current request, both checks returned
+        // false → boolean trap → 404 on a perfectly mapped entity.
+        // Surfaced 2026-05-14 dogfooding round 3 (friction C5).
+        if ($this->em->getMetadataFactory()->isTransient($entityClass)) {
             throw new NotFoundHttpException(\sprintf('Entity "%s" is not mapped by Doctrine.', $entityClass));
         }
 

@@ -52,7 +52,7 @@ final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements Admi
      * no longer need to manually add:
      *
      *     polysource_easyadmin_filter_bridge:
-     *         resource: '@PolysourceEasyAdminFilterBridge/config/routes.php'
+     *         resource: '@PolysourceEasyAdminFilterBridgeBundle/Resources/config/routes.php'
      *         type: php
      *
      * to their `config/routes.yaml` — a manual-import gate that was
@@ -77,6 +77,37 @@ final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements Admi
         if (null === $this->container) {
             return;
         }
+
+        // C1 guard — same logic as the DI extension: bridge is a
+        // no-op on EA-less kernels in multi-kernel apps. Without this,
+        // routes pointing at controllers that aren't registered as
+        // services would still appear in the collection and 500 on
+        // first hit. Surfaced 2026-05-14 dogfooding round 3.
+        $bundles = $this->container->hasParameter('kernel.bundles')
+            ? $this->container->getParameter('kernel.bundles')
+            : [];
+        if (!\is_array($bundles) || !\array_key_exists('EasyAdminBundle', $bundles)) {
+            return;
+        }
+
+        // C2 guard — opt-out for multi-tenant hosts that mount EA
+        // under a custom prefix (e.g. `/{channel}/admin`). The
+        // bridge's controllers hard-code `#[Route('/admin/...')]`
+        // — auto-importing them in a tenant-prefixed host would
+        // splice routes OUTSIDE the tenant namespace, leaking
+        // links out of the channel scope. Hosts opt out via
+        // `polysource_easyadmin_filter_bridge.auto_register_routes: false`
+        // in their config and import
+        // `@PolysourceEasyAdminFilterBridge/config/routes.php`
+        // manually under their own prefix. Surfaced 2026-05-14
+        // dogfooding round 3.
+        if (
+            $this->container->hasParameter('polysource_easyadmin_filter_bridge.auto_register_routes')
+            && false === $this->container->getParameter('polysource_easyadmin_filter_bridge.auto_register_routes')
+        ) {
+            return;
+        }
+
         if (!$this->container->has('router')) {
             return;
         }
