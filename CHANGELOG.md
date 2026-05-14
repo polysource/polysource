@@ -8,6 +8,35 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Column reordering (Task #1)
+
+Per-user persistent column ordering for the EA index page.
+Adds an optional `orderedColumns: ?list<string>` field to the
+`ColumnPreference` VO (nullable for BC — pre-v0.5.0 rows
+decode as "no override"). New `column_order_json` column on
+`polysource_column_preferences`; migration documented in
+`docs/user/easyadmin-filter-bridge/column-reorder.md`.
+
+API:
+- `ColumnPreferenceService::setColumnOrder()` — persist a new
+  override (or `null` to clear).
+- `ColumnPreferenceService::applyOrder()` — resolve effective
+  order: override layered on top of host's defaults, with
+  defaults not in the override appended at the end.
+- `ColumnPreferenceService::orderedColumns()` — read the
+  current override or null.
+
+UI:
+- `polysource_column_reorder_buttons(resource, property, columns)`
+  Twig helper — renders ← → anchor pair per header.
+- `ColumnOrderController` — GET
+  `/admin/polysource/column-order/{resource}/move` endpoint
+  with CSRF protection. Pure server-side baseline per ADR-027;
+  hosts who want drag-and-drop layer their own Stimulus
+  controller on the same persistence backend.
+
+See `docs/user/easyadmin-filter-bridge/column-reorder.md`.
+
 #### Column widths on saved views (Task #10)
 
 The `SavedView` value object gains an optional

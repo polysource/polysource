@@ -13,6 +13,7 @@ use Polysource\EasyAdminFilterBridge\Configurator\DateTimeFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\EntityFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\NumericFilterEnhancer;
 use Polysource\EasyAdminFilterBridge\Configurator\TextFilterEnhancer;
+use Polysource\EasyAdminFilterBridge\Controller\ColumnOrderController;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
@@ -33,6 +34,7 @@ use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedTextFilterType;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\BulkScopeExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\CellFilterMenuExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ChipExtension;
+use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnReorderExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ColumnWidthExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\EmptyStateExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\FilterTreeExtension;
@@ -417,6 +419,23 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         ) {
             $container
                 ->register(\Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+                ->addTag('controller.service_arguments')
+            ;
+
+            // ColumnReorderExtension + ColumnOrderController (v0.5.0).
+            // Same gating as ColumnPreferenceController: depend on
+            // ColumnPreferenceService which itself is registered only
+            // when the host has Doctrine + Security bundles.
+            $container
+                ->register(ColumnReorderExtension::class)
+                ->setAutowired(true)
+                ->setAutoconfigured(true)
+            ;
+
+            $container
+                ->register(ColumnOrderController::class)
                 ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')

@@ -35,4 +35,14 @@ class ColumnPreferenceRecord
     /** JSON list<string> of hidden property names. */
     #[ORM\Column(name: 'hidden_columns_json', type: 'text')]
     public string $hiddenColumnsJson;
+
+    /**
+     * JSON list<string> — explicit display order override. Nullable
+     * so existing rows pre-v0.5.0 stay valid without backfill; the
+     * storage decodes a null value as "no override, use host default".
+     *
+     * @since 0.5.0
+     */
+    #[ORM\Column(name: 'column_order_json', type: 'text', nullable: true)]
+    public ?string $columnOrderJson = null;
 }
