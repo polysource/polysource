@@ -183,9 +183,13 @@ final class SavedViewController
 
     private function redirectToReferrer(Request $request): RedirectResponse
     {
-        $referrer = (string) $request->headers->get('referer', '/admin');
+        // Fall back to `/` rather than `/admin`: the latter assumes
+        // a specific EA mount which breaks on multi-tenant hosts
+        // (`/{channel}/admin`) and on apps with a custom prefix.
+        // Surfaced 2026-05-14 dogfooding round 3 (friction C9).
+        $referrer = (string) $request->headers->get('referer', '/');
 
-        return new RedirectResponse($referrer !== '' ? $referrer : '/admin');
+        return new RedirectResponse('' !== $referrer ? $referrer : '/');
     }
 
     private function flash(Request $request, string $type, string $message): void

@@ -72,9 +72,13 @@ final class ColumnPreferenceController
 
         // Redirect to where the form came from. The Referer header is
         // present for any non-AJAX POST submitted from an EA index
-        // page. Fall back to the EA index URL if missing — host can
-        // always reconstruct it from the resource name (`/admin?routeName=…`).
-        $referer = (string) $request->headers->get('Referer', '/admin');
+        // page (the standard call path). For the rare cases without
+        // a Referer (curl, browser privacy mode), fall back to `/`
+        // — `/admin` would assume a specific EA mount which breaks
+        // on multi-tenant hosts (`/{channel}/admin`) and on apps
+        // that mount EA under a custom prefix. Surfaced 2026-05-14
+        // dogfooding round 3 (friction C9).
+        $referer = (string) $request->headers->get('Referer', '/');
 
         return new RedirectResponse($referer);
     }

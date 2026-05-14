@@ -77,7 +77,11 @@ final class ColumnOrderController
         $newOrder = $this->moveColumn($effective, $property, $direction);
         $this->service->setColumnOrder($resource, $newOrder);
 
-        $referer = (string) $request->headers->get('Referer', '/admin');
+        // Fall back to `/` rather than `/admin`: the latter assumes
+        // a specific EA mount which breaks on multi-tenant hosts
+        // (`/{channel}/admin`) and on apps with a custom prefix.
+        // Surfaced 2026-05-14 dogfooding round 3 (friction C9).
+        $referer = (string) $request->headers->get('Referer', '/');
 
         return new RedirectResponse($referer);
     }
