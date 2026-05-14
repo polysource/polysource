@@ -8,8 +8,10 @@ use Polysource\Core\Plugin\AdminPluginInterface;
 use Polysource\Core\Plugin\Attribute\AsPlugin;
 use Polysource\Core\Plugin\HasPluginMetadata;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\PolysourceEasyAdminFilterBridgeExtension;
+use Polysource\EasyAdminFilterBridge\Routing\BundleRouteLoader;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Symfony\Component\Routing\Router;
 
 /**
  * Symfony bundle entry point for the EasyAdmin filter bridge.
@@ -42,5 +44,55 @@ final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements Admi
     public function getPath(): string
     {
         return \dirname(__DIR__);
+    }
+
+    /**
+     * Auto-import the bridge's routes on every kernel boot. Hosts
+     * no longer need to manually add:
+     *
+     *     polysource_easyadmin_filter_bridge:
+     *         resource: '@PolysourceEasyAdminFilterBridge/config/routes.php'
+     *         type: php
+     *
+     * to their `config/routes.yaml` — a manual-import gate that was
+     * easy to miss, silently breaking every host-side helper that
+     * generates URLs through the router (export, column-prefs,
+     * saved-view modal, filter-url-token, matching-count,
+     * column-order). Surfaced 2026-05-14 by dogfooding round 2.
+     *
+     * Symfony 7.4 does NOT provide `AbstractBundle::configureRoutes()`
+     * (that's 7.5+). Bundle::boot() is the universally-available
+     * hook — fires on every container build, gives us access to the
+     * router service, and lets us splice our route collection into
+     * the host's at runtime. Manual import remains supported (the
+     * loader is idempotent — same route names produce a single
+     * registration).
+     *
+     * @since 0.5.4
+     */
+    public function boot(): void
+    {
+        parent::boot();
+        if (null === $this->container) {
+            return;
+        }
+        if (!$this->container->has('router')) {
+            return;
+        }
+        $router = $this->container->get('router');
+        if (!$router instanceof Router) {
+            return;
+        }
+
+        // Idempotency: if the host already imported our routes via
+        // routes.yaml, the route names are already in the collection.
+        // We probe one well-known name and skip the auto-load if so.
+        $collection = $router->getRouteCollection();
+        if (null !== $collection->get('polysource_export')) {
+            return;
+        }
+
+        $loader = new BundleRouteLoader();
+        $collection->addCollection($loader->loadAll());
     }
 }
