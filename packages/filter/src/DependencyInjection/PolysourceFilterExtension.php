@@ -118,6 +118,13 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                             'prefix' => 'Polysource\\Filter\\BulkActionHistory\\Storage\\Doctrine',
                             'alias' => 'PolysourceFilterBulkActionHistory',
                         ],
+                        'PolysourceFilterRecentRecords' => [
+                            'type' => 'attribute',
+                            'is_bundle' => false,
+                            'dir' => \dirname(__DIR__) . '/RecentRecords/Storage/Doctrine',
+                            'prefix' => 'Polysource\\Filter\\RecentRecords\\Storage\\Doctrine',
+                            'alias' => 'PolysourceFilterRecentRecords',
+                        ],
                     ],
                 ],
             ]);
@@ -328,6 +335,27 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             );
             $container
                 ->register(\Polysource\Filter\BulkActionHistory\BulkActionHistoryService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+        }
+
+        // RecentRecords wiring (v0.5.0).
+        if (
+            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
+            && $hasDoctrineBundle
+            && $hasSecurity
+        ) {
+            $container
+                ->register(\Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class)
+                ->setAutowired(true)
+            ;
+            $container->setAlias(
+                \Polysource\Filter\RecentRecords\Storage\RecentRecordsStorageInterface::class,
+                \Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class,
+            );
+            $container
+                ->register(\Polysource\Filter\RecentRecords\RecentRecordsService::class)
                 ->setAutowired(true)
                 ->setPublic(true)
             ;

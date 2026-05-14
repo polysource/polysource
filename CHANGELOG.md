@@ -8,6 +8,26 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — `polysource/easyadmin-filter-bridge`
 
+#### Recently viewed records (Task #6)
+
+New `polysource/filter` slice — per-user "most recently
+viewed records" log. `RecentRecord` VO +
+`RecentRecordsService` + Doctrine/InMemory storage. The
+storage upserts by `(owner, resource, recordId)`: the same
+record viewed N times yields one row with the latest
+timestamp, not N rows. Anonymous users get a no-op.
+
+New `polysource_recent_records` table with composite PK on
+`(owner_id, resource_name, record_id)` + index on `viewed_at`.
+Showcase migration `Version20260515000004` ships the schema;
+canonical SQL + GDPR clean-up snippet documented.
+
+Powers a "Recently viewed" widget on the resource index page
+or a command palette MRU section. Hosts call
+`$service->recordView(resource, recordId, label)` from their
+detail/edit actions; render the list via
+`$service->recentForCurrentUser(resource, limit)`.
+
 #### Keyboard shortcuts help cheat sheet (Task #5)
 
 `polysource_keyboard_shortcuts_help()` Twig helper — renders a
