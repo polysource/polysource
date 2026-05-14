@@ -392,7 +392,19 @@
                no SecurityBundle) — the controller's route returns 404,
                and the dropdown wouldn't be useful anyway. Hosts in that
                state see no UI clutter. #}
-            {% if entities is defined and entities|length > 0 %}
+            {# Defensive route-existence gate (since v0.5.4). The
+               column-visibility dropdown POSTs to
+               `polysource_column_preferences_update` — if that route
+               isn't registered (host hasn't imported the bridge's
+               routes, or v0.5.4's `Bundle::boot()` auto-import is
+               disabled), don't render the dropdown rather than 500
+               on every admin index page. Surfaced 2026-05-14 by
+               dogfooding round 2: without this guard, fresh installs
+               crash the entire index page with "Unable to generate
+               a URL for the named route" before v0.5.4's auto-route
+               fix landed. #}
+            {% if entities is defined and entities|length > 0
+               and polysource_route_exists('polysource_column_preferences_update') %}
                 {% set polysource_first_entity = entities|first %}
                 {% set polysource_resource_key = ea.crud.entityFqcn %}
                 {% set polysource_hidden = polysource_hidden_columns(polysource_resource_key) %}
