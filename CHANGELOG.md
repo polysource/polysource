@@ -4,7 +4,9 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — v0.6.0 candidates
+## [0.6.0] — 2026-05-15
+
+**Three v0.6 backlog issues closed.** Two new features that consolidate the v0.5.7 dogfooding lessons into permanent tooling, plus a regression-coverage milestone for the bridge HTTP endpoints. Zero breaking change.
 
 ### Added
 
@@ -46,6 +48,42 @@ Webpack Encore + `@symfony/stimulus-bridge` hosts are unaffected
 
 Filed as v0.1.1 dogfooding friction B3a, still open at v0.5.7, now
 resolved.
+
+### Tests
+
+#### Bridge HTTP integration tests with TestKernel + SQLite (closes #31)
+
+15 functional tests / 55 assertions exercising the bridge endpoints
+end-to-end through a minimal Symfony kernel, an in-memory SQLite
+EntityManager, and a 30-row `TestItem` fixture. Locks in regression
+coverage for every v0.5.7 controller-layer fix that previously had
+only unit coverage:
+
+- C5 — `resolveEntityClass` on cold metadata cache (no 404 on first
+  hit)
+- C7 — `toIterable + HYDRATE_ARRAY + select('e')` yielding 0 rows
+  in ORM 2.x (export CSV has the expected 30 data rows; matching-count
+  `?samples=N` returns actual samples)
+- C8 — DateTime exported as ISO 8601 / `DateTimeInterface::ATOM`
+- C10 — `IN` / `NOT IN` / `IS [NOT] NULL` filter operators applied
+  to DQL
+
+Test infrastructure:
+- `tests/Functional/Integration/App/TestKernel.php` — MicroKernel with
+  FrameworkBundle + TwigBundle + SecurityBundle + DoctrineBundle +
+  EasyAdminBundle + the 2 polysource bundles. SQLite in-memory ORM.
+- `BridgeIntegrationTestCase` — boots a fresh kernel per test, drops
+  + recreates schema, seeds fixtures, exposes a `request()` helper.
+  Uses `$kernel->handle()` directly (not `KernelBrowser`) because
+  Symfony's handle leaks an exception handler that
+  `Kernel::shutdown()` doesn't unwind — PHPUnit 11's global
+  `failOnRisky` would flag every test.
+
+Tooling:
+- New `integration` PHPUnit suite in `phpunit.xml.dist` (excluded
+  from the `functional` suite to avoid double-coverage).
+- New `make test-integration` target with `--do-not-fail-on-risky`.
+- New `integration` CI job parallel to the PHPUnit matrix.
 
 ## [0.5.7] — 2026-05-15
 
