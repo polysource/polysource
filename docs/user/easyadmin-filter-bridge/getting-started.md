@@ -19,11 +19,11 @@ instead.
 
 ## Status
 
-Pre-v0.1.0. The bridge is shipped from the same monorepo as
-`polysource/filter` and depends on it. Contracts are stable per
+**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable per
 [ADR-012](../../adr/0012-dual-product-positioning.md) (dual-product
 positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
-(filter package architecture).
+(filter package architecture). The bridge is shipped from the same monorepo as
+`polysource/filter` and depends on it (transitively).
 
 ## 1. Prerequisites
 

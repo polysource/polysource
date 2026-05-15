@@ -27,7 +27,7 @@ storage / DI cost. The bundle is opt-in.
 
 ## Status
 
-Pre-v0.1.0. The public API is the one documented in
+**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable, documented in
 [ADR-020](../../adr/0020-audit-non-doctrine-actions.md):
 - 12-field `AuditEntry` value object
 - `AuditOutcome` enum (success / failure / exception)

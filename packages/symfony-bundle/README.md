@@ -25,7 +25,7 @@ polysource:
 
 ## Status
 
-**v0.1 — work in progress.** Public API not yet frozen. See
+**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable (committed for v0.5.x, SemVer freeze at v1.0). See
 [ROADMAP](../../ROADMAP.md) Phase 2.
 
 ## Architectural decisions

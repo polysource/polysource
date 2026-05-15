@@ -6,41 +6,59 @@
 
 ## Status
 
-**Pre-v0.1.0.** The seam is technically validated (cf.
+**v0.5.7 published (2026-05-15).** API release-candidate stable —
+committed for v0.5.x, breaking changes allowed before v1.0 (cf.
 [ADR-012](../../docs/adr/0012-dual-product-positioning.md)).
+Distributed on Packagist as
+[`polysource/easyadmin-filter-bridge`](https://packagist.org/packages/polysource/easyadmin-filter-bridge).
 
-Feature-complete on the bridge side:
+Feature-complete on the bridge side, dogfooded on multi-tenant
+client integrations through v0.5.7:
 
 - **All 8 built-in EasyAdmin filters covered** by an Enhancer
   (`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`,
   `Array`, `Entity`).
+- **4 custom filter types**: `BetweenDateFilter`, `InFilter`,
+  `NotNullFilter`, `FullTextSearchFilter`.
 - **Twig templates auto-register** via `PrependExtensionInterface` —
   enhanced widget HTML renders with zero config.
 - **Filter session persistence** via `FilterSessionPersistenceSubscriber`
   on `BeforeCrudActionEvent` — operators returning to the index page
   see their previous filters restored automatically (scoped per CRUD
   controller FQCN, no leak across resources).
+- **8 polysource routes auto-import** via `Bundle::boot()` since
+  v0.5.4 — no manual `routes.yaml` import needed in the host.
+- **Multi-kernel safe** since v0.5.7 — bundle is a no-op on
+  EA-less kernels.
+- **Multi-tenant ready** since v0.5.7 — opt out of auto-route
+  registration via `auto_register_routes: false` to mount under
+  a custom prefix (e.g. `/{channel}/admin`).
 
 ## What it does
 
 Once installed, EasyAdmin's built-in filters gain richer form types,
 **without any change to your existing CRUD controllers**:
 
-| Built-in filter | Enhancement (today) | Visual rendering (Phase 9.7) |
-|---|---|---|
-| `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) so themes can override rendering. | Native HTML5 date pickers (no extra UI). |
-| `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. | Toggle-switch UI variant. |
-| `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). | Mode toggle (exact / starts_with / ends_with / contains) inline. |
-| `NumericFilter` | `step` option (granularity hint, e.g. `0.01` for currency). | Native HTML5 number input with step attribute. |
-| `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. | Inline pills rendering. |
-| `ComparisonFilter` | `comparisons` option — whitelist of operators to expose in the dropdown (default `[]` = all). | Restricted operator dropdown. |
-| `ArrayFilter` | `chip_display` option — selected items as removable chips instead of multi-line list. | Chips rendering. |
-| `EntityFilter` | `placeholder` option — custom placeholder text for the dropdown / autocomplete. | Custom placeholder text. |
+| Built-in filter | Enhancement |
+|---|---|
+| `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) + `presets` (today / last 7 days / …) + `show_clear` button. |
+| `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. |
+| `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). |
+| `NumericFilter` | `step` option (granularity hint, e.g. `0.01` for currency) + `quick_ranges` buttons. |
+| `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. |
+| `ComparisonFilter` | `comparisons` option — whitelist of operators to expose in the dropdown (default `[]` = all). |
+| `ArrayFilter` | `chip_display` option — selected items as removable chips instead of multi-line list. |
+| `EntityFilter` | `placeholder` option — custom placeholder text for the dropdown / autocomplete. |
 
-Plus, post-9.7:
-- Filter **chips/tags** above the table (active filters visible, click X to remove).
+Plus, list-level capabilities layered on top:
+- Filter **chips/tags** bar above the table (active filters visible, click X to remove).
 - **Session persistence** of filters per CRUD controller FQCN.
-- Custom filters: `BetweenDateFilter`, `InFilter`, `NotNullFilter`, `FullTextSearchFilter`.
+- **Saved views** dropdown (private / team / public scopes).
+- **Column visibility** dropdown + **column reordering**.
+- **Filter-aware streaming export** (CSV / XLSX).
+- **Matching-count** JSON endpoint for bulk dry-run preview.
+- **Filter URL tokens** for short shareable filtered URLs.
+- Custom filter types: `BetweenDateFilter`, `InFilter`, `NotNullFilter`, `FullTextSearchFilter`.
 
 ## Installation
 
