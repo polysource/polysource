@@ -47,6 +47,10 @@ test-unit: ## Run only unit tests
 test-functional: ## Run only functional tests
 	$(PHP_RUN) vendor/bin/phpunit --testsuite=functional
 
+.PHONY: test-integration
+test-integration: ## Run bridge integration tests (TestKernel + SQLite); --do-not-fail-on-risky because Symfony's Kernel::handle() leaks an exception handler not unwound by shutdown()
+	$(PHP_RUN) vendor/bin/phpunit --testsuite=integration --do-not-fail-on-risky
+
 .PHONY: phpstan
 phpstan: ## Run PHPStan static analysis (level max)
 	$(PHP_RUN) vendor/bin/phpstan analyse --memory-limit=2G

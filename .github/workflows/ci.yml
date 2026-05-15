@@ -258,8 +258,30 @@ jobs:
       - name: Install dependencies
         uses: ramsey/composer-install@v3
 
-      - name: Run PHPUnit
-        run: vendor/bin/phpunit --testdox
+      - name: Run PHPUnit (unit + functional suites)
+        # The `integration` suite has its own job below because
+        # Symfony's `Kernel::handle()` pushes an exception handler
+        # that `Kernel::shutdown()` doesn't unwind — PHPUnit 11's
+        # global `failOnRisky` mode then flags every test. The
+        # integration suite is run with `--do-not-fail-on-risky`.
+        run: vendor/bin/phpunit --testsuite=unit,functional --testdox
+
+  integration:
+    name: Bridge integration (TestKernel + SQLite)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Run integration suite (failOnRisky disabled — Symfony handler leak)
+        run: vendor/bin/phpunit --testsuite=integration --do-not-fail-on-risky --testdox
 
   coverage:
     name: Core coverage gate (>= 90%)
