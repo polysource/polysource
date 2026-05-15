@@ -4,6 +4,49 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — v0.6.0 candidates
+
+### Added
+
+#### `polysource:doctor` console command (closes #29)
+
+New `polysource:doctor` command in `polysource/symfony-bundle` runs
+5 install-time / runtime checks and emits a PASS/WARN/FAIL table:
+
+- PHP version (>= 8.1)
+- Polysource bundles registered on this kernel
+- EasyAdmin co-load (when bridge is loaded but EA isn't → WARN — the
+  v0.5.7 C1 guard makes it safe, but the doctor still flags it as a
+  configuration smell)
+- Polysource plugins discovered
+- Doctrine schema sync — uses `SchemaTool::getUpdateSchemaSql()` to
+  compute pending DDL for polysource-namespaced entities; FAIL with
+  a `migrations:diff` remediation hint when drift is detected (C3
+  pattern from v0.5.7 dogfooding)
+
+Exit code: 0 if all PASS/WARN, 1 if any FAIL. Suitable for CI /
+pre-deploy gates.
+
+Doctrine dep is `nullOnInvalid()` so the command works on hosts
+without Doctrine (schema check degrades to WARN).
+
+Doc: `docs/user/installation.md` "Verifying the install" section
+extended with the command's sample output + exit-code contract.
+
+#### Stimulus controllers advertised in `composer.json extra.symfony.controllers` (closes #30)
+
+`polysource/filter` (`polysource--filter-chips`) and
+`polysource/easyadmin-filter-bridge` (`polysource--filter`) now
+declare their Stimulus controllers in `composer.json` so AssetMapper
++ `@symfony/stimulus-bundle` hosts auto-discover them — no need to
+edit `assets/controllers.json` manually.
+
+Webpack Encore + `@symfony/stimulus-bridge` hosts are unaffected
+(`assets/package.json` declaration kept).
+
+Filed as v0.1.1 dogfooding friction B3a, still open at v0.5.7, now
+resolved.
+
 ## [0.5.7] — 2026-05-15
 
 **Ten install + runtime + UX fixes from dogfooding round 3.** Driving
