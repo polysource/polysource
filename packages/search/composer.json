@@ -45,6 +45,17 @@
     "extra": {
         "branch-alias": {
             "dev-main": "0.1.x-dev"
+        },
+        "symfony": {
+            "controllers": {
+                "polysource--search--cmdk": {
+                    "main": "./assets/controllers/cmdk_controller.js",
+                    "name": "polysource--search--cmdk",
+                    "fetch": "eager",
+                    "enabled": true,
+                    "autoimport": {}
+                }
+            }
         }
     }
 }
