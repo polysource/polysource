@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\FilterUrlToken\Storage;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Filter\FilterUrlToken\Model\FilterUrlToken;
 use Polysource\Filter\FilterUrlToken\Storage\Doctrine\FilterUrlTokenRecord;
@@ -64,5 +65,18 @@ final class DoctrineFilterUrlTokenStorage implements FilterUrlTokenStorageInterf
             filtersSlice: $slice,
             createdAt: $record->createdAt,
         );
+    }
+
+    public function purgeOlderThan(DateTimeImmutable $cutoff): int
+    {
+        $qb = $this->em->createQueryBuilder()
+            ->delete(FilterUrlTokenRecord::class, 'r')
+            ->where('r.createdAt < :cutoff')
+            ->setParameter('cutoff', $cutoff)
+        ;
+
+        $result = $qb->getQuery()->execute();
+
+        return \is_int($result) ? $result : 0;
     }
 }

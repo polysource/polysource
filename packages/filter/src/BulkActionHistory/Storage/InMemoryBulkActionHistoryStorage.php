@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\BulkActionHistory\Storage;
 
+use DateTimeImmutable;
 use Polysource\Filter\BulkActionHistory\Model\BulkActionEntry;
 
 /**
@@ -52,5 +53,21 @@ final class InMemoryBulkActionHistoryStorage implements BulkActionHistoryStorage
         );
 
         return array_values(\array_slice($sorted, 0, max(0, $limit)));
+    }
+
+    public function purgeOlderThan(DateTimeImmutable $cutoff): int
+    {
+        $kept = [];
+        $removed = 0;
+        foreach ($this->entries as $entry) {
+            if ($entry->occurredAt < $cutoff) {
+                ++$removed;
+                continue;
+            }
+            $kept[] = $entry;
+        }
+        $this->entries = $kept;
+
+        return $removed;
     }
 }
