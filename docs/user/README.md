@@ -43,6 +43,7 @@ docs/user/
 ├── installation.md            ← composer require + bundle registration
 ├── getting-started.md         ← five-minute path to a working dashboard
 ├── i18n.md                    ← EN + FR ship out of the box; how to add ES/DE/…
+├── security-and-a11y.md       ← CSP (style-src nonce) + WCAG 2.2 AA coverage audit
 ├── concepts/
 │   ├── resource.md            ← what a Resource is
 │   ├── data-source.md         ← read/write contracts (3 + 3 methods)
