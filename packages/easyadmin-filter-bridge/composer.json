@@ -57,6 +57,17 @@
     "extra": {
         "branch-alias": {
             "dev-main": "0.1.x-dev"
+        },
+        "symfony": {
+            "controllers": {
+                "polysource--filter": {
+                    "main": "./assets/controllers/polysource_filter_controller.js",
+                    "name": "polysource--filter",
+                    "fetch": "eager",
+                    "enabled": true,
+                    "autoimport": {}
+                }
+            }
         }
     }
 }
