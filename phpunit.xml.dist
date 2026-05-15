@@ -43,6 +43,14 @@
             <directory>packages/bulk-async/tests/Functional</directory>
             <directory>packages/easyadmin-filter-bridge/tests/Functional</directory>
             <directory>packages/filter/tests/Functional</directory>
+            <exclude>packages/easyadmin-filter-bridge/tests/Functional/Integration</exclude>
+        </testsuite>
+        <!-- Integration suite — Symfony's Kernel::handle() leaks an
+             exception handler that PHPUnit 11's failOnRisky flags.
+             Run these tests with failOnRisky disabled via the
+             dedicated `integration` suite (cf. `Makefile`). -->
+        <testsuite name="integration">
+            <directory>packages/easyadmin-filter-bridge/tests/Functional/Integration</directory>
         </testsuite>
     </testsuites>
     <source>
