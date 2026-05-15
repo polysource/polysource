@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Polysource\Bundle\ArgumentResolver\AdminContextResolver;
+use Polysource\Bundle\Command\DoctorCommand;
 use Polysource\Bundle\Command\PluginListCommand;
 use Polysource\Bundle\Context\AdminContextProvider;
 use Polysource\Bundle\Controller\ActionController;
@@ -169,6 +170,19 @@ return static function (ContainerConfigurator $container): void {
     $services
         ->set(PluginListCommand::class)
         ->args([service(PluginRegistry::class)])
+        ->tag('console.command')
+    ;
+
+    // `polysource:doctor` — runtime health check.
+    // `ManagerRegistry` is optional (hosts without Doctrine skip the
+    // schema check). `PluginRegistry` is always wired by this bundle.
+    $services
+        ->set(DoctorCommand::class)
+        ->args([
+            service('kernel'),
+            service(PluginRegistry::class),
+            service('doctrine')->nullOnInvalid(),
+        ])
         ->tag('console.command')
     ;
 };

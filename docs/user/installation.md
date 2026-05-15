@@ -225,6 +225,42 @@ polysource_<slug>_action          POST    /admin/<slug>/{id}/{action}
 If no routes appear, you likely forgot to import the
 `polysource:` route loader — re-check `config/routes/polysource.yaml`.
 
+### `polysource:doctor` — self-diagnostic command (since v0.6.0)
+
+For a one-command health check that runs the most common
+install-time checks, use:
+
+```bash
+bin/console polysource:doctor
+```
+
+Output:
+
+```
+Polysource Doctor
+
+ ----------------------- ----------- -------------------------------------------
+  Check                   Status      Detail
+ ----------------------- ----------- -------------------------------------------
+  PHP version             ✓ PASS     8.4.20 (>= 8.1)
+  Polysource bundles      ✓ PASS     3 registered (PolysourceBundle, …)
+  EA bridge co-load       ✓ PASS     EasyAdminBundle is loaded alongside the bridge.
+  Polysource plugins      ✓ PASS     7 discovered (polysource/core 0.6.0, …)
+  Doctrine schema         ✓ PASS     5 Polysource entities in sync with the database.
+ ----------------------- ----------- -------------------------------------------
+
+ [OK] All checks passed.
+```
+
+Exit code: 0 if all checks PASS or WARN, 1 if any FAIL. Suitable
+for CI / pre-deploy gates.
+
+The checks mirror the frictions surfaced during v0.5.7 dogfooding:
+- C1 (bridge bundle loaded on a kernel without EasyAdmin → WARN)
+- C3 (Doctrine schema out of sync → FAIL with `migrations:diff` hint)
+
+If a check fails, the remediation hint is in the "Detail" column.
+
 ## Troubleshooting
 
 ### `LogicException: PolysourceBundle could not find a Symfony Security firewall.`
