@@ -32,6 +32,7 @@ La documentation utilisateur (installation, getting-started, guides par package,
 ### Release & distribution
 - [**Monorepo split + Packagist mirrors (ADR-026)**](./adr/0026-monorepo-split-and-packagist-mirrors.md) — pourquoi 1 monorepo de dev + 16 mirrors read-only sur Packagist
 - [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
+- [**Symfony Flex recipes (prepared)**](./maintainers/flex-recipes/README.md) — 14 manifests prêts pour soumission à `symfony/recipes-contrib` + workflow de submission
 
 ### Roadmap & historique
 - [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré en v0.1, ce qui est planifié en v0.2+

@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Bundle\\PolysourceBundle": ["all"]
+    },
+    "aliases": ["polysource"]
+}

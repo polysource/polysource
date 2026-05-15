@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Adapter\\Flysystem\\PolysourceAdapterFlysystemBundle": ["all"]
+    },
+    "aliases": ["polysource-flysystem"]
+}

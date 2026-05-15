@@ -1,0 +1,9 @@
+{
+    "bundles": {
+        "Polysource\\EasyAdminFilterBridge\\PolysourceEasyAdminFilterBridgeBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "aliases": ["polysource-bridge", "easyadmin-filter-bridge"]
+}

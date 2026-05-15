@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\WorkflowBridge\\PolysourceWorkflowBridgeBundle": ["all"]
+    },
+    "aliases": ["polysource-workflow"]
+}

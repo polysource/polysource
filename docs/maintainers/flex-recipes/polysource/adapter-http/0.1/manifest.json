@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Adapter\\Http\\PolysourceAdapterHttpBundle": ["all"]
+    },
+    "aliases": ["polysource-http"]
+}

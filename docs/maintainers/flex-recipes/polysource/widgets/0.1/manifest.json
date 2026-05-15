@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Widgets\\PolysourceWidgetsBundle": ["all"]
+    },
+    "aliases": ["polysource-widgets"]
+}

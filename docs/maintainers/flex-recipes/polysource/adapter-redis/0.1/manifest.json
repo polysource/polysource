@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Adapter\\Redis\\PolysourceAdapterRedisBundle": ["all"]
+    },
+    "aliases": ["polysource-redis"]
+}

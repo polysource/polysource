@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Audit\\PolysourceAuditBundle": ["all"]
+    },
+    "aliases": ["polysource-audit"]
+}
