@@ -266,6 +266,57 @@ jobs:
         # integration suite is run with `--do-not-fail-on-risky`.
         run: vendor/bin/phpunit --testsuite=unit,functional --testdox
 
+  sf54-floor:
+    name: Sf 5.4 floor smoke (filter + bridge alone)
+    runs-on: ubuntu-24.04
+    # The main `test` matrix can't include Sf 5.4 because
+    # polysource/symfony-bundle requires Sf 6.4+ (`ValueResolverInterface`
+    # is Sf 6.2+), so the full-suite install would fail. This
+    # dedicated job installs ONLY filter + easyadmin-filter-bridge
+    # from Packagist on a vanilla Sf 5.4 + EA 4 skeleton — gates
+    # the documented Sf 5.4 floor without breaking the matrix.
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          # PHP 8.1 — the legacy floor. EA 5 requires PHP 8.2+, so we
+          # gate the Sf 5.4 floor against EA 4 (the realistic
+          # combination of an app that hasn't bumped its Symfony in
+          # 4 years).
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Bootstrap vanilla Symfony 5.4 skeleton + EA 4
+        run: |
+          mkdir -p /tmp/sf54-smoke
+          cd /tmp/sf54-smoke
+          composer create-project symfony/skeleton:^5.4 . --no-interaction --no-progress 2>&1 | tail -3
+          composer require --no-interaction --no-progress \
+            easycorp/easyadmin-bundle:^4.24 \
+            polysource/easyadmin-filter-bridge:^0.6 \
+            doctrine/orm doctrine/doctrine-bundle \
+            symfony/security-bundle 2>&1 | tail -8
+
+      - name: Assert bridge + filter resolved + no symfony-bundle
+        run: |
+          cd /tmp/sf54-smoke
+          # symfony-bundle requires Sf 6.4+ — MUST not be installed transitively.
+          if [ -d vendor/polysource/symfony-bundle ]; then
+              echo 'FAIL: polysource/symfony-bundle was installed on Sf 5.4 — that should be impossible.'
+              exit 1
+          fi
+          # filter + bridge MUST be installed.
+          for pkg in core filter easyadmin-filter-bridge; do
+              [ -d "vendor/polysource/$pkg" ] || { echo "FAIL: polysource/$pkg missing"; exit 1; }
+          done
+          echo 'OK: polysource/{core,filter,easyadmin-filter-bridge} on Sf 5.4 + EA 4'
+
+      - name: Cache clear succeeds (bundles auto-register cleanly)
+        run: |
+          cd /tmp/sf54-smoke
+          php bin/console cache:clear --env=dev 2>&1 | tail -3
+
   integration:
     name: Bridge integration (TestKernel + SQLite)
     runs-on: ubuntu-24.04

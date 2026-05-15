@@ -70,6 +70,17 @@ SMOKE_DIR="${SMOKE_DIR:-/tmp/polysource-smoke-bridge-$$}"
 DOCKER_COMPOSE="${DOCKER_COMPOSE:-docker compose}"
 VERSION_CONSTRAINT="${VERSION_CONSTRAINT:-^0.1}"
 
+# Symfony skeleton version. Default to 7.4 (the current LTS).
+# Override to `^5.4` to validate the Sf 5.4 floor — the bridge +
+# polysource/filter advertise `^5.4` compat but the main CI matrix
+# can't test it (symfony-bundle requires Sf 6.4+, full-suite would
+# fail). This bridge-alone smoke is the canonical Sf 5.4 gate.
+SYMFONY_SKELETON_VERSION="${SYMFONY_SKELETON_VERSION:-^7.4}"
+# EasyAdmin pinned to a version compatible with the Symfony floor.
+# EA 5 requires PHP 8.2+, which excludes the Sf 5.4 + PHP 8.1 combo.
+# Sf 5.4 floor → EA 4 (^4.24); Sf 7.4 floor → EA 5 (^5.0).
+EASYADMIN_VERSION="${EASYADMIN_VERSION:-^5.0}"
+
 cleanup() {
     rm -rf "$SMOKE_DIR"
 }
@@ -91,16 +102,16 @@ echo "  Workdir: $SMOKE_DIR"
 echo "=================================================="
 
 echo
-echo "=== [1/6] Bootstrap vanilla Symfony 7.4 skeleton ==="
-run_in_container '
-    composer create-project symfony/skeleton:^7.4 . --no-interaction --no-progress 2>&1 | tail -3
-'
+echo "=== [1/6] Bootstrap vanilla Symfony $SYMFONY_SKELETON_VERSION skeleton ==="
+run_in_container "
+    composer create-project symfony/skeleton:$SYMFONY_SKELETON_VERSION . --no-interaction --no-progress 2>&1 | tail -3
+"
 
 echo
-echo "=== [2/6] composer require easycorp/easyadmin-bundle (the host stack) ==="
-run_in_container '
-    composer require easycorp/easyadmin-bundle:^5.0 --no-interaction --no-progress 2>&1 | tail -3
-'
+echo "=== [2/6] composer require easycorp/easyadmin-bundle:$EASYADMIN_VERSION ==="
+run_in_container "
+    composer require easycorp/easyadmin-bundle:$EASYADMIN_VERSION --no-interaction --no-progress 2>&1 | tail -3
+"
 
 echo
 echo "=== [3/6] composer require polysource/easyadmin-filter-bridge ALONE ==="
