@@ -36,6 +36,7 @@
 | [ADR-026](./0026-monorepo-split-and-packagist-mirrors.md) | Monorepo unique + 16 mirrors Packagist via subtree split + GitHub App | Accepté |
 | [ADR-027](./0027-progressive-enhancement.md) | Progressive enhancement : tout interactif a un fallback serveur | Accepté |
 | [ADR-028](./0028-scope-discipline.md) | Scope discipline : couche UX filter+listing, pas une plateforme d'admin | Accepté |
+| [ADR-029](./0029-admin-context-decomposition.md) | `AdminContext` décomposition planifiée en sous-VOs au seuil ADR-004 | Accepté (planification) |
 
 ## Convention
 
