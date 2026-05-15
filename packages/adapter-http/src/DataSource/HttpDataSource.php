@@ -11,6 +11,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
+use Polysource\Core\Query\FilterOperator;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
@@ -204,7 +205,7 @@ final class HttpDataSource implements WritableDataSourceInterface
     {
         $params = [];
         foreach ($query->filters as $criterion) {
-            if ('eq' !== $criterion->operator) {
+            if (FilterOperator::Eq !== $criterion->operator) {
                 continue; // v0.1: only `eq` maps cleanly to a passthrough query param
             }
             $value = $criterion->value;

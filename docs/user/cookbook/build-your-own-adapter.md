@@ -127,19 +127,7 @@ Convention from the shipped adapters:
 - Sensitive fields (passwords, tokens, API keys) → **never**
   expose. The data source decides; resources can't undo this.
 
-## 5. Optional: implement `BatchableDataSourceInterface`
-
-If your source can fetch N records in one call (Doctrine
-`findBy(['id' => [...]])`, Meilisearch
-`getDocuments(['filter' => 'id IN [...]'])`), implement
-`BatchableDataSourceInterface::findMany()` so the UI can avoid N+1
-when rendering association columns.
-
-If your `findMany()` would just be a `find()` loop, **don't**
-implement it — the default fallback is the same thing minus the
-extra interface surface.
-
-## 6. Wire the resource
+## 5. Wire the resource
 
 Resources are independent of data sources — you write one resource
 per logical view, and each ships its own data source instance:
@@ -170,7 +158,7 @@ Or, for adapters that ship a base class (Doctrine / Redis /
 Flysystem / HTTP / Meilisearch all do), subclass the base —
 saves boilerplate.
 
-## 7. Test with an in-memory fake
+## 6. Test with an in-memory fake
 
 The best of the shipped adapters all ship an in-memory test fake
 (`InMemoryRedisHashClient`, `InMemoryMeilisearchIndex`,
@@ -189,7 +177,7 @@ Pattern: ship the fake under `tests/InMemory/`, namespace
 write their own custom data sources can re-use it as a drop-in
 mock for their tests.
 
-## 8. Bundle + DI registration
+## 7. Bundle + DI registration
 
 Every shipped adapter follows the same shape:
 
@@ -216,7 +204,7 @@ loads `services.php` which typically just enables autowire +
 autoconfigure — **don't** auto-register the resource itself
 (host decides which entities/indexes/buckets to admin).
 
-## 9. Document it
+## 8. Document it
 
 Drop a `docs/user/adapters/yourthing.md` mirroring the structure
 of the shipped ones:
@@ -228,7 +216,7 @@ of the shipped ones:
 - When to use vs custom
 - See-also links to ADRs
 
-## 10. Common gotchas — learned the hard way
+## 9. Common gotchas — learned the hard way
 
 **Don't leak source-specific types in the public signature.** A
 data source returns `DataRecord`, not `Doctrine\Entity\X` or

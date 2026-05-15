@@ -10,6 +10,7 @@ use Polysource\Adapter\Meilisearch\Tests\InMemory\InMemoryMeilisearchIndex;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use Polysource\Core\Query\SortDirection;
 use RuntimeException;
@@ -48,7 +49,7 @@ final class MeilisearchDataSourceTest extends TestCase
     public function testFilterEqRestrictsResults(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('category', new FilterCriterion('category', 'eq', 'tools'));
+            ->withFilter('category', new FilterCriterion('category', FilterOperator::Eq, 'tools'));
 
         $items = $this->source->search($query)->asArray();
         self::assertCount(1, $items);
@@ -58,7 +59,7 @@ final class MeilisearchDataSourceTest extends TestCase
     public function testFilterInWhitelistsValues(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('id', new FilterCriterion('id', 'in', ['p-1', 'p-3']));
+            ->withFilter('id', new FilterCriterion('id', FilterOperator::In, ['p-1', 'p-3']));
 
         $ids = array_map(static fn ($r) => $r->identifier, $this->source->search($query)->asArray());
         sort($ids);
@@ -68,7 +69,7 @@ final class MeilisearchDataSourceTest extends TestCase
     public function testFilterRangeOperators(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('priceCents', new FilterCriterion('priceCents', 'gte', 5000));
+            ->withFilter('priceCents', new FilterCriterion('priceCents', FilterOperator::Gte, 5000));
 
         self::assertSame(2, $this->source->count($query));
     }
@@ -160,7 +161,7 @@ final class MeilisearchDataSourceTest extends TestCase
         // not slip into the filter expression — the data source
         // strips non-identifier characters.
         $query = (new DataQuery('products'))
-            ->withFilter("category' OR 1=1; --", new FilterCriterion("category' OR 1=1; --", 'eq', 'tools'));
+            ->withFilter("category' OR 1=1; --", new FilterCriterion("category' OR 1=1; --", FilterOperator::Eq, 'tools'));
 
         // The malicious property is sanitised to "categoryOR11" which
         // matches no filterableAttribute on the index — no documents

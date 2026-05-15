@@ -115,7 +115,7 @@ final class RealHttpContainerTest extends TestCase
         );
 
         $query = (new DataQuery('http-test'))
-            ->withFilter('status', new \Polysource\Core\Query\FilterCriterion('status', 'eq', 'paid'));
+            ->withFilter('status', new \Polysource\Core\Query\FilterCriterion('status', \Polysource\Core\Query\FilterOperator::Eq, 'paid'));
 
         $page = $dataSource->search($query);
         $items = [...$page->items];

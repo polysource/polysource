@@ -4,6 +4,104 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — 2026-05-15
+
+**Pre-v1.0 freeze prep.** Closes the 6 remaining items from ADR-011
+that gate the v1.0 API freeze. Two of them are breaking changes
+(grouped here in v0.7.0); the other four were docs/docblock-only
+and shipped alongside.
+
+### Added
+
+#### `FilterOperator` enum (closes ADR-011 item A4)
+
+New `Polysource\Core\Query\FilterOperator: string` backing enum with 12
+cases (`Eq`, `Neq`, `Gt`, `Gte`, `Lt`, `Lte`, `Like`, `In`, `Nin`,
+`Between`, `IsNull`, `IsNotNull`). Replaces the free-form `string
+$operator` on `FilterCriterion` — PHPStan / IDE now flag typos at
+construct time, `match($operator)` blocks in adapters become exhaustive,
+and the canonical operator set is self-documenting.
+
+URL serialization preserved: `?filter[name][op]=...` round-trips through
+`FilterOperator::tryFrom($string) ?? FilterOperator::Eq` at the boundary
+(`AdminContextResolver`), so bookmarks with stale or unknown operators
+silently fall back to `Eq` — same default as before.
+
+The Twig API (`apply_filter_url(context, name, value, operator)`) keeps
+its `string $operator` parameter for template ergonomics; conversion
+happens at the resolver boundary, not in templates.
+
+### Changed (BREAKING)
+
+#### `FilterCriterion::$operator: string` → `FilterOperator` (closes A4)
+
+`Polysource\Core\Query\FilterCriterion::$operator` is now typed as
+`FilterOperator` instead of `string`. Application code constructing
+criterions directly must update:
+
+```diff
+- new FilterCriterion('status', 'eq', 'active')
++ new FilterCriterion('status', FilterOperator::Eq, 'active')
+```
+
+`Polysource\Filter\Model\FilterCriterion` (the bridge-internal one used
+by `polysource/easyadmin-filter-bridge` and the saved-view pipeline)
+keeps `string $operator` intentionally — it accepts open-ended
+Doctrine/EA comparison strings (`=`, `>=`, etc.) that an enum would
+artificially close.
+
+### Removed (BREAKING)
+
+#### `BatchableDataSourceInterface` cut (closes ADR-011 item A1)
+
+`Polysource\Core\DataSource\BatchableDataSourceInterface` removed from
+`polysource/core`. Pure speculation since v0.1 — zero implementers
+across the 6 shipped adapters, zero callers in the monorepo. Per
+ADR-011 the criterion for keeping it was "an adapter v0.2 implements
+`findMany()` AND a controller calls it to avoid a demonstrated N+1".
+Neither happened in 6 months.
+
+The core surface count drops from 26 → 25 public types (`ADR-010`
+updated accordingly). The interface is reintroducible in v1.x if a
+real cursor-batched adapter case emerges; the design space (HTTP
+`?ids=1,2,3`, Meilisearch `getDocuments(filter: 'id IN [...]')`,
+Doctrine `findBy(['id' => [...]])`) remains documented in the cookbook
+for that future.
+
+### Closed without code change
+
+ADR-011 items A3, A6, A8, L4 — non-breaking docs/docblock-only
+closures shipped in the same release cycle:
+
+- **A3** `DataRecord::$rawSource: mixed` — `@internal` docblock added,
+  property exempt from SemVer surface at v1.0
+- **A6** `ResourceInterface::configureSearch()` — dangling reference
+  removed from `docs/architecture/target-architecture.md` §6.2.1
+- **A8** `AdminContext` decomposition — ADR-029 written documenting
+  the 5-VO target structure for v1.x; code stays at 7 props
+- **L4** `DataPage::isEmpty()` Generator one-shot — visible warning
+  docblock with 3 safe call patterns
+
+### Migration guide
+
+For application code using `Polysource\Core\Query\FilterCriterion`:
+
+1. Add `use Polysource\Core\Query\FilterOperator;` to every file
+   constructing a `FilterCriterion`.
+2. Replace string operator literals with enum cases:
+   `'eq'` → `FilterOperator::Eq`, `'gt'` → `FilterOperator::Gt`, etc.
+   The 12-case table is the canonical reference.
+3. If your code reads `$criterion->operator` and uses it as a string
+   (e.g., serialization, URL encoding), use `->value`:
+   `$criterion->operator->value` returns `'eq'`, `'gt'`, etc.
+
+For adapter authors:
+- `match($criterion->operator)` blocks: replace string cases with
+  enum cases (`'eq'` → `FilterOperator::Eq`, etc.).
+- If you implemented `BatchableDataSourceInterface`, switch to extending
+  `DataSourceInterface` directly and call `find()` in a loop until the
+  interface is reintroduced (v1.x).
+
 ## [0.6.0] — 2026-05-15
 
 **Three v0.6 backlog issues closed.** Two new features that consolidate the v0.5.7 dogfooding lessons into permanent tooling, plus a regression-coverage milestone for the bridge HTTP endpoints. Zero breaking change.

@@ -10,6 +10,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
+use Polysource\Core\Query\FilterOperator;
 use RuntimeException;
 
 /**
@@ -187,14 +188,16 @@ final class RedisHashDataSource implements WritableDataSourceInterface
         return true;
     }
 
-    private static function matchesCriterion(mixed $value, string $operator, mixed $expected): bool
+    private static function matchesCriterion(mixed $value, FilterOperator $operator, mixed $expected): bool
     {
         return match ($operator) {
-            'eq' => self::looseEquals($value, $expected),
-            'neq' => !self::looseEquals($value, $expected),
-            'in' => \is_array($expected) && \in_array(self::asString($value), array_map(self::asString(...), $expected), true),
-            'like' => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
-            default => true, // unsupported operator — don't constrain
+            FilterOperator::Eq => self::looseEquals($value, $expected),
+            FilterOperator::Neq => !self::looseEquals($value, $expected),
+            FilterOperator::In => \is_array($expected) && \in_array(self::asString($value), array_map(self::asString(...), $expected), true),
+            FilterOperator::Like => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
+            // Operators not supported by Redis hash matching (Gt/Lt/Between/etc.)
+            // — don't constrain so the rest of the query still works.
+            default => true,
         };
     }
 

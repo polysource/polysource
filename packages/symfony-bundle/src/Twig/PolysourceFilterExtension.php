@@ -73,7 +73,7 @@ final class PolysourceFilterExtension extends AbstractExtension
             $chips[] = [
                 'name' => (string) $name,
                 'label' => $label,
-                'operator' => $criterion->operator,
+                'operator' => $criterion->operator->value,
                 'displayValue' => self::formatValue($criterion->value),
                 'removeUrl' => $this->removeFilterUrl($context, (string) $name),
             ];
@@ -90,6 +90,9 @@ final class PolysourceFilterExtension extends AbstractExtension
     public function applyFilterUrl(AdminContext $context, string $name, mixed $value, string $operator = 'eq'): string
     {
         $filters = self::queryFiltersAsArray($context->query);
+        // Twig surface stays string-based for template ergonomics — the
+        // operator gets validated at AdminContextResolver entry point via
+        // FilterOperator::tryFrom().
         $filters[$name] = self::criterionForUrl($name, $operator, $value);
 
         return $this->buildIndexUrl($context, $filters);
@@ -137,7 +140,7 @@ final class PolysourceFilterExtension extends AbstractExtension
         $out = [];
         foreach ($query->filters as $name => $criterion) {
             \assert($criterion instanceof FilterCriterion);
-            $out[$name] = self::criterionForUrl($name, $criterion->operator, $criterion->value);
+            $out[$name] = self::criterionForUrl($name, $criterion->operator->value, $criterion->value);
         }
 
         return $out;

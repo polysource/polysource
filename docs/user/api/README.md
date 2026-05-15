@@ -72,16 +72,6 @@ public function delete(string|int $identifier): void;
 Implement to enable Create / Edit / Delete buttons.
 [concept page](../concepts/data-source.md#the-optional-write-contract)
 
-### `Polysource\Core\DataSource\BatchableDataSourceInterface` *(extends `DataSourceInterface`)*
-
-```php
-/** @return array<string|int, DataRecord> keyed by identifier */
-public function findMany(array $identifiers): array;
-```
-
-Marker interface — only implement when the underlying store has a real
-batched primitive.
-[concept page](../concepts/data-source.md#the-optional-batch-contract)
 
 ### `Polysource\Core\Action\ActionInterface`
 

@@ -11,6 +11,7 @@ use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use RuntimeException;
 
@@ -62,7 +63,7 @@ final class RedisHashDataSourceTest extends TestCase
     public function testFilterEqOnString(): void
     {
         $query = (new DataQuery('flags'))
-            ->withFilter('enabled', new FilterCriterion('enabled', 'eq', '0'));
+            ->withFilter('enabled', new FilterCriterion('enabled', FilterOperator::Eq, '0'));
 
         $items = $this->source->search($query)->asArray();
         self::assertCount(1, $items);
@@ -72,7 +73,7 @@ final class RedisHashDataSourceTest extends TestCase
     public function testFilterEqOnBoolCoercesStoredString(): void
     {
         $query = (new DataQuery('flags'))
-            ->withFilter('enabled', new FilterCriterion('enabled', 'eq', true));
+            ->withFilter('enabled', new FilterCriterion('enabled', FilterOperator::Eq, true));
 
         $ids = array_map(static fn ($r) => $r->identifier, $this->source->search($query)->asArray());
         sort($ids);
@@ -82,7 +83,7 @@ final class RedisHashDataSourceTest extends TestCase
     public function testFilterInWhitelist(): void
     {
         $query = (new DataQuery('flags'))
-            ->withFilter('name', new FilterCriterion('name', 'in', ['beta-checkout', 'legacy-pdf']));
+            ->withFilter('name', new FilterCriterion('name', FilterOperator::In, ['beta-checkout', 'legacy-pdf']));
 
         self::assertCount(2, $this->source->search($query)->asArray());
     }
@@ -90,7 +91,7 @@ final class RedisHashDataSourceTest extends TestCase
     public function testFilterLikeIsCaseInsensitive(): void
     {
         $query = (new DataQuery('flags'))
-            ->withFilter('description', new FilterCriterion('description', 'like', 'CHECKOUT'));
+            ->withFilter('description', new FilterCriterion('description', FilterOperator::Like, 'CHECKOUT'));
 
         $items = $this->source->search($query)->asArray();
         self::assertCount(1, $items);

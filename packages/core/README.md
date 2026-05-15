@@ -12,7 +12,6 @@ Tiny on purpose. If a contract grows past 5 methods we open an ADR (cf. [ADR-010
 |---|---|---|
 | `DataSourceInterface` | **3** (`search`, `find`, `count`) | Any read-only data source — Doctrine, Redis, Meilisearch, an HTTP API, your microservice |
 | `WritableDataSourceInterface` | extends + **3** (`create`, `update`, `delete`) | Adds write — UI auto-detects and shows write affordances |
-| `BatchableDataSourceInterface` | extends + **1** (`findMany`) | Avoids N+1 across resources |
 | `ResourceInterface` | 5 | What a Polysource Resource is — name, label, fields, actions, data source |
 | `FieldInterface` | n/a (DTO + trait) | A column declaration |
 | `ActionInterface` | 4 | Base action contract (inline / bulk / global specialise) |

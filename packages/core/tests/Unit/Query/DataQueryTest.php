@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use Polysource\Core\Query\SortDirection;
 
@@ -41,8 +42,8 @@ final class DataQueryTest extends TestCase
     public function withFilterAddsToTheFilterMap(): void
     {
         $q = (new DataQuery('products'))
-            ->withFilter('status', new FilterCriterion('status', 'eq', 'active'))
-            ->withFilter('price', new FilterCriterion('price', 'gt', 10));
+            ->withFilter('status', new FilterCriterion('status', FilterOperator::Eq, 'active'))
+            ->withFilter('price', new FilterCriterion('price', FilterOperator::Gt, 10));
 
         self::assertCount(2, $q->filters);
         self::assertArrayHasKey('status', $q->filters);
@@ -53,8 +54,8 @@ final class DataQueryTest extends TestCase
     public function withFilterReplacesExistingFilterWithSameName(): void
     {
         $q = (new DataQuery('products'))
-            ->withFilter('status', new FilterCriterion('status', 'eq', 'active'))
-            ->withFilter('status', new FilterCriterion('status', 'eq', 'archived'));
+            ->withFilter('status', new FilterCriterion('status', FilterOperator::Eq, 'active'))
+            ->withFilter('status', new FilterCriterion('status', FilterOperator::Eq, 'archived'));
 
         self::assertCount(1, $q->filters);
         self::assertSame('archived', $q->filters['status']->value);
@@ -64,7 +65,7 @@ final class DataQueryTest extends TestCase
     public function withoutFilterRemovesFromTheMap(): void
     {
         $q = (new DataQuery('products'))
-            ->withFilter('status', new FilterCriterion('status', 'eq', 'active'));
+            ->withFilter('status', new FilterCriterion('status', FilterOperator::Eq, 'active'));
         $q = $q->withoutFilter('status');
 
         self::assertSame([], $q->filters);

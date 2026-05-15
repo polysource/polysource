@@ -16,6 +16,7 @@ use Polysource\Adapter\Doctrine\Tests\Fixture\Product;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use Polysource\Core\Query\SortDirection;
 use RuntimeException;
@@ -119,7 +120,7 @@ final class DoctrineDataSourceTest extends TestCase
     public function testFilterEqRestrictsResults(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('sku', new FilterCriterion('sku', 'eq', 'WIDGET-1'));
+            ->withFilter('sku', new FilterCriterion('sku', FilterOperator::Eq, 'WIDGET-1'));
 
         $items = $this->source->search($query)->asArray();
         self::assertCount(1, $items);
@@ -129,7 +130,7 @@ final class DoctrineDataSourceTest extends TestCase
     public function testFilterInRestrictsResults(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('sku', new FilterCriterion('sku', 'in', ['WIDGET-1', 'GADGET-1']));
+            ->withFilter('sku', new FilterCriterion('sku', FilterOperator::In, ['WIDGET-1', 'GADGET-1']));
 
         self::assertSame(2, $this->source->count($query));
     }
@@ -137,7 +138,7 @@ final class DoctrineDataSourceTest extends TestCase
     public function testFilterBetweenOnInteger(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('priceCents', new FilterCriterion('priceCents', 'between', [1000, 5000]));
+            ->withFilter('priceCents', new FilterCriterion('priceCents', FilterOperator::Between, [1000, 5000]));
 
         $items = $this->source->search($query)->asArray();
         self::assertCount(2, $items);
@@ -152,7 +153,7 @@ final class DoctrineDataSourceTest extends TestCase
     public function testFilterLikeWrapsValue(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('name', new FilterCriterion('name', 'like', 'widget'));
+            ->withFilter('name', new FilterCriterion('name', FilterOperator::Like, 'widget'));
 
         self::assertSame(2, $this->source->count($query));
     }
@@ -168,7 +169,7 @@ final class DoctrineDataSourceTest extends TestCase
     public function testUnknownFilterPropertyIsSilentlySkipped(): void
     {
         $query = (new DataQuery('products'))
-            ->withFilter('secret', new FilterCriterion('secret', 'eq', 'whatever'));
+            ->withFilter('secret', new FilterCriterion('secret', FilterOperator::Eq, 'whatever'));
 
         self::assertSame(4, $this->source->count($query), 'Unknown filter property must not constrain.');
     }
