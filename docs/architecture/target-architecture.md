@@ -59,7 +59,6 @@ interface ResourceInterface
 
     public function configureActions(Actions $actions): Actions;
     public function configureFilters(Filters $filters): Filters;
-    public function configureSearch(Search $search): Search;
 
     public function getPermission(): ?string;     // attribute Symfony Voter
 }

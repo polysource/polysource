@@ -45,9 +45,28 @@ final class DataPage
     /**
      * Whether the page contains zero records.
      *
-     * Note: for un-countable Traversable items where the total is unknown,
-     * this materialises the iterator to determine emptiness — which may
-     * consume it. Prefer checking $total when known.
+     * ## ⚠️ Generator consumption warning (closes ADR-011 item L4)
+     *
+     * When `$items` is a one-shot `\Generator` (or any non-Countable
+     * Traversable) AND `$total` is null (cursor source with unknown
+     * total), this method MUST materialise the iterator to determine
+     * emptiness. **The iterator is then consumed**: a subsequent call
+     * to `asArray()` or `foreach ($page->items as ...)` will yield
+     * zero rows.
+     *
+     * ## Safe call patterns
+     *
+     * 1. **Set `$total` explicitly when you know it** — `isEmpty()`
+     *    short-circuits on `$total === 0` without touching items.
+     * 2. **Materialise upstream** with `iterator_to_array($gen, false)`
+     *    if you need both `isEmpty()` and iteration.
+     * 3. **Use array or `\Countable` items** — both are always safe
+     *    to call `isEmpty()` on.
+     *
+     * The unsafe last-resort branch exists because returning `false`
+     * (= "non-empty") for an unknown-total Generator would make UI
+     * rendering branch incorrectly. Materialising is the lesser evil —
+     * but producers SHOULD pass `$total` to avoid hitting it.
      */
     public function isEmpty(): bool
     {
@@ -63,7 +82,8 @@ final class DataPage
             return 0 === $this->total;
         }
 
-        // Last resort: peek the iterator. Materialises it (one item).
+        // Last resort: materialises the iterator. See method docblock —
+        // producers SHOULD pass `$total` to avoid hitting this branch.
         return [] === [...$this->items];
     }
 }
