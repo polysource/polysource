@@ -345,6 +345,15 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->setAutowired(true)
                 ->setPublic(true)
             ;
+
+            // Periodic purge command (v0.6.1) — opt-in via cron in
+            // non-regulated hosts. Compliance hosts MUST NOT run it
+            // (cf. docblock).
+            $container
+                ->register(\Polysource\Filter\BulkActionHistory\Command\PurgeBulkActionHistoryCommand::class)
+                ->setAutowired(true)
+                ->addTag('console.command')
+            ;
         }
 
         // RecentRecords wiring (v0.5.0).
@@ -386,6 +395,15 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->register(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
                 ->setAutowired(true)
                 ->setPublic(true)
+            ;
+
+            // Periodic purge command (v0.6.1) — hosts wire it to a
+            // nightly cron, otherwise the polysource_filter_url_tokens
+            // table grows unbounded.
+            $container
+                ->register(\Polysource\Filter\FilterUrlToken\Command\PurgeFilterUrlTokensCommand::class)
+                ->setAutowired(true)
+                ->addTag('console.command')
             ;
         }
 

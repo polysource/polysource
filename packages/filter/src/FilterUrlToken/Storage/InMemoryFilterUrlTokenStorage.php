@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\FilterUrlToken\Storage;
 
+use DateTimeImmutable;
 use Polysource\Filter\FilterUrlToken\Model\FilterUrlToken;
 
 /**
@@ -24,5 +25,18 @@ final class InMemoryFilterUrlTokenStorage implements FilterUrlTokenStorageInterf
     public function find(string $token): ?FilterUrlToken
     {
         return $this->byToken[$token] ?? null;
+    }
+
+    public function purgeOlderThan(DateTimeImmutable $cutoff): int
+    {
+        $removed = 0;
+        foreach ($this->byToken as $key => $entry) {
+            if ($entry->createdAt < $cutoff) {
+                unset($this->byToken[$key]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
     }
 }

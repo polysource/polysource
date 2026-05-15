@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\BulkActionHistory\Storage;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Polysource\Filter\BulkActionHistory\Model\BulkActionEntry;
 use Polysource\Filter\BulkActionHistory\Storage\Doctrine\BulkActionHistoryRecord;
@@ -93,5 +94,18 @@ final class DoctrineBulkActionHistoryStorage implements BulkActionHistoryStorage
         }
 
         return $out;
+    }
+
+    public function purgeOlderThan(DateTimeImmutable $cutoff): int
+    {
+        $qb = $this->em->createQueryBuilder()
+            ->delete(BulkActionHistoryRecord::class, 'r')
+            ->where('r.occurredAt < :cutoff')
+            ->setParameter('cutoff', $cutoff)
+        ;
+
+        $result = $qb->getQuery()->execute();
+
+        return \is_int($result) ? $result : 0;
     }
 }
