@@ -42,6 +42,7 @@ docs/user/
 ├── README.md                  ← you are here
 ├── installation.md            ← composer require + bundle registration
 ├── getting-started.md         ← five-minute path to a working dashboard
+├── i18n.md                    ← EN + FR ship out of the box; how to add ES/DE/…
 ├── concepts/
 │   ├── resource.md            ← what a Resource is
 │   ├── data-source.md         ← read/write contracts (3 + 3 methods)
