@@ -13,6 +13,7 @@ use Polysource\Core\Field\FieldDto;
 use Polysource\Core\Permission\PermissionInterface;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Resource\ResourceInterface;
+use Stringable;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -114,8 +115,18 @@ final class ControllerSupport
     public static function synthesiseFieldsFromRecord(DataRecord $record): array
     {
         $fields = [];
-        foreach (array_keys($record->properties) as $property) {
+        foreach ($record->properties as $property => $value) {
             if (!\is_string($property) || '' === $property) {
+                continue;
+            }
+            // Non-stringable objects (DateTimeImmutable, Doctrine
+            // entities, …) would blow up the generic Twig template
+            // with "Object of class X could not be converted to
+            // string". Skip them — hosts with rich-typed properties
+            // should declare typed fields (DateTimeField, CodeField,
+            // …) instead of relying on the synthesis fallback.
+            // Stringable objects, scalars, null and arrays all pass.
+            if (\is_object($value) && !$value instanceof Stringable) {
                 continue;
             }
             $fields[] = new FieldDto(property: $property, label: $property);

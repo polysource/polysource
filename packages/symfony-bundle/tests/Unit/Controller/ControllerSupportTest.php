@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Tests\Unit\Controller;
 
+use DateTime;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Core\Query\DataRecord;
+use Stringable;
 
 /**
  * Unit coverage for {@see ControllerSupport::synthesiseFieldsFromRecord}
@@ -82,5 +85,49 @@ final class ControllerSupportTest extends TestCase
         $fields = ControllerSupport::synthesiseFieldsFromRecord($record);
 
         self::assertSame(['name'], array_map(static fn ($f) => $f->property, $fields));
+    }
+
+    #[Test]
+    public function skipsNonStringableObjects(): void
+    {
+        // DateTimeImmutable and other non-Stringable objects would
+        // blow up the generic Twig template with "Object of class X
+        // could not be converted to string". The synthesis must drop
+        // them so the page renders. Hosts with rich-typed properties
+        // declare typed fields (DateTimeField, etc.) explicitly.
+        $record = new DataRecord(
+            identifier: 'r-1',
+            properties: [
+                'name' => 'Alice',
+                'createdAt' => new DateTimeImmutable('2026-05-15'),
+                'failedAt' => new DateTime('2026-05-15'),
+            ],
+        );
+
+        $fields = ControllerSupport::synthesiseFieldsFromRecord($record);
+
+        self::assertSame(['name'], array_map(static fn ($f) => $f->property, $fields));
+    }
+
+    #[Test]
+    public function keepsStringableObjects(): void
+    {
+        // Stringable objects have __toString(), so the generic
+        // template's `{{ value }}` is safe — keep them.
+        $stringable = new class implements Stringable {
+            public function __toString(): string
+            {
+                return 'rendered';
+            }
+        };
+
+        $record = new DataRecord(
+            identifier: 'r-1',
+            properties: ['name' => 'Alice', 'descriptor' => $stringable],
+        );
+
+        $fields = ControllerSupport::synthesiseFieldsFromRecord($record);
+
+        self::assertSame(['name', 'descriptor'], array_map(static fn ($f) => $f->property, $fields));
     }
 }
