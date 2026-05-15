@@ -13,18 +13,19 @@ Le `development-plan.md` §14 incluait à l'origine un critère "stop-the-line" 
 
 Ce critère visait à **résister au scope creep** et à éviter le piège « God Object » (Sonata `AdminInterface` à 80 méthodes — cf. analyse interne). Intention saine.
 
-À la fin de la Phase 1, `packages/core` contient **26 types publics** (réduit à **25** en v0.7 — coupure de `BatchableDataSourceInterface` per ADR-011 A1) :
+À la fin de la Phase 1, `packages/core` contenait **26 types publics**. v0.7 a coupé `BatchableDataSourceInterface` (ADR-011 A1, 26→25) et ajouté l'enum `FilterOperator` (ADR-011 A4, 25→26). v0.7.1 ajoute 5 concrete field types pour combler le gap dogfood "configureFields(): [] → rows vides" (26→31) :
 
 | Catégorie | Nombre | Détail |
 |---|---|---|
 | Interfaces | 9 | `DataSourceInterface`, `WritableDataSourceInterface`, `ResourceInterface`, `FieldInterface`, `FilterInterface`, `ActionInterface`, `InlineActionInterface`, `BulkActionInterface`, `PermissionInterface` |
 | Value objects (`final readonly class`) | 9 | `DataQuery`, `DataPage`, `DataRecord`, `DataPayload`, `Pagination`, `FilterCriterion`, `ActionResult`, `FieldDto`, `FilterDto` |
+| Concrete field types | 5 | `TextField`, `IdField`, `BooleanField`, `DateTimeField`, `CodeField` (v0.7.1 — chacun = 1 wrapper de 5 lignes sur `FieldTrait` + 1 template `@Polysource/field/*.html.twig`) |
 | Exceptions (`final class` ou `class`) | 3 | `DataSourceException`, `ResourceNotFoundException`, `UnsupportedOperationException` |
 | Abstract base class | 1 | `AbstractResource` |
 | Enum | 2 | `SortDirection`, `FilterOperator` (v0.7 — per ADR-011 A4) |
 | Trait | 1 | `FieldTrait` |
 | Constants holder | 1 | `Polysource` |
-| **Total** | **26** (v0.7) | |
+| **Total** | **31** (v0.7.1) | |
 
 **26 > 12.** Si on applique le critère littéralement, c'est un échec. Mais la lecture qualitative est différente.
 

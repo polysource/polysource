@@ -14,6 +14,7 @@ Tiny on purpose. If a contract grows past 5 methods we open an ADR (cf. [ADR-010
 | `WritableDataSourceInterface` | extends + **3** (`create`, `update`, `delete`) | Adds write — UI auto-detects and shows write affordances |
 | `ResourceInterface` | 5 | What a Polysource Resource is — name, label, fields, actions, data source |
 | `FieldInterface` | n/a (DTO + trait) | A column declaration |
+| `TextField` / `IdField` / `BooleanField` / `DateTimeField` / `CodeField` | static `::new($property, $label)` | Built-in concrete field types (v0.7.1) backed by the twig-theme `field/*.html.twig` templates |
 | `ActionInterface` | 4 | Base action contract (inline / bulk / global specialise) |
 | `InlineActionInterface` | extends | Per-record action (button on each row) |
 | `BulkActionInterface` | extends | Multi-record action (selection-driven) |

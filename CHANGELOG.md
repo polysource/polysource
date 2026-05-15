@@ -4,6 +4,55 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] — 2026-05-15
+
+**Dogfood-driven fixes.** Two UX traps surfaced while wiring polysource standalone admin into a real multi-tenant app: a Resource declaring no fields renders rows-without-columns (worse than no rows at all), and the absence of any concrete `Field` class out of the box forces every host to write boilerplate before the first row even displays. Both fixed here.
+
+### Added
+
+#### 5 concrete field types in `polysource/core`
+
+`TextField`, `IdField`, `BooleanField`, `DateTimeField`, `CodeField` — each a 5-line wrapper over `FieldTrait` that wires the matching `polysource/twig-theme` template (`@Polysource/field/{text,id,boolean,datetime,code}.html.twig`). Hosts no longer need to write their own field shim:
+
+```php
+public function configureFields(string $page): iterable
+{
+    yield IdField::new('id', 'ID');
+    yield TextField::new('name', 'Name');
+    yield BooleanField::new('active', 'Active');
+    yield DateTimeField::new('createdAt', 'Created');
+    yield CodeField::new('payload', 'Payload');
+}
+```
+
+Core surface: 26 → 31 public types. Comfortable margin remains vs the ADR-010 cap (40).
+
+#### Empty-fields fallback in IndexController + DetailController
+
+When `ResourceInterface::configureFields()` returns `[]`, both controllers now synthesise a `FieldDto` per property key on a representative record (`page.items[0]` for index, the looked-up record for detail). Resources that declare no fields render a generic listing of their data instead of empty rows — the previous behaviour was a UX trap.
+
+Synthesis policy:
+
+- One field per `DataRecord::properties` key, property name doubles as label
+- `DataRecord::$rawSource` is **never** surfaced (matches ADR-011 A3's `@internal` contract)
+- Index: only synthesises if `page.items` is an array (one-shot Generators don't get the fallback — hosts who use cursor iterators must declare fields explicitly)
+- Detail: always synthesises (the record is already materialised)
+
+The synthesis helper is public + static: `ControllerSupport::synthesiseFieldsFromRecord(DataRecord $record): list<FieldDto>` — hosts can call it from custom controllers if they want the same fallback elsewhere.
+
+### Why now
+
+These were latent UX bugs since v0.1. They surfaced during a dogfood session where the new resource genuinely had nothing to declare yet — and the empty page hid the fact that the underlying SCAN was returning records correctly. Shipping fixes in v0.7.1 (patch, non-breaking) means hosts auto-get the better defaults without touching their code.
+
+### Migration
+
+Zero-effort upgrade. Hosts who had been working around the empty-fields trap with custom shim Field classes can:
+
+1. Replace their shims with the new concrete types from `polysource/core`
+2. Delete `configureFields()` entirely if the synthesised fallback suffices
+
+Both are optional — existing field declarations keep working unchanged.
+
 ## [0.7.0] — 2026-05-15
 
 **Pre-v1.0 freeze prep.** Closes the 6 remaining items from ADR-011

@@ -26,16 +26,43 @@ final class IndexController
         $page = $context->resource->getDataSource()->search($context->query);
         $actions = $this->support->collectActionViews($context->resource);
 
+        // Empty-fields fallback: when the Resource declared no fields,
+        // synthesise them from the first record's properties so the UI
+        // doesn't render rows-without-columns. Cf. ControllerSupport::synthesiseFieldsFromRecord.
+        $fields = $this->support->collectFields($context->resource, 'index');
+        if ([] === $fields) {
+            $first = self::peekFirstRecord($page->items);
+            if (null !== $first) {
+                $fields = ControllerSupport::synthesiseFieldsFromRecord($first);
+            }
+        }
+
         return new PolysourceView(
             template: '@Polysource/index.html.twig',
             variables: [
                 'context' => $context,
                 'resource' => $context->resource,
                 'page' => $page,
-                'fields' => $this->support->collectFields($context->resource, 'index'),
+                'fields' => $fields,
                 'inline_actions' => $actions['inline'],
                 'bulk_actions' => $actions['bulk'],
             ],
         );
+    }
+
+    /**
+     * @param iterable<\Polysource\Core\Query\DataRecord> $items
+     */
+    private static function peekFirstRecord(iterable $items): ?\Polysource\Core\Query\DataRecord
+    {
+        // Arrays + Countable iterables can be peeked without
+        // consuming. For a one-shot Generator we DON'T peek — the
+        // template foreach would then see zero rows. Hosts using
+        // generators MUST declare fields explicitly.
+        if (\is_array($items)) {
+            return $items[array_key_first($items)] ?? null;
+        }
+
+        return null;
     }
 }

@@ -31,13 +31,22 @@ final class DetailController
             throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
 
+        // Empty-fields fallback: same as IndexController. When the
+        // Resource declares no fields, synthesise from the record's
+        // properties so the detail page renders something instead
+        // of "no fields configured for this view".
+        $fields = $this->support->collectFields($context->resource, 'detail');
+        if ([] === $fields) {
+            $fields = ControllerSupport::synthesiseFieldsFromRecord($record);
+        }
+
         return new PolysourceView(
             template: '@Polysource/detail.html.twig',
             variables: [
                 'context' => $context,
                 'resource' => $context->resource,
                 'record' => $record,
-                'fields' => $this->support->collectFields($context->resource, 'detail'),
+                'fields' => $fields,
                 'inline_actions' => $this->support->collectActionViews($context->resource)['inline'],
             ],
         );
