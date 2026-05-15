@@ -51,6 +51,10 @@ test-functional: ## Run only functional tests
 test-integration: ## Run bridge integration tests (TestKernel + SQLite); --do-not-fail-on-risky because Symfony's Kernel::handle() leaks an exception handler not unwound by shutdown()
 	$(PHP_RUN) vendor/bin/phpunit --testsuite=integration --do-not-fail-on-risky
 
+.PHONY: smoke-sf54
+smoke-sf54: ## Smoke install of polysource/easyadmin-filter-bridge on Symfony 5.4 + EA 4.x (the documented floor; main CI matrix can't gate this because symfony-bundle requires Sf 6.4+)
+	SYMFONY_SKELETON_VERSION='^5.4' EASYADMIN_VERSION='^4.24' VERSION_CONSTRAINT='^0.6' ./scripts/smoke-packagist-bridge.sh
+
 .PHONY: phpstan
 phpstan: ## Run PHPStan static analysis (level max)
 	$(PHP_RUN) vendor/bin/phpstan analyse --memory-limit=2G
