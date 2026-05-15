@@ -115,6 +115,30 @@ only the ones you need.
 composer require polysource/symfony-bundle
 ```
 
+> **⚠ Always use `composer require`** — do **not** add Polysource
+> packages by editing `composer.json` manually. The two operations
+> look equivalent but aren't: `composer require` atomically updates
+> `composer.json` + `composer.lock` + runs Flex post-install. A
+> manual edit leaves the lock out of sync, which makes any
+> downstream `composer install --no-scripts` (typical in
+> Makefile-driven `make build` setups) fail with:
+>
+> ```
+> - Required package "polysource/symfony-bundle" is not present in the lock file.
+> ```
+>
+> Same applies to `composer remove` over manual deletions.
+
+> **⚠ Multi-kernel hosts** (per-app `apps/*/config/bundles.php`
+> alongside the root `config/bundles.php`): Symfony Flex
+> registers the bundle in the **root** `config/bundles.php`,
+> which loads it on every kernel. If you only want Polysource on
+> one kernel (typically `backend`), move the entry from
+> `config/bundles.php` to `apps/backend/config/bundles.php`
+> after running `composer require`. Same applies to
+> `polysource/easyadmin-filter-bridge` which only makes sense
+> alongside EasyAdmin.
+
 The bundle auto-registers via Symfony Flex. If you don't use Flex,
 add it manually to `config/bundles.php`:
 

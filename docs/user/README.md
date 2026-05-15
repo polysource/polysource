@@ -16,6 +16,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | **🔌 Extend Polysource — 14+ extension points, zero forks** | [**extensibility.md**](./extensibility.md) |
 | **See Polysource in action with screenshots** | [showcase-tour.md](./showcase-tour.md) |
 | Install Polysource in a Symfony 5.4+ app (any minor since 5.4) | [installation.md](./installation.md) |
+| Upgrade an existing app from v0.5 / v0.6 to v0.7 | [upgrade/v0.5-to-v0.7.md](./upgrade/v0.5-to-v0.7.md) |
 | Get a working dashboard in 5 minutes | [getting-started.md](./getting-started.md) |
 | Understand the building blocks | [concepts/](./concepts/) |
 | Wire the Messenger failed transport | [adapters/messenger.md](./adapters/messenger.md) |
