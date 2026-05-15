@@ -51,6 +51,17 @@
     "extra": {
         "branch-alias": {
             "dev-main": "0.1.x-dev"
+        },
+        "symfony": {
+            "controllers": {
+                "polysource--filter-chips": {
+                    "main": "./assets/controllers/filter_chips_controller.js",
+                    "name": "polysource--filter-chips",
+                    "fetch": "eager",
+                    "enabled": true,
+                    "autoimport": {}
+                }
+            }
         }
     }
 }
