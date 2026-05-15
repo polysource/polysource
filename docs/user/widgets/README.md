@@ -18,7 +18,7 @@ no cost.
 
 ## Status
 
-Pre-v0.1.0. Public API per ADR-022:
+**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable per ADR-022:
 - `WidgetInterface` + `AbstractWidget`
 - `CounterWidget`, `ListWidget`, `ChartWidget`
 - `Dashboard` VO + `DashboardRegistry`

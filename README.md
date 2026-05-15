@@ -37,16 +37,17 @@ composer require polysource/easyadmin-filter-bridge
 
 Symfony Flex registers the bundles automatically. Full guide (manual registration, dev install from the monorepo, package picker) in [`docs/user/installation.md`](./docs/user/installation.md). Five-minute path to a working dashboard in [`docs/user/getting-started.md`](./docs/user/getting-started.md).
 
-## Status — v0.5.0 published (2026-05-14)
+## Status — v0.5.7 published (2026-05-15)
 
 16 packages distributed on Packagist as [`polysource/*`](https://packagist.org/?query=polysource%2F), mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.5.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
 
-**v0.2.0 → v0.5.0 highlights** (since the v0.1.0 base — full per-version detail in [CHANGELOG.md](./CHANGELOG.md)):
+**v0.2.0 → v0.5.7 highlights** (since the v0.1.0 base — full per-version detail in [CHANGELOG.md](./CHANGELOG.md)):
 
 - **v0.2.0** — Simplification: Stimulus controllers replaced by native `<details>` HTML, [ADR-027 progressive enhancement](./docs/adr/0027-progressive-enhancement.md) + [ADR-028 scope discipline](./docs/adr/0028-scope-discipline.md) ratified.
 - **v0.3.0** — Column visibility toggle (per-user prefs), default saved view per user (`★`), row conditional styles, streaming CSV/XLSX export.
 - **v0.4.0** — Filter-from-cell dropdown, per-column quick filter row, cross-page bulk selection + dry-run preview, empty-state design system.
 - **v0.5.0** — Filter-aware export, frozen/sticky columns, row density toggle, toast notifications, column widths on saved views, column reordering, bulk action history audit log, keyboard shortcut cheat sheet, recently viewed records, short filter URL tokens.
+- **v0.5.1 → v0.5.7** — Six dogfooding-driven patch releases hardening the install path (multi-kernel + multi-tenant safety), runtime (Doctrine ORM 2.x export streaming, IN/NULL filter DQL, PHP 8.4 deprecations, stale-schema degrade), and UX (horizontal filter tab strip, ISO 8601 date export). Zero breaking change.
 
 Each helper is a Twig function or DI-wired service composable from the host's templates — never auto-injected into pages the host didn't opt into. See [`whats-new.md`](./docs/user/easyadmin-filter-bridge/whats-new.md) for the full feature index.
 

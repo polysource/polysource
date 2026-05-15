@@ -45,12 +45,34 @@ Doctrine `WHERE` clauses on the QueryBuilder. Supported shapes:
 ```
 
 Supported comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`,
-`between`, `like`, `not like`. Anything else is silently dropped
-(defensive — no DQL injection).
+`between`, `like`, `not like`, `in`, `not in`, `is null`,
+`is not null` (all case-insensitive). Anything else is silently
+dropped (defensive — no DQL injection).
 
 The string values `"true"` / `"false"` are coerced to PHP booleans
 so boolean columns behave as expected; numeric strings stay as
 strings (Doctrine handles the SQL cast).
+
+### Column value formatting
+
+The CSV/XLSX writer (`Exporter`) coerces each cell value to text via:
+
+| Type | Output |
+|---|---|
+| `null` | empty string |
+| `bool` | `"1"` / `"0"` |
+| scalar (string, int, float) | direct cast |
+| `Stringable` | `__toString()` |
+| `DateTimeInterface` | ISO 8601 / RFC 3339 (e.g. `2026-03-31T08:52:54+02:00`) — universal, sortable as text, opens correctly in Excel and parses cleanly with every modern date library |
+| `BackedEnum` | the case's backing value |
+| `UnitEnum` | the case's name |
+| `array` | JSON-encoded with `JSON_UNESCAPED_UNICODE \| JSON_UNESCAPED_SLASHES` |
+| other | empty string (defensive) |
+
+Hosts wanting different per-column formatting (e.g. localised
+date format, money formatting) build their own iterable upstream
+of `Exporter::streamCsv()` — see "Going beyond the lean applier"
+below.
 
 ## Coverage limitations
 

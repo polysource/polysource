@@ -44,7 +44,7 @@ Records over 50 KB are truncated with a marker.
 
 ## Status
 
-**v0.1 — read-only.** Retry / dismiss / retry-all / purge actions ship in
+**Shipped — v0.5.7 (2026-05-15).** Read-only browse. Retry / dismiss / retry-all / purge actions ship in
 Phase 5 of the development plan.
 
 ## Architectural decisions

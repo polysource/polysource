@@ -24,8 +24,7 @@ run `make demo` from the repository root — it boots the bundled
 composer require polysource/symfony-bundle polysource/adapter-messenger
 ```
 
-(Pre-v0.1.0: install from the monorepo path repository instead — see
-[../installation.md → Dev install](../installation.md#dev-install).)
+(Both packages are on Packagist since v0.1.0; current stable: v0.5.7.)
 
 ## 2. Register the bundles
 

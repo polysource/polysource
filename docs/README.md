@@ -5,7 +5,7 @@
 > 1. **`polysource/easyadmin-filter-bridge`** — enrichit les filtres d'une app EasyAdmin existante (4.24+ ou 5.0+) — ranges, multi-select, custom filter types, saved views, chips bar — sans forker EA.
 > 2. **Polysource standalone admin** (à installer via `polysource/symfony-bundle` + les adapters utiles) — admin pour ressources non-Doctrine : Messenger, Redis, S3, REST, Meilisearch, configs.
 
-Statut : **v0.1.0 publiée le 2026-05-10** — 16 packages distribués sur Packagist comme `polysource/<pkg>`, mirrorés depuis ce monorepo via le pipeline subtree-split documenté dans [ADR-026](./adr/0026-monorepo-split-and-packagist-mirrors.md). Pour l'historique versionné voir [`CHANGELOG.md`](../CHANGELOG.md), pour ce qui vient ensuite voir [`ROADMAP.md`](../ROADMAP.md), et pour les items à trancher avant le freeze v1.0 voir [ADR-011](./adr/0011-pre-v1.0-freeze-checklist.md).
+Statut : **v0.5.7 publiée le 2026-05-15** — 16 packages distribués sur Packagist comme `polysource/<pkg>`, mirrorés depuis ce monorepo via le pipeline subtree-split documenté dans [ADR-026](./adr/0026-monorepo-split-and-packagist-mirrors.md). API publique release-candidate stable (committed pour v0.5.x, freeze SemVer à v1.0). Pour l'historique versionné voir [`CHANGELOG.md`](../CHANGELOG.md), pour ce qui vient ensuite voir [`ROADMAP.md`](../ROADMAP.md), et pour les items à trancher avant le freeze v1.0 voir [ADR-011](./adr/0011-pre-v1.0-freeze-checklist.md).
 
 ## Pour les utilisateurs
 
@@ -35,7 +35,7 @@ La documentation utilisateur (installation, getting-started, guides par package,
 
 ### Roadmap & historique
 - [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré en v0.1, ce qui est planifié en v0.2+
-- [**CHANGELOG.md**](../CHANGELOG.md) — historique versionné des releases (v0.1.0 → 2026-05-10)
+- [**CHANGELOG.md**](../CHANGELOG.md) — historique versionné des releases (v0.1.0 → v0.5.7)
 - [**Pre-v1.0 freeze checklist (ADR-011)**](./adr/0011-pre-v1.0-freeze-checklist.md) — items API à trancher avant le freeze v1.0
 
 > Le plan de développement détaillé (par phase, par item, par jour) reste un document de travail interne du mainteneur — non publié.
