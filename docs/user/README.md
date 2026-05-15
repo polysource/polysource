@@ -62,7 +62,8 @@ docs/user/
 ├── cookbook/
 │   ├── messenger-failed-dashboard.md
 │   ├── adding-a-custom-action.md
-│   └── permissions-with-roles.md
+│   ├── permissions-with-roles.md
+│   └── wrapping-in-easyadmin-chrome.md ← mix Polysource standalone with EA sidebar/header
 └── api/
     └── README.md              ← public interfaces at a glance
 ```
