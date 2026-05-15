@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\BulkAsync\\PolysourceBulkAsyncBundle": ["all"]
+    },
+    "aliases": ["polysource-bulk-async"]
+}

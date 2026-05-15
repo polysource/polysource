@@ -1,0 +1,12 @@
+polysource_easyadmin_filter_bridge:
+    # Set to false on multi-tenant hosts where EasyAdmin is mounted under a
+    # custom prefix (e.g. `/{channel}/admin`). When disabled, import the
+    # bridge's routes manually from `config/routes.yaml`:
+    #
+    #     polysource_easyadmin_filter_bridge:
+    #         resource: '@PolysourceEasyAdminFilterBridge/config/routes.php'
+    #         type: php
+    #         prefix: /{channel}/admin
+    #
+    # Default `true` keeps zero-config behaviour for single-tenant `/admin` mounts.
+    auto_register_routes: true

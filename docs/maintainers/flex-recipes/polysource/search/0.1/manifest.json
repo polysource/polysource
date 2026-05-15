@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Search\\PolysourceSearchBundle": ["all"]
+    },
+    "aliases": ["polysource-search"]
+}

@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Adapter\\Doctrine\\PolysourceAdapterDoctrineBundle": ["all"]
+    },
+    "aliases": ["polysource-doctrine"]
+}

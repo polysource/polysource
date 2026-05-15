@@ -1,0 +1,6 @@
+{
+    "bundles": {
+        "Polysource\\Adapter\\Messenger\\PolysourceMessengerBundle": ["all"]
+    },
+    "aliases": ["polysource-messenger"]
+}
