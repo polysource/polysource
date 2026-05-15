@@ -51,6 +51,17 @@
     "extra": {
         "branch-alias": {
             "dev-main": "0.1.x-dev"
+        },
+        "symfony": {
+            "controllers": {
+                "polysource--bulk-async--progress": {
+                    "main": "./assets/controllers/progress_controller.js",
+                    "name": "polysource--bulk-async--progress",
+                    "fetch": "eager",
+                    "enabled": true,
+                    "autoimport": {}
+                }
+            }
         }
     }
 }
