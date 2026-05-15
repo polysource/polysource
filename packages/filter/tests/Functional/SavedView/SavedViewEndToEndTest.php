@@ -202,6 +202,102 @@ final class SavedViewEndToEndTest extends TestCase
         self::assertStringNotContainsString('polysource-saved-views__item active', $output);
     }
 
+    #[Test]
+    public function teamScopeVisibilityAcrossUsersInSameAndDifferentTeams(): void
+    {
+        // v0.6.1 — locks in the TEAM-scope contract end-to-end:
+        // a TEAM view is visible to every user whose
+        // TeamResolver::teamIdFor() returns the matching teamId, and
+        // hidden from users in other teams.
+        //
+        // Closes Tier 3 item 12 from the v0.6.0 wrap-up — the voter
+        // was already covered by SavedViewVoterTest unit tests but
+        // no functional test exercised the full
+        // service.listVisible() filtering with a wired resolver.
+
+        $teamResolver = new StaticTeamResolver([
+            'alice' => 'team-red',
+            'bob' => 'team-red',
+            'carol' => 'team-blue',
+        ]);
+
+        // Alice creates a TEAM-scoped view for team-red.
+        $aliceTeamView = new SavedView(
+            id: 'view-team-red',
+            name: 'Q4 review',
+            resourceName: 'products',
+            ownerId: 'alice',
+            scope: SavedViewScope::TEAM,
+            filters: new FilterCollection('products', [
+                new FilterCriterion('isActive', 'eq', ['1']),
+            ]),
+            teamId: 'team-red',
+        );
+        $this->storage->save($aliceTeamView);
+
+        // Spin up a 2nd service+authChecker for Bob (same team as Alice).
+        $bobTokenStorage = new TokenStorage();
+        $bobUser = new InMemoryUser('bob', null, ['ROLE_USER']);
+        $bobTokenStorage->setToken(new UsernamePasswordToken($bobUser, 'main', $bobUser->getRoles()));
+        $bobVoter = new SavedViewVoter(teamResolver: $teamResolver);
+        $bobAuth = new AuthorizationChecker($bobTokenStorage, new AccessDecisionManager([$bobVoter]));
+        $bobService = new SavedViewService(
+            storage: $this->storage,
+            authChecker: $bobAuth,
+            tokenStorage: $bobTokenStorage,
+            teamResolver: $teamResolver,
+            requestStack: $this->newRequestStack(),
+        );
+
+        // Bob is a teammate → he sees Alice's TEAM view.
+        $bobVisible = $bobService->listVisible('products');
+        $bobIds = array_map(static fn (SavedView $v): string => $v->id, $bobVisible);
+        self::assertContains('view-team-red', $bobIds, 'Bob (team-red) must see Alice\'s TEAM-scoped view');
+
+        // Carol — different team → she does NOT see Alice's TEAM view.
+        $carolTokenStorage = new TokenStorage();
+        $carolUser = new InMemoryUser('carol', null, ['ROLE_USER']);
+        $carolTokenStorage->setToken(new UsernamePasswordToken($carolUser, 'main', $carolUser->getRoles()));
+        $carolVoter = new SavedViewVoter(teamResolver: $teamResolver);
+        $carolAuth = new AuthorizationChecker($carolTokenStorage, new AccessDecisionManager([$carolVoter]));
+        $carolService = new SavedViewService(
+            storage: $this->storage,
+            authChecker: $carolAuth,
+            tokenStorage: $carolTokenStorage,
+            teamResolver: $teamResolver,
+            requestStack: $this->newRequestStack(),
+        );
+
+        $carolVisible = $carolService->listVisible('products');
+        $carolIds = array_map(static fn (SavedView $v): string => $v->id, $carolVisible);
+        self::assertNotContains('view-team-red', $carolIds, 'Carol (team-blue) must NOT see Alice\'s team-red view');
+
+        // Anonymous user: TEAM views are never visible without a token.
+        $anonTokenStorage = new TokenStorage(); // no token set
+        $anonVoter = new SavedViewVoter(teamResolver: $teamResolver);
+        $anonAuth = new AuthorizationChecker($anonTokenStorage, new AccessDecisionManager([$anonVoter]));
+        $anonService = new SavedViewService(
+            storage: $this->storage,
+            authChecker: $anonAuth,
+            tokenStorage: $anonTokenStorage,
+            teamResolver: $teamResolver,
+            requestStack: $this->newRequestStack(),
+        );
+        $anonVisible = $anonService->listVisible('products');
+        $anonIds = array_map(static fn (SavedView $v): string => $v->id, $anonVisible);
+        self::assertNotContains('view-team-red', $anonIds, 'Anonymous user must NOT see TEAM views');
+    }
+
+    private function newRequestStack(): RequestStack
+    {
+        $stack = new RequestStack();
+        $request = new Request();
+        $request->setSession(new Session(new MockArraySessionStorage()));
+        $stack->push($request);
+
+        return $stack;
+    }
+
     private function makeView(
         string $id,
         string $name,
@@ -218,6 +314,27 @@ final class SavedViewEndToEndTest extends TestCase
                 new FilterCriterion('isActive', 'eq', ['1']),
             ]),
         );
+    }
+}
+
+/**
+ * Static map-based team resolver — useful as a test fixture and as
+ * a reference impl hosts can crib for their own user→team mapping.
+ *
+ * @internal test fixture
+ */
+final class StaticTeamResolver implements \Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface
+{
+    /**
+     * @param array<string, string> $userToTeam map of userIdentifier → teamId
+     */
+    public function __construct(private readonly array $userToTeam)
+    {
+    }
+
+    public function teamIdFor(\Symfony\Component\Security\Core\User\UserInterface $user): ?string
+    {
+        return $this->userToTeam[$user->getUserIdentifier()] ?? null;
     }
 }
 
