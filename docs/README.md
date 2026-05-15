@@ -33,6 +33,7 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [**Monorepo split + Packagist mirrors (ADR-026)**](./adr/0026-monorepo-split-and-packagist-mirrors.md) — pourquoi 1 monorepo de dev + 16 mirrors read-only sur Packagist
 - [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
 - [**Symfony Flex recipes (prepared)**](./maintainers/flex-recipes/README.md) — 14 manifests prêts pour soumission à `symfony/recipes-contrib` + workflow de submission
+- [**TestKernel patterns**](./maintainers/test-kernel-patterns.md) — conventions pour les TestKernels intra-monorepo (PHPUnit 11 risky, cache-dirs uniques, SchemaTool reset, ORM 2.x quirks)
 
 ### Roadmap & historique
 - [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré en v0.1, ce qui est planifié en v0.2+
