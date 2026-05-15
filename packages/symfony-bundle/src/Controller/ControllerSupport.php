@@ -11,7 +11,9 @@ use Polysource\Core\Action\InlineActionInterface;
 use Polysource\Core\Action\StyledActionInterface;
 use Polysource\Core\Field\FieldDto;
 use Polysource\Core\Permission\PermissionInterface;
+use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Resource\ResourceInterface;
+use Stringable;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -85,6 +87,49 @@ final class ControllerSupport
                 continue;
             }
             $fields[] = $dto;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Build a fallback field list from a representative record's
+     * properties when {@see ResourceInterface::configureFields()} returns
+     * empty. Prevents the "rows visible but empty" UX trap where a
+     * minimal Resource declares no fields and the theme renders zero
+     * columns. Controllers call this AFTER {@see self::collectFields()}
+     * when the latter is empty AND a record is available.
+     *
+     * Each synthesised field uses the generic theme template (the same
+     * fallback the templates apply when `field.template` is null), so
+     * the rendering is identical to whatever the empty-fields-with-no-
+     * synthesis path would have produced — except now there's actually
+     * a header + cell to render the value into.
+     *
+     * The property name doubles as the label (camelCase / snake_case
+     * stays readable enough for a dev-tier admin); hosts wanting nicer
+     * labels declare proper fields via `configureFields()`.
+     *
+     * @return list<FieldDto>
+     */
+    public static function synthesiseFieldsFromRecord(DataRecord $record): array
+    {
+        $fields = [];
+        foreach ($record->properties as $property => $value) {
+            if (!\is_string($property) || '' === $property) {
+                continue;
+            }
+            // Non-stringable objects (DateTimeImmutable, Doctrine
+            // entities, …) would blow up the generic Twig template
+            // with "Object of class X could not be converted to
+            // string". Skip them — hosts with rich-typed properties
+            // should declare typed fields (DateTimeField, CodeField,
+            // …) instead of relying on the synthesis fallback.
+            // Stringable objects, scalars, null and arrays all pass.
+            if (\is_object($value) && !$value instanceof Stringable) {
+                continue;
+            }
+            $fields[] = new FieldDto(property: $property, label: $property);
         }
 
         return $fields;
