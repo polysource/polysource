@@ -27,6 +27,48 @@ contrib recipe. Shipping a contrib recipe adds three concrete wins:
    the project's visibility to Symfony developers browsing for admin
    tooling.
 
+## ⚠ Multi-kernel hosts
+
+Symfony Flex's recipe runner registers bundles in
+`config/bundles.php` (the **root**, app-wide file). Multi-kernel
+apps that read this file across all kernels work fine, but apps
+following the [Symfony multi-app
+pattern](https://symfony.com/doc/current/configuration/multiple_kernels.html)
+that maintain per-kernel `apps/*/config/bundles.php` files get an
+incorrectly-scoped registration:
+
+- The recipe adds the bundle to `config/bundles.php` (shared)
+- The bundle then loads on every kernel — including ones where its
+  dependencies aren't installed (e.g. Polysource standalone admin
+  loading on the `job` kernel that has no EasyAdmin or twig setup)
+
+**Workaround**: after running `composer require polysource/<pkg>`,
+remove the bundle entry from the shared `config/bundles.php` and
+add it manually to the per-kernel file(s) where you actually want
+it. Example for `polysource/symfony-bundle` on an app that
+exposes Polysource only on `apps/backend`:
+
+```diff
+--- a/config/bundles.php
++++ b/config/bundles.php
+@@ ... @@
+-    Polysource\Bundle\PolysourceBundle::class => ['all' => true],
+ ];
+```
+
+```diff
+--- a/apps/backend/config/bundles.php
++++ b/apps/backend/config/bundles.php
+@@ ... @@
++    Polysource\Bundle\PolysourceBundle::class => ['all' => true],
+ ];
+```
+
+This isn't a polysource-specific issue — every Flex recipe behaves
+the same way. We can't fix it from the recipe manifest because Flex
+has no notion of multi-kernel layout. Document the workaround in
+the host app's own README.
+
 ## What's prepared
 
 | Package | Recipe | Default config? |
