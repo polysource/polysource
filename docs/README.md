@@ -34,6 +34,7 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
 - [**Symfony Flex recipes (prepared)**](./maintainers/flex-recipes/README.md) — 14 manifests prêts pour soumission à `symfony/recipes-contrib` + workflow de submission
 - [**TestKernel patterns**](./maintainers/test-kernel-patterns.md) — conventions pour les TestKernels intra-monorepo (PHPUnit 11 risky, cache-dirs uniques, SchemaTool reset, ORM 2.x quirks)
+- [**Symfony compatibility audit**](./maintainers/symfony-compat-audit.md) — ce qu'on advertise vs ce qu'on teste (Sf 5.4 → 8.0, PHP 8.1 → 8.5, EA 4.24 / 5.0, Doctrine ORM 2.x / 3.x), gaps et action items v0.7+ / v1.0
 
 ### Roadmap & historique
 - [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré en v0.1, ce qui est planifié en v0.2+
