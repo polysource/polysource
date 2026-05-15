@@ -15,6 +15,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Throwable;
 
 /**
@@ -116,11 +117,11 @@ final class BulkJobDataSource implements DataSourceInterface
         $param = ':p' . $bindIndex;
 
         match ($criterion->operator) {
-            'between' => $this->applyBetween($qb, $alias, $criterion->value, $bindIndex),
-            'eq' => $this->applyScalar($qb, "{$alias} = {$param}", $param, $criterion->value),
-            'gte' => $this->applyScalar($qb, "{$alias} >= {$param}", $param, $criterion->value),
-            'lte' => $this->applyScalar($qb, "{$alias} <= {$param}", $param, $criterion->value),
-            'in' => $this->applyIn($qb, "{$alias} IN ({$param})", $param, $criterion->value),
+            FilterOperator::Between => $this->applyBetween($qb, $alias, $criterion->value, $bindIndex),
+            FilterOperator::Eq => $this->applyScalar($qb, "{$alias} = {$param}", $param, $criterion->value),
+            FilterOperator::Gte => $this->applyScalar($qb, "{$alias} >= {$param}", $param, $criterion->value),
+            FilterOperator::Lte => $this->applyScalar($qb, "{$alias} <= {$param}", $param, $criterion->value),
+            FilterOperator::In => $this->applyIn($qb, "{$alias} IN ({$param})", $param, $criterion->value),
             default => null,
         };
     }

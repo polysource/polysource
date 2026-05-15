@@ -11,19 +11,19 @@ namespace Polysource\Core\Query;
  * query language (Doctrine DQL, Redis SCAN match, HTTP query string,
  * Meilisearch filter syntax, etc.).
  *
- * Standard operators (an adapter may declare additional ones):
- *   - eq, neq          : equality / inequality
- *   - gt, gte, lt, lte : numeric/date comparisons
- *   - like             : substring (semantics adapter-dependent — cf. risks.R17)
- *   - in, nin          : membership in a list
- *   - between          : range (value must be a 2-element array)
- *   - null, notnull    : presence check (value ignored)
+ * The set of canonical operators is defined by {@see FilterOperator}.
+ * Adapters may handle additional cases internally but the core contract
+ * is the enum.
+ *
+ * @since 0.1.0
+ * @since 0.7.0 `$operator` is now typed as {@see FilterOperator} instead
+ *              of `string`. Closes ADR-011 item A4.
  */
 final class FilterCriterion
 {
     public function __construct(
         public readonly string $property,
-        public readonly string $operator,
+        public readonly FilterOperator $operator,
         public readonly mixed $value = null,
     ) {
     }

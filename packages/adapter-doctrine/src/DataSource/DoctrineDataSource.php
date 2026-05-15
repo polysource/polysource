@@ -15,6 +15,7 @@ use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\SortDirection;
 use RuntimeException;
 use Throwable;
@@ -209,15 +210,17 @@ final class DoctrineDataSource implements WritableDataSourceInterface
         $value = $criterion->value;
 
         match ($criterion->operator) {
-            'eq' => $this->whereScalar($qb, "{$alias} = {$param}", $param, $value),
-            'neq' => $this->whereScalar($qb, "{$alias} != {$param}", $param, $value),
-            'gt' => $this->whereScalar($qb, "{$alias} > {$param}", $param, $value),
-            'gte' => $this->whereScalar($qb, "{$alias} >= {$param}", $param, $value),
-            'lt' => $this->whereScalar($qb, "{$alias} < {$param}", $param, $value),
-            'lte' => $this->whereScalar($qb, "{$alias} <= {$param}", $param, $value),
-            'like' => $this->whereScalar($qb, "{$alias} LIKE {$param}", $param, '%' . (\is_scalar($value) ? (string) $value : '') . '%'),
-            'in' => $this->whereIn($qb, "{$alias} IN ({$param})", $param, $value),
-            'between' => $this->whereBetween($qb, $alias, $value, $bindIndex),
+            FilterOperator::Eq => $this->whereScalar($qb, "{$alias} = {$param}", $param, $value),
+            FilterOperator::Neq => $this->whereScalar($qb, "{$alias} != {$param}", $param, $value),
+            FilterOperator::Gt => $this->whereScalar($qb, "{$alias} > {$param}", $param, $value),
+            FilterOperator::Gte => $this->whereScalar($qb, "{$alias} >= {$param}", $param, $value),
+            FilterOperator::Lt => $this->whereScalar($qb, "{$alias} < {$param}", $param, $value),
+            FilterOperator::Lte => $this->whereScalar($qb, "{$alias} <= {$param}", $param, $value),
+            FilterOperator::Like => $this->whereScalar($qb, "{$alias} LIKE {$param}", $param, '%' . (\is_scalar($value) ? (string) $value : '') . '%'),
+            FilterOperator::In => $this->whereIn($qb, "{$alias} IN ({$param})", $param, $value),
+            FilterOperator::Between => $this->whereBetween($qb, $alias, $value, $bindIndex),
+            // Nin / IsNull / IsNotNull not yet mapped — silently skipped
+            // so the rest of the query still works.
             default => null,
         };
     }

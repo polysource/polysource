@@ -9,6 +9,7 @@ use Polysource\Bundle\Context\AdminContextProvider;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use Polysource\Core\Query\SortDirection;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -171,14 +172,17 @@ final class AdminContextResolver implements ValueResolverInterface
                 return null;
             }
 
-            return new FilterCriterion($name, 'eq', $scalar);
+            return new FilterCriterion($name, FilterOperator::Eq, $scalar);
         }
 
         if (!\is_array($value)) {
             return null;
         }
 
-        $operator = \is_string($value['op'] ?? null) ? $value['op'] : 'eq';
+        // Unknown operator strings silently fall back to Eq — preserves
+        // URL backward compat for bookmarks with stale `op=...` params.
+        $opString = \is_string($value['op'] ?? null) ? $value['op'] : 'eq';
+        $operator = FilterOperator::tryFrom($opString) ?? FilterOperator::Eq;
 
         if (isset($value['values']) && \is_array($value['values'])) {
             $list = array_values(array_filter(
@@ -199,7 +203,7 @@ final class AdminContextResolver implements ValueResolverInterface
                 return null;
             }
 
-            return new FilterCriterion($name, 'between', [$min, $max]);
+            return new FilterCriterion($name, FilterOperator::Between, [$min, $max]);
         }
 
         if (isset($value['value']) && \is_scalar($value['value'])) {

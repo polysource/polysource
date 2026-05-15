@@ -12,6 +12,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
@@ -114,22 +115,21 @@ final class MessengerFailedDataSource implements DataSourceInterface
         return true;
     }
 
-    private static function matchesCriterion(mixed $value, string $operator, mixed $expected): bool
+    private static function matchesCriterion(mixed $value, FilterOperator $operator, mixed $expected): bool
     {
         return match ($operator) {
-            'eq' => self::looseEquals($value, $expected),
-            'neq' => !self::looseEquals($value, $expected),
-            'in' => \is_array($expected) && self::isInList($value, $expected),
-            'nin' => \is_array($expected) && !self::isInList($value, $expected),
-            'like' => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
-            'gte' => self::compareDateOrScalar($value, $expected) >= 0,
-            'lte' => self::compareDateOrScalar($value, $expected) <= 0,
-            'gt' => self::compareDateOrScalar($value, $expected) > 0,
-            'lt' => self::compareDateOrScalar($value, $expected) < 0,
-            'between' => self::matchesBetween($value, $expected),
-            'null' => null === $value,
-            'notnull' => null !== $value,
-            default => true, // unsupported operator — don't constrain
+            FilterOperator::Eq => self::looseEquals($value, $expected),
+            FilterOperator::Neq => !self::looseEquals($value, $expected),
+            FilterOperator::In => \is_array($expected) && self::isInList($value, $expected),
+            FilterOperator::Nin => \is_array($expected) && !self::isInList($value, $expected),
+            FilterOperator::Like => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
+            FilterOperator::Gte => self::compareDateOrScalar($value, $expected) >= 0,
+            FilterOperator::Lte => self::compareDateOrScalar($value, $expected) <= 0,
+            FilterOperator::Gt => self::compareDateOrScalar($value, $expected) > 0,
+            FilterOperator::Lt => self::compareDateOrScalar($value, $expected) < 0,
+            FilterOperator::Between => self::matchesBetween($value, $expected),
+            FilterOperator::IsNull => null === $value,
+            FilterOperator::IsNotNull => null !== $value,
         };
     }
 

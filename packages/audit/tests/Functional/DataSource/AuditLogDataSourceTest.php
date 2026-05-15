@@ -20,6 +20,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 
 /**
@@ -81,7 +82,7 @@ final class AuditLogDataSourceTest extends TestCase
     public function testFilterByActorIdEqRestrictsResults(): void
     {
         $query = (new DataQuery('audit-log'))
-            ->withFilter('actor', new FilterCriterion('actorId', 'eq', 'bob'));
+            ->withFilter('actor', new FilterCriterion('actorId', FilterOperator::Eq, 'bob'));
 
         $page = $this->source->search($query);
 
@@ -94,7 +95,7 @@ final class AuditLogDataSourceTest extends TestCase
     public function testFilterByOutcomeInRestrictsResults(): void
     {
         $query = (new DataQuery('audit-log'))
-            ->withFilter('outcome', new FilterCriterion('outcome', 'in', ['failure', 'exception']));
+            ->withFilter('outcome', new FilterCriterion('outcome', FilterOperator::In, ['failure', 'exception']));
 
         $page = $this->source->search($query);
 
@@ -109,7 +110,7 @@ final class AuditLogDataSourceTest extends TestCase
         $query = (new DataQuery('audit-log'))
             ->withFilter(
                 'occurredAt',
-                new FilterCriterion('occurredAt', 'between', ['2026-05-05T08:00:00', '2026-05-05T11:00:00']),
+                new FilterCriterion('occurredAt', FilterOperator::Between, ['2026-05-05T08:00:00', '2026-05-05T11:00:00']),
             );
 
         $page = $this->source->search($query);
@@ -122,7 +123,7 @@ final class AuditLogDataSourceTest extends TestCase
     public function testFilterByResourceNameInRestrictsResults(): void
     {
         $query = (new DataQuery('audit-log'))
-            ->withFilter('resourceName', new FilterCriterion('resourceName', 'in', ['flags']));
+            ->withFilter('resourceName', new FilterCriterion('resourceName', FilterOperator::In, ['flags']));
 
         $page = $this->source->search($query);
 
@@ -133,8 +134,8 @@ final class AuditLogDataSourceTest extends TestCase
     public function testCombinedFiltersAreAppliedAsConjunction(): void
     {
         $query = (new DataQuery('audit-log'))
-            ->withFilter('actor', new FilterCriterion('actorId', 'eq', 'alice'))
-            ->withFilter('outcome', new FilterCriterion('outcome', 'in', ['success']));
+            ->withFilter('actor', new FilterCriterion('actorId', FilterOperator::Eq, 'alice'))
+            ->withFilter('outcome', new FilterCriterion('outcome', FilterOperator::In, ['success']));
 
         $page = $this->source->search($query);
 
@@ -162,7 +163,7 @@ final class AuditLogDataSourceTest extends TestCase
     public function testUnsupportedFilterPropertyIsSkipped(): void
     {
         $query = (new DataQuery('audit-log'))
-            ->withFilter('unknown', new FilterCriterion('unknownProperty', 'eq', 'whatever'));
+            ->withFilter('unknown', new FilterCriterion('unknownProperty', FilterOperator::Eq, 'whatever'));
 
         $page = $this->source->search($query);
 

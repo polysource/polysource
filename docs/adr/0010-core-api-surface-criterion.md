@@ -13,18 +13,18 @@ Le `development-plan.md` §14 incluait à l'origine un critère "stop-the-line" 
 
 Ce critère visait à **résister au scope creep** et à éviter le piège « God Object » (Sonata `AdminInterface` à 80 méthodes — cf. analyse interne). Intention saine.
 
-À la fin de la Phase 1, `packages/core` contient **26 types publics** :
+À la fin de la Phase 1, `packages/core` contient **26 types publics** (réduit à **25** en v0.7 — coupure de `BatchableDataSourceInterface` per ADR-011 A1) :
 
 | Catégorie | Nombre | Détail |
 |---|---|---|
-| Interfaces | 10 | `DataSourceInterface`, `WritableDataSourceInterface`, `BatchableDataSourceInterface`, `ResourceInterface`, `FieldInterface`, `FilterInterface`, `ActionInterface`, `InlineActionInterface`, `BulkActionInterface`, `PermissionInterface` |
+| Interfaces | 9 | `DataSourceInterface`, `WritableDataSourceInterface`, `ResourceInterface`, `FieldInterface`, `FilterInterface`, `ActionInterface`, `InlineActionInterface`, `BulkActionInterface`, `PermissionInterface` |
 | Value objects (`final readonly class`) | 9 | `DataQuery`, `DataPage`, `DataRecord`, `DataPayload`, `Pagination`, `FilterCriterion`, `ActionResult`, `FieldDto`, `FilterDto` |
 | Exceptions (`final class` ou `class`) | 3 | `DataSourceException`, `ResourceNotFoundException`, `UnsupportedOperationException` |
 | Abstract base class | 1 | `AbstractResource` |
-| Enum | 1 | `SortDirection` |
+| Enum | 2 | `SortDirection`, `FilterOperator` (v0.7 — per ADR-011 A4) |
 | Trait | 1 | `FieldTrait` |
 | Constants holder | 1 | `Polysource` |
-| **Total** | **26** | |
+| **Total** | **26** (v0.7) | |
 
 **26 > 12.** Si on applique le critère littéralement, c'est un échec. Mais la lecture qualitative est différente.
 
@@ -36,9 +36,13 @@ Examinons si chaque type est justifié.
 
 - `DataSourceInterface` (3 méthodes) — read-only minimal
 - `WritableDataSourceInterface extends DataSourceInterface` (+ 3 méthodes) — opt-in pour l'écriture
-- `BatchableDataSourceInterface extends DataSourceInterface` (+ 1 méthode) — opt-in pour `findMany`
 
-Ces 3 interfaces **ne peuvent pas** être fusionnées sans violer l'ISP (cf. ADR-001/002). Une source read-only ne doit pas être forcée d'implémenter `create()`/`update()`/`delete()`.
+> Note historique : une 3e interface `BatchableDataSourceInterface`
+> (`findMany`) a existé en v0.1 → v0.6 mais a été coupée en v0.7
+> (ADR-011 A1) car aucun adapter ne l'implémentait — pure spéculation.
+> Réintroductible en v1.x si un cas réel apparaît.
+
+Ces interfaces **ne peuvent pas** être fusionnées sans violer l'ISP (cf. ADR-001/002). Une source read-only ne doit pas être forcée d'implémenter `create()`/`update()`/`delete()`.
 
 Idem pour `ActionInterface`/`InlineActionInterface`/`BulkActionInterface` : décomposition obligatoire pour différencier les signatures (`execute(DataRecord)` vs `executeBatch(iterable)`).
 

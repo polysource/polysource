@@ -12,6 +12,7 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
+use Polysource\Core\Query\FilterOperator;
 use RuntimeException;
 
 /**
@@ -252,9 +253,9 @@ final class FlysystemDataSource implements WritableDataSourceInterface
         foreach ($query->filters as $criterion) {
             $value = $record->get($criterion->property);
             $matches = match ($criterion->operator) {
-                'eq' => self::asString($value) === self::asString($criterion->value),
-                'in' => \is_array($criterion->value) && \in_array(self::asString($value), array_map(self::asString(...), $criterion->value), true),
-                'like' => \is_string($value) && \is_string($criterion->value) && false !== stripos($value, $criterion->value),
+                FilterOperator::Eq => self::asString($value) === self::asString($criterion->value),
+                FilterOperator::In => \is_array($criterion->value) && \in_array(self::asString($value), array_map(self::asString(...), $criterion->value), true),
+                FilterOperator::Like => \is_string($value) && \is_string($criterion->value) && false !== stripos($value, $criterion->value),
                 default => true,
             };
             if (!$matches) {

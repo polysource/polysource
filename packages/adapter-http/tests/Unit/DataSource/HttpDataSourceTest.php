@@ -10,6 +10,7 @@ use Polysource\Adapter\Http\Pagination\CursorPaginationStrategy;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use RuntimeException;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -60,7 +61,7 @@ final class HttpDataSourceTest extends TestCase
         $source = new HttpDataSource($client, 'https://api.example.com/users');
         $source->search(
             (new DataQuery('users'))
-                ->withFilter('role', new FilterCriterion('role', 'eq', 'admin'))
+                ->withFilter('role', new FilterCriterion('role', FilterOperator::Eq, 'admin'))
         );
 
         self::assertStringContainsString('role=admin', $captured[0]);

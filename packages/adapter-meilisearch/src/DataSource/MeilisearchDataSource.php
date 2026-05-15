@@ -11,6 +11,7 @@ use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\SortDirection;
 use RuntimeException;
 
@@ -162,15 +163,17 @@ final class MeilisearchDataSource implements WritableDataSourceInterface
         $value = $criterion->value;
 
         return match ($criterion->operator) {
-            'eq' => null === $value ? '' : \sprintf('%s = %s', $field, self::quote($value)),
-            'neq' => null === $value ? '' : \sprintf('%s != %s', $field, self::quote($value)),
-            'gt' => null === $value ? '' : \sprintf('%s > %s', $field, self::quote($value)),
-            'gte' => null === $value ? '' : \sprintf('%s >= %s', $field, self::quote($value)),
-            'lt' => null === $value ? '' : \sprintf('%s < %s', $field, self::quote($value)),
-            'lte' => null === $value ? '' : \sprintf('%s <= %s', $field, self::quote($value)),
-            'in' => \is_array($value) && [] !== $value
+            FilterOperator::Eq => null === $value ? '' : \sprintf('%s = %s', $field, self::quote($value)),
+            FilterOperator::Neq => null === $value ? '' : \sprintf('%s != %s', $field, self::quote($value)),
+            FilterOperator::Gt => null === $value ? '' : \sprintf('%s > %s', $field, self::quote($value)),
+            FilterOperator::Gte => null === $value ? '' : \sprintf('%s >= %s', $field, self::quote($value)),
+            FilterOperator::Lt => null === $value ? '' : \sprintf('%s < %s', $field, self::quote($value)),
+            FilterOperator::Lte => null === $value ? '' : \sprintf('%s <= %s', $field, self::quote($value)),
+            FilterOperator::In => \is_array($value) && [] !== $value
                 ? \sprintf('%s IN [%s]', $field, implode(', ', array_map(self::quote(...), array_values($value))))
                 : '',
+            // Operators not (yet) translated to Meilisearch filter syntax —
+            // emit no clause so they're silently dropped.
             default => '',
         };
     }

@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Polysource\Audit\Filter\AuditLogFilter;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 
 /**
  * Pin the 5 named factories the audit log resource uses (occurredAt,
@@ -56,7 +57,7 @@ final class AuditLogFilterTest extends TestCase
     {
         $filter = AuditLogFilter::actorId();
         $query = new DataQuery('audit-log');
-        $criterion = new FilterCriterion('actorId', 'eq', 'admin@shop.co');
+        $criterion = new FilterCriterion('actorId', FilterOperator::Eq, 'admin@shop.co');
 
         $applied = $filter->applyToQuery($query, $criterion);
 

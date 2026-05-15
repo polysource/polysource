@@ -69,23 +69,6 @@ Segregation Principle in action. The UI auto-detects whether a source
 is writable and toggles Create / Edit / Delete buttons accordingly. A
 read-only Messenger dashboard never shows "Create".
 
-## The optional batch contract
-
-```php
-interface BatchableDataSourceInterface extends DataSourceInterface
-{
-    /** @return array<string|int, DataRecord> */
-    public function findMany(array $identifiers): array;
-}
-```
-
-Implement only if the underlying store has a real batched primitive
-(SQL `IN (...)`, Redis `MGET`, an HTTP endpoint that takes a list).
-Adapters where `findMany([1, 2, 3])` would just be three `find()` calls
-in a loop **must not** implement this — the framework handles that
-fallback itself, and the marker interface is the signal that batched
-lookups are actually cheaper.
-
 ## Value objects passed across the boundary
 
 ### `DataQuery`

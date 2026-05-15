@@ -15,6 +15,7 @@ use Polysource\BulkAsync\Job\BulkJobStatus;
 use Polysource\BulkAsync\Job\Doctrine\BulkJobRecord;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 
 /**
@@ -81,7 +82,7 @@ final class BulkJobDataSourceTest extends TestCase
     public function testFilterByActorEqRestrictsResults(): void
     {
         $query = (new DataQuery('bulk-jobs'))
-            ->withFilter('actorId', new FilterCriterion('actorId', 'eq', 'alice@shop.co'));
+            ->withFilter('actorId', new FilterCriterion('actorId', FilterOperator::Eq, 'alice@shop.co'));
 
         self::assertSame(3, $this->source->count($query));
     }
@@ -89,7 +90,7 @@ final class BulkJobDataSourceTest extends TestCase
     public function testFilterByStatusInRestrictsResults(): void
     {
         $query = (new DataQuery('bulk-jobs'))
-            ->withFilter('status', new FilterCriterion('status', 'in', ['running', 'completed']));
+            ->withFilter('status', new FilterCriterion('status', FilterOperator::In, ['running', 'completed']));
 
         self::assertSame(2, $this->source->count($query));
     }
@@ -97,7 +98,7 @@ final class BulkJobDataSourceTest extends TestCase
     public function testFilterByResourceNameInRestrictsResults(): void
     {
         $query = (new DataQuery('bulk-jobs'))
-            ->withFilter('resourceName', new FilterCriterion('resourceName', 'in', ['orders']));
+            ->withFilter('resourceName', new FilterCriterion('resourceName', FilterOperator::In, ['orders']));
 
         self::assertSame(3, $this->source->count($query));
     }
@@ -107,7 +108,7 @@ final class BulkJobDataSourceTest extends TestCase
         $query = (new DataQuery('bulk-jobs'))
             ->withFilter('createdAt', new FilterCriterion(
                 'createdAt',
-                'between',
+                FilterOperator::Between,
                 ['2026-04-01T00:00:00+00:00', '2026-05-01T00:00:00+00:00'],
             ));
 
@@ -127,7 +128,7 @@ final class BulkJobDataSourceTest extends TestCase
     public function testUnknownFilterPropertyIsSilentlySkipped(): void
     {
         $query = (new DataQuery('bulk-jobs'))
-            ->withFilter('unknownField', new FilterCriterion('unknownField', 'eq', 'whatever'));
+            ->withFilter('unknownField', new FilterCriterion('unknownField', FilterOperator::Eq, 'whatever'));
 
         // Whitelist behaviour: unknown properties don't constrain.
         self::assertSame(5, $this->source->count($query));

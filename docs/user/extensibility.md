@@ -255,7 +255,6 @@ Alias `Polysource\Core\Permission\PermissionInterface` → your service. Field-l
 
 | Interface | Use case |
 |---|---|
-| `BatchableDataSourceInterface::findMany` | Avoid N+1 when a column resolves a foreign reference across resources |
 | `FilterMapperInterface` / `FilterFormatterInterface` / `FilterRendererInterface` | Take over the URL → criteria → Symfony Form pipeline of `polysource/filter` |
 | `WorkflowAwareInterface` | Mark a resource as workflow-driven (transitions auto-discovered) |
 | `BulkJobStorageInterface` | Persist bulk-async jobs somewhere other than Doctrine |

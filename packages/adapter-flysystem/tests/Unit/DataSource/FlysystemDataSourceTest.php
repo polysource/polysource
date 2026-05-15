@@ -11,6 +11,7 @@ use Polysource\Adapter\Flysystem\DataSource\FlysystemDataSource;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
 use RuntimeException;
 
@@ -85,7 +86,7 @@ final class FlysystemDataSourceTest extends TestCase
     public function testFilterByExtension(): void
     {
         $query = (new DataQuery('files'))
-            ->withFilter('extension', new FilterCriterion('extension', 'eq', 'txt'));
+            ->withFilter('extension', new FilterCriterion('extension', FilterOperator::Eq, 'txt'));
 
         $items = $this->source->search($query)->asArray();
         $paths = array_map(static fn ($r): string => (string) $r->identifier, $items);
