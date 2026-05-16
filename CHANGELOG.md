@@ -4,6 +4,84 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-05-16
+
+**`polysource/adapter-redis` reshape — 5 type-specific data sources.** Dogfood signal #8 surfaced a `WRONGTYPE` crash when SCAN returned keys of mixed Redis types — the v0.7 adapter only handled hashes. v0.8 reframes the Redis adapter to cover all 5 Redis data structures with type-pure semantics per data source.
+
+### Added
+
+#### 4 new type-specific DataSources
+
+| Class | Type | Typical use |
+|---|---|---|
+| `RedisStringDataSource` (new) | string | Cache entries, sessions, simple feature toggles |
+| `RedisListDataSource` (new) | list | Workflow queues, event streams, retry buffers |
+| `RedisHashDataSource` (existing — type-narrowed) | hash | Feature flags, config objects |
+| `RedisSetDataSource` (new) | set | Online users, blocked IPs, unique-tracking |
+| `RedisSortedSetDataSource` (new) | sorted-set | Leaderboards, time-series buckets, priority queues |
+
+Each DataSource:
+- Implements `WritableDataSourceInterface`
+- **Skips keys of the wrong type during SCAN** — no more `WRONGTYPE` crashes when a host's prefix accidentally overlaps multiple Redis types
+- Uses type-coherent CRUD: `RedisListDataSource::create` pushes to the list, `RedisSortedSetDataSource::create` zadds with scores, etc.
+- Exposes type-appropriate preview properties (`length`+`head` for lists, `cardinality`+`members` for sets, `topMembers` with scores for zsets, etc.)
+
+#### 4 new Resource base classes
+
+`RedisStringResource`, `RedisListResource`, `RedisSetResource`, `RedisSortedSetResource` — each a 5-property convenience over `AbstractResource`. Hosts subclass once per Redis namespace + type they want to admin.
+
+#### Expanded client interface — `RedisClientInterface` (21 methods)
+
+Old `RedisHashClientInterface` had 5 methods (hash + cross-type only). New `RedisClientInterface` covers all 5 Redis types:
+
+- Cross-type (5): `scan`, `exists`, `del`, `type`, `ttl`
+- String (2): `get`, `set` (with optional TTL)
+- List (4): `llen`, `lrange`, `rpush`, `lpop`
+- Hash (2): `hgetall`, `hmset` (unchanged from v0.7)
+- Set (4): `smembers`, `sadd`, `srem`, `scard`
+- Sorted set (4): `zrange` (WITHSCORES), `zadd`, `zrem`, `zcard`
+
+#### `PredisRedisClient` + extended `InMemoryRedisClient` (test fake)
+
+The Predis-backed implementation covers all 21 methods. The in-memory test fake (renamed from `InMemoryRedisHashClient` → `InMemoryRedisClient`) handles all 5 types with realistic semantics including SET overwriting any prior type at the same key, ZRANGE tie-breaking by lexicographic order, and SCAN iteration over the union of all keys.
+
+### Deprecated (BC aliases retained — removed at v1.0)
+
+- `RedisHashClientInterface` — now extends `RedisClientInterface` (the wider parent). Existing implementations keep working.
+- `PredisRedisHashClient` — extends `PredisRedisClient` (empty subclass).
+- `InMemoryRedisHashClient` (tests) — extends `InMemoryRedisClient` + `seed()` method forwards to `seedHash()`.
+
+DI services: the bundle aliases the deprecated interface/class to the new ones so host code that injected `RedisHashClientInterface` keeps resolving.
+
+### Why now
+
+The dogfood install caught a `WRONGTYPE Operation against a key holding the wrong kind of value` crash on a Redis cache page after a workflow pushed list entries to keys matching the SCAN pattern. The v0.7 design assumed all keys under a prefix shared a type — false in real apps where multiple workflows touch overlapping namespaces.
+
+The architectural call (covered in PR description): **5 type-specific resources, not 1 generic** — different types have semantically incompatible CRUD shapes (LRANGE has no equivalent for sets, HSET doesn't apply to strings). Bundling them is the right granularity.
+
+A complementary `polysource/adapter-redis-console` package (read-only, type-aware, for "show me everything in Redis" debugging) is on the v0.9.x backlog as a separate concern.
+
+### Migration
+
+Zero-effort for hosts already using `RedisHashDataSource` + `RedisHashResource` — they keep working via the BC aliases.
+
+New hosts wiring Redis admin pick the right DataSource per Redis namespace:
+
+```php
+#[AsResource]
+final class WorkflowQueueResource extends RedisListResource
+{
+    public function __construct(RedisClientInterface $client) {
+        parent::__construct(
+            dataSource: new RedisListDataSource($client, 'queue:'),
+            slug: 'workflow-queues',
+            label: 'Workflow queues',
+            permission: 'POLYSOURCE_QUEUE_VIEW',
+        );
+    }
+}
+```
+
 ## [0.7.3] — 2026-05-16
 
 **Dogfood signal #7 — buttons inertes OOTB.** When the polysource standalone admin renders under its default `polysource/twig-theme` layout, the saved-views dropdown and the filters modal both rely on Bootstrap 5's data API (`data-bs-toggle="dropdown"`, `data-bs-toggle="modal"`). The layout shipped Bootstrap CSS via CDN since v0.1 but the matching Bootstrap JS bundle was absent — every Polysource page on a Stimulus-less host had inert controls.

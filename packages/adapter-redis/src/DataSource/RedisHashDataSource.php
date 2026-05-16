@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Redis\DataSource;
 
-use Polysource\Adapter\Redis\Client\RedisHashClientInterface;
+use Polysource\Adapter\Redis\Client\RedisClientInterface;
 use Polysource\Core\DataSource\WritableDataSourceInterface;
 use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
@@ -51,7 +51,7 @@ final class RedisHashDataSource implements WritableDataSourceInterface
     public const DEFAULT_PAGE_SIZE = 50;
 
     public function __construct(
-        private readonly RedisHashClientInterface $client,
+        private readonly RedisClientInterface $client,
         private readonly string $keyPrefix,
         private readonly int $defaultPageSize = self::DEFAULT_PAGE_SIZE,
     ) {
