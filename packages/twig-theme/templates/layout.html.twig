@@ -48,6 +48,27 @@
         {% include '@PolysourceSearch/_palette.html.twig' ignore missing %}
     {% endblock %}
 
+    {# Bootstrap 5 JS bundle (Popper.js included) — required by the
+     # saved-views dropdown (`data-bs-toggle="dropdown"`), the filters
+     # modal (`data-bs-toggle="modal"`), the bulk-action confirmation
+     # popovers, and any host-added tooltip. Loaded BEFORE the host's
+     # `javascripts` block so hosts can attach their own listeners on
+     # top of Bootstrap's data API.
+     #
+     # Hosts wrapping polysource pages in their own chrome (cf. the
+     # `polysource.layout_template` override + the
+     # `wrapping-in-easyadmin-chrome.md` cookbook) typically don't
+     # extend this layout — they extend their host base directly and
+     # bring their own asset pipeline.
+     #
+     # Add an `integrity=` SRI hash before publishing the theme —
+     # pinning a version without one trusts jsdelivr never to be
+     # compromised. Verify the hash from
+     # https://www.jsdelivr.com/package/npm/bootstrap before changing. #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            crossorigin="anonymous"
+            defer></script>
+
     {% block javascripts %}{% endblock %}
 </body>
 </html>
