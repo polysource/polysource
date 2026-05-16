@@ -4,6 +4,54 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] — 2026-05-16
+
+**Dogfood signal #7 — buttons inertes OOTB.** When the polysource standalone admin renders under its default `polysource/twig-theme` layout, the saved-views dropdown and the filters modal both rely on Bootstrap 5's data API (`data-bs-toggle="dropdown"`, `data-bs-toggle="modal"`). The layout shipped Bootstrap CSS via CDN since v0.1 but the matching Bootstrap JS bundle was absent — every Polysource page on a Stimulus-less host had inert controls.
+
+### Changed (Layout — non-breaking)
+
+#### `polysource/twig-theme/layout.html.twig` loads Bootstrap JS via CDN
+
+Mirrors the existing Bootstrap CSS CDN pattern. Loaded as `<script defer>` before the `{% block javascripts %}` host block so hosts can attach their own listeners on top of Bootstrap's data API.
+
+```diff
++ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
++         crossorigin="anonymous" defer></script>
+  {% block javascripts %}{% endblock %}
+```
+
+### Why this is OK as a patch release
+
+- **No template changes** — existing markup with `data-bs-toggle` attributes already targets the Bootstrap data API, this fix just provides the JS that was always implied
+- **No behavior change for hosts wrapping the layout** — hosts using `polysource.layout_template` config to extend their own chrome don't load this layout, so they're unaffected
+- **No double-init risk for hosts with their own Bootstrap** — Bootstrap 5's data-bs-toggle initialisation is idempotent; loading the bundle twice doesn't bind listeners twice
+- **CSP impact**: requires `script-src https://cdn.jsdelivr.net`. Hosts on stricter CSPs already needed the same exception for the CSS CDN; if they pin Bootstrap via host pipeline (Encore/AssetMapper), they don't need the CDN exception
+
+### Architectural rationale
+
+The senior call between (a) ship Bootstrap JS via CDN, (b) ship a vanilla JS polyfill of `data-bs-toggle`, (c) refactor templates to HTML-native `<details>` / `<dialog>`:
+
+- (a) is what (b) would build less reliably (bootstrap 5 dropdown has ~600 LOC of edge-case handling we'd reinvent)
+- (c) is the purest progressive-enhancement path but requires retemplating + restyling the entire admin shell (CSS classes are Bootstrap-shaped throughout)
+- (a) is symmetric with the existing CSS CDN pattern, minimum blast radius, fixes OOTB UX
+
+Path (c) stays on the v1.x backlog for a full HTML-native theme variant alongside the Bootstrap-themed one.
+
+## [0.7.2] — 2026-05-15
+
+**Hotfix — inter-package constraints.** v0.7.0/v0.7.1 shipped with inter-package `require` declarations only unioning `^0.1 || ^0.5`. Hosts pinning `polysource/symfony-bundle: ^0.7` got the bundle v0.7.1 but Composer kept `polysource/core` at v0.5.7 — leaving the 5 new concrete field types (`TextField`/`IdField`/…) inaccessible.
+
+### Fixed
+
+Union `^0.7` across all 14 inter-package require declarations:
+
+```diff
+- "polysource/core": "^0.1 || ^0.5"
++ "polysource/core": "^0.1 || ^0.5 || ^0.7"
+```
+
+No code change, just constraint widening. Reproduces exactly the `feedback_inter_package_constraints` rule from prior dogfooding — re-learned: every minor lineage tag must audit inter-package constraints before pushing.
+
 ## [0.7.1] — 2026-05-15
 
 **Dogfood-driven fixes.** Two UX traps surfaced while wiring polysource standalone admin into a real multi-tenant app: a Resource declaring no fields renders rows-without-columns (worse than no rows at all), and the absence of any concrete `Field` class out of the box forces every host to write boilerplate before the first row even displays. Both fixed here.
