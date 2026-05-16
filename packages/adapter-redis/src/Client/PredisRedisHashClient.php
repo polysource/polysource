@@ -4,54 +4,16 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Redis\Client;
 
-use Predis\ClientInterface;
-
 /**
- * Default {@see RedisHashClientInterface} implementation wrapping
- * Predis. Hosts that already wire `Predis\Client` get the adapter
- * for free by aliasing this class to the interface.
+ * @deprecated since 0.8.0 — use {@see PredisRedisClient} instead.
+ *             v0.8.0 expanded the Redis client surface from hashes
+ *             only to all 5 Redis types. This subclass is kept as a
+ *             drop-in alias for backward compatibility but will be
+ *             removed at v1.0.
  *
- * Predis is a soft dependency — this class is only loaded when the
- * host actually uses it. Apps on ext-redis ship their own adapter
- * implementing the same 5-method contract.
+ * Implementation inherited from {@see PredisRedisClient} — every
+ * method this class used to declare is now covered by the parent.
  */
-final class PredisRedisHashClient implements RedisHashClientInterface
+final class PredisRedisHashClient extends PredisRedisClient
 {
-    public function __construct(private readonly ClientInterface $client)
-    {
-    }
-
-    public function scan(string $cursor, string $pattern, int $count = 100): array
-    {
-        /** @var array{0: int|string, 1: list<string>} $result */
-        $result = $this->client->scan((int) $cursor, ['MATCH' => $pattern, 'COUNT' => $count]);
-
-        return [(string) $result[0], $result[1]];
-    }
-
-    public function hgetall(string $key): array
-    {
-        /** @var array<string, string> $hash */
-        $hash = $this->client->hgetall($key);
-
-        return $hash;
-    }
-
-    public function hmset(string $key, array $fields): void
-    {
-        if ([] === $fields) {
-            return;
-        }
-        $this->client->hmset($key, $fields);
-    }
-
-    public function del(string $key): void
-    {
-        $this->client->del([$key]);
-    }
-
-    public function exists(string $key): bool
-    {
-        return (bool) $this->client->exists($key);
-    }
 }
