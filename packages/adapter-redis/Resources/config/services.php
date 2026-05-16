@@ -28,11 +28,16 @@ return static function (ContainerConfigurator $container): void {
 
         $services->alias(RedisClientInterface::class, PredisRedisClient::class);
 
-        /* BC aliases (v0.7 → v0.8) — host code that type-hinted on
-           the old narrow interface / class still resolves. Removed at
-           v1.0 per the @deprecated markers on those types. */
-        $services->alias(PredisRedisHashClient::class, PredisRedisClient::class);
-        $services->alias(RedisHashClientInterface::class, PredisRedisClient::class);
+        /* BC alias (v0.7 → v0.8) — host code that type-hinted on
+           the old narrow interface still resolves. The hash-specific
+           subclass is registered as its own service (the alias points
+           there because PredisRedisClient does NOT implement
+           RedisHashClientInterface — only PredisRedisHashClient does).
+           Removed at v1.0 per the @deprecated marker. */
+        $services->set(PredisRedisHashClient::class)
+            ->arg('$client', service(ClientInterface::class)->nullOnInvalid());
+
+        $services->alias(RedisHashClientInterface::class, PredisRedisHashClient::class);
     }
 
     /* No resource is auto-registered — hosts wire one Resource

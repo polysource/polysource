@@ -13,7 +13,10 @@ namespace Polysource\Adapter\Redis\Client;
  *
  * Implementation inherited from {@see PredisRedisClient} — every
  * method this class used to declare is now covered by the parent.
+ * Declares {@see RedisHashClientInterface} explicitly so existing
+ * host code that type-hints on the narrow interface still resolves
+ * via DI autowiring.
  */
-final class PredisRedisHashClient extends PredisRedisClient
+final class PredisRedisHashClient extends PredisRedisClient implements RedisHashClientInterface
 {
 }
