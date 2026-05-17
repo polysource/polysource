@@ -33,6 +33,17 @@ Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
   contract tests + 1 subscriber test proving interface precedence
   over duck-typing.
 
+### Polish (PR 5/7) — landed on main
+
+- LSP nullable return types tightened on 8 sites (8 `phpstan-ignore`
+  removed); `Throwable` narrow in bundle boot;
+  `SavedViewController::toggleDefault` timing-leak documented.
+
+### Coupling (PR 2/7) — landed on main
+
+- `search` composer dep + inter-package constraint normalization
+  across 8 packages.
+
 ### Validation
 
 - 916 unit tests / 2140 assertions OK (+12 new)

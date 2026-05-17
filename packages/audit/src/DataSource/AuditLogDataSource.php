@@ -83,12 +83,12 @@ final class AuditLogDataSource implements DataSourceInterface
 
     /**
      * Doctrine always knows the exact count cheaply (indexed COUNT
-     * query). The interface allows null for adapters that can't —
-     * we simply never return it. Return type stays nullable for LSP.
-     *
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?int`; we always know
+     * query). PHP covariant returns let the impl narrow the
+     * interface's `?int` to a non-nullable `int` — adapters that
+     * can't count (Messenger failed, Redis SCAN) keep the nullable
+     * return.
      */
-    public function count(DataQuery $query): ?int
+    public function count(DataQuery $query): int
     {
         return $this->countWith($query);
     }
