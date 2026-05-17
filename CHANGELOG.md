@@ -4,6 +4,42 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Polish (PR 5/7) — LSP tightening + narrowed silent catches
+
+- **LSP return types tightened.** 4 sites (`AuditLogDataSource::count`,
+  `BulkJobDataSource::count`, `DoctrineDataSource::count`,
+  `ExportAuditCsvAction::getIcon`, `ApplyTransitionAction::getIcon`,
+  `ApplyTransitionAction::getPermission`, `CancelBulkJobAction::getIcon`,
+  `CancelBulkJobAction::getPermission`) declared `?int` / `?string`
+  to match their interface but always returned a value. Narrowed via
+  PHP covariant returns to `int` / `string`. Eight
+  `@phpstan-ignore-next-line return.unusedType` annotations removed —
+  the interface contract stays nullable for adapters that genuinely
+  can't always return a value (Messenger / Redis SCAN counts).
+- **`Throwable` swallow narrowed in bundle boot.**
+  `PolysourceEasyAdminFilterBridgeBundle::boot()` caught
+  `\Throwable` while resolving the router (a defensive guard for
+  kernels missing `DEFAULT_URI` env). Narrowed to
+  `Symfony\Component\DependencyInjection\Exception\ExceptionInterface`
+  so unrelated runtime errors (logic bugs, broken host bundles)
+  flow up the stack instead of being silently swallowed.
+- **`SavedViewController::toggleDefault` timing-leak concern
+  documented and closed.** The v0.9.0 audit flagged a potential
+  existence-vs-ownership leak; investigation showed both 403 paths
+  emit the same exception with the same message (load() runs the
+  voter, markAsDefault() does too). The behaviour was correct; the
+  fix is a comment explaining why no narrowing is needed.
+
+### Validation
+
+- 904 unit tests / 2118 assertions OK
+- PHPStan max + CS clean (8 phpstan-ignore annotations removed)
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.

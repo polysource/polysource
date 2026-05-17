@@ -124,12 +124,12 @@ final class DoctrineDataSource implements WritableDataSourceInterface
 
     /**
      * Doctrine always returns an exact count via the indexed COUNT
-     * query — return type stays nullable for LSP with the parent
-     * interface.
-     *
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?int`; we always know
+     * query. PHP covariant returns let the impl narrow the
+     * interface's `?int` to a non-nullable `int` — adapters that
+     * can't count efficiently (Messenger, Redis SCAN) keep the
+     * nullable return.
      */
-    public function count(DataQuery $query): ?int
+    public function count(DataQuery $query): int
     {
         return $this->countWith($query);
     }
