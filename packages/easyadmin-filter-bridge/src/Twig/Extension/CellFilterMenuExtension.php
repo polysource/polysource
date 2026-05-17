@@ -61,10 +61,19 @@ final class CellFilterMenuExtension extends AbstractExtension
         ];
     }
 
+    /**
+     * @param mixed $filterValue optional — value to put in the URL
+     *                           filter slice. Defaults to `$value` (the
+     *                           display value). Hosts pass an entity ID
+     *                           here for `EntityFilter` columns where
+     *                           the display string (`__toString()`)
+     *                           differs from the primary key.
+     */
     public function render(
         string $property,
         mixed $value,
         ?string $label = null,
+        mixed $filterValue = null,
     ): Markup {
         $stringValue = $this->stringify($value);
         if ('' === $stringValue) {
@@ -73,14 +82,22 @@ final class CellFilterMenuExtension extends AbstractExtension
             return new Markup('', 'UTF-8');
         }
 
+        // When the caller didn't provide an explicit filter value,
+        // fall back to the display value — preserves prior behaviour
+        // for scalar columns. For entity fields, hosts MUST pass the
+        // entity's id as `$filterValue` because the display string
+        // (e.g. `User #42 — Jane Doe`) cannot be matched by EA's
+        // EntityFilter which expects the primary key.
+        $resolvedFilterValue = null !== $filterValue ? $filterValue : $value;
+
         $label ??= ucfirst(str_replace('_', ' ', $property));
         $labelEscaped = htmlspecialchars($label, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $valueDisplay = mb_strimwidth($stringValue, 0, 32, '…', 'UTF-8');
         $valueEscaped = htmlspecialchars($valueDisplay, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
 
-        $urlEq = htmlspecialchars($this->urlFor($property, $value, 'eq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
-        $urlNeq = htmlspecialchars($this->urlFor($property, $value, 'neq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
-        $urlOnly = htmlspecialchars($this->urlFor($property, $value, 'eq', replace: true), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $urlEq = htmlspecialchars($this->urlFor($property, $resolvedFilterValue, 'eq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $urlNeq = htmlspecialchars($this->urlFor($property, $resolvedFilterValue, 'neq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $urlOnly = htmlspecialchars($this->urlFor($property, $resolvedFilterValue, 'eq', replace: true), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
 
         $html = <<<HTML
             <span class="polysource-cell-filter-menu dropdown">

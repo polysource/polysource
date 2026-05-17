@@ -125,6 +125,48 @@ final class CellFilterMenuExtensionTest extends TestCase
         self::assertStringContainsString('page=2', $url);
     }
 
+    #[Test]
+    public function renderUsesFilterValueOverrideForUrlButDisplayValueForLabel(): void
+    {
+        // EntityFilter case: display string "Jane Doe #42" but the
+        // filter value must be the entity primary key "42". The
+        // host passes both — render shows the display string in the
+        // dropdown label and emits the primary key in the URL.
+        $extension = new CellFilterMenuExtension(
+            requestStack: $this->makeRequestStack('/admin/orders'),
+        );
+
+        $html = (string) $extension->render(
+            property: 'customer',
+            value: 'Jane Doe #42',
+            label: 'Client',
+            filterValue: 42,
+        );
+
+        // Display label preserved in the dropdown menu items. The
+        // literal quotes around the value are part of the heredoc
+        // template — not HTML-escaped because they aren't inside
+        // an attribute.
+        self::assertStringContainsString('Filter where Client = "Jane Doe #42"', $html);
+        // URL uses the primary key, not the display label.
+        self::assertStringContainsString('filters%5Bcustomer%5D%5Bvalue%5D=42', $html);
+        self::assertStringNotContainsString('filters%5Bcustomer%5D%5Bvalue%5D=Jane', $html);
+    }
+
+    #[Test]
+    public function renderFallsBackToValueWhenNoFilterValueOverride(): void
+    {
+        // Existing behaviour for scalar columns: display value IS
+        // the filter value. No regression.
+        $extension = new CellFilterMenuExtension(
+            requestStack: $this->makeRequestStack('/admin/orders'),
+        );
+
+        $html = (string) $extension->render('status', 'paid');
+
+        self::assertStringContainsString('filters%5Bstatus%5D%5Bvalue%5D=paid', $html);
+    }
+
     /**
      * @param array<string, array<string, string>|string> $query
      */
