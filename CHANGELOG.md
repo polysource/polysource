@@ -4,6 +4,45 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Refactor (PR 7/7) — FilterUrlParser extraction + WorkflowResolver narrow
+
+#### `Polysource\EasyAdminFilterBridge\Filter\FilterUrlParser`
+
+Extracted from `SavedViewController::buildCriteria` — the previous
+85-line static method with 9+ branches and 3-level nesting is now a
+pipeline of small named helpers:
+
+- `parseField()` — top-level entry per filter property
+- `extractComparison()` — read EA `comparison` or Polysource `op`
+- `promoteFromValues()` — Polysource `values[]` → `value`
+- `promoteToBetween()` — Polysource `min`/`max` → `{min, max}` envelope
+- `buildBetweenCriterion()` / `buildInCriterion()` / `mapComparison()`
+
+`SavedViewController::buildCriteria()` becomes a thin static shim
+over the new class so existing tests and host call-sites stay valid.
+The `mapComparison()` v0.9.0 hardening (unknown operators fall back
+to default instead of passing through) lives in the new class.
+
+#### WorkflowResolver narrow
+
+`WorkflowResolver::resolve()` caught `\Throwable` while looking up a
+workflow in the registry. Narrowed to
+`Symfony\Component\Workflow\Exception\InvalidArgumentException` +
+SPL `\InvalidArgumentException`. `Registry::get()` throws exactly
+those when the named workflow doesn't exist or no registered
+workflow supports the subject — both are recoverable. Unrelated
+errors (logic bugs, DI issues) now flow up the stack.
+
+### Validation
+
+- 914 unit tests / 2141 assertions OK (+ FilterUrlParserTest)
+- PHPStan max + CS clean
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.
