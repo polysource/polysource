@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Polysource\WorkflowBridge\Service;
 
+use InvalidArgumentException;
 use Polysource\WorkflowBridge\Resource\WorkflowAwareInterface;
+use Symfony\Component\Workflow\Exception\InvalidArgumentException as WorkflowInvalidArgumentException;
 use Symfony\Component\Workflow\Registry;
 use Symfony\Component\Workflow\WorkflowInterface;
-use Throwable;
 
 /**
  * Resolves the Symfony Workflow attached to a record, given its
@@ -46,12 +47,16 @@ final class WorkflowResolver
             }
 
             return $this->registry->get($subject);
-        } catch (Throwable) {
-            // Registry::get() throws InvalidArgumentException when:
+        } catch (WorkflowInvalidArgumentException|InvalidArgumentException) {
+            // Registry::get() throws Symfony\Workflow\Exception\InvalidArgumentException
+            // (preferred since Symfony 4.3) — or the generic SPL
+            // InvalidArgumentException on older Symfony — when:
             //  - the named workflow doesn't exist
             //  - no registered workflow `supports($subject)`
             // Both are recoverable: the resource just produces no
-            // transition actions and no state chip.
+            // transition actions and no state chip. Narrowed in
+            // v0.9.0 per the architectural audit — unrelated
+            // throwables (logic bugs, DI errors) now flow up.
             return null;
         }
     }

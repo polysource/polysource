@@ -9,29 +9,31 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Refactor (PR 4/7) — unified filter URL serializer
+### Refactor (PR 7/7) — FilterUrlParser extraction + WorkflowResolver narrow
 
-Eliminates the root-cause class for the v0.8.1 URL-shape regression
-by extracting three small primitives into `polysource/filter`:
+#### `Polysource\EasyAdminFilterBridge\Filter\FilterUrlParser`
 
-- **`Polysource\Filter\Url\OperatorMap`** — single source of truth
-  for the EA URL operator ↔ Polysource canonical operator mapping.
-  Replaces three ad-hoc dispatch sites (`SavedViewController::mapComparison`,
-  `SavedViewApplySubscriber::criteriaToEaQuery`,
-  `UrlFilterApplier::applyExpanded`). Round-trip property is asserted
-  in tests — every canonical operator survives `fromEa(toEa(X))`.
-- **`Polysource\Filter\Url\FilterArrayExtractor`** — defensive
-  extraction of the `filters[...]` slice from a request query.
-- **`Polysource\Filter\Url\FilterUrlBuilder`** — builds URL query
-  arrays carrying a single criterion slice in the **expanded** EA
-  shape. The scalar shorthand is silently dropped by EA — dogfood
-  signal #10.
+Extracted from `SavedViewController::buildCriteria` — the previous
+85-line static method with 9+ branches and 3-level nesting is now a
+pipeline of small named helpers:
 
-Call-site migrations: `CellFilterMenuExtension::urlFor()` →
-`FilterUrlBuilder` + `OperatorMap`; `SavedViewController::mapComparison()`
-→ `OperatorMap::fromEa()` (replaces the inline match landed in PR 1);
-`UrlFilterApplier::apply()` + `FilterShortUrlExtension::shortUrl()`
-→ `FilterArrayExtractor::fromQueryArray()`.
+- `parseField()` — top-level entry per filter property
+- `extractComparison()` — read EA `comparison` or Polysource `op`
+- `promoteFromValues()` — Polysource `values[]` → `value`
+- `promoteToBetween()` — Polysource `min`/`max` → `{min, max}` envelope
+- `buildBetweenCriterion()` / `buildInCriterion()` / `mapComparison()`
+  (the last delegates to `OperatorMap::fromEa()` from PR 4 — single
+  source of truth for the operator alphabet)
+
+`SavedViewController::buildCriteria()` becomes a thin static shim
+over the new class so existing tests and host call-sites stay valid.
+
+#### WorkflowResolver narrow
+
+`WorkflowResolver::resolve()` caught `\Throwable` while looking up a
+workflow in the registry. Narrowed to
+`Symfony\Component\Workflow\Exception\InvalidArgumentException` +
+SPL `\InvalidArgumentException`.
 
 ### Earlier PRs landed on main
 
@@ -42,13 +44,15 @@ Call-site migrations: `CellFilterMenuExtension::urlFor()` →
   normalization across 8 packages.
 - **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
   data-driven chip dispatch.
+- **PR 4/7** — `OperatorMap` + `FilterArrayExtractor` +
+  `FilterUrlBuilder` (single source of truth for filter URL shapes).
 - **PR 5/7** — LSP nullable return types tightened (8 sites);
   `Throwable` narrow in bundle boot.
 - **PR 6/7** — `DoctorCommand` → `HealthCheck` registry.
 
 ### Validation
 
-- 952 unit tests / 2179 assertions OK (+23 new for PR 4)
+- 914 unit tests / 2141 assertions OK (+ FilterUrlParserTest)
 - 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 

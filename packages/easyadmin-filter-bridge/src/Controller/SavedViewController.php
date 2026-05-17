@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Controller;
 
+use Polysource\EasyAdminFilterBridge\Filter\FilterUrlParser;
 use Polysource\EasyAdminFilterBridge\Http\SafeReferer;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
@@ -13,7 +14,6 @@ use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
-use Polysource\Filter\Url\OperatorMap;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -100,6 +100,8 @@ final class SavedViewController
         $filterRaw = (array) ($parsed['filters'] ?? $parsed['filter'] ?? []);
         /** @var array<string, mixed> $filterRaw */
         $criteria = self::buildCriteria($filterRaw);
+        // Delegation lives in self::buildCriteria below — kept as a
+        // thin shim so existing test/host call-sites stay valid.
 
         if ($criteria === []) {
             $this->flash($request, 'warning', 'Apply at least one filter before saving a view.');
@@ -271,111 +273,19 @@ final class SavedViewController
     }
 
     /**
+     * Decode a filter-URL slice into canonical {@see FilterCriterion}
+     * objects. Thin shim over {@see FilterUrlParser::buildCriteria()}
+     * — the parsing logic was extracted in v0.9.0 (previously a
+     * single 85-line static method with 9+ branches and 3-level
+     * nesting). Kept here as a static facade so existing tests and
+     * host call-sites stay valid.
+     *
      * @param array<string, mixed> $raw
      *
      * @return list<FilterCriterion>
      */
     public static function buildCriteria(array $raw): array
     {
-        $criteria = [];
-
-        foreach ($raw as $field => $config) {
-            $field = (string) $field;
-            if (!\is_array($config)) {
-                if (!\is_scalar($config) || $config === '') {
-                    continue;
-                }
-                $criteria[] = new FilterCriterion($field, 'eq', [(string) $config]);
-                continue;
-            }
-
-            $value = $config['value'] ?? null;
-            // Operator key is `comparison` in EasyAdmin's URL shape
-            // (`?filters[X][comparison]==&[value]=foo`) and `op` in
-            // Polysource's URL shape (`?filter[X][op]=like&[value]=foo`).
-            // Reading both lets the same controller handle saves from
-            // either page family.
-            $comparison = \is_string($config['comparison'] ?? null)
-                ? $config['comparison']
-                : (\is_string($config['op'] ?? null) ? $config['op'] : '');
-
-            // The Polysource shape can also pack a multi-value list as
-            // `?filter[X][values][]=a&[values][]=b` (operator usually
-            // `in`). Promote it so the list branch below sees it.
-            if ($value === null && \is_array($config['values'] ?? null) && $config['values'] !== []) {
-                $value = $config['values'];
-            }
-
-            // Polysource between shape: `?filter[X][op]=between&[min]=..&[max]=..`
-            // packs min/max as direct siblings of op (not nested in
-            // `value`). Promote into the EA-shaped `{min, max}`
-            // envelope so the next branch picks them up.
-            if ($value === null && (isset($config['min']) || isset($config['max']))) {
-                $value = [
-                    'min' => $config['min'] ?? '',
-                    'max' => $config['max'] ?? '',
-                ];
-            }
-
-            if ($value === '' || $value === null || (\is_array($value) && $value === [])) {
-                continue;
-            }
-
-            // between (date range / numeric range).
-            if (\is_array($value) && (isset($value['min']) || isset($value['max']) || isset($value['from']) || isset($value['to']))) {
-                $minRaw = $value['min'] ?? $value['from'] ?? '';
-                $maxRaw = $value['max'] ?? $value['to'] ?? '';
-                $min = \is_scalar($minRaw) ? (string) $minRaw : '';
-                $max = \is_scalar($maxRaw) ? (string) $maxRaw : '';
-                if ($min !== '' || $max !== '') {
-                    $criteria[] = new FilterCriterion($field, 'between', [$min, $max]);
-                }
-                continue;
-            }
-
-            // Indexed list → in (multi-select choice).
-            // Force `in` regardless of the comparison operator
-            // EA may carry: EA's ChoiceFilter with canSelectMultiple
-            // submits as `?filters[X][comparison]==&[value][]=a&[value][]=b`.
-            // Translating `=` to `eq` would store an exact-equality
-            // criterion against a list, which the data sources can't
-            // honour. The semantic of "value IS one of these" is
-            // always `in` — fall through.
-            if (\is_array($value) && $value === array_values($value)) {
-                $criteria[] = new FilterCriterion(
-                    $field,
-                    'in',
-                    array_values(array_map(static fn ($v): string => \is_scalar($v) ? (string) $v : '', $value)),
-                );
-                continue;
-            }
-
-            $scalar = \is_scalar($value) ? (string) $value : '';
-            $criteria[] = new FilterCriterion(
-                $field,
-                self::mapComparison($comparison, 'eq'),
-                [$scalar],
-            );
-        }
-
-        return $criteria;
-    }
-
-    /**
-     * Map an EA URL operator to a Polysource canonical name. Delegates
-     * to {@see OperatorMap::fromEa()} — the bidirectional source of
-     * truth for the EA ↔ Polysource operator vocabulary. Extracted in
-     * v0.9.0 so the operator alphabet is no longer duplicated between
-     * this controller (URL → criterion) and {@see SavedViewApplySubscriber}
-     * (criterion → URL).
-     *
-     * Unknown operators fall back to `$default` rather than passing
-     * through verbatim — hardened in v0.9.0 per the architectural
-     * audit (a hostile client cannot persist a criterion with arbitrary
-     * operator text downstream consumers had to defensively reject).
-     */
-    private static function mapComparison(string $comparison, string $default): string
-    {
-        return OperatorMap::fromEa($comparison, $default);
+        return FilterUrlParser::buildCriteria($raw);
     }
 }
