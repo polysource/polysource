@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use Polysource\Filter\FilterUrlToken\FilterUrlTokenService;
+use Polysource\Filter\Url\FilterArrayExtractor;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Extension\AbstractExtension;
@@ -71,17 +72,10 @@ final class FilterShortUrlExtension extends AbstractExtension
             return '';
         }
 
-        $filtersRaw = $request->query->all()['filters'] ?? null;
-        if (!\is_array($filtersRaw) || [] === $filtersRaw) {
-            return '';
-        }
-        /** @var array<string, mixed> $filters */
-        $filters = [];
-        foreach ($filtersRaw as $key => $value) {
-            if (\is_string($key)) {
-                $filters[$key] = $value;
-            }
-        }
+        // Extracted to FilterArrayExtractor in v0.9.0 — the
+        // defensive `is_array($query['filters'])` + non-string-key
+        // sift was repeated verbatim across multiple sites.
+        $filters = FilterArrayExtractor::fromQueryArray($request->query->all());
         if ([] === $filters) {
             return '';
         }

@@ -296,7 +296,9 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 // registered but returns empty when called.
                 // setAutowired stays false so missing services
                 // don't fail DI compilation.
-                $extensionDef->setArguments([null, null, null, null]);
+                // v0.9.0 PR 1: 5th arg is the optional CsrfTokenManager;
+                // `polysource_csrf_token()` returns '' when null.
+                $extensionDef->setArguments([null, null, null, null, null]);
             }
         }
 

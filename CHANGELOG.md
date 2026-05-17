@@ -22,25 +22,38 @@ pipeline of small named helpers:
 - `promoteFromValues()` — Polysource `values[]` → `value`
 - `promoteToBetween()` — Polysource `min`/`max` → `{min, max}` envelope
 - `buildBetweenCriterion()` / `buildInCriterion()` / `mapComparison()`
+  (the last delegates to `OperatorMap::fromEa()` from PR 4 — single
+  source of truth for the operator alphabet)
 
 `SavedViewController::buildCriteria()` becomes a thin static shim
 over the new class so existing tests and host call-sites stay valid.
-The `mapComparison()` v0.9.0 hardening (unknown operators fall back
-to default instead of passing through) lives in the new class.
 
 #### WorkflowResolver narrow
 
 `WorkflowResolver::resolve()` caught `\Throwable` while looking up a
 workflow in the registry. Narrowed to
 `Symfony\Component\Workflow\Exception\InvalidArgumentException` +
-SPL `\InvalidArgumentException`. `Registry::get()` throws exactly
-those when the named workflow doesn't exist or no registered
-workflow supports the subject — both are recoverable. Unrelated
-errors (logic bugs, DI issues) now flow up the stack.
+SPL `\InvalidArgumentException`.
+
+### Earlier PRs landed on main
+
+- **PR 1/7** — CSRF on all saved-view POST routes (3 scoped tokens),
+  open-redirect closed (`SafeReferer`), XSS hardening on
+  `RowDensityExtension`, `polysource_csrf_token` Twig helper.
+- **PR 2/7** — `search` composer dep + inter-package constraint
+  normalization across 8 packages.
+- **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
+  data-driven chip dispatch.
+- **PR 4/7** — `OperatorMap` + `FilterArrayExtractor` +
+  `FilterUrlBuilder` (single source of truth for filter URL shapes).
+- **PR 5/7** — LSP nullable return types tightened (8 sites);
+  `Throwable` narrow in bundle boot.
+- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry.
 
 ### Validation
 
 - 914 unit tests / 2141 assertions OK (+ FilterUrlParserTest)
+- 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 
 ## [0.8.2] — 2026-05-17

@@ -54,18 +54,12 @@ final class ApplyTransitionAction implements InlineActionInterface
         return ucfirst(str_replace('_', ' ', $this->transition->getName()));
     }
 
-    /**
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?string`; we always know
-     */
-    public function getIcon(): ?string
+    public function getIcon(): string
     {
         return 'arrow-right-circle';
     }
 
-    /**
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?string`; we always know
-     */
-    public function getPermission(): ?string
+    public function getPermission(): string
     {
         return 'POLYSOURCE_WORKFLOW_TRANSITION_' . strtoupper($this->transition->getName());
     }

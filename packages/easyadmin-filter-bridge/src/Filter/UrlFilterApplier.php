@@ -6,6 +6,7 @@ namespace Polysource\EasyAdminFilterBridge\Filter;
 
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\QueryBuilder;
+use Polysource\Filter\Url\FilterArrayExtractor;
 
 /**
  * Applies a `?filters[...]` URL slice to a Doctrine QueryBuilder.
@@ -57,15 +58,17 @@ final class UrlFilterApplier
         ClassMetadata $metadata,
         string $rootAlias,
     ): int {
-        /** @var array<string, mixed> $filters */
-        $filters = isset($query['filters']) && \is_array($query['filters']) ? $query['filters'] : [];
+        // Extracted to FilterArrayExtractor in v0.9.0 — the defensive
+        // `is_array($query['filters'])` guard was repeated verbatim
+        // in 3 places and would have to be patched everywhere if the
+        // shape ever changed (hostile input handling, etc.).
+        $filters = FilterArrayExtractor::fromQueryArray($query);
         $applied = 0;
         $paramIndex = 0;
 
         foreach ($filters as $property => $raw) {
-            if (!\is_string($property) || '' === $property) {
-                continue;
-            }
+            // FilterArrayExtractor already filtered out non-string and
+            // empty-string keys — no need to re-guard here.
             // Defensive: only allow filtering on properties actually
             // mapped by Doctrine. Refuses anything else without
             // touching the QB.

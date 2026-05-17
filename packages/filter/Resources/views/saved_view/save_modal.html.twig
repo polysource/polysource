@@ -20,8 +20,10 @@
       (`templates/bundles/PolysourceFilterBundle/saved_view/save_modal.html.twig`)
       to point the form at their controller.
 
-   No CSRF token in the default template — hosts add it to fit
-   their security setup.
+   CSRF token id: `polysource_saved_view_create`. The default
+   bridge SavedViewController validates it before any state
+   mutation (v0.9.0+). Hosts who wire their own controller MUST
+   either validate the same token id or rotate to their own.
 #}
 {%- set _create_route = 'polysource_saved_view_create' -%}
 {%- set _form_action = polysource_route_exists(_create_route)
@@ -101,6 +103,9 @@
                     {# Pass the current filter URL to the controller so it can
                        decode the FilterCollection from query parameters. #}
                     <input type="hidden" name="filter_querystring" value="{{ app.request.queryString|default('')|escape('html_attr') }}">
+                    {# CSRF token — validated by the default
+                       SavedViewController (v0.9.0+). #}
+                    <input type="hidden" name="_token" value="{{ polysource_csrf_token('polysource_saved_view_create') }}">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">

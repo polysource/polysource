@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use BackedEnum;
+use Polysource\Filter\Url\FilterUrlBuilder;
+use Polysource\Filter\Url\OperatorMap;
 use Stringable;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -136,29 +138,25 @@ final class CellFilterMenuExtension extends AbstractExtension
 
         $request = $this->requestStack?->getCurrentRequest();
         $path = null !== $request ? $request->getPathInfo() : '';
+        $existingQuery = null !== $request ? $request->query->all() : [];
 
-        $query = null !== $request && !$replace
-            ? $request->query->all()
-            : [];
-        // EA's `crud/index` Controller applies filters only when they
-        // arrive in the **expanded shape**
-        // `filters[<prop>][comparison]=<op>&filters[<prop>][value]=<val>`.
-        // The scalar shorthand `filters[<prop>]=<val>` is honoured by
-        // the bridge's UrlFilterApplier (export, bulk dry-run) but
-        // NOT by EA's index — applying it would render chips without
-        // actually narrowing the rows. Always emit the expanded
-        // shape so the cell-filter menu produces a filter the index
-        // page can act on. Dogfood signal #10, 2026-05-17.
-        $existing = isset($query['filters']) && \is_array($query['filters']) ? $query['filters'] : [];
-        $existing[$property] = [
-            'comparison' => 'eq' === $operator ? '=' : '!=',
-            'value' => $stringValue,
-        ];
-        $query['filters'] = $existing;
+        // Delegate the URL assembly to FilterUrlBuilder — the single
+        // source of truth for the `filters[...]` query shape. The
+        // builder always emits the expanded EA shape
+        // (`filters[<prop>][comparison]=<op>&[value]=<v>`) regardless
+        // of operator; the scalar shorthand `filters[<prop>]=<v>` is
+        // silently dropped by EA's filter pipeline. Dogfood signal #10,
+        // 2026-05-17 — shipped in v0.8.1, extracted to a shared class
+        // in v0.9.0 to prevent the regression from recurring elsewhere.
+        $merged = FilterUrlBuilder::mergeCriterion(
+            existingQuery: $existingQuery,
+            property: $property,
+            eaOperator: OperatorMap::toEa($operator),
+            value: $stringValue,
+            replace: $replace,
+        );
 
-        $qs = http_build_query($query, '', '&', \PHP_QUERY_RFC3986);
-
-        return '' !== $qs ? $path . '?' . $qs : $path;
+        return FilterUrlBuilder::toPathWithQuery($path, $merged);
     }
 
     private function stringify(mixed $value): string

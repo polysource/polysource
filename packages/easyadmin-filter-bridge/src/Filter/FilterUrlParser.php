@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Filter;
 
 use Polysource\Filter\Model\FilterCriterion;
+use Polysource\Filter\Url\OperatorMap;
 
 /**
  * Decodes the `?filters[...]` URL slice into a canonical
@@ -214,26 +215,14 @@ final class FilterUrlParser
     }
 
     /**
-     * Map an EA URL operator to a Polysource canonical name. Hardened
-     * in v0.9.0 per the architectural audit — unknown operators fall
-     * back to `$default` rather than passing through verbatim. A
-     * hostile client cannot persist a criterion with arbitrary
-     * operator text downstream consumers would have to defensively
-     * reject.
+     * Map an EA URL operator to a Polysource canonical name. Delegates
+     * to {@see OperatorMap::fromEa()} — the bidirectional source of
+     * truth (PR 4). Unknown operators fall back to `$default` rather
+     * than passing through verbatim (hardened in v0.9.0 per the
+     * architectural audit).
      */
     private static function mapComparison(string $comparison, string $default): string
     {
-        return match ($comparison) {
-            '=', 'eq' => 'eq',
-            '!=', '<>', 'neq' => 'neq',
-            '>', 'gt' => 'gt',
-            '>=', 'gte' => 'gte',
-            '<', 'lt' => 'lt',
-            '<=', 'lte' => 'lte',
-            'like', 'like*', '*like', 'not like' => 'like',
-            'in', 'not in' => 'in',
-            'between' => 'between',
-            default => $default,
-        };
+        return OperatorMap::fromEa($comparison, $default);
     }
 }

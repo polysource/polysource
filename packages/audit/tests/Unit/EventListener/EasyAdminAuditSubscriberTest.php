@@ -123,6 +123,27 @@ final class EasyAdminAuditSubscriberTest extends TestCase
         self::assertSame(['42'], $logger->entries[0]->recordIds);
     }
 
+    public function testExtractIdentifierPrefersIdentifiableInterfaceOverDuckTyping(): void
+    {
+        // v0.9.0: entities implementing IdentifiableInterface use the
+        // typed contract path. The legacy duck-typing (getId/getUuid/
+        // $id/$uuid) is bypassed entirely — proof: this entity also
+        // exposes `getId()` returning '99' but the interface returns
+        // 'iface-1' and the latter wins.
+        $entity = new EntityWithIdentifiableInterface(
+            getIdReturn: '99',
+            identifierReturn: 'iface-1',
+        );
+        $logger = new RecordingLogger2();
+        $em = $this->emWithChangeSet([]);
+
+        $subscriber = $this->makeSubscriber($logger, $em);
+        $subscriber->onBeforePersisted(new BeforeEntityPersistedEvent($entity));
+        $subscriber->onPersisted(new AfterEntityPersistedEvent($entity));
+
+        self::assertSame(['iface-1'], $logger->entries[0]->recordIds);
+    }
+
     public function testExtractIdentifierFallsBackToGetUuidWhenGetIdAbsent(): void
     {
         $entity = new EntityWithUuid('019df-uuid-7');
@@ -460,6 +481,28 @@ final class EntityWithPublicId
 
 final class EntityWithoutId
 {
+}
+
+final class EntityWithIdentifiableInterface implements \Polysource\Core\Identity\IdentifiableInterface
+{
+    public function __construct(
+        private readonly string $getIdReturn,
+        private readonly string $identifierReturn,
+    ) {
+    }
+
+    public function getIdentifier(): string
+    {
+        return $this->identifierReturn;
+    }
+
+    // Also exposes the legacy getId() so the test proves the
+    // interface takes precedence — if duck-typing still ran first,
+    // the assertion in the test would see '99' instead of 'iface-1'.
+    public function getId(): string
+    {
+        return $this->getIdReturn;
+    }
 }
 
 final class FixedActor2 implements AuditActorInterface
