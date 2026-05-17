@@ -9,45 +9,45 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Polish (PR 5/7) — LSP tightening + narrowed silent catches
+### Refactor (PR 3/7) — chip dispatch + Doctrine helper + IdentifiableInterface
 
-- **LSP return types tightened.** 4 sites (`AuditLogDataSource::count`,
-  `BulkJobDataSource::count`, `DoctrineDataSource::count`,
-  `ExportAuditCsvAction::getIcon`, `ApplyTransitionAction::getIcon`,
-  `ApplyTransitionAction::getPermission`, `CancelBulkJobAction::getIcon`,
-  `CancelBulkJobAction::getPermission`) declared `?int` / `?string`
-  to match their interface but always returned a value. Narrowed via
-  PHP covariant returns to `int` / `string`. Eight
-  `@phpstan-ignore-next-line return.unusedType` annotations removed —
-  the interface contract stays nullable for adapters that genuinely
-  can't always return a value (Messenger / Redis SCAN counts).
-- **`Throwable` swallow narrowed in bundle boot.**
-  `PolysourceEasyAdminFilterBridgeBundle::boot()` caught
-  `\Throwable` while resolving the router (a defensive guard for
-  kernels missing `DEFAULT_URI` env). Narrowed to
-  `Symfony\Component\DependencyInjection\Exception\ExceptionInterface`
-  so unrelated runtime errors (logic bugs, broken host bundles)
-  flow up the stack instead of being silently swallowed.
-- **`SavedViewController::toggleDefault` timing-leak concern
-  documented and closed.** The v0.9.0 audit flagged a potential
-  existence-vs-ownership leak; investigation showed both 403 paths
-  emit the same exception with the same message (load() runs the
-  voter, markAsDefault() does too). The behaviour was correct; the
-  fix is a comment explaining why no narrowing is needed.
+- **`Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper`**
+  — new helper that hides the Doctrine ORM 2.x (array mapping) vs
+  3.x (`AssociationMapping` object) shape detection behind a typed
+  API. `ChipValueFormatter` used to inline the `(array) $mapping`
+  cast workaround; now delegates. Helper exposes both the common
+  `extractTargetEntity()` and a general `readField()` for less-common
+  mapping fields. 9 new tests cover both Doctrine majors.
+- **`ChipValueFormatter` form-type dispatch is now data-driven** —
+  the `in_array($formType, [...], true)` chains became two private
+  const maps (`BOOLEAN_FORM_TYPES`, `ENTITY_FORM_TYPES`). Adding a
+  new form-type handler is a one-line append to a const instead of
+  mutating the match block, and the dispatch surface is greppable.
+- **`Polysource\Core\Identity\IdentifiableInterface`** — opt-in
+  contract for entities that want audit/bulk-async/saved-view
+  subsystems to extract a stable identifier without duck-typing.
+  Declares `getIdentifier(): string`. `EasyAdminAuditSubscriber`
+  now prefers the interface; falls back to the legacy
+  `getId()` / `getUuid()` / `$id` / `$uuid` discovery for hosts that
+  haven't adopted it yet (slated for deprecation in v1.0). 2 new
+  contract tests + 1 subscriber test proving interface precedence
+  over duck-typing.
+
+### Polish (PR 5/7) — landed on main
+
+- LSP nullable return types tightened on 8 sites (8 `phpstan-ignore`
+  removed); `Throwable` narrow in bundle boot;
+  `SavedViewController::toggleDefault` timing-leak documented.
 
 ### Coupling (PR 2/7) — landed on main
 
-- **search** declared `polysource/symfony-bundle` composer dep —
-  standalone installs would otherwise break at autoload time.
-- **Inter-package version constraints normalized** across 8 packages
-  — `polysource/symfony-bundle: "0.1.x-dev"` replaced with the union
-  pattern `"^0.1 || ^0.5 || ^0.7"` matching every shipped lineage
-  (rule from `feedback_inter_package_constraints` 2026-05-14).
+- `search` composer dep + inter-package constraint normalization
+  across 8 packages.
 
 ### Validation
 
-- 904 unit tests / 2118 assertions OK
-- PHPStan max + CS clean (8 phpstan-ignore annotations removed)
+- 916 unit tests / 2140 assertions OK (+12 new)
+- PHPStan max + CS clean
 
 ## [0.8.2] — 2026-05-17
 
