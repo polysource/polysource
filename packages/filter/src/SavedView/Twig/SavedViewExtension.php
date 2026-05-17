@@ -9,6 +9,7 @@ use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Throwable;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
@@ -58,6 +59,7 @@ final class SavedViewExtension extends AbstractExtension
         private readonly ?Environment $twig = null,
         private readonly ?RouterInterface $router = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
+        private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
     ) {
     }
 
@@ -84,7 +86,32 @@ final class SavedViewExtension extends AbstractExtension
                 'polysource_active_saved_view',
                 $this->activeSavedView(...),
             ),
+            // CSRF token resolver — templates use this instead of
+            // Symfony's `csrf_token()` global so they parse cleanly
+            // even on kernels without `framework.csrf_protection`
+            // enabled (test harnesses, vanilla showcase). When CSRF
+            // isn't wired, returns an empty string — the controller
+            // fails closed at request time, so the token value is
+            // irrelevant client-side. Added in v0.9.0 PR 1.
+            new TwigFunction(
+                'polysource_csrf_token',
+                $this->csrfToken(...),
+            ),
         ];
+    }
+
+    /**
+     * Return a CSRF token for the given id, or an empty string when
+     * `framework.csrf_protection` is not enabled on this kernel. The
+     * SavedView controller rejects every POST with a missing/invalid
+     * token, so emitting `''` here just means the form will get a
+     * clean 403 at request time — no false sense of security.
+     */
+    public function csrfToken(string $tokenId): string
+    {
+        return null !== $this->csrfTokenManager
+            ? $this->csrfTokenManager->getToken($tokenId)->getValue()
+            : '';
     }
 
     /**

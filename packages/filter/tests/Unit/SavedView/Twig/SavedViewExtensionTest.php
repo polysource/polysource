@@ -38,10 +38,10 @@ final class SavedViewExtensionTest extends TestCase
         $extension = $this->makeExtension(visible: [], current: null);
 
         $functions = $extension->getFunctions();
-        // 4 functions since v0.5.1: saved_views_dropdown,
+        // 5 functions since v0.9.0: saved_views_dropdown,
         // polysource_route_exists, polysource_team_scope_supported,
-        // polysource_active_saved_view.
-        self::assertCount(4, $functions);
+        // polysource_active_saved_view, polysource_csrf_token.
+        self::assertCount(5, $functions);
 
         $names = array_map(static fn ($f) => $f->getName(), $functions);
         self::assertContains(
@@ -54,6 +54,7 @@ final class SavedViewExtensionTest extends TestCase
         self::assertContains('polysource_route_exists', $names);
         self::assertContains('polysource_active_saved_view', $names);
         self::assertContains('polysource_team_scope_supported', $names);
+        self::assertContains('polysource_csrf_token', $names);
     }
 
     #[Test]
