@@ -52,13 +52,11 @@ final class ExportAuditCsvAction implements BulkActionInterface
     }
 
     /**
-     * Always returns 'download' — kept nullable to honour the parent
-     * `ActionInterface::getIcon()` contract for LSP / future
-     * subclassing.
-     *
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?string`; we always know
+     * Always returns 'download'. PHP covariant returns let the impl
+     * narrow the interface's `?string` to a non-nullable `string` —
+     * actions without an icon keep the nullable return.
      */
-    public function getIcon(): ?string
+    public function getIcon(): string
     {
         return 'download';
     }

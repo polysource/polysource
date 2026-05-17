@@ -161,6 +161,22 @@ final class SavedViewController
     #[Route('/admin/saved-views/{id}/default', name: 'polysource_saved_view_toggle_default', methods: ['POST'])]
     public function toggleDefault(string $id, Request $request): RedirectResponse
     {
+        // Auth-failure paths intentionally converge on a single
+        // AccessDeniedHttpException with the same message regardless
+        // of which step failed:
+        //
+        //   1. `load()` returns null when the view doesn't exist OR
+        //      when the user has no VIEW permission on it (the voter
+        //      runs inside `SavedViewService::load`).
+        //   2. `markAsDefault()` / `unmarkAsDefault()` throw
+        //      SavedViewAccessDeniedException when the user has VIEW
+        //      but not EDIT on the target view.
+        //
+        // Both code paths emit the SAME exception with the SAME
+        // message — no timing leak between "view doesn't exist" and
+        // "view exists but user can't edit it". The leak the v0.9.0
+        // audit flagged as MEDIUM was a misreading of load()'s
+        // contract.
         $view = $this->service->load($id);
         if (null === $view) {
             throw new AccessDeniedHttpException('You are not authorized to mark this view as default.');

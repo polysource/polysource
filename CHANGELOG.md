@@ -9,23 +9,45 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Coupling (PR 2/7)
+### Polish (PR 5/7) — LSP tightening + narrowed silent catches
 
-- **search** now declares its `polysource/symfony-bundle` dependency
-  in `composer.json`. The package's `ResourceSearchProvider` imports
-  `Polysource\Bundle\Routing\PolysourceUrlGenerator` from
-  `polysource/symfony-bundle` but the composer requirement was
-  missing, so standalone installs of `polysource/search` broke at
-  autoload time. Surfaced by the v0.9.0 architectural audit.
-- **Inter-package version constraints normalized across the monorepo.**
-  8 packages (`adapter-doctrine`, `adapter-flysystem`, `adapter-http`,
-  `adapter-meilisearch`, `adapter-redis`, `audit`, `bulk-async`,
-  `workflow-bridge`) declared `polysource/symfony-bundle: "0.1.x-dev"`
-  — a dev-branch-only constraint that depended on the `branch-alias`
-  metadata on every consumer to resolve correctly. Replaced with the
-  union pattern `"^0.1 || ^0.5 || ^0.7"` that explicitly accepts every
-  shipped lineage, matching the rule documented in
-  `feedback_inter_package_constraints` (2026-05-14).
+- **LSP return types tightened.** 4 sites (`AuditLogDataSource::count`,
+  `BulkJobDataSource::count`, `DoctrineDataSource::count`,
+  `ExportAuditCsvAction::getIcon`, `ApplyTransitionAction::getIcon`,
+  `ApplyTransitionAction::getPermission`, `CancelBulkJobAction::getIcon`,
+  `CancelBulkJobAction::getPermission`) declared `?int` / `?string`
+  to match their interface but always returned a value. Narrowed via
+  PHP covariant returns to `int` / `string`. Eight
+  `@phpstan-ignore-next-line return.unusedType` annotations removed —
+  the interface contract stays nullable for adapters that genuinely
+  can't always return a value (Messenger / Redis SCAN counts).
+- **`Throwable` swallow narrowed in bundle boot.**
+  `PolysourceEasyAdminFilterBridgeBundle::boot()` caught
+  `\Throwable` while resolving the router (a defensive guard for
+  kernels missing `DEFAULT_URI` env). Narrowed to
+  `Symfony\Component\DependencyInjection\Exception\ExceptionInterface`
+  so unrelated runtime errors (logic bugs, broken host bundles)
+  flow up the stack instead of being silently swallowed.
+- **`SavedViewController::toggleDefault` timing-leak concern
+  documented and closed.** The v0.9.0 audit flagged a potential
+  existence-vs-ownership leak; investigation showed both 403 paths
+  emit the same exception with the same message (load() runs the
+  voter, markAsDefault() does too). The behaviour was correct; the
+  fix is a comment explaining why no narrowing is needed.
+
+### Coupling (PR 2/7) — landed on main
+
+- **search** declared `polysource/symfony-bundle` composer dep —
+  standalone installs would otherwise break at autoload time.
+- **Inter-package version constraints normalized** across 8 packages
+  — `polysource/symfony-bundle: "0.1.x-dev"` replaced with the union
+  pattern `"^0.1 || ^0.5 || ^0.7"` matching every shipped lineage
+  (rule from `feedback_inter_package_constraints` 2026-05-14).
+
+### Validation
+
+- 904 unit tests / 2118 assertions OK
+- PHPStan max + CS clean (8 phpstan-ignore annotations removed)
 
 ## [0.8.2] — 2026-05-17
 
