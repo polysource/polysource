@@ -18,6 +18,7 @@ use Polysource\Audit\Logger\AuditLoggerInterface;
 use Polysource\Audit\Model\AuditActorInterface;
 use Polysource\Audit\Model\AuditEntry;
 use Polysource\Audit\Model\AuditOutcome;
+use Polysource\Core\Identity\IdentifiableInterface;
 use Stringable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -394,16 +395,37 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
     }
 
     /**
+     * Resolve a stable string identifier for an audited entity. Strategy:
+     *
+     *   1. If the entity opts in via {@see IdentifiableInterface}, use
+     *      `getIdentifier()` — typed, mandatory, no defensive guard
+     *      needed. Recommended path going forward (v0.9.0+).
+     *   2. Fall back to legacy duck-typing on `getId()` / `getUuid()`
+     *      / `$id` / `$uuid`. Kept for hosts that haven't adopted the
+     *      interface yet; will be deprecated in v1.0.
+     *
      * @return list<string>
      */
     private static function extractIdentifier(object $entity): array
     {
+        if ($entity instanceof IdentifiableInterface) {
+            $value = self::stringifyOrNull($entity->getIdentifier());
+
+            return null !== $value ? [$value] : [];
+        }
+
+        // ─── Legacy duck-typing (pre-v0.9.0 contract) ───
+        // Host entities that haven't adopted IdentifiableInterface
+        // still need to surface an identifier — try the conventional
+        // method/property names. Each branch silently skips on
+        // failure so the audit log doesn't break when an entity
+        // shape is unexpected.
         foreach (['getId', 'getUuid'] as $method) {
             if (!method_exists($entity, $method)) {
                 continue;
             }
             try {
-                /** @phpstan-ignore-next-line method.dynamicName — host entities may declare either method */
+                /** @phpstan-ignore-next-line method.dynamicName — legacy probe; entities w/o IdentifiableInterface */
                 $value = self::stringifyOrNull($entity->{$method}());
                 if (null !== $value) {
                     return [$value];

@@ -4,6 +4,40 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Refactor (PR 3/7) — chip dispatch + Doctrine helper + IdentifiableInterface
+
+- **`Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper`**
+  — new helper that hides the Doctrine ORM 2.x (array mapping) vs
+  3.x (`AssociationMapping` object) shape detection behind a typed
+  API. `ChipValueFormatter` used to inline the `(array) $mapping`
+  cast workaround; now delegates. Helper exposes both the common
+  `extractTargetEntity()` and a general `readField()` for less-common
+  mapping fields. 9 new tests cover both Doctrine majors.
+- **`ChipValueFormatter` form-type dispatch is now data-driven** —
+  the `in_array($formType, [...], true)` chains became two private
+  const maps (`BOOLEAN_FORM_TYPES`, `ENTITY_FORM_TYPES`). Adding a
+  new form-type handler is a one-line append to a const instead of
+  mutating the match block, and the dispatch surface is greppable.
+- **`Polysource\Core\Identity\IdentifiableInterface`** — opt-in
+  contract for entities that want audit/bulk-async/saved-view
+  subsystems to extract a stable identifier without duck-typing.
+  Declares `getIdentifier(): string`. `EasyAdminAuditSubscriber`
+  now prefers the interface; falls back to the legacy
+  `getId()` / `getUuid()` / `$id` / `$uuid` discovery for hosts that
+  haven't adopted it yet (slated for deprecation in v1.0). 2 new
+  contract tests + 1 subscriber test proving interface precedence
+  over duck-typing.
+
+### Validation
+
+- 916 unit tests / 2140 assertions OK (+12 new)
+- PHPStan max + CS clean
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.
