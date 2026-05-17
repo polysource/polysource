@@ -9,29 +9,46 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Refactor (PR 3/7) — chip dispatch + Doctrine helper + IdentifiableInterface
+### Refactor (PR 6/7) — DoctorCommand → HealthCheck registry
 
-- **`Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper`**
-  — new helper that hides the Doctrine ORM 2.x (array mapping) vs
-  3.x (`AssociationMapping` object) shape detection behind a typed
-  API. `ChipValueFormatter` used to inline the `(array) $mapping`
-  cast workaround; now delegates. Helper exposes both the common
-  `extractTargetEntity()` and a general `readField()` for less-common
-  mapping fields. 9 new tests cover both Doctrine majors.
-- **`ChipValueFormatter` form-type dispatch is now data-driven** —
-  the `in_array($formType, [...], true)` chains became two private
-  const maps (`BOOLEAN_FORM_TYPES`, `ENTITY_FORM_TYPES`). Adding a
-  new form-type handler is a one-line append to a const instead of
-  mutating the match block, and the dispatch surface is greppable.
-- **`Polysource\Core\Identity\IdentifiableInterface`** — opt-in
-  contract for entities that want audit/bulk-async/saved-view
-  subsystems to extract a stable identifier without duck-typing.
-  Declares `getIdentifier(): string`. `EasyAdminAuditSubscriber`
-  now prefers the interface; falls back to the legacy
-  `getId()` / `getUuid()` / `$id` / `$uuid` discovery for hosts that
-  haven't adopted it yet (slated for deprecation in v1.0). 2 new
-  contract tests + 1 subscriber test proving interface precedence
-  over duck-typing.
+`DoctorCommand` shrank from 299 lines orchestrating 5 hardcoded
+checks down to a thin iterator over a tagged-service collection.
+Plugins now extend the diagnostic surface by tagging their own
+`HealthCheckInterface` services with `polysource.doctor.check` — no
+need to fork the command.
+
+New primitives in `Polysource\Bundle\Doctor\`:
+
+- **`HealthCheckInterface`** — `getName(): string` + `run(): HealthCheckResult`
+- **`HealthCheckResult`** — immutable value object with three static
+  factories (`pass()`, `warn()`, `fail()`)
+- **`Check\PhpVersionCheck`** — PHP >= 8.1
+- **`Check\BundleCheck`** — at least one Polysource bundle registered
+- **`Check\EasyAdminCoLoadCheck`** — bridge + EA co-load warning
+- **`Check\PluginCheck`** — plugin discovery via `PluginRegistry`
+- **`Check\DoctrineSchemaCheck`** — pending DDL surfaces with the
+  remediation pointer
+
+Default checks are registered in the bundle's `services.php` with
+the `polysource.doctor.check` tag; `DoctorCommand`'s constructor
+takes the `tagged_iterator(...)` of all of them.
+
+### Note on #60 (deferred)
+
+The audit flagged `PluginCompilerPass` for "duck-typing via
+`class_exists()` + `is_subclass_of()`". Investigation: the pass
+already uses the proper interface (`AdminPluginInterface`) for
+discovery; `class_exists()` is a defensive guard for kernels with
+malformed bundle entries (documented in code with a 2026-05-14
+incident reference). No change in this PR — the audit recommendation
+was based on a misreading of the existing code.
+
+### Refactor (PR 3/7) — landed on main
+
+- `DoctrineMetadataHelper` extracts the Doctrine 2.x/3.x mapping cast
+  workaround; `ChipValueFormatter` form-type dispatch is now
+  data-driven via const maps; `IdentifiableInterface` lets audit
+  subscribers extract identifiers without duck-typing.
 
 ### Polish (PR 5/7) — landed on main
 
@@ -46,7 +63,8 @@ Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 
 ### Validation
 
-- 916 unit tests / 2140 assertions OK (+12 new)
+- 905 unit tests / 2122 assertions OK (DoctorCommandTest updated +
+  one new test proving host-supplied checks work)
 - PHPStan max + CS clean
 
 ## [0.8.2] — 2026-05-17
