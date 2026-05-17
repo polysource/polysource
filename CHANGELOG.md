@@ -35,6 +35,15 @@ Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
   voter, markAsDefault() does too). The behaviour was correct; the
   fix is a comment explaining why no narrowing is needed.
 
+### Coupling (PR 2/7) — landed on main
+
+- **search** declared `polysource/symfony-bundle` composer dep —
+  standalone installs would otherwise break at autoload time.
+- **Inter-package version constraints normalized** across 8 packages
+  — `polysource/symfony-bundle: "0.1.x-dev"` replaced with the union
+  pattern `"^0.1 || ^0.5 || ^0.7"` matching every shipped lineage
+  (rule from `feedback_inter_package_constraints` 2026-05-14).
+
 ### Validation
 
 - 904 unit tests / 2118 assertions OK

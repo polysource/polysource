@@ -32,7 +32,7 @@
         "doctrine/dbal": "^3.6 || ^4.0",
         "doctrine/orm": "^2.20 || ^3.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
-        "polysource/symfony-bundle": "0.1.x-dev",
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7",
         "symfony/mercure": "^0.6 || ^1.0"
     },
     "autoload": {
