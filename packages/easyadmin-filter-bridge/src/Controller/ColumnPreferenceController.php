@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Controller;
 
+use Polysource\EasyAdminFilterBridge\Http\SafeReferer;
 use Polysource\Filter\ColumnPreference\ColumnPreferenceService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -70,17 +71,16 @@ final class ColumnPreferenceController
 
         $this->service->setHiddenColumns($resource, $hidden);
 
-        // Redirect to where the form came from. The Referer header is
-        // present for any non-AJAX POST submitted from an EA index
-        // page (the standard call path). For the rare cases without
-        // a Referer (curl, browser privacy mode), fall back to `/`
-        // — `/admin` would assume a specific EA mount which breaks
-        // on multi-tenant hosts (`/{channel}/admin`) and on apps
-        // that mount EA under a custom prefix. Surfaced 2026-05-14
-        // dogfooding round 3 (friction C9).
-        $referer = (string) $request->headers->get('Referer', '/');
-
-        return new RedirectResponse($referer);
+        // Redirect to where the form came from. SafeReferer rejects
+        // external hosts so a crafted Referer header cannot turn this
+        // POST into an open redirect. When there's no valid same-host
+        // referer (curl, browser privacy mode, cross-site attempt),
+        // fall back to `/` — `/admin` would assume a specific EA
+        // mount which breaks on multi-tenant hosts (`/{channel}/admin`)
+        // and on apps that mount EA under a custom prefix. Surfaced
+        // 2026-05-14 dogfooding round 3 (friction C9). Hardened in
+        // v0.9.0 per architectural audit.
+        return new RedirectResponse(SafeReferer::resolve($request, '/'));
     }
 
     /**

@@ -83,6 +83,9 @@
                             <form method="post"
                                   action="{{ path('polysource_saved_view_toggle_default', {id: view.id}) }}"
                                   class="polysource-saved-views__default-form me-1">
+                                {# CSRF token — validated by the default
+                                   SavedViewController (v0.9.0+). #}
+                                <input type="hidden" name="_token" value="{{ polysource_csrf_token('polysource_saved_view_toggle_default') }}">
                                 <button type="submit"
                                         class="btn btn-sm btn-link polysource-saved-views__default {{ view.isDefault ? 'text-warning' : 'text-muted' }}"
                                         title="{{ (view.isDefault ? 'polysource.saved_views.default.unmark' : 'polysource.saved_views.default.mark')|trans({'%name%': view.name}, 'PolysourceFilter') }}"
@@ -104,6 +107,9 @@
                               action="{{ path('polysource_saved_view_delete', {id: view.id}) }}"
                               class="polysource-saved-views__delete-form me-2"
                               onsubmit="return confirm({{ 'polysource.saved_views.delete.confirm'|trans({'%name%': view.name}, 'PolysourceFilter')|json_encode }});">
+                            {# CSRF token — validated by the default
+                               SavedViewController (v0.9.0+). #}
+                            <input type="hidden" name="_token" value="{{ polysource_csrf_token('polysource_saved_view_delete') }}">
                             <button type="submit"
                                     class="btn btn-sm btn-link text-danger polysource-saved-views__delete"
                                     aria-label="{{ 'polysource.saved_views.delete.label'|trans({'%name%': view.name}, 'PolysourceFilter') }}">

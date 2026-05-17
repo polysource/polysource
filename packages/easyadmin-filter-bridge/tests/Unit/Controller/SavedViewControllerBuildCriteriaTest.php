@@ -132,6 +132,25 @@ final class SavedViewControllerBuildCriteriaTest extends TestCase
             [],
         ];
 
+        // v0.9.0 hardening: unknown operator strings no longer
+        // pass through verbatim — they fall back to the default
+        // (`eq` here). Previous behaviour returned the raw operator
+        // unchanged, which let a hostile client persist a criterion
+        // with arbitrary operator text downstream consumers had to
+        // defensively reject. Caught by architectural audit.
+        yield 'v0.9.0: unknown operator falls back to default eq' => [
+            ['name' => ['comparison' => 'UNION', 'value' => 'foo']],
+            [['property' => 'name', 'operator' => 'eq', 'values' => ['foo']]],
+        ];
+
+        // Polysource canonical operator names round-trip unchanged
+        // (`eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `between` are now
+        // explicitly recognised, not falling through default).
+        yield 'v0.9.0: canonical neq round-trips' => [
+            ['name' => ['comparison' => 'neq', 'value' => 'foo']],
+            [['property' => 'name', 'operator' => 'neq', 'values' => ['foo']]],
+        ];
+
         // Mix of multiple criteria in one URL.
         yield 'mixed multi' => [
             [

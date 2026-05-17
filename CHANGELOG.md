@@ -6,65 +6,58 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Refactor (PR 6/7) — DoctorCommand → HealthCheck registry
+### Security (PR 1/7)
 
-`DoctorCommand` shrank from 299 lines orchestrating 5 hardcoded
-checks down to a thin iterator over a tagged-service collection.
-Plugins now extend the diagnostic surface by tagging their own
-`HealthCheckInterface` services with `polysource.doctor.check` — no
-need to fork the command.
+- **CSRF** — every state-mutating saved-view route now validates a
+  scoped `_token`. Token IDs:
+  - `polysource_saved_view_create`
+  - `polysource_saved_view_delete`
+  - `polysource_saved_view_toggle_default`
 
-New primitives in `Polysource\Bundle\Doctor\`:
+  A leaked token cannot be replayed across operations. The default
+  templates (`save_modal.html.twig`, `dropdown.html.twig`) emit the
+  matching `csrf_token()` automatically — hosts wiring their own
+  controllers must validate the same token IDs or rotate.
+- **Open redirect** — `SavedViewController`, `ColumnPreferenceController`
+  and `ColumnOrderController` no longer redirect to the raw `Referer`
+  header. New `Polysource\EasyAdminFilterBridge\Http\SafeReferer`
+  rejects external hosts and falls back to a safe default; relative
+  paths are honoured (same-origin by definition).
+- **Defense-in-depth** — `SavedViewController::mapComparison()` no
+  longer passes unknown operator strings through verbatim; unknown
+  operators fall back to the supplied default (`eq`) so a hostile
+  client cannot persist a criterion with arbitrary operator text.
+- **XSS hardening** — `polysource_row_density_toggle()` now
+  `htmlspecialchars()`-escapes URLs before interpolating into `href`
+  attributes (matches the existing escape pattern in
+  `CellFilterMenuExtension` and `FilterShortUrlExtension`).
 
-- **`HealthCheckInterface`** — `getName(): string` + `run(): HealthCheckResult`
-- **`HealthCheckResult`** — immutable value object with three static
-  factories (`pass()`, `warn()`, `fail()`)
-- **`Check\PhpVersionCheck`** — PHP >= 8.1
-- **`Check\BundleCheck`** — at least one Polysource bundle registered
-- **`Check\EasyAdminCoLoadCheck`** — bridge + EA co-load warning
-- **`Check\PluginCheck`** — plugin discovery via `PluginRegistry`
-- **`Check\DoctrineSchemaCheck`** — pending DDL surfaces with the
-  remediation pointer
+### Constructor signature
 
-Default checks are registered in the bundle's `services.php` with
-the `polysource.doctor.check` tag; `DoctorCommand`'s constructor
-takes the `tagged_iterator(...)` of all of them.
+- `SavedViewController::__construct()` gains a `?CsrfTokenManagerInterface`
+  parameter — autowired when `framework.csrf_protection` is enabled.
+  When null (kernels without CSRF wiring), the controller fails
+  closed at request time with a 403 explaining the misconfiguration.
+  Hosts manually constructing the controller can omit the argument
+  if they don't expose CSRF-protected routes.
 
-### Note on #60 (deferred)
+### Earlier PRs landed on main
 
-The audit flagged `PluginCompilerPass` for "duck-typing via
-`class_exists()` + `is_subclass_of()`". Investigation: the pass
-already uses the proper interface (`AdminPluginInterface`) for
-discovery; `class_exists()` is a defensive guard for kernels with
-malformed bundle entries (documented in code with a 2026-05-14
-incident reference). No change in this PR — the audit recommendation
-was based on a misreading of the existing code.
-
-### Refactor (PR 3/7) — landed on main
-
-- `DoctrineMetadataHelper` extracts the Doctrine 2.x/3.x mapping cast
-  workaround; `ChipValueFormatter` form-type dispatch is now
-  data-driven via const maps; `IdentifiableInterface` lets audit
-  subscribers extract identifiers without duck-typing.
-
-### Polish (PR 5/7) — landed on main
-
-- LSP nullable return types tightened on 8 sites (8 `phpstan-ignore`
-  removed); `Throwable` narrow in bundle boot;
-  `SavedViewController::toggleDefault` timing-leak documented.
-
-### Coupling (PR 2/7) — landed on main
-
-- `search` composer dep + inter-package constraint normalization
-  across 8 packages.
+- **PR 2/7** — `search` composer dep + inter-package constraint
+  normalization across 8 packages.
+- **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
+  data-driven chip dispatch.
+- **PR 5/7** — LSP nullable return types tightened (8 sites);
+  `Throwable` narrow in bundle boot.
+- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry. Plugins
+  extend the diagnostic surface via `polysource.doctor.check` tag.
 
 ### Validation
 
-- 905 unit tests / 2122 assertions OK (DoctorCommandTest updated +
-  one new test proving host-supplied checks work)
+- 919 unit tests / 2141 assertions OK (+15 new tests for PR 1)
+- 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 
 ## [0.8.2] — 2026-05-17
