@@ -4,6 +4,29 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Coupling (PR 2/7)
+
+- **search** now declares its `polysource/symfony-bundle` dependency
+  in `composer.json`. The package's `ResourceSearchProvider` imports
+  `Polysource\Bundle\Routing\PolysourceUrlGenerator` from
+  `polysource/symfony-bundle` but the composer requirement was
+  missing, so standalone installs of `polysource/search` broke at
+  autoload time. Surfaced by the v0.9.0 architectural audit.
+- **Inter-package version constraints normalized across the monorepo.**
+  8 packages (`adapter-doctrine`, `adapter-flysystem`, `adapter-http`,
+  `adapter-meilisearch`, `adapter-redis`, `audit`, `bulk-async`,
+  `workflow-bridge`) declared `polysource/symfony-bundle: "0.1.x-dev"`
+  — a dev-branch-only constraint that depended on the `branch-alias`
+  metadata on every consumer to resolve correctly. Replaced with the
+  union pattern `"^0.1 || ^0.5 || ^0.7"` that explicitly accepts every
+  shipped lineage, matching the rule documented in
+  `feedback_inter_package_constraints` (2026-05-14).
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.
