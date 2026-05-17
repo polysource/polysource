@@ -69,7 +69,7 @@ final class SavedViewController
     public function __construct(
         private readonly SavedViewService $service,
         private readonly Security $security,
-        private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
     }
@@ -210,11 +210,23 @@ final class SavedViewController
 
     /**
      * Validate the submitted `_token` field against the given CSRF id.
-     * Throws 403 on missing/invalid token. Exits the request before any
-     * state mutation so unauthorized POSTs cannot persist anything.
+     * Throws 403 on missing/invalid token. Exits the request before
+     * any state mutation so unauthorized POSTs cannot persist anything.
+     *
+     * Fails closed when the CSRF token manager is not wired — hosts
+     * that haven't enabled `framework.csrf_protection` get 403 on
+     * every save-view POST. Better than autowire-failure that breaks
+     * the entire DI compilation (the previous v0.9.0 PR1 attempt at
+     * a non-nullable required dep blew up the bundle's compile on
+     * kernels without CSRF). Hosts MUST enable
+     * `framework.csrf_protection` to actually use saved views.
      */
     private function assertCsrf(Request $request, string $tokenId): void
     {
+        if (null === $this->csrfTokenManager) {
+            throw new AccessDeniedHttpException('CSRF protection not configured — enable `framework.csrf_protection` to use saved views.');
+        }
+
         $submitted = (string) $request->request->get('_token', '');
         if (!$this->csrfTokenManager->isTokenValid(new CsrfToken($tokenId, $submitted))) {
             throw new AccessDeniedHttpException('Invalid CSRF token.');

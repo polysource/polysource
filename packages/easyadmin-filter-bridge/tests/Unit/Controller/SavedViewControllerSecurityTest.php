@@ -62,6 +62,35 @@ final class SavedViewControllerSecurityTest extends TestCase
     }
 
     #[Test]
+    public function rejectsWhenCsrfTokenManagerNotWired(): void
+    {
+        // Hosts that haven't enabled framework.csrf_protection get
+        // null injected. The controller fails closed at request time
+        // with a 403 explaining the misconfiguration — better than
+        // either silently accepting unauthenticated mutations or
+        // breaking DI compilation at boot.
+        $service = new SavedViewService(
+            storage: $this->createMock(SavedViewStorageInterface::class),
+            authChecker: $this->createMock(AuthorizationCheckerInterface::class),
+            tokenStorage: $this->createMock(TokenStorageInterface::class),
+        );
+        $security = $this->createMock(Security::class);
+
+        $controller = new SavedViewController(
+            service: $service,
+            security: $security,
+            csrfTokenManager: null,
+        );
+
+        $request = Request::create('/admin/saved-views', 'POST');
+        $request->request->set('_token', 'anything');
+
+        $this->expectException(AccessDeniedHttpException::class);
+        $this->expectExceptionMessage('CSRF protection not configured');
+        $controller->create($request);
+    }
+
+    #[Test]
     public function createTokenCannotBeReplayedAgainstDelete(): void
     {
         // The csrf manager is configured to ONLY accept the

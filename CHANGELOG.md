@@ -36,16 +36,21 @@ the security batch.
   attributes (matches the existing escape pattern in
   `CellFilterMenuExtension` and `FilterShortUrlExtension`).
 
-### Breaking
+### Constructor signature
 
-- `SavedViewController::__construct()` gains a required
-  `CsrfTokenManagerInterface` parameter (autowired by default). Hosts
-  manually constructing the controller must pass the token manager.
+- `SavedViewController::__construct()` gains a `?CsrfTokenManagerInterface`
+  parameter — autowired when `framework.csrf_protection` is enabled.
+  When null (kernels without CSRF wiring), the controller fails
+  closed at request time with a 403 explaining the misconfiguration.
+  Hosts manually constructing the controller can omit the argument
+  if they don't expose CSRF-protected routes.
 
 ### Validation
 
-- 918 unit tests / 2139 assertions OK (+14 new tests covering
-  SafeReferer, CSRF rejection, hardened operator default)
+- 919 unit tests / 2141 assertions OK (+15 new tests covering
+  SafeReferer, CSRF rejection on all routes, scoped-token replay
+  protection, null-token-manager fail-closed, hardened operator
+  default)
 - 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 
