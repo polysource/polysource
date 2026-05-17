@@ -100,8 +100,13 @@ final class RowDensityExtension extends AbstractExtension
     {
         $current = $this->currentDensity();
 
-        $normalUrl = $this->urlForDensity('normal');
-        $compactUrl = $this->urlForDensity('compact');
+        // Escape URLs before interpolating into `href` attributes —
+        // `http_build_query()` RFC3986-encodes individual values but
+        // the assembled URL is still embedded in raw HTML, so we
+        // defense-in-depth with `htmlspecialchars()`. Same idiom as
+        // CellFilterMenuExtension and FilterShortUrlExtension.
+        $normalUrl = htmlspecialchars($this->urlForDensity('normal'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $compactUrl = htmlspecialchars($this->urlForDensity('compact'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
 
         $normalActive = 'normal' === $current;
         $compactActive = 'compact' === $current;

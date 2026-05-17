@@ -4,6 +4,51 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`. PR 1 of 7 lands
+the security batch.
+
+### Security (PR 1/7)
+
+- **CSRF** — every state-mutating saved-view route now validates a
+  scoped `_token`. Token IDs:
+  - `polysource_saved_view_create`
+  - `polysource_saved_view_delete`
+  - `polysource_saved_view_toggle_default`
+
+  A leaked token cannot be replayed across operations. The default
+  templates (`save_modal.html.twig`, `dropdown.html.twig`) emit the
+  matching `csrf_token()` automatically — hosts wiring their own
+  controllers must validate the same token IDs or rotate.
+- **Open redirect** — `SavedViewController`, `ColumnPreferenceController`
+  and `ColumnOrderController` no longer redirect to the raw `Referer`
+  header. New `Polysource\EasyAdminFilterBridge\Http\SafeReferer`
+  rejects external hosts and falls back to a safe default; relative
+  paths are honoured (same-origin by definition).
+- **Defense-in-depth** — `SavedViewController::mapComparison()` no
+  longer passes unknown operator strings through verbatim; unknown
+  operators fall back to the supplied default (`eq`) so a hostile
+  client cannot persist a criterion with arbitrary operator text.
+- **XSS hardening** — `polysource_row_density_toggle()` now
+  `htmlspecialchars()`-escapes URLs before interpolating into `href`
+  attributes (matches the existing escape pattern in
+  `CellFilterMenuExtension` and `FilterShortUrlExtension`).
+
+### Breaking
+
+- `SavedViewController::__construct()` gains a required
+  `CsrfTokenManagerInterface` parameter (autowired by default). Hosts
+  manually constructing the controller must pass the token manager.
+
+### Validation
+
+- 918 unit tests / 2139 assertions OK (+14 new tests covering
+  SafeReferer, CSRF rejection, hardened operator default)
+- 15 integration tests / 55 assertions OK
+- PHPStan max + CS clean
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.
