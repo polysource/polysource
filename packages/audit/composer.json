@@ -32,7 +32,7 @@
     "require-dev": {
         "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
-        "polysource/symfony-bundle": "0.1.x-dev",
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7",
         "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
     "suggest": {

@@ -43,6 +43,24 @@ malformed bundle entries (documented in code with a 2026-05-14
 incident reference). No change in this PR — the audit recommendation
 was based on a misreading of the existing code.
 
+### Refactor (PR 3/7) — landed on main
+
+- `DoctrineMetadataHelper` extracts the Doctrine 2.x/3.x mapping cast
+  workaround; `ChipValueFormatter` form-type dispatch is now
+  data-driven via const maps; `IdentifiableInterface` lets audit
+  subscribers extract identifiers without duck-typing.
+
+### Polish (PR 5/7) — landed on main
+
+- LSP nullable return types tightened on 8 sites (8 `phpstan-ignore`
+  removed); `Throwable` narrow in bundle boot;
+  `SavedViewController::toggleDefault` timing-leak documented.
+
+### Coupling (PR 2/7) — landed on main
+
+- `search` composer dep + inter-package constraint normalization
+  across 8 packages.
+
 ### Validation
 
 - 905 unit tests / 2122 assertions OK (DoctorCommandTest updated +
