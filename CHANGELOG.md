@@ -4,6 +4,38 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] — 2026-05-17
+
+**Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.
+
+### Added
+
+`polysource_cell_filter_menu()` accepts a new optional `$filterValue` parameter:
+
+```twig
+{# Scalar column — display value is also the filter value (no change) #}
+{{ polysource_cell_filter_menu('status', record.status) }}
+
+{# Entity column — pass entity id explicitly so the URL filters by PK #}
+{{ polysource_cell_filter_menu(
+    'customer',
+    record.customer.label,
+    'Client',
+    record.customer.id
+) }}
+```
+
+Default behaviour unchanged: when `$filterValue` is null, falls back to `$value` (display) — preserves the existing scalar-column path.
+
+### Validation
+
+- 1019 tests / 2458 assertions OK (+2 from the new render/fallback tests)
+- PHPStan max + CS clean
+
+### Migration
+
+Zero-effort for scalar columns. Hosts using cell-filter on entity columns gain the `$filterValue` parameter — adopt when ready.
+
 ## [0.8.1] — 2026-05-17
 
 **Dogfood signal #10 — cell-filter URL shape mismatch.** The `polysource_cell_filter_menu()` Twig helper emitted `?filters[<prop>]=<value>` for the `eq` operator (scalar shorthand). The bridge's `UrlFilterApplier` honours this shape for filter-aware export / bulk dry-run, but EA's `crud/index` action filter pipeline does NOT — the chip rendered in the chips bar but no row filtering happened. Caught in dogfooding round 4.
