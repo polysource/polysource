@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Controller;
 
+use Polysource\EasyAdminFilterBridge\Http\SafeReferer;
 use Polysource\Filter\ColumnPreference\ColumnPreferenceService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -81,9 +82,10 @@ final class ColumnOrderController
         // a specific EA mount which breaks on multi-tenant hosts
         // (`/{channel}/admin`) and on apps with a custom prefix.
         // Surfaced 2026-05-14 dogfooding round 3 (friction C9).
-        $referer = (string) $request->headers->get('Referer', '/');
-
-        return new RedirectResponse($referer);
+        // SafeReferer rejects external hosts so a crafted Referer
+        // cannot turn this endpoint into an open redirect. Hardened
+        // in v0.9.0 per architectural audit.
+        return new RedirectResponse(SafeReferer::resolve($request, '/'));
     }
 
     /**

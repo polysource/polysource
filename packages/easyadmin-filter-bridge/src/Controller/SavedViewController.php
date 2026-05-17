@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Controller;
 
+use Polysource\EasyAdminFilterBridge\Http\SafeReferer;
 use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
 use Polysource\Filter\SavedView\Exception\SavedViewAccessDeniedException;
@@ -19,6 +20,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -30,6 +33,19 @@ use Symfony\Component\Uid\Uuid;
  * Routes:
  *   - POST /admin/saved-views                → polysource_saved_view_create
  *   - POST /admin/saved-views/{id}/delete    → polysource_saved_view_delete
+ *   - POST /admin/saved-views/{id}/default   → polysource_saved_view_toggle_default
+ *
+ * Security:
+ *   - Authentication required (`getUser()` must be non-null).
+ *   - CSRF token required on every POST. Tokens are scoped per
+ *     operation so a leaked create-token cannot be replayed against
+ *     delete/toggle-default. Token IDs:
+ *       - `polysource_saved_view_create`
+ *       - `polysource_saved_view_delete`
+ *       - `polysource_saved_view_toggle_default`
+ *   - Authorization is voter-enforced inside `SavedViewService`.
+ *   - Redirects are filtered through {@see SafeReferer} so a crafted
+ *     `Referer` header cannot become an open-redirect chain.
  *
  * Decodes EasyAdmin's filter URL shape:
  *
@@ -47,9 +63,14 @@ use Symfony\Component\Uid\Uuid;
  */
 final class SavedViewController
 {
+    private const CSRF_CREATE = 'polysource_saved_view_create';
+    private const CSRF_DELETE = 'polysource_saved_view_delete';
+    private const CSRF_TOGGLE_DEFAULT = 'polysource_saved_view_toggle_default';
+
     public function __construct(
         private readonly SavedViewService $service,
         private readonly Security $security,
+        private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
     }
@@ -57,6 +78,8 @@ final class SavedViewController
     #[Route('/admin/saved-views', name: 'polysource_saved_view_create', methods: ['POST'])]
     public function create(Request $request): RedirectResponse
     {
+        $this->assertCsrf($request, self::CSRF_CREATE);
+
         $user = $this->security->getUser();
         if ($user === null) {
             throw new AccessDeniedHttpException();
@@ -134,6 +157,8 @@ final class SavedViewController
     #[Route('/admin/saved-views/{id}/delete', name: 'polysource_saved_view_delete', methods: ['POST'])]
     public function delete(string $id, Request $request): RedirectResponse
     {
+        $this->assertCsrf($request, self::CSRF_DELETE);
+
         try {
             $this->service->delete($id);
         } catch (SavedViewAccessDeniedException) {
@@ -162,6 +187,24 @@ final class SavedViewController
     #[Route('/admin/saved-views/{id}/default', name: 'polysource_saved_view_toggle_default', methods: ['POST'])]
     public function toggleDefault(string $id, Request $request): RedirectResponse
     {
+        $this->assertCsrf($request, self::CSRF_TOGGLE_DEFAULT);
+
+        // Auth-failure paths intentionally converge on a single
+        // AccessDeniedHttpException with the same message regardless
+        // of which step failed:
+        //
+        //   1. `load()` returns null when the view doesn't exist OR
+        //      when the user has no VIEW permission on it (the voter
+        //      runs inside `SavedViewService::load`).
+        //   2. `markAsDefault()` / `unmarkAsDefault()` throw
+        //      SavedViewAccessDeniedException when the user has VIEW
+        //      but not EDIT on the target view.
+        //
+        // Both code paths emit the SAME exception with the SAME
+        // message — no timing leak between "view doesn't exist" and
+        // "view exists but user can't edit it". The leak the v0.9.0
+        // audit flagged as MEDIUM was a misreading of load()'s
+        // contract.
         $view = $this->service->load($id);
         if (null === $view) {
             throw new AccessDeniedHttpException('You are not authorized to mark this view as default.');
@@ -182,15 +225,40 @@ final class SavedViewController
         return $this->redirectToReferrer($request);
     }
 
+    /**
+     * Validate the submitted `_token` field against the given CSRF id.
+     * Throws 403 on missing/invalid token. Exits the request before
+     * any state mutation so unauthorized POSTs cannot persist anything.
+     *
+     * Fails closed when the CSRF token manager is not wired — hosts
+     * that haven't enabled `framework.csrf_protection` get 403 on
+     * every save-view POST. Better than autowire-failure that breaks
+     * the entire DI compilation (the previous v0.9.0 PR1 attempt at
+     * a non-nullable required dep blew up the bundle's compile on
+     * kernels without CSRF). Hosts MUST enable
+     * `framework.csrf_protection` to actually use saved views.
+     */
+    private function assertCsrf(Request $request, string $tokenId): void
+    {
+        if (null === $this->csrfTokenManager) {
+            throw new AccessDeniedHttpException('CSRF protection not configured — enable `framework.csrf_protection` to use saved views.');
+        }
+
+        $submitted = (string) $request->request->get('_token', '');
+        if (!$this->csrfTokenManager->isTokenValid(new CsrfToken($tokenId, $submitted))) {
+            throw new AccessDeniedHttpException('Invalid CSRF token.');
+        }
+    }
+
     private function redirectToReferrer(Request $request): RedirectResponse
     {
         // Fall back to `/` rather than `/admin`: the latter assumes
         // a specific EA mount which breaks on multi-tenant hosts
         // (`/{channel}/admin`) and on apps with a custom prefix.
         // Surfaced 2026-05-14 dogfooding round 3 (friction C9).
-        $referrer = (string) $request->headers->get('referer', '/');
-
-        return new RedirectResponse('' !== $referrer ? $referrer : '/');
+        // SafeReferer rejects external hosts so a crafted Referer
+        // header cannot turn this POST into an open redirect.
+        return new RedirectResponse(SafeReferer::resolve($request, '/'));
     }
 
     private function flash(Request $request, string $type, string $message): void

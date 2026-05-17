@@ -11,6 +11,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInter
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\EntityFilterType;
 use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
+use Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
 use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
@@ -56,6 +57,26 @@ use Throwable;
  */
 final class ChipValueFormatter
 {
+    /**
+     * Form types that resolve to the Yes/No/Null translation chip.
+     * Adding a new boolean-shaped filter is a one-line addition to
+     * this map — the dispatch in {@see format()} is data-driven.
+     */
+    private const BOOLEAN_FORM_TYPES = [
+        BooleanFilterType::class,
+        EnhancedBooleanFilterType::class,
+    ];
+
+    /**
+     * Form types that resolve to an entity __toString chip via the
+     * Doctrine association mapping. Adding a new entity-shaped
+     * filter is a one-line addition.
+     */
+    private const ENTITY_FORM_TYPES = [
+        EntityFilterType::class,
+        EnhancedEntityFilterType::class,
+    ];
+
     public function __construct(
         private readonly AdminContextProviderInterface $contextProvider,
         private readonly EntityManagerInterface $entityManager,
@@ -96,11 +117,14 @@ final class ChipValueFormatter
 
         // ─── Stage 3: Match by FormType (covers EA built-ins +
         //              custom FilterInterface using EA form types) ───
+        // Data-driven dispatch via the const maps above so hosts /
+        // contributors can add a new form-type chip handler by
+        // appending one entry instead of mutating a `match` block.
         $formType = $filter->getAsDto()->getFormType();
-        if (\in_array($formType, [BooleanFilterType::class, EnhancedBooleanFilterType::class], true)) {
+        if (\in_array($formType, self::BOOLEAN_FORM_TYPES, true)) {
             return $this->formatBoolean($rawValue);
         }
-        if (\in_array($formType, [EntityFilterType::class, EnhancedEntityFilterType::class], true)) {
+        if (\in_array($formType, self::ENTITY_FORM_TYPES, true)) {
             return $this->formatEntity($context, $property, $rawValue);
         }
 
@@ -212,15 +236,12 @@ final class ChipValueFormatter
             return $this->stringify($rawValue);
         }
 
-        // Doctrine ORM 2.x exposes the mapping as an array
-        // (`$mapping['targetEntity']`), 3.x exposes it as an
-        // AssociationMapping object (`$mapping->targetEntity`).
-        // Casting to array uniformly works on both: 2.x is a
-        // no-op, 3.x converts public properties to array entries.
-        // Per ADR-015 we support both Doctrine majors and the
-        // static analyser only sees the installed one, so this
-        // cast is the only branch-free way to access the field.
-        $targetClass = $this->extractTargetEntity(
+        // Doctrine ORM 2.x exposes the mapping as an array, 3.x as
+        // an AssociationMapping object. DoctrineMetadataHelper hides
+        // the shape detection — extracted in v0.9.0 so the cross-
+        // version trivia lives in one well-named class instead of
+        // being inlined here.
+        $targetClass = DoctrineMetadataHelper::extractTargetEntity(
             $metadata->getAssociationMapping($property),
         );
 
@@ -239,39 +260,6 @@ final class ChipValueFormatter
         }
 
         return (string) $entity;
-    }
-
-    /**
-     * Extracts `targetEntity` from a Doctrine association mapping.
-     *
-     * Doctrine ORM 2.x returns an array with the field as an offset;
-     * 3.x returns an `AssociationMapping` object with a public
-     * property. Per ADR-015 (multi-version baseline) we accept both.
-     * The parameter is `mixed` so PHPStan doesn't try to narrow
-     * against whichever Doctrine major happens to be installed
-     * during static analysis.
-     *
-     * @return class-string|null
-     */
-    private function extractTargetEntity(mixed $mapping): ?string
-    {
-        $value = null;
-        if (\is_array($mapping) && \array_key_exists('targetEntity', $mapping)) {
-            $value = $mapping['targetEntity'];
-        } elseif (\is_object($mapping)) {
-            // Object-shaped mapping (Doctrine 3.x) — read via array
-            // cast so PHPStan can't apply class-specific narrowing
-            // that would block Doctrine 2.x (where the object branch
-            // is dead) or vice versa.
-            $asArray = (array) $mapping;
-            $value = $asArray['targetEntity'] ?? null;
-        }
-
-        if (!\is_string($value) || '' === $value || !class_exists($value)) {
-            return null;
-        }
-
-        return $value;
     }
 
     /**

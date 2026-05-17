@@ -22,30 +22,33 @@ by extracting three small primitives into `polysource/filter`:
   in tests — every canonical operator survives `fromEa(toEa(X))`.
 - **`Polysource\Filter\Url\FilterArrayExtractor`** — defensive
   extraction of the `filters[...]` slice from a request query.
-  The defensive guard
-  `isset($query['filters']) && is_array($query['filters'])` was
-  repeated verbatim in 3 places and dropped non-string keys
-  inconsistently. Now centralised.
 - **`Polysource\Filter\Url\FilterUrlBuilder`** — builds URL query
   arrays carrying a single criterion slice in the **expanded** EA
-  shape (`filters[<prop>][comparison]=<op>&[value]=<v>`). The scalar
-  shorthand (`filters[<prop>]=<v>`) is the form EA's filter pipeline
-  silently drops — dogfood signal #10. Having a single builder
-  prevents any caller from regressing.
+  shape. The scalar shorthand is silently dropped by EA — dogfood
+  signal #10.
 
-Call-site migrations:
+Call-site migrations: `CellFilterMenuExtension::urlFor()` →
+`FilterUrlBuilder` + `OperatorMap`; `SavedViewController::mapComparison()`
+→ `OperatorMap::fromEa()` (replaces the inline match landed in PR 1);
+`UrlFilterApplier::apply()` + `FilterShortUrlExtension::shortUrl()`
+→ `FilterArrayExtractor::fromQueryArray()`.
 
-- `CellFilterMenuExtension::urlFor()` now delegates URL assembly to
-  `FilterUrlBuilder` and operator translation to `OperatorMap`.
-- `SavedViewController::mapComparison()` delegates to
-  `OperatorMap::fromEa()`.
-- `UrlFilterApplier::apply()` uses `FilterArrayExtractor::fromQueryArray()`.
-- `FilterShortUrlExtension::shortUrl()` uses `FilterArrayExtractor::fromQueryArray()`.
+### Earlier PRs landed on main
+
+- **PR 1/7** — CSRF on all saved-view POST routes (3 scoped tokens),
+  open-redirect closed (`SafeReferer`), XSS hardening on
+  `RowDensityExtension`, `polysource_csrf_token` Twig helper.
+- **PR 2/7** — `search` composer dep + inter-package constraint
+  normalization across 8 packages.
+- **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
+  data-driven chip dispatch.
+- **PR 5/7** — LSP nullable return types tightened (8 sites);
+  `Throwable` narrow in bundle boot.
+- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry.
 
 ### Validation
 
-- 952 unit tests / 2179 assertions OK (+23 new across the 3 new
-  classes, including operator round-trip property tests)
+- 952 unit tests / 2179 assertions OK (+23 new for PR 4)
 - 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 
