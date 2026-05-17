@@ -6,57 +6,49 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
 `docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
-### Security (PR 1/7)
+### Refactor (PR 4/7) — unified filter URL serializer
 
-- **CSRF** — every state-mutating saved-view route now validates a
-  scoped `_token`. Token IDs:
-  - `polysource_saved_view_create`
-  - `polysource_saved_view_delete`
-  - `polysource_saved_view_toggle_default`
+Eliminates the root-cause class for the v0.8.1 URL-shape regression
+by extracting three small primitives into `polysource/filter`:
 
-  A leaked token cannot be replayed across operations. The default
-  templates (`save_modal.html.twig`, `dropdown.html.twig`) emit the
-  matching `csrf_token()` automatically — hosts wiring their own
-  controllers must validate the same token IDs or rotate.
-- **Open redirect** — `SavedViewController`, `ColumnPreferenceController`
-  and `ColumnOrderController` no longer redirect to the raw `Referer`
-  header. New `Polysource\EasyAdminFilterBridge\Http\SafeReferer`
-  rejects external hosts and falls back to a safe default; relative
-  paths are honoured (same-origin by definition).
-- **Defense-in-depth** — `SavedViewController::mapComparison()` no
-  longer passes unknown operator strings through verbatim; unknown
-  operators fall back to the supplied default (`eq`) so a hostile
-  client cannot persist a criterion with arbitrary operator text.
-- **XSS hardening** — `polysource_row_density_toggle()` now
-  `htmlspecialchars()`-escapes URLs before interpolating into `href`
-  attributes (matches the existing escape pattern in
-  `CellFilterMenuExtension` and `FilterShortUrlExtension`).
+- **`Polysource\Filter\Url\OperatorMap`** — single source of truth
+  for the EA URL operator ↔ Polysource canonical operator mapping.
+  Replaces three ad-hoc dispatch sites (`SavedViewController::mapComparison`,
+  `SavedViewApplySubscriber::criteriaToEaQuery`,
+  `UrlFilterApplier::applyExpanded`). Round-trip property is asserted
+  in tests — every canonical operator survives `fromEa(toEa(X))`.
+- **`Polysource\Filter\Url\FilterArrayExtractor`** — defensive
+  extraction of the `filters[...]` slice from a request query.
+- **`Polysource\Filter\Url\FilterUrlBuilder`** — builds URL query
+  arrays carrying a single criterion slice in the **expanded** EA
+  shape. The scalar shorthand is silently dropped by EA — dogfood
+  signal #10.
 
-### Constructor signature
-
-- `SavedViewController::__construct()` gains a `?CsrfTokenManagerInterface`
-  parameter — autowired when `framework.csrf_protection` is enabled.
-  When null (kernels without CSRF wiring), the controller fails
-  closed at request time with a 403 explaining the misconfiguration.
-  Hosts manually constructing the controller can omit the argument
-  if they don't expose CSRF-protected routes.
+Call-site migrations: `CellFilterMenuExtension::urlFor()` →
+`FilterUrlBuilder` + `OperatorMap`; `SavedViewController::mapComparison()`
+→ `OperatorMap::fromEa()` (replaces the inline match landed in PR 1);
+`UrlFilterApplier::apply()` + `FilterShortUrlExtension::shortUrl()`
+→ `FilterArrayExtractor::fromQueryArray()`.
 
 ### Earlier PRs landed on main
 
+- **PR 1/7** — CSRF on all saved-view POST routes (3 scoped tokens),
+  open-redirect closed (`SafeReferer`), XSS hardening on
+  `RowDensityExtension`, `polysource_csrf_token` Twig helper.
 - **PR 2/7** — `search` composer dep + inter-package constraint
   normalization across 8 packages.
 - **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
   data-driven chip dispatch.
 - **PR 5/7** — LSP nullable return types tightened (8 sites);
   `Throwable` narrow in bundle boot.
-- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry. Plugins
-  extend the diagnostic surface via `polysource.doctor.check` tag.
+- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry.
 
 ### Validation
 
-- 919 unit tests / 2141 assertions OK (+15 new tests for PR 1)
+- 952 unit tests / 2179 assertions OK (+23 new for PR 4)
 - 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 
