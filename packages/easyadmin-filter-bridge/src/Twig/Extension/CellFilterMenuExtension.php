@@ -123,13 +123,20 @@ final class CellFilterMenuExtension extends AbstractExtension
         $query = null !== $request && !$replace
             ? $request->query->all()
             : [];
-        // EA conventional shape: `filters[<property>][value]=<value>&filters[<property>][comparison]=<op>`.
-        // The bridge accepts both `filter` and `filters` URL keys, but
-        // EA's own URL build uses `filters` (plural). Match that.
+        // EA's `crud/index` Controller applies filters only when they
+        // arrive in the **expanded shape**
+        // `filters[<prop>][comparison]=<op>&filters[<prop>][value]=<val>`.
+        // The scalar shorthand `filters[<prop>]=<val>` is honoured by
+        // the bridge's UrlFilterApplier (export, bulk dry-run) but
+        // NOT by EA's index — applying it would render chips without
+        // actually narrowing the rows. Always emit the expanded
+        // shape so the cell-filter menu produces a filter the index
+        // page can act on. Dogfood signal #10, 2026-05-17.
         $existing = isset($query['filters']) && \is_array($query['filters']) ? $query['filters'] : [];
-        $existing[$property] = 'eq' === $operator
-            ? $stringValue
-            : ['comparison' => '!=', 'value' => $stringValue];
+        $existing[$property] = [
+            'comparison' => 'eq' === $operator ? '=' : '!=',
+            'value' => $stringValue,
+        ];
         $query['filters'] = $existing;
 
         $qs = http_build_query($query, '', '&', \PHP_QUERY_RFC3986);

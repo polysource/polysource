@@ -4,6 +4,30 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] — 2026-05-17
+
+**Dogfood signal #10 — cell-filter URL shape mismatch.** The `polysource_cell_filter_menu()` Twig helper emitted `?filters[<prop>]=<value>` for the `eq` operator (scalar shorthand). The bridge's `UrlFilterApplier` honours this shape for filter-aware export / bulk dry-run, but EA's `crud/index` action filter pipeline does NOT — the chip rendered in the chips bar but no row filtering happened. Caught in dogfooding round 4.
+
+### Fixed
+
+`CellFilterMenuExtension::urlFor()` now always emits the **expanded** EA shape:
+
+```diff
+- ?filters[status]=paid                                  (scalar — ignored by EA index)
++ ?filters[status][comparison]==&filters[status][value]=paid    (expanded — applied)
+```
+
+Same for `neq` (already used expanded shape — unchanged). The scalar shorthand stays supported by the bridge's `UrlFilterApplier` for export / bulk consumers; only the cell-filter-menu URL builder is corrected.
+
+### Validation
+
+- 1017 tests / 2454 assertions OK (existing CellFilterMenuExtensionTest covers the change)
+- PHPStan max + CS clean
+
+### Migration
+
+Zero-effort. Hosts using `polysource_cell_filter_menu(property, value)` get the corrected URL automatically.
+
 ## [0.8.0] — 2026-05-16
 
 **`polysource/adapter-redis` reshape — 5 type-specific data sources.** Dogfood signal #8 surfaced a `WRONGTYPE` crash when SCAN returned keys of mixed Redis types — the v0.7 adapter only handled hashes. v0.8 reframes the Redis adapter to cover all 5 Redis data structures with type-pure semantics per data source.

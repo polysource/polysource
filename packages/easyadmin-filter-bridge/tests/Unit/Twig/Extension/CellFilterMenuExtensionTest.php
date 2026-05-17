@@ -70,7 +70,7 @@ final class CellFilterMenuExtensionTest extends TestCase
 
         $url = $extension->urlFor('status', 'paid', 'eq');
 
-        self::assertSame('/admin/orders?filters%5Bstatus%5D=paid', $url);
+        self::assertSame('/admin/orders?filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D=paid', $url);
     }
 
     #[Test]
@@ -103,7 +103,7 @@ final class CellFilterMenuExtensionTest extends TestCase
         // only this X" behaviour.
         $url = $extension->urlFor('status', 'paid', 'eq', replace: true);
 
-        self::assertStringContainsString('filters%5Bstatus%5D=paid', $url);
+        self::assertStringContainsString('filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D=paid', $url);
         self::assertStringNotContainsString('country', $url);
         self::assertStringNotContainsString('createdAt', $url);
     }
@@ -120,7 +120,7 @@ final class CellFilterMenuExtensionTest extends TestCase
 
         $url = $extension->urlFor('status', 'paid', 'eq');
 
-        self::assertStringContainsString('filters%5Bstatus%5D=paid', $url);
+        self::assertStringContainsString('filters%5Bstatus%5D%5Bcomparison%5D=%3D&filters%5Bstatus%5D%5Bvalue%5D=paid', $url);
         self::assertStringContainsString('sort%5BcreatedAt%5D=desc', $url);
         self::assertStringContainsString('page=2', $url);
     }
