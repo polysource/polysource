@@ -4,6 +4,51 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Refactor (PR 4/7) — unified filter URL serializer
+
+Eliminates the root-cause class for the v0.8.1 URL-shape regression
+by extracting three small primitives into `polysource/filter`:
+
+- **`Polysource\Filter\Url\OperatorMap`** — single source of truth
+  for the EA URL operator ↔ Polysource canonical operator mapping.
+  Replaces three ad-hoc dispatch sites (`SavedViewController::mapComparison`,
+  `SavedViewApplySubscriber::criteriaToEaQuery`,
+  `UrlFilterApplier::applyExpanded`). Round-trip property is asserted
+  in tests — every canonical operator survives `fromEa(toEa(X))`.
+- **`Polysource\Filter\Url\FilterArrayExtractor`** — defensive
+  extraction of the `filters[...]` slice from a request query.
+  The defensive guard
+  `isset($query['filters']) && is_array($query['filters'])` was
+  repeated verbatim in 3 places and dropped non-string keys
+  inconsistently. Now centralised.
+- **`Polysource\Filter\Url\FilterUrlBuilder`** — builds URL query
+  arrays carrying a single criterion slice in the **expanded** EA
+  shape (`filters[<prop>][comparison]=<op>&[value]=<v>`). The scalar
+  shorthand (`filters[<prop>]=<v>`) is the form EA's filter pipeline
+  silently drops — dogfood signal #10. Having a single builder
+  prevents any caller from regressing.
+
+Call-site migrations:
+
+- `CellFilterMenuExtension::urlFor()` now delegates URL assembly to
+  `FilterUrlBuilder` and operator translation to `OperatorMap`.
+- `SavedViewController::mapComparison()` delegates to
+  `OperatorMap::fromEa()`.
+- `UrlFilterApplier::apply()` uses `FilterArrayExtractor::fromQueryArray()`.
+- `FilterShortUrlExtension::shortUrl()` uses `FilterArrayExtractor::fromQueryArray()`.
+
+### Validation
+
+- 952 unit tests / 2179 assertions OK (+23 new across the 3 new
+  classes, including operator round-trip property tests)
+- 15 integration tests / 55 assertions OK
+- PHPStan max + CS clean
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.

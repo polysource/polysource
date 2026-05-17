@@ -12,6 +12,7 @@ use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Security\SavedViewTeamResolverInterface;
+use Polysource\Filter\Url\OperatorMap;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -292,19 +293,21 @@ final class SavedViewController
         return $criteria;
     }
 
+    /**
+     * Map an EA URL operator to a Polysource canonical name. Delegates
+     * to {@see OperatorMap::fromEa()} — the bidirectional source of
+     * truth for the EA ↔ Polysource operator vocabulary. Extracted in
+     * v0.9.0 so the operator alphabet is no longer duplicated between
+     * this controller (URL → criterion) and {@see SavedViewApplySubscriber}
+     * (criterion → URL).
+     *
+     * Unknown operators fall back to `$default` rather than passing
+     * through verbatim — hardened in v0.9.0 per the architectural
+     * audit (a hostile client cannot persist a criterion with arbitrary
+     * operator text downstream consumers had to defensively reject).
+     */
     private static function mapComparison(string $comparison, string $default): string
     {
-        return match ($comparison) {
-            '=' => 'eq',
-            '!=', '<>' => 'neq',
-            '>' => 'gt',
-            '>=' => 'gte',
-            '<' => 'lt',
-            '<=' => 'lte',
-            'like', 'like*', '*like', 'not like' => 'like',
-            'in', 'not in' => 'in',
-            '' => $default,
-            default => $comparison,
-        };
+        return OperatorMap::fromEa($comparison, $default);
     }
 }
