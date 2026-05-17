@@ -4,6 +4,51 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+
+### Refactor (PR 6/7) — DoctorCommand → HealthCheck registry
+
+`DoctorCommand` shrank from 299 lines orchestrating 5 hardcoded
+checks down to a thin iterator over a tagged-service collection.
+Plugins now extend the diagnostic surface by tagging their own
+`HealthCheckInterface` services with `polysource.doctor.check` — no
+need to fork the command.
+
+New primitives in `Polysource\Bundle\Doctor\`:
+
+- **`HealthCheckInterface`** — `getName(): string` + `run(): HealthCheckResult`
+- **`HealthCheckResult`** — immutable value object with three static
+  factories (`pass()`, `warn()`, `fail()`)
+- **`Check\PhpVersionCheck`** — PHP >= 8.1
+- **`Check\BundleCheck`** — at least one Polysource bundle registered
+- **`Check\EasyAdminCoLoadCheck`** — bridge + EA co-load warning
+- **`Check\PluginCheck`** — plugin discovery via `PluginRegistry`
+- **`Check\DoctrineSchemaCheck`** — pending DDL surfaces with the
+  remediation pointer
+
+Default checks are registered in the bundle's `services.php` with
+the `polysource.doctor.check` tag; `DoctorCommand`'s constructor
+takes the `tagged_iterator(...)` of all of them.
+
+### Note on #60 (deferred)
+
+The audit flagged `PluginCompilerPass` for "duck-typing via
+`class_exists()` + `is_subclass_of()`". Investigation: the pass
+already uses the proper interface (`AdminPluginInterface`) for
+discovery; `class_exists()` is a defensive guard for kernels with
+malformed bundle entries (documented in code with a 2026-05-14
+incident reference). No change in this PR — the audit recommendation
+was based on a misreading of the existing code.
+
+### Validation
+
+- 905 unit tests / 2122 assertions OK (DoctorCommandTest updated +
+  one new test proving host-supplied checks work)
+- PHPStan max + CS clean
+
 ## [0.8.2] — 2026-05-17
 
 **Dogfood signal #11 — cell-filter on EntityFilter columns.** `polysource_cell_filter_menu` rendered a chip for an EntityFilter column with the entity's display label (`__toString()`) as the URL filter value. EA's `EntityFilter` expects the entity primary key, so the filter applied but matched nothing — user saw "all rows" stay visible despite the chip.

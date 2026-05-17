@@ -10,6 +10,11 @@ use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
+use Polysource\Bundle\Doctor\Check\BundleCheck;
+use Polysource\Bundle\Doctor\Check\DoctrineSchemaCheck;
+use Polysource\Bundle\Doctor\Check\EasyAdminCoLoadCheck;
+use Polysource\Bundle\Doctor\Check\PhpVersionCheck;
+use Polysource\Bundle\Doctor\Check\PluginCheck;
 use Polysource\Bundle\EventListener\PolysourceViewListener;
 use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
@@ -173,16 +178,42 @@ return static function (ContainerConfigurator $container): void {
         ->tag('console.command')
     ;
 
-    // `polysource:doctor` — runtime health check.
-    // `ManagerRegistry` is optional (hosts without Doctrine skip the
-    // schema check). `PluginRegistry` is always wired by this bundle.
+    // `polysource:doctor` — runtime health check. Plugins extend the
+    // diagnostic surface by tagging their own services with
+    // `polysource.doctor.check` (v0.9.0+). The default checks ship
+    // below.
+    $services
+        ->set(PhpVersionCheck::class)
+        ->tag('polysource.doctor.check')
+    ;
+
+    $services
+        ->set(BundleCheck::class)
+        ->args([service('kernel')])
+        ->tag('polysource.doctor.check')
+    ;
+
+    $services
+        ->set(EasyAdminCoLoadCheck::class)
+        ->args([service('kernel')])
+        ->tag('polysource.doctor.check')
+    ;
+
+    $services
+        ->set(PluginCheck::class)
+        ->args([service(PluginRegistry::class)])
+        ->tag('polysource.doctor.check')
+    ;
+
+    $services
+        ->set(DoctrineSchemaCheck::class)
+        ->args([service('doctrine')->nullOnInvalid()])
+        ->tag('polysource.doctor.check')
+    ;
+
     $services
         ->set(DoctorCommand::class)
-        ->args([
-            service('kernel'),
-            service(PluginRegistry::class),
-            service('doctrine')->nullOnInvalid(),
-        ])
+        ->args([tagged_iterator('polysource.doctor.check')])
         ->tag('console.command')
     ;
 };
