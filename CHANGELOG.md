@@ -6,9 +6,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
-`docs/maintainers/v0.9.0-architectural-cleanup.md`. PR 1 of 7 lands
-the security batch.
+`docs/maintainers/v0.9.0-architectural-cleanup.md`.
 
 ### Security (PR 1/7)
 
@@ -45,12 +43,20 @@ the security batch.
   Hosts manually constructing the controller can omit the argument
   if they don't expose CSRF-protected routes.
 
+### Earlier PRs landed on main
+
+- **PR 2/7** — `search` composer dep + inter-package constraint
+  normalization across 8 packages.
+- **PR 3/7** — `DoctrineMetadataHelper` + `IdentifiableInterface` +
+  data-driven chip dispatch.
+- **PR 5/7** — LSP nullable return types tightened (8 sites);
+  `Throwable` narrow in bundle boot.
+- **PR 6/7** — `DoctorCommand` → `HealthCheck` registry. Plugins
+  extend the diagnostic surface via `polysource.doctor.check` tag.
+
 ### Validation
 
-- 919 unit tests / 2141 assertions OK (+15 new tests covering
-  SafeReferer, CSRF rejection on all routes, scoped-token replay
-  protection, null-token-manager fail-closed, hardened operator
-  default)
+- 919 unit tests / 2141 assertions OK (+15 new tests for PR 1)
 - 15 integration tests / 55 assertions OK
 - PHPStan max + CS clean
 

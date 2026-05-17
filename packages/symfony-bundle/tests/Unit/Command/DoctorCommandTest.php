@@ -8,6 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Polysource\Bundle\Command\DoctorCommand;
+use Polysource\Bundle\Doctor\Check\BundleCheck;
+use Polysource\Bundle\Doctor\Check\EasyAdminCoLoadCheck;
+use Polysource\Bundle\Doctor\Check\PhpVersionCheck;
+use Polysource\Bundle\Doctor\Check\PluginCheck;
+use Polysource\Bundle\Doctor\HealthCheckInterface;
+use Polysource\Bundle\Doctor\HealthCheckResult;
 use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Core\Plugin\AdminPluginInterface;
 use Symfony\Component\Console\Command\Command;
@@ -24,7 +30,12 @@ final class DoctorCommandTest extends TestCase
         $kernel = $this->kernelWithBundles(['PolysourceBundle', 'PolysourceFilterBundle']);
         $plugins = $this->pluginRegistry(['polysource/core 0.5.7']);
 
-        $tester = new CommandTester(new DoctorCommand($kernel, $plugins, null));
+        $tester = new CommandTester($this->command([
+            new PhpVersionCheck(),
+            new BundleCheck($kernel),
+            new EasyAdminCoLoadCheck($kernel),
+            new PluginCheck($plugins),
+        ]));
         $tester->execute([]);
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
@@ -39,7 +50,12 @@ final class DoctorCommandTest extends TestCase
         $kernel = $this->kernelWithBundles(['FrameworkBundle', 'TwigBundle']);
         $plugins = $this->pluginRegistry([]);
 
-        $tester = new CommandTester(new DoctorCommand($kernel, $plugins, null));
+        $tester = new CommandTester($this->command([
+            new PhpVersionCheck(),
+            new BundleCheck($kernel),
+            new EasyAdminCoLoadCheck($kernel),
+            new PluginCheck($plugins),
+        ]));
         $tester->execute([]);
 
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
@@ -50,15 +66,15 @@ final class DoctorCommandTest extends TestCase
     #[Test]
     public function warnsWhenBridgeIsLoadedButEasyAdminIsAbsent(): void
     {
-        // Reflects the C1 dogfood scenario: multi-kernel app loaded the
-        // bridge bundle globally but EA only on some kernels. v0.5.7's
-        // C1 guard makes this safe, but the doctor still flags it as
-        // a configuration smell so the user can scope the bundle
-        // properly.
         $kernel = $this->kernelWithBundles(['PolysourceEasyAdminFilterBridgeBundle']);
         $plugins = $this->pluginRegistry(['polysource/easyadmin-filter-bridge 0.5.7']);
 
-        $tester = new CommandTester(new DoctorCommand($kernel, $plugins, null));
+        $tester = new CommandTester($this->command([
+            new PhpVersionCheck(),
+            new BundleCheck($kernel),
+            new EasyAdminCoLoadCheck($kernel),
+            new PluginCheck($plugins),
+        ]));
         $tester->execute([]);
 
         // WARN doesn't fail the exit code.
@@ -76,7 +92,12 @@ final class DoctorCommandTest extends TestCase
         ]);
         $plugins = $this->pluginRegistry(['polysource/easyadmin-filter-bridge 0.5.7']);
 
-        $tester = new CommandTester(new DoctorCommand($kernel, $plugins, null));
+        $tester = new CommandTester($this->command([
+            new PhpVersionCheck(),
+            new BundleCheck($kernel),
+            new EasyAdminCoLoadCheck($kernel),
+            new PluginCheck($plugins),
+        ]));
         $tester->execute([]);
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
@@ -84,17 +105,56 @@ final class DoctorCommandTest extends TestCase
     }
 
     #[Test]
-    public function skipsDoctrineCheckWhenDoctrineIsNotInstalled(): void
+    public function pluginCheckSkipsGracefullyWhenRegistryNotWired(): void
     {
         $kernel = $this->kernelWithBundles(['PolysourceBundle']);
-        $plugins = $this->pluginRegistry(['polysource/core 0.5.7']);
 
-        $tester = new CommandTester(new DoctorCommand($kernel, $plugins, null));
+        $tester = new CommandTester($this->command([
+            new PhpVersionCheck(),
+            new BundleCheck($kernel),
+            new EasyAdminCoLoadCheck($kernel),
+            new PluginCheck(null),
+        ]));
         $tester->execute([]);
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
-        // WARN row on the schema check, but exit code is still 0.
-        self::assertStringContainsString('Doctrine not installed', $tester->getDisplay());
+        self::assertStringContainsString('WARN', $tester->getDisplay());
+        self::assertStringContainsString('PluginRegistry not wired', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function commandSupportsHostSuppliedExtraChecks(): void
+    {
+        // Plugins extend the diagnostic surface by tagging their own
+        // HealthCheckInterface services. The command iterates over
+        // whatever is injected — no hardcoded check list.
+        $extra = new class implements HealthCheckInterface {
+            public function getName(): string
+            {
+                return 'Host check';
+            }
+
+            public function run(): HealthCheckResult
+            {
+                return HealthCheckResult::pass('host wired its own check');
+            }
+        };
+
+        $tester = new CommandTester($this->command([new PhpVersionCheck(), $extra]));
+        $tester->execute([]);
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        self::assertStringContainsString('Host check', $display);
+        self::assertStringContainsString('host wired its own check', $display);
+    }
+
+    /**
+     * @param list<HealthCheckInterface> $checks
+     */
+    private function command(array $checks): DoctorCommand
+    {
+        return new DoctorCommand($checks);
     }
 
     /**

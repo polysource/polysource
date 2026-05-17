@@ -43,18 +43,12 @@ final class CancelBulkJobAction implements InlineActionInterface
         return 'Cancel';
     }
 
-    /**
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?string`; we always know
-     */
-    public function getIcon(): ?string
+    public function getIcon(): string
     {
         return 'x-circle';
     }
 
-    /**
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?string`; we always know
-     */
-    public function getPermission(): ?string
+    public function getPermission(): string
     {
         return self::PERMISSION;
     }

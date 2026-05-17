@@ -75,11 +75,10 @@ final class BulkJobDataSource implements DataSourceInterface
 
     /**
      * Doctrine always knows the count cheaply (indexed status / actor
-     * / created_at queries). Return type stays nullable for LSP.
-     *
-     * @phpstan-ignore-next-line return.unusedType — interface contract is `?int`; we always know
+     * / created_at queries). PHP covariant returns let the impl
+     * narrow the interface's `?int` to a non-nullable `int`.
      */
-    public function count(DataQuery $query): ?int
+    public function count(DataQuery $query): int
     {
         return $this->countWith($query);
     }
