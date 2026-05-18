@@ -1,6 +1,6 @@
 {
     "name": "polysource/symfony-bundle",
-    "description": "Polysource Admin — Symfony bundle wiring core contracts into Symfony 7.4 (DI, routing, controllers).",
+    "description": "Polysource Admin \u2014 Symfony bundle wiring core contracts into Symfony 7.4 (DI, routing, controllers).",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -16,9 +16,9 @@
     },
     "require": {
         "php": ">=8.1",
-        "polysource/core": "^0.1 || ^0.5 || ^0.7",
-        "polysource/filter": "^0.1 || ^0.5 || ^0.7",
-        "polysource/twig-theme": "^0.1 || ^0.5 || ^0.7",
+        "polysource/core": "^0.1 || ^0.5 || ^0.7 || ^0.9",
+        "polysource/filter": "^0.1 || ^0.5 || ^0.7 || ^0.9",
+        "polysource/twig-theme": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^6.4 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
         "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",

@@ -1,6 +1,6 @@
 {
     "name": "polysource/adapter-meilisearch",
-    "description": "Polysource — Meilisearch adapter: browse, search, facet over Meilisearch indexes through the admin.",
+    "description": "Polysource \u2014 Meilisearch adapter: browse, search, facet over Meilisearch indexes through the admin.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -17,7 +17,7 @@
     },
     "require": {
         "php": ">=8.1",
-        "polysource/core": "^0.1 || ^0.5 || ^0.7",
+        "polysource/core": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
@@ -26,7 +26,7 @@
         "meilisearch/meilisearch-php": "^1.0",
         "nyholm/psr7": "^1.8",
         "phpunit/phpunit": "^10.5 || ^11.5",
-        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7"
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7 || ^0.9"
     },
     "suggest": {
         "meilisearch/meilisearch-php": "Recommended client for the Meilisearch adapter (^1.0). Hosts can also wrap their own client through MeilisearchIndexInterface."

@@ -1,6 +1,6 @@
 {
     "name": "polysource/search",
-    "description": "Polysource — global cross-resource search with Cmd+K palette UI.",
+    "description": "Polysource \u2014 global cross-resource search with Cmd+K palette UI.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -17,8 +17,8 @@
     },
     "require": {
         "php": ">=8.1",
-        "polysource/core": "^0.1 || ^0.5 || ^0.7",
-        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7",
+        "polysource/core": "^0.1 || ^0.5 || ^0.7 || ^0.9",
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",

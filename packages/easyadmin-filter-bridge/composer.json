@@ -1,6 +1,6 @@
 {
     "name": "polysource/easyadmin-filter-bridge",
-    "description": "Polysource — drop-in package that enriches EasyAdmin v5 filters (ranges, multi-select, custom filter types, session persistence, chips) without forking EasyAdmin.",
+    "description": "Polysource \u2014 drop-in package that enriches EasyAdmin v5 filters (ranges, multi-select, custom filter types, session persistence, chips) without forking EasyAdmin.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -18,7 +18,7 @@
     "require": {
         "php": ">=8.1",
         "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
-        "polysource/filter": "^0.1 || ^0.5 || ^0.7",
+        "polysource/filter": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
@@ -27,7 +27,7 @@
         "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
     "suggest": {
-        "openspout/openspout": "^4.0 — needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`."
+        "openspout/openspout": "^4.0 \u2014 needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`."
     },
     "require-dev": {
         "doctrine/doctrine-bundle": "^2.18",

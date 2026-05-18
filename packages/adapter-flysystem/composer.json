@@ -1,6 +1,6 @@
 {
     "name": "polysource/adapter-flysystem",
-    "description": "Polysource — Flysystem adapter: list, browse, upload, delete files on S3 / local / FTP / Azure / GCS through the admin.",
+    "description": "Polysource \u2014 Flysystem adapter: list, browse, upload, delete files on S3 / local / FTP / Azure / GCS through the admin.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -19,7 +19,7 @@
     "require": {
         "php": ">=8.1",
         "league/flysystem": "^3.0",
-        "polysource/core": "^0.1 || ^0.5 || ^0.7",
+        "polysource/core": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
@@ -29,7 +29,7 @@
         "league/flysystem-async-aws-s3": "^3.29",
         "league/flysystem-memory": "^3.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
-        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7"
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7 || ^0.9"
     },
     "autoload": {
         "psr-4": {

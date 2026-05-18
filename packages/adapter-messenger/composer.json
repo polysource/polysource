@@ -1,6 +1,6 @@
 {
     "name": "polysource/adapter-messenger",
-    "description": "Polysource Admin — Symfony Messenger failed transport data source.",
+    "description": "Polysource Admin \u2014 Symfony Messenger failed transport data source.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -16,8 +16,8 @@
     },
     "require": {
         "php": ">=8.1",
-        "polysource/core": "^0.1 || ^0.5 || ^0.7",
-        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7",
+        "polysource/core": "^0.1 || ^0.5 || ^0.7 || ^0.9",
+        "polysource/symfony-bundle": "^0.1 || ^0.5 || ^0.7 || ^0.9",
         "symfony/config": "^6.4 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
         "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
