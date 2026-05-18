@@ -190,48 +190,15 @@ final class RedisHashDataSource implements WritableDataSourceInterface
 
     private static function matchesCriterion(mixed $value, FilterOperator $operator, mixed $expected): bool
     {
-        return match ($operator) {
-            FilterOperator::Eq => self::looseEquals($value, $expected),
-            FilterOperator::Neq => !self::looseEquals($value, $expected),
-            FilterOperator::In => \is_array($expected) && \in_array(self::asString($value), array_map(self::asString(...), $expected), true),
-            FilterOperator::Like => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
-            // Operators not supported by Redis hash matching (Gt/Lt/Between/etc.)
-            // — don't constrain so the rest of the query still works.
-            default => true,
-        };
-    }
-
-    private static function looseEquals(mixed $value, mixed $expected): bool
-    {
-        if (\is_bool($expected)) {
-            return self::asBool($value) === $expected;
-        }
-
-        return self::asString($value) === self::asString($expected);
-    }
-
-    private static function asString(mixed $value): string
-    {
-        if (\is_string($value)) {
-            return $value;
-        }
-        if (\is_scalar($value) || (\is_object($value) && method_exists($value, '__toString'))) {
-            return (string) $value;
-        }
-
-        return '';
-    }
-
-    private static function asBool(mixed $value): bool
-    {
-        if (\is_bool($value)) {
-            return $value;
-        }
-        if (\is_string($value)) {
-            return \in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
-        }
-
-        return (bool) $value;
+        // Operator dispatch shared with adapter-flysystem and
+        // adapter-messenger — extracted to core in v0.10.0 (audit
+        // task #65). Redis hash inherits the full vocabulary but
+        // semantically only Eq/Neq/In/Like make sense on Redis
+        // hash fields (no native range support); the matcher's
+        // behaviour for Gt/Between etc. simply falls back to
+        // string/numeric comparison, which is correct for our use
+        // cases and harmless otherwise.
+        return \Polysource\Core\Query\InMemoryValueMatcher::matches($value, $operator, $expected);
     }
 
     private static function extractId(DataPayload $payload): string

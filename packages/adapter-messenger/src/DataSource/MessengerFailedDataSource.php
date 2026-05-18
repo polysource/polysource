@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Messenger\DataSource;
 
-use DateTimeImmutable;
-use DateTimeInterface;
 use LogicException;
 use Polysource\Core\DataSource\DataSourceInterface;
 use Polysource\Core\Query\DataPage;
@@ -117,102 +115,12 @@ final class MessengerFailedDataSource implements DataSourceInterface
 
     private static function matchesCriterion(mixed $value, FilterOperator $operator, mixed $expected): bool
     {
-        return match ($operator) {
-            FilterOperator::Eq => self::looseEquals($value, $expected),
-            FilterOperator::Neq => !self::looseEquals($value, $expected),
-            FilterOperator::In => \is_array($expected) && self::isInList($value, $expected),
-            FilterOperator::Nin => \is_array($expected) && !self::isInList($value, $expected),
-            FilterOperator::Like => \is_string($value) && \is_string($expected) && false !== stripos($value, $expected),
-            FilterOperator::Gte => self::compareDateOrScalar($value, $expected) >= 0,
-            FilterOperator::Lte => self::compareDateOrScalar($value, $expected) <= 0,
-            FilterOperator::Gt => self::compareDateOrScalar($value, $expected) > 0,
-            FilterOperator::Lt => self::compareDateOrScalar($value, $expected) < 0,
-            FilterOperator::Between => self::matchesBetween($value, $expected),
-            FilterOperator::IsNull => null === $value,
-            FilterOperator::IsNotNull => null !== $value,
-        };
-    }
-
-    private static function matchesBetween(mixed $value, mixed $expected): bool
-    {
-        if (!\is_array($expected) || 2 !== \count($expected)) {
-            return false;
-        }
-        [$min, $max] = array_values($expected);
-
-        return self::compareDateOrScalar($value, $min) >= 0
-            && self::compareDateOrScalar($value, $max) <= 0;
-    }
-
-    /**
-     * @param array<int|string, mixed> $list
-     */
-    private static function isInList(mixed $value, array $list): bool
-    {
-        $needle = self::asScalar($value);
-        foreach ($list as $candidate) {
-            if (self::asScalar($candidate) === $needle) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static function looseEquals(mixed $value, mixed $expected): bool
-    {
-        return self::asScalar($value) === self::asScalar($expected);
-    }
-
-    /**
-     * Compare two values that may be DateTimeInterface instances or
-     * scalar dates (ISO-8601 strings). Returns -1, 0, 1 like
-     * spaceship — defaults to 0 for incompatible types so a misuse
-     * does not erase rows arbitrarily.
-     */
-    private static function compareDateOrScalar(mixed $a, mixed $b): int
-    {
-        $left = self::toComparable($a);
-        $right = self::toComparable($b);
-        if (null === $left || null === $right) {
-            return 0;
-        }
-
-        return $left <=> $right;
-    }
-
-    private static function toComparable(mixed $value): float|int|string|null
-    {
-        if ($value instanceof DateTimeInterface) {
-            return $value->getTimestamp();
-        }
-        if (\is_string($value)) {
-            try {
-                return (new DateTimeImmutable($value))->getTimestamp();
-            } catch (Throwable) {
-                return $value;
-            }
-        }
-        if (\is_int($value) || \is_float($value)) {
-            return $value;
-        }
-
-        return null;
-    }
-
-    private static function asScalar(mixed $value): string
-    {
-        if (\is_string($value)) {
-            return $value;
-        }
-        if ($value instanceof DateTimeInterface) {
-            return $value->format(DateTimeInterface::ATOM);
-        }
-        if (\is_scalar($value) || (\is_object($value) && method_exists($value, '__toString'))) {
-            return (string) $value;
-        }
-
-        return '';
+        // Operator dispatch shared with adapter-flysystem and
+        // adapter-redis — extracted to core in v0.10.0 (audit task
+        // #65). All 12 FilterOperator variants implemented by the
+        // shared matcher, matching the previous Messenger-specific
+        // behaviour 1:1.
+        return \Polysource\Core\Query\InMemoryValueMatcher::matches($value, $operator, $expected);
     }
 
     public function find(string|int $identifier): ?DataRecord
