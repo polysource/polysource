@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Doctrine\DataSource;
 
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use InvalidArgumentException;
+use Polysource\Adapter\Doctrine\Hydration\EntityRecordHydrator;
+use Polysource\Adapter\Doctrine\Query\CriterionApplier;
 use Polysource\Core\DataSource\WritableDataSourceInterface;
 use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
-use Polysource\Core\Query\FilterCriterion;
-use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\SortDirection;
 use RuntimeException;
-use Throwable;
 
 /**
  * Generic Doctrine ORM data source — read+write over any mapped entity.
@@ -107,7 +105,7 @@ final class DoctrineDataSource implements WritableDataSourceInterface
         /** @var list<object> $entities */
         $entities = $qb->getQuery()->getResult();
 
-        $items = array_map([$this, 'toDataRecord'], $entities);
+        $items = array_map(fn (object $entity): DataRecord => $this->toDataRecord($entity), $entities);
 
         return new DataPage($items, $this->countWith($query));
     }
@@ -185,9 +183,12 @@ final class DoctrineDataSource implements WritableDataSourceInterface
             ->select('r')
             ->from($this->entityClass, 'r');
 
+        // Criterion → WHERE delegation extracted to CriterionApplier
+        // in v0.10.0 so the operator dispatch is unit-testable in
+        // isolation from the data-source coordination.
         $bindIndex = 0;
         foreach ($query->filters as $criterion) {
-            $this->applyCriterion($qb, $criterion, $bindIndex);
+            CriterionApplier::apply($qb, $criterion, $bindIndex, $this->allowedFilters);
             ++$bindIndex;
         }
 
@@ -197,63 +198,6 @@ final class DoctrineDataSource implements WritableDataSourceInterface
         }
 
         return $qb;
-    }
-
-    private function applyCriterion(QueryBuilder $qb, FilterCriterion $criterion, int $bindIndex): void
-    {
-        $field = $this->allowedFilters[$criterion->property] ?? null;
-        if (null === $field) {
-            return;
-        }
-        $alias = 'r.' . $field;
-        $param = ':p' . $bindIndex;
-        $value = $criterion->value;
-
-        match ($criterion->operator) {
-            FilterOperator::Eq => $this->whereScalar($qb, "{$alias} = {$param}", $param, $value),
-            FilterOperator::Neq => $this->whereScalar($qb, "{$alias} != {$param}", $param, $value),
-            FilterOperator::Gt => $this->whereScalar($qb, "{$alias} > {$param}", $param, $value),
-            FilterOperator::Gte => $this->whereScalar($qb, "{$alias} >= {$param}", $param, $value),
-            FilterOperator::Lt => $this->whereScalar($qb, "{$alias} < {$param}", $param, $value),
-            FilterOperator::Lte => $this->whereScalar($qb, "{$alias} <= {$param}", $param, $value),
-            FilterOperator::Like => $this->whereScalar($qb, "{$alias} LIKE {$param}", $param, '%' . (\is_scalar($value) ? (string) $value : '') . '%'),
-            FilterOperator::In => $this->whereIn($qb, "{$alias} IN ({$param})", $param, $value),
-            FilterOperator::Between => $this->whereBetween($qb, $alias, $value, $bindIndex),
-            // Nin / IsNull / IsNotNull not yet mapped — silently skipped
-            // so the rest of the query still works.
-            default => null,
-        };
-    }
-
-    private function whereScalar(QueryBuilder $qb, string $clause, string $param, mixed $value): void
-    {
-        if (null === $value) {
-            return;
-        }
-        $qb->andWhere($clause);
-        $qb->setParameter(ltrim($param, ':'), $this->normaliseDateBound($value));
-    }
-
-    private function whereIn(QueryBuilder $qb, string $clause, string $param, mixed $value): void
-    {
-        if (!\is_array($value) || [] === $value) {
-            return;
-        }
-        $qb->andWhere($clause);
-        $qb->setParameter(ltrim($param, ':'), array_values($value));
-    }
-
-    private function whereBetween(QueryBuilder $qb, string $alias, mixed $value, int $bindIndex): void
-    {
-        if (!\is_array($value) || 2 !== \count($value)) {
-            return;
-        }
-        [$start, $end] = array_values($value);
-        $a = ':p' . $bindIndex . 'a';
-        $b = ':p' . $bindIndex . 'b';
-        $qb->andWhere("{$alias} BETWEEN {$a} AND {$b}");
-        $qb->setParameter(ltrim($a, ':'), $this->normaliseDateBound($start));
-        $qb->setParameter(ltrim($b, ':'), $this->normaliseDateBound($end));
     }
 
     private function applySorts(QueryBuilder $qb, DataQuery $query): void
@@ -276,64 +220,17 @@ final class DoctrineDataSource implements WritableDataSourceInterface
 
     private function applyPayload(object $entity, DataPayload $payload): void
     {
-        foreach ($payload->properties as $property => $value) {
-            $field = $this->allowedFilters[$property] ?? $property;
-            if (!$this->metadata->hasField($field) && !$this->metadata->hasAssociation($field)) {
-                continue;
-            }
-            try {
-                $this->metadata->setFieldValue($entity, $field, $value);
-            } catch (Throwable) {
-                // Read-only field, computed property — skip rather
-                // than crash the whole write.
-            }
-        }
+        EntityRecordHydrator::applyPayload($this->metadata, $entity, $payload, $this->allowedFilters);
     }
 
     private function instantiate(): object
     {
-        $reflection = $this->metadata->getReflectionClass();
-
-        // Doctrine entities should always be newInstanceWithoutConstructor-safe;
-        // host can override by subclassing if their entity needs constructor args.
-        return $reflection->newInstanceWithoutConstructor();
+        return EntityRecordHydrator::instantiate($this->metadata);
     }
 
     private function toDataRecord(object $entity): DataRecord
     {
-        $idField = $this->metadata->getSingleIdentifierFieldName();
-        $rawId = $this->metadata->getFieldValue($entity, $idField);
-        $properties = [];
-
-        foreach ($this->metadata->getFieldNames() as $field) {
-            $value = $this->metadata->getFieldValue($entity, $field);
-            $properties[$field] = $value instanceof DateTimeImmutable
-                ? $value->format(\DATE_ATOM)
-                : $value;
-        }
-
-        if (\is_int($rawId) || \is_string($rawId)) {
-            $identifier = $rawId;
-        } elseif (\is_scalar($rawId) || (\is_object($rawId) && method_exists($rawId, '__toString'))) {
-            $identifier = (string) $rawId;
-        } else {
-            $identifier = '';
-        }
-
-        return new DataRecord($identifier, $properties, $entity);
-    }
-
-    private function normaliseDateBound(mixed $value): mixed
-    {
-        if (\is_string($value) && 1 === preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
-            try {
-                return new DateTimeImmutable($value);
-            } catch (Throwable) {
-                return $value;
-            }
-        }
-
-        return $value;
+        return EntityRecordHydrator::toRecord($this->metadata, $entity);
     }
 
     /**
