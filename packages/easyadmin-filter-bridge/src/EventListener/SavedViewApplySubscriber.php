@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\EventListener;
 
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
-use Polysource\Filter\SavedView\SavedViewService;
+use Polysource\Filter\SavedView\SavedViewApplyService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -33,7 +32,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 final class SavedViewApplySubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly SavedViewService $service,
+        private readonly SavedViewApplyService $applyService,
         private readonly RequestStack $requestStack,
     ) {
     }
@@ -52,25 +51,19 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
             return;
         }
 
-        $viewId = (string) $request->query->get('view', '');
-        if ($viewId === '') {
-            return;
-        }
-
-        $view = $this->service->load($viewId);
-        if ($view === null) {
-            return;
-        }
-
         $context = $event->getAdminContext();
         $crud = $context?->getCrud();
         if ($crud === null) {
             return;
         }
 
-        $entityFqcn = $crud->getEntityFqcn();
-        if ($view->resourceName !== $entityFqcn) {
-            // Saved view doesn't belong to this resource — drop silently.
+        // Load + resource-check delegated to the shared service. The
+        // resource is keyed by EA's entity FQCN for EA-bridge mode.
+        $view = $this->applyService->resolveView(
+            (string) $request->query->get('view', ''),
+            $crud->getEntityFqcn(),
+        );
+        if (null === $view) {
             return;
         }
 
@@ -88,17 +81,7 @@ final class SavedViewApplySubscriber implements EventSubscriberInterface
         unset($existing['view'], $existing['_t']);
         $merged = array_replace_recursive($existing, $newQuery);
 
-        $url = $request->getPathInfo() . '?' . http_build_query($merged);
-        $response = new RedirectResponse($url);
-        // Defensive: forbid caching of this 302. Browsers (and any
-        // intermediate caches) MUST revalidate. Without this, a stale
-        // cached 200 of `?view=<id>` from a prior session — back when
-        // the listener didn't exist or didn't redirect — can shadow
-        // the live redirect and the user perceives "first click does
-        // nothing" until the cache expires. Pre-v0.1.0 demo bug.
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-        $event->setResponse($response);
+        $event->setResponse($this->applyService->buildRedirect($request->getPathInfo(), $merged));
     }
 
     /**

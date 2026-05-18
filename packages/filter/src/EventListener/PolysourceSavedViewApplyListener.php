@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Polysource\Filter\EventListener;
 
 use Polysource\Filter\Model\FilterCollection;
-use Polysource\Filter\SavedView\SavedViewService;
+use Polysource\Filter\SavedView\SavedViewApplyService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -35,7 +34,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class PolysourceSavedViewApplyListener implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ?SavedViewService $service = null,
+        private readonly ?SavedViewApplyService $applyService = null,
     ) {
     }
 
@@ -59,33 +58,33 @@ final class PolysourceSavedViewApplyListener implements EventSubscriberInterface
 
     public function onKernelRequest(RequestEvent $event): void
     {
-        if (!$event->isMainRequest() || null === $this->service) {
+        if (!$event->isMainRequest() || null === $this->applyService) {
             return;
         }
 
         $request = $event->getRequest();
         $viewId = (string) $request->query->get('view', '');
-        if ('' === $viewId) {
-            return;
-        }
-
         $resourceName = $request->attributes->get('resourceName');
-        if (!\is_string($resourceName) || '' === $resourceName) {
+        if (!\is_string($resourceName)) {
             return;
         }
 
-        $view = $this->service->load($viewId);
-        if (null === $view || $view->resourceName !== $resourceName) {
-            // Either the view has been deleted, or it belongs to a
-            // different resource (stale link / shared URL across
-            // resources). Drop the param silently.
+        // Load + resource-check delegated to the shared service.
+        // Service returns null for empty id, missing view, voter
+        // denial, or resource-name mismatch.
+        $view = $this->applyService->resolveView($viewId, $resourceName);
+        if (null === $view) {
             return;
         }
 
-        $event->setResponse($this->buildRedirect($request, $view->filters));
+        $query = $this->buildQuery($request, $view->filters);
+        $event->setResponse($this->applyService->buildRedirect($request->getPathInfo(), $query));
     }
 
-    private function buildRedirect(Request $request, FilterCollection $collection): RedirectResponse
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function buildQuery(Request $request, FilterCollection $collection): array
     {
         $existing = $request->query->all();
         // Drop `view` (replaced with `filter`), `filter` (about to be rebuilt),
@@ -95,17 +94,7 @@ final class PolysourceSavedViewApplyListener implements EventSubscriberInterface
 
         $existing['filter'] = self::collectionToUrlFilters($collection);
 
-        $url = $request->getPathInfo() . '?' . http_build_query($existing);
-
-        $response = new RedirectResponse($url);
-        // Defensive: forbid caching of this 302 — see the EA-bridge
-        // SavedViewApplySubscriber for the same rationale. Stale 200
-        // of `?view=<id>` from a prior session can shadow the live
-        // redirect and the user perceives "first click does nothing".
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
+        return $existing;
     }
 
     /**

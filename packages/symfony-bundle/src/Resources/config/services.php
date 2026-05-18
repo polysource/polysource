@@ -153,9 +153,12 @@ return static function (ContainerConfigurator $container): void {
     if (class_exists(Polysource\Filter\SavedView\SavedViewService::class)
         && class_exists(Polysource\Filter\EventListener\PolysourceSavedViewApplyListener::class)
     ) {
+        // v0.10.0 extraction: the listener depends on the shared
+        // SavedViewApplyService (load + resource-check + cache-busting
+        // redirect). Filter's DI extension wires the service.
         $services
             ->set(Polysource\Filter\EventListener\PolysourceSavedViewApplyListener::class)
-            ->args([service(Polysource\Filter\SavedView\SavedViewService::class)->nullOnInvalid()])
+            ->args([service(Polysource\Filter\SavedView\SavedViewApplyService::class)->nullOnInvalid()])
             ->tag('kernel.event_subscriber')
         ;
     }
