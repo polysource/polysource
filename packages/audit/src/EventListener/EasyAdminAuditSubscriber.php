@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Polysource\Audit\EventListener;
 
 use DateTimeImmutable;
-use DateTimeInterface;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityDeletedEvent;
@@ -14,10 +13,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityDeletedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
+use Polysource\Audit\Formatter\DiffSummaryFormatter;
 use Polysource\Audit\Logger\AuditLoggerInterface;
 use Polysource\Audit\Model\AuditActorInterface;
 use Polysource\Audit\Model\AuditEntry;
 use Polysource\Audit\Model\AuditOutcome;
+use Polysource\Audit\Serializer\ChangeSetNormalizer;
 use Polysource\Core\Identity\IdentifiableInterface;
 use Stringable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -67,12 +68,13 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
 {
     /**
      * Maximum length of the human-readable diff summary stored in
-     * `AuditEntry::message`. Anything longer is truncated with a
-     * trailing "… [truncated]" — the full structured diff still goes
-     * into `context.changes` / `context.snapshot` (which has no length
-     * cap because it's stored as JSON in a `text` column).
+     * `AuditEntry::message`. Re-exported from the formatter for
+     * backward-compat with hosts/tests that referenced
+     * `EasyAdminAuditSubscriber::MAX_MESSAGE_BYTES` directly.
+     *
+     * @deprecated since v0.10.0 — use `DiffSummaryFormatter::MAX_MESSAGE_BYTES`
      */
-    public const MAX_MESSAGE_BYTES = 1024;
+    public const MAX_MESSAGE_BYTES = DiffSummaryFormatter::MAX_MESSAGE_BYTES;
 
     /**
      * Per-request buffer of captured change sets, keyed by
@@ -123,7 +125,7 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
 
         $this->pending[spl_object_id($entity)] = [
             'action' => 'create',
-            'changes' => self::normaliseChangeSet($changeSet),
+            'changes' => ChangeSetNormalizer::normaliseChangeSet($changeSet),
         ];
     }
 
@@ -139,7 +141,7 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
 
         $this->pending[spl_object_id($entity)] = [
             'action' => 'update',
-            'changes' => self::normaliseChangeSet($changeSet),
+            'changes' => ChangeSetNormalizer::normaliseChangeSet($changeSet),
         ];
     }
 
@@ -207,52 +209,12 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
             actionName: $expectedAction,
             recordIds: self::extractIdentifier($entity),
             outcome: AuditOutcome::Success,
-            message: self::summariseDiff($expectedAction, $changes, $snapshot),
+            message: DiffSummaryFormatter::summarise($expectedAction, $changes, $snapshot),
             durationMs: 0,
             context: $this->buildContext($changes, $snapshot),
         );
 
         $this->logger->log($entry);
-    }
-
-    /**
-     * Human-readable single-line diff summary for the `message` column
-     * — appears in the CSV export, the dropdown, and tail-style queries.
-     * Capped at {@see self::MAX_MESSAGE_BYTES}.
-     *
-     * @param array<string, array{old: mixed, new: mixed}>|null $changes
-     * @param array<string, mixed>|null $snapshot
-     */
-    private static function summariseDiff(string $action, ?array $changes, ?array $snapshot): ?string
-    {
-        if ('delete' === $action && null !== $snapshot && [] !== $snapshot) {
-            $parts = [];
-            foreach ($snapshot as $field => $value) {
-                $parts[] = $field . '=' . self::formatScalar($value);
-            }
-
-            return self::truncate(implode(', ', $parts));
-        }
-
-        if (null === $changes || [] === $changes) {
-            return null;
-        }
-
-        $parts = [];
-        foreach ($changes as $field => $delta) {
-            if ('create' === $action) {
-                $parts[] = $field . '=' . self::formatScalar($delta['new']);
-                continue;
-            }
-            $parts[] = \sprintf(
-                '%s: %s → %s',
-                $field,
-                self::formatScalar($delta['old']),
-                self::formatScalar($delta['new']),
-            );
-        }
-
-        return self::truncate(implode(', ', $parts));
     }
 
     /**
@@ -282,34 +244,11 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Normalise Doctrine's change set to a plain array shape that
-     * survives JSON encoding without leaking entity references.
-     *
-     * @param array<string, array{0: mixed, 1: mixed}> $changeSet
-     *
-     * @return array<string, array{old: mixed, new: mixed}>
-     */
-    private static function normaliseChangeSet(array $changeSet): array
-    {
-        $out = [];
-        foreach ($changeSet as $field => $pair) {
-            if (!\is_array($pair) || !\array_key_exists(0, $pair) || !\array_key_exists(1, $pair)) {
-                continue;
-            }
-            $out[$field] = [
-                'old' => self::serialiseValue($pair[0]),
-                'new' => self::serialiseValue($pair[1]),
-            ];
-        }
-
-        return $out;
-    }
-
-    /**
-     * Reflection-based snapshot of mapped scalar properties — used at
-     * delete time when Doctrine has no change set to offer. Skips
-     * relations (objects) at top level; consumers wanting deep-dump
-     * snapshots subclass and override.
+     * Reflection-based snapshot of mapped scalar properties via
+     * Doctrine metadata. Used at delete time when Doctrine has no
+     * change set to offer. Delegates the field-list + value-serialise
+     * pipeline to {@see ChangeSetNormalizer::snapshotMetadata()};
+     * this method only supplies the Doctrine-specific getter closure.
      *
      * @return array<string, mixed>
      */
@@ -321,77 +260,15 @@ final class EasyAdminAuditSubscriber implements EventSubscriberInterface
             return [];
         }
 
-        $snapshot = [];
-        foreach ($metadata->getFieldNames() as $field) {
-            try {
-                $value = $metadata->getFieldValue($entity, $field);
-            } catch (Throwable) {
-                continue;
-            }
-            $snapshot[$field] = self::serialiseValue($value);
-        }
-
-        return $snapshot;
-    }
-
-    /**
-     * Coerce arbitrary Doctrine column values to JSON-friendly scalars.
-     */
-    private static function serialiseValue(mixed $value): mixed
-    {
-        if (null === $value || \is_scalar($value)) {
-            return $value;
-        }
-
-        if ($value instanceof DateTimeInterface) {
-            return $value->format(DateTimeInterface::ATOM);
-        }
-
-        if ($value instanceof Stringable) {
-            return (string) $value;
-        }
-
-        if (\is_array($value)) {
-            return array_map(self::serialiseValue(...), $value);
-        }
-
-        // Entity reference / object without __toString — record the
-        // class for forensic context, drop the body.
-        if (\is_object($value)) {
-            return '[object ' . $value::class . ']';
-        }
-
-        return null;
-    }
-
-    private static function formatScalar(mixed $value): string
-    {
-        if (null === $value) {
-            return 'null';
-        }
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (\is_string($value)) {
-            return "'" . $value . "'";
-        }
-        if (\is_scalar($value)) {
-            return (string) $value;
-        }
-        if (\is_array($value)) {
-            return 'array(' . \count($value) . ')';
-        }
-
-        return '?';
-    }
-
-    private static function truncate(string $message): string
-    {
-        if (\strlen($message) <= self::MAX_MESSAGE_BYTES) {
-            return $message;
-        }
-
-        return substr($message, 0, self::MAX_MESSAGE_BYTES) . '… [truncated]';
+        // Doctrine's `getFieldNames()` returns array<int, string> with
+        // sequential int keys, but PHPStan can't infer list-ness from
+        // the ORM stub. `array_values()` is a no-op at runtime when
+        // the input is already list-shaped — it's here to satisfy the
+        // signature.
+        return ChangeSetNormalizer::snapshotMetadata(
+            array_values($metadata->getFieldNames()),
+            static fn (string $field): mixed => $metadata->getFieldValue($entity, $field),
+        );
     }
 
     /**
