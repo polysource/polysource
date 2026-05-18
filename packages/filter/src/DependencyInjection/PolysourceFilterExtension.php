@@ -93,7 +93,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         //
         //    Gated on DoctrineBundle availability — saved views are
         //    optional, hosts without Doctrine never reach this code.
-        if (\array_key_exists('DoctrineBundle', $bundles)) {
+        if (FeatureGate::hasDoctrineBundle($bundles)) {
             $container->prependExtensionConfig('doctrine', [
                 'orm' => [
                     'mappings' => [
@@ -207,7 +207,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         $bundles = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
-        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+        if (FeatureGate::hasTwigBundle($bundles)) {
             $container
                 ->register(FilterTagsExtension::class)
                 ->setAutowired(true)
@@ -215,27 +215,15 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
             ;
         }
 
-        // SavedView wiring (cf. ADR-019).
-        //
-        // The feature requires BOTH:
-        //   - DoctrineBundle (storage backend — DoctrineSavedViewStorage
-        //     needs an EntityManager service; class_exists alone is
-        //     insufficient because the test deps load the Doctrine
-        //     classes without the bundle being registered).
-        //   - SecurityBundle (SavedViewService autowires
-        //     AuthorizationCheckerInterface for owner-scoped voter checks).
-        //
-        // Hosts missing either gracefully get no SavedView services —
-        // the Twig function returns an empty string, the controller
-        // route is absent, and host code that opts out cleanly.
+        // SavedView wiring (cf. ADR-019). Requires DoctrineBundle
+        // (storage) + SecurityBundle (voter). Hosts missing either
+        // get no SavedView services — Twig function returns empty
+        // markup, controller route absent.
         $hasStorage = false;
-        $hasSecurity = \is_array($bundles) && \array_key_exists('SecurityBundle', $bundles);
-        $hasDoctrineBundle = \is_array($bundles) && \array_key_exists('DoctrineBundle', $bundles);
 
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
-            && $hasSecurity
+            && FeatureGate::savedViewsAvailable($bundles)
         ) {
             $container
                 ->register(\Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class)
@@ -293,7 +281,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // that call it unconditionally still parse on bridge-alone
         // installs, which is the v0.1.4 architectural fix for the
         // v0.1.1 install-time crash.
-        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+        if (FeatureGate::hasTwigBundle($bundles)) {
             $extensionDef = $container
                 ->register(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
                 ->addTag('twig.extension')
@@ -320,8 +308,8 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // to resolve the current user.
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
-            && $hasSecurity
+            && FeatureGate::hasDoctrineBundle($bundles)
+            && FeatureGate::hasSecurityBundle($bundles)
         ) {
             $container
                 ->register(\Polysource\Filter\ColumnPreference\Storage\DoctrineColumnPreferenceStorage::class)
@@ -342,8 +330,8 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // Same gating as ColumnPreference: needs Doctrine + Security.
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
-            && $hasSecurity
+            && FeatureGate::hasDoctrineBundle($bundles)
+            && FeatureGate::hasSecurityBundle($bundles)
         ) {
             $container
                 ->register(\Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class)
@@ -372,8 +360,8 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // RecentRecords wiring (v0.5.0).
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
-            && $hasSecurity
+            && FeatureGate::hasDoctrineBundle($bundles)
+            && FeatureGate::hasSecurityBundle($bundles)
         ) {
             $container
                 ->register(\Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class)
@@ -394,7 +382,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // Security dependency: tokens are user-agnostic by design.
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
+            && FeatureGate::hasDoctrineBundle($bundles)
         ) {
             $container
                 ->register(\Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class)
@@ -427,15 +415,15 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         // templates parse on bridge-alone installs; the service is
         // null when storage isn't wired, in which case the functions
         // return safe defaults (false / []).
-        if (\is_array($bundles) && \array_key_exists('TwigBundle', $bundles)) {
+        if (FeatureGate::hasTwigBundle($bundles)) {
             $extensionDef = $container
                 ->register(\Polysource\Filter\ColumnPreference\Twig\ColumnPreferenceExtension::class)
                 ->addTag('twig.extension')
             ;
             if (
                 interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-                && $hasDoctrineBundle
-                && $hasSecurity
+                && FeatureGate::hasDoctrineBundle($bundles)
+                && FeatureGate::hasSecurityBundle($bundles)
             ) {
                 $extensionDef->setAutowired(true);
             } else {
