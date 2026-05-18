@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Polysource\Adapter\Messenger\DataSource;
 
-use DateTimeImmutable;
-use DateTimeInterface;
 use LogicException;
 use Polysource\Core\DataSource\DataSourceInterface;
 use Polysource\Core\Query\DataPage;

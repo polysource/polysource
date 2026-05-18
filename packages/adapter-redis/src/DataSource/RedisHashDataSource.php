@@ -201,7 +201,6 @@ final class RedisHashDataSource implements WritableDataSourceInterface
         return \Polysource\Core\Query\InMemoryValueMatcher::matches($value, $operator, $expected);
     }
 
-
     private static function extractId(DataPayload $payload): string
     {
         $id = $payload->get('id');
