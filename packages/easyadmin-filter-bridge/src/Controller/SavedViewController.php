@@ -69,7 +69,7 @@ final class SavedViewController
 
     public function __construct(
         private readonly SavedViewService $service,
-        private readonly Security $security,
+        private readonly ?Security $security = null,
         private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
     ) {
@@ -80,8 +80,11 @@ final class SavedViewController
     {
         $this->assertCsrf($request, self::CSRF_CREATE);
 
-        $user = $this->security->getUser();
+        $user = $this->security?->getUser();
         if ($user === null) {
+            // No SecurityBundle wired OR anonymous request. Both
+            // resolve to 403 — saved views require an authenticated
+            // user to own the record.
             throw new AccessDeniedHttpException();
         }
 
