@@ -60,7 +60,10 @@ final class CriteriaToEaQueryTest extends TestCase
             authChecker: $authChecker,
             tokenStorage: new TokenStorage(),
         );
-        $this->subscriber = new SavedViewApplySubscriber($service, new RequestStack());
+        $this->subscriber = new SavedViewApplySubscriber(
+            new \Polysource\Filter\SavedView\SavedViewApplyService($service),
+            new RequestStack(),
+        );
 
         $this->criteriaToEaQuery = new ReflectionMethod($this->subscriber, 'criteriaToEaQuery');
     }

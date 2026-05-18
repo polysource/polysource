@@ -21,6 +21,7 @@ use Polysource\Filter\Model\FilterCollection;
 use Polysource\Filter\Model\FilterCriterion;
 use Polysource\Filter\SavedView\Model\SavedView;
 use Polysource\Filter\SavedView\Model\SavedViewScope;
+use Polysource\Filter\SavedView\SavedViewApplyService;
 use Polysource\Filter\SavedView\SavedViewService;
 use Polysource\Filter\SavedView\Storage\InMemorySavedViewStorage;
 use ReflectionClass;
@@ -76,7 +77,10 @@ final class SavedViewApplySubscriberTest extends TestCase
             tokenStorage: $tokenStorage,
         );
         $this->requestStack = new RequestStack();
-        $this->subscriber = new SavedViewApplySubscriber($this->service, $this->requestStack);
+        $this->subscriber = new SavedViewApplySubscriber(
+            new SavedViewApplyService($this->service),
+            $this->requestStack,
+        );
     }
 
     #[Test]

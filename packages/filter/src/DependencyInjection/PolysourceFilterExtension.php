@@ -255,6 +255,17 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
                 ->setPublic(true)
             ;
 
+            // SavedViewApplyService — shared core for the two listeners
+            // (`SavedViewApplySubscriber` in EA bridge, `PolysourceSavedViewApplyListener`
+            // in the standalone admin) that translate `?view=<id>` into
+            // a filtered URL redirect. Extracted in v0.10.0 per audit
+            // task #66 (MEDIUM DRY).
+            $container
+                ->register(\Polysource\Filter\SavedView\SavedViewApplyService::class)
+                ->setAutowired(true)
+                ->setPublic(true)
+            ;
+
             $container
                 ->register(\Polysource\Filter\SavedView\Security\SavedViewVoter::class)
                 ->setAutowired(true)
