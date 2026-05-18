@@ -388,12 +388,38 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // the box — host can override by re-declaring the routes at
         // higher priority.
         if (class_exists(\Polysource\Filter\SavedView\SavedViewService::class)) {
-            $container
+            // SavedViewController constructor type-hints
+            // `Symfony\Bundle\SecurityBundle\Security`. The class
+            // ships in `symfony/security-bundle` which is a `suggest`
+            // dep (not required) — hosts may install the bridge on
+            // a kernel without SecurityBundle (Sf 5.4 bridge-alone
+            // smoke path). When SecurityBundle is absent we still
+            // register the controller — but with autowiring OFF
+            // because Symfony's autowire would resolve Security
+            // type-hint via reflection and fail on `class not
+            // found`. The constructor signature uses `?Security`
+            // since v0.9.0, so the controller is happy with a null
+            // arg; the create()/delete()/toggleDefault() handlers
+            // gate on `$this->security?->getUser()`. v0.9.0 fix.
+            $hasSecurityBundle = class_exists(\Symfony\Bundle\SecurityBundle\Security::class);
+            $controllerDef = $container
                 ->register(SavedViewController::class)
-                ->setAutowired(true)
                 ->setPublic(true)
                 ->addTag('controller.service_arguments')
             ;
+            if ($hasSecurityBundle) {
+                $controllerDef->setAutowired(true);
+            } else {
+                // Manual wiring: SavedViewService is the only required
+                // arg in the constructor's positional order;
+                // ?Security, ?CsrfTokenManagerInterface, and
+                // ?SavedViewTeamResolverInterface all default to null
+                // and the controller fails closed when they're
+                // unavailable at request time.
+                $controllerDef->setArguments([
+                    new \Symfony\Component\DependencyInjection\Reference(\Polysource\Filter\SavedView\SavedViewService::class),
+                ]);
+            }
 
             $container
                 ->register(SavedViewApplySubscriber::class)
