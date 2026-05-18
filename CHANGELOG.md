@@ -4,10 +4,34 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] — 2026-05-18
 
-Targeted release: **v0.9.0 — architectural cleanup**. Tracked in
-`docs/maintainers/v0.9.0-architectural-cleanup.md`.
+**Architectural cleanup release** — full audit + 8 PRs landing
+every CRITICAL/HIGH finding and the contained MEDIUM ones. Tracked
+in `docs/maintainers/v0.9.0-architectural-cleanup.md` (17 of 22
+audit items resolved; the 5 LARGE refactors — OperatorTranslator
+across 6 adapters, DI extension split, audit subscriber decomp,
+DoctrineDataSource decomp, Twig extension base class — are deferred
+to v0.10 with documented rationale).
+
+### Highlights
+
+- **Security**: CSRF on all saved-view POST routes (3 scoped tokens),
+  open-redirect closed (`SafeReferer`), XSS hardening on
+  `RowDensityExtension`, `polysource_csrf_token` Twig helper for
+  CSRF-less kernels, hardened operator passthrough.
+- **Architecture**: `OperatorMap` + `FilterArrayExtractor` +
+  `FilterUrlBuilder` + `FilterUrlParser` (single source of truth for
+  the filter-URL vocabulary — kills the v0.8.1 regression class),
+  `DoctrineMetadataHelper` (extracts the Doctrine 2.x/3.x cast
+  bandaid), `IdentifiableInterface` (opt-in audit identity),
+  `HealthCheckInterface` + registry (`DoctorCommand` is now a thin
+  iterator over tagged checks — plugins extend the surface via
+  `polysource.doctor.check` tag).
+- **Polish**: LSP nullable return types tightened on 8 sites (8
+  `phpstan-ignore` removed); two `Throwable` swallows narrowed
+  (bundle boot, workflow resolver); search composer dep declared;
+  inter-package version constraints normalized across 8 packages.
 
 ### Refactor (PR 7/7) — FilterUrlParser extraction + WorkflowResolver narrow
 
