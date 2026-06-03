@@ -15,7 +15,7 @@
         "symfony/dotenv": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/monolog-bundle": "^3.10",
+        "symfony/monolog-bundle": "^4.0",
         "symfony/runtime": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/stimulus-bundle": "^2.27",
