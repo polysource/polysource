@@ -1,35 +1,24 @@
 # Dependabot configuration.
 #
-# Two ecosystems: Composer (per-package + demos) and github-actions
-# (CI pinning). Major-version bumps are filtered out everywhere —
-# they routinely break the multi-version CI matrix and need a human
-# decision against the roadmap. Minor + patch ship automatically;
-# security advisories override the schedule and ship immediately.
+# Two ecosystems: Composer (demos) and github-actions (CI pinning).
+# Major-version bumps are filtered out everywhere — they routinely
+# break the multi-version CI matrix and need a human decision against
+# the roadmap. Minor + patch ship automatically; security advisories
+# override the schedule and ship immediately.
+#
+# The ROOT composer manifest is deliberately NOT monitored. The root
+# workspace commits no lock and uses wide caret unions spanning every
+# supported Symfony/PHP line, so there is never an actionable bump:
+# minors are already covered by the ranges and majors are ignored by
+# policy. Worse, Dependabot resolves with the platform pinned to the
+# advertised PHP floor (8.1), while the latest minors of the modern
+# tooling lines require PHP >= 8.2/8.4 — every run died on that
+# contradiction. Version freshness at root is governed by the CI
+# matrix and deliberate maintenance instead.
 
 version: 2
 
 updates:
-  - package-ecosystem: composer
-    directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    labels: [dependencies, composer]
-    commit-message: { prefix: chore, include: scope }
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      php-runtime:
-        patterns:
-          - "symfony/*"
-          - "doctrine/*"
-          - "phpunit/phpunit"
-          - "phpstan/*"
-          - "friendsofphp/php-cs-fixer"
-        update-types: [minor, patch]
-
   - package-ecosystem: composer
     directory: /examples/showcase-demo
     schedule: { interval: monthly }
