@@ -17,7 +17,7 @@ use Throwable;
  * Mercure SSE bridge for {@see BulkJobProgressEvent} (cf. ADR-024 §8).
  *
  * Service registration is gated on
- * `class_exists(\Symfony\Component\Mercure\HubInterface)` so apps
+ * `interface_exists(\Symfony\Component\Mercure\HubInterface)` so apps
  * without Mercure don't pay the runtime cost — they fall back to
  * Stimulus polling against {@see ProgressController}.
  *

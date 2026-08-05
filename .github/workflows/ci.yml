@@ -130,8 +130,21 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          tools: composer:v2
+          tools: composer:v2, flex
           coverage: none
+
+      - name: Constrain Symfony version
+        # PHPStan parses vendor code at the ADR-015 baseline
+        # (phpVersion 8.1). Symfony 8.1+ ships PHP 8.4-only syntax
+        # (property hooks, asymmetric visibility) that the 8.1 parser
+        # rejects, so an unpinned install breaks analysis the day a
+        # new Symfony minor lands. Pin the vendor to the same LTS the
+        # test matrix validates.
+        run: |
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-interaction symfony/flex
+          composer config --no-plugins allow-plugins.symfony/flex true
+          composer config extra.symfony.require "7.4.*"
 
       - name: Patch branch-alias for non-main PR branches
         # Composer's path repos derive the package version from git
@@ -326,7 +339,17 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          tools: composer:v2
+          tools: composer:v2, flex
+
+      - name: Constrain Symfony version
+        # Unpinned installs drifted to Symfony 8.1, which is outside
+        # the validated matrix and turns the known handler leak into
+        # hard test errors. Pin to the LTS the matrix validates.
+        run: |
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-interaction symfony/flex
+          composer config --no-plugins allow-plugins.symfony/flex true
+          composer config extra.symfony.require "7.4.*"
 
       - name: Install dependencies
         uses: ramsey/composer-install@v3

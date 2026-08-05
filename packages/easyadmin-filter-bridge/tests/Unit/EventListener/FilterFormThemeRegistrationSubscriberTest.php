@@ -98,6 +98,8 @@ final class FilterFormThemeRegistrationSubscriberTest extends TestCase
     }
 
     /**
+     * @param CrudContext<object> $crudContext
+     *
      * @return AdminContext<object>
      */
     private function makeAdminContext(CrudContext $crudContext): AdminContext
