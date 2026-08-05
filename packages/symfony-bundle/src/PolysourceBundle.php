@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * Implements {@see AdminPluginInterface} per ADR-018 — every Polysource
  * package that ships as a Symfony bundle is itself a plugin.
  */
-#[AsPlugin(name: 'polysource/symfony-bundle', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/symfony-bundle')]
 final class PolysourceBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

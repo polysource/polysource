@@ -26,7 +26,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * Implements {@see AdminPluginInterface} per ADR-018 — discoverable
  * via `polysource:plugins:list`.
  */
-#[AsPlugin(name: 'polysource/filter', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/filter')]
 final class PolysourceFilterBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

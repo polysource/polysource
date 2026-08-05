@@ -31,7 +31,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  *
  * Implements {@see AdminPluginInterface} per ADR-018.
  */
-#[AsPlugin(name: 'polysource/adapter-redis', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/adapter-redis')]
 final class PolysourceAdapterRedisBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

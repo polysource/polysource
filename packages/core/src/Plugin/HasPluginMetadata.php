@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Core\Plugin;
 
+use Composer\InstalledVersions;
 use Polysource\Core\Plugin\Attribute\AsPlugin;
 use ReflectionClass;
 use RuntimeException;
@@ -11,13 +12,15 @@ use RuntimeException;
 /**
  * Default implementation of {@see AdminPluginInterface} that reads
  * `name` + `version` from the {@see AsPlugin} attribute on the
- * consumer class.
+ * consumer class. When the attribute carries no explicit version,
+ * the installed package version is resolved from Composer's
+ * `InstalledVersions` using the plugin name.
  *
  * Plugin authors include the trait on their Bundle class so they
  * don't have to write `getName()` / `getVersion()` / `boot()` by hand:
  *
  * ```php
- * #[AsPlugin(name: 'polysource/adapter-messenger', version: '0.1.0')]
+ * #[AsPlugin(name: 'polysource/adapter-messenger')]
  * final class PolysourceAdapterMessengerBundle extends Bundle
  *     implements AdminPluginInterface
  * {
@@ -40,7 +43,16 @@ trait HasPluginMetadata
 
     public function getPluginVersion(): string
     {
-        return $this->resolvePluginAttribute()->version;
+        $attribute = $this->resolvePluginAttribute();
+        if (null !== $attribute->version) {
+            return $attribute->version;
+        }
+
+        if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled($attribute->name)) {
+            return InstalledVersions::getPrettyVersion($attribute->name) ?? 'unknown';
+        }
+
+        return 'unknown';
     }
 
     private function resolvePluginAttribute(): AsPlugin

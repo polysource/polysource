@@ -56,9 +56,9 @@ final class PluginRegistrySmokeTest extends KernelTestCase
         \assert($registry instanceof PluginRegistry);
 
         // The TestKernel registers PolysourceBundle which carries
-        // #[AsPlugin(name: 'polysource/symfony-bundle', version: '0.1.0-alpha.1')].
-        // The compiler pass should auto-tag it; the registry should
-        // list it.
+        // #[AsPlugin(name: 'polysource/symfony-bundle')] — the version
+        // is derived from Composer metadata. The compiler pass should
+        // auto-tag it; the registry should list it.
         self::assertTrue(
             $registry->has('polysource/symfony-bundle'),
             'PolysourceBundle should appear in the registry by its #[AsPlugin] name.',
@@ -67,7 +67,10 @@ final class PluginRegistrySmokeTest extends KernelTestCase
         $plugin = $registry->get('polysource/symfony-bundle');
         self::assertInstanceOf(PolysourceBundle::class, $plugin);
         self::assertSame('polysource/symfony-bundle', $plugin->getPluginName());
-        self::assertSame('0.1.0-alpha.1', $plugin->getPluginVersion());
+        self::assertSame(
+            \Composer\InstalledVersions::getPrettyVersion('polysource/symfony-bundle'),
+            $plugin->getPluginVersion(),
+        );
     }
 
     #[Test]
@@ -83,6 +86,9 @@ final class PluginRegistrySmokeTest extends KernelTestCase
         $tester->assertCommandIsSuccessful();
         $output = $tester->getDisplay();
         self::assertStringContainsString('polysource/symfony-bundle', $output);
-        self::assertStringContainsString('0.1.0-alpha.1', $output);
+        self::assertStringContainsString(
+            (string) \Composer\InstalledVersions::getPrettyVersion('polysource/symfony-bundle'),
+            $output,
+        );
     }
 }

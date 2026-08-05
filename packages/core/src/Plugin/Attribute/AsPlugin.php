@@ -19,12 +19,18 @@ use InvalidArgumentException;
  * Usage:
  *
  * ```php
- * #[AsPlugin(name: 'polysource/adapter-messenger', version: '0.1.0')]
+ * #[AsPlugin(name: 'polysource/adapter-messenger')]
  * final class PolysourceAdapterMessengerBundle extends Bundle
  * {
  *     use HasPluginMetadata;
  * }
  * ```
+ *
+ * `version` is optional: when omitted, {@see HasPluginMetadata}
+ * resolves the installed package version from Composer's
+ * `InstalledVersions` using `name` — hardcoded versions go stale on
+ * every release, so only pass one when the plugin name is not a
+ * Composer package name.
  *
  * Per ADR-018 §3, the attribute is part of the public API and
  * follows semver from v1.0.0 — adding required parameters would be a
@@ -37,14 +43,14 @@ final class AsPlugin
 {
     public function __construct(
         public readonly string $name,
-        public readonly string $version,
+        public readonly ?string $version = null,
     ) {
         if ('' === $name) {
             throw new InvalidArgumentException('AsPlugin name cannot be empty.');
         }
 
         if ('' === $version) {
-            throw new InvalidArgumentException('AsPlugin version cannot be empty.');
+            throw new InvalidArgumentException('AsPlugin version cannot be empty — omit it to derive the version from Composer metadata.');
         }
     }
 }

@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * Implements {@see AdminPluginInterface} per ADR-018 — surfaces in
  * `polysource:plugins:list`.
  */
-#[AsPlugin(name: 'polysource/workflow-bridge', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/workflow-bridge')]
 final class PolysourceWorkflowBridgeBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;
