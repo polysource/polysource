@@ -1,0 +1,8 @@
+# Paths stripped from the Composer dist of the split repository.
+# The monorepo root .gitattributes does not survive the split
+# (cf. docs/maintainers/release-and-split.md), so every package
+# carries its own copy.
+/.gitattributes export-ignore
+/tests          export-ignore
+/assets/controllers/__tests__ export-ignore
+/assets/vitest.config.js export-ignore
