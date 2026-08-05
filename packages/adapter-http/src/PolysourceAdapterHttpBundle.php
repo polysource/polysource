@@ -11,7 +11,7 @@ use Polysource\Core\Plugin\HasPluginMetadata;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-#[AsPlugin(name: 'polysource/adapter-http', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/adapter-http')]
 final class PolysourceAdapterHttpBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

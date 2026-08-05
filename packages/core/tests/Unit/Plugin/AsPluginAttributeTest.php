@@ -37,7 +37,7 @@ final class AsPluginAttributeTest extends TestCase
     public function rejectsEmptyVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('AsPlugin version cannot be empty.');
+        $this->expectExceptionMessage('AsPlugin version cannot be empty — omit it to derive the version from Composer metadata.');
 
         new AsPlugin(name: 'polysource/example', version: '');
     }

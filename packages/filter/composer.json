@@ -35,6 +35,9 @@
         "symfony/phpunit-bridge": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
     },
+    "suggest": {
+        "doctrine/orm": "Enables the Doctrine-backed storages (saved views, column preferences, bulk-action history, filter URL tokens). Gated on the ORM being installed; session/in-memory storages are used when absent."
+    },
     "autoload": {
         "psr-4": {
             "Polysource\\Filter\\": "src/"

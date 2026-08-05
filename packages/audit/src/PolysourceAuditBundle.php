@@ -26,7 +26,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * surfaces in `polysource:plugins:list` alongside core / filter /
  * symfony-bundle / adapter-messenger.
  */
-#[AsPlugin(name: 'polysource/audit', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/audit')]
 final class PolysourceAuditBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

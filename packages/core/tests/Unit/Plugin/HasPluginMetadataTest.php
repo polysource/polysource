@@ -26,6 +26,30 @@ final class HasPluginMetadataTest extends TestCase
     }
 
     #[Test]
+    public function derivesVersionFromComposerMetadataWhenOmitted(): void
+    {
+        // polysource/core is always installed in the test workspace,
+        // so the trait must resolve its version from Composer's
+        // InstalledVersions instead of returning the 'unknown'
+        // fallback reserved for non-package plugin names.
+        $plugin = new DerivedVersionPluginFixture();
+
+        self::assertSame('polysource/core', $plugin->getPluginName());
+        self::assertSame(
+            \Composer\InstalledVersions::getPrettyVersion('polysource/core'),
+            $plugin->getPluginVersion(),
+        );
+    }
+
+    #[Test]
+    public function fallsBackToUnknownForNonPackagePluginNames(): void
+    {
+        $plugin = new UnknownVersionPluginFixture();
+
+        self::assertSame('unknown', $plugin->getPluginVersion());
+    }
+
+    #[Test]
     public function throwsWhenAttributeMissing(): void
     {
         $plugin = new MissingAttributePluginFixture();
@@ -67,6 +91,24 @@ final class SimplePluginFixture implements AdminPluginInterface
  * @internal
  */
 final class MissingAttributePluginFixture implements AdminPluginInterface
+{
+    use HasPluginMetadata;
+}
+
+/**
+ * @internal
+ */
+#[AsPlugin(name: 'polysource/core')]
+final class DerivedVersionPluginFixture implements AdminPluginInterface
+{
+    use HasPluginMetadata;
+}
+
+/**
+ * @internal
+ */
+#[AsPlugin(name: 'polysource/not-a-real-package')]
+final class UnknownVersionPluginFixture implements AdminPluginInterface
 {
     use HasPluginMetadata;
 }

@@ -33,7 +33,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * Implements {@see AdminPluginInterface} per ADR-018 — the bundle
  * surfaces in `polysource:plugins:list`.
  */
-#[AsPlugin(name: 'polysource/bulk-async', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/bulk-async')]
 final class PolysourceBulkAsyncBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

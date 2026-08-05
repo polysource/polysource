@@ -17,7 +17,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * Implements {@see AdminPluginInterface} per ADR-018 — discoverable via
  * `polysource:plugins:list`.
  */
-#[AsPlugin(name: 'polysource/adapter-messenger', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/adapter-messenger')]
 final class PolysourceMessengerBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

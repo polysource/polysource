@@ -28,7 +28,7 @@ use Symfony\Component\Routing\Router;
  * Implements {@see AdminPluginInterface} per ADR-018 — discoverable
  * via `polysource:plugins:list`.
  */
-#[AsPlugin(name: 'polysource/easyadmin-filter-bridge', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/easyadmin-filter-bridge')]
 final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;

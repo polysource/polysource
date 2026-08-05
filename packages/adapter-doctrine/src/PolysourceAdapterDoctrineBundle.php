@@ -31,7 +31,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * messages + Doctrine product catalogue) inside the same admin
  * panel.
  */
-#[AsPlugin(name: 'polysource/adapter-doctrine', version: '0.1.0-alpha.1')]
+#[AsPlugin(name: 'polysource/adapter-doctrine')]
 final class PolysourceAdapterDoctrineBundle extends Bundle implements AdminPluginInterface
 {
     use HasPluginMetadata;
