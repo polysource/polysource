@@ -4,6 +4,66 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] — 2026-08-06
+
+**Maintenance release** — dependency-freeze thaw, distribution
+hygiene, and one latent-bug fix surfaced by the analyzer refresh.
+
+### Fixed
+
+- **bulk-async: the Mercure broadcaster was never registered.** The
+  optional-dependency gate in `services.php` used `class_exists()` on
+  `HubInterface` — an interface, for which `class_exists()` is always
+  false — so `MercureBulkJobBroadcaster` was silently dropped even
+  with `symfony/mercure` installed and consumers always fell back to
+  Stimulus polling. Fixed with `interface_exists()`, plus the
+  registration regression test that was missing. (Every other
+  optional-dependency gate in the codebase was audited: this was the
+  only faulty site.)
+- **Inter-package constraints union every published lineage.** The
+  constraints read `^0.1 || ^0.5 || ^0.7 || ^0.9` while every lineage
+  0.1–0.9 is on Packagist; the gaps made mixed-lineage installs
+  (e.g. bridge 0.9 alongside filter 0.8) unresolvable. Now
+  `^0.1 → ^0.9` across all 16 packages.
+
+### Changed
+
+- **Every runtime dependency is declared explicitly.** A sweep of
+  use-statements vs `composer.json` across all packages found deps
+  that only resolved transitively: `easyadmin-filter-bridge` never
+  declared `doctrine/orm`, `polysource/core` nor `twig/twig`;
+  `audit` and `bulk-async` promote `polysource/symfony-bundle` from
+  require-dev to require (their wiring references Bundle events and
+  `ResourceRegistry` unconditionally); `psr/log` declared where
+  type-hinted; `core` declares `composer-runtime-api`. Optional
+  integrations gated behind `interface_exists()` are documented as
+  `suggest` entries.
+- **`#[AsPlugin]` versions derive from Composer metadata.** The
+  attribute's `version` parameter is now optional; when omitted,
+  `HasPluginMetadata` resolves the installed package version via
+  `Composer\InstalledVersions`. All 15 bundles drop the hardcoded
+  `0.1.0-alpha.1` (stale by eight minors);
+  `polysource:plugins:list` now reports real versions.
+- **Split-repo dists are lean.** Each package ships its own
+  `.gitattributes` (the monorepo root one does not survive the
+  split), export-ignoring `tests/` (~8k LOC for the bridge) and the
+  JS test tooling. `assets/package.json` stays in the dist — it
+  carries the `symfony.controllers` manifest, per the Symfony UX
+  convention.
+
+### Infrastructure
+
+- CI unfrozen after a three-month freeze: showcase-demo voter gains
+  the `?Vote` parameter (symfony/security-core 7.3+/8.0), the
+  PHPStan and bridge-integration jobs are pinned to the Symfony LTS
+  the matrix validates, and the upstream doctrine/orm 3.6.8
+  SchemaTool regression (doctrine/orm#12547) is excluded via an
+  exact-version conflict that self-heals on the next patch.
+- All 42 open Dependabot alerts cleared: vitest raised to `^3.2.6`
+  (both Stimulus test suites), showcase-demo lock refreshed in one
+  grouped update (78 minor/patch bumps — Twig 3.28, Symfony 7.4.15,
+  EasyAdmin 5.5.0, now exercised end-to-end by the Panther suite).
+
 ## [0.9.0] — 2026-05-18
 
 **Architectural cleanup release** — full audit + 8 PRs landing
