@@ -94,7 +94,6 @@ final class FilterTreeBuilder
                 continue;
             }
 
-            \assert(null !== $tab); // narrows for PHPStan after the two earlier branches
             $tabIndex = $this->findTabIndex($tabs, $tab);
             if (-1 === $tabIndex) {
                 /** @var array{label: string, ungrouped: list<string>, groups: list<array{label: string, properties: list<string>}>} $newTab */
