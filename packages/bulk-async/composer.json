@@ -19,6 +19,8 @@
     "require": {
         "php": ">=8.1",
         "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+        "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+        "psr/log": "^1.0 || ^2.0 || ^3.0",
         "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
         "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
@@ -32,8 +34,11 @@
         "doctrine/dbal": "^3.6 || ^4.0",
         "doctrine/orm": "^2.20 || ^3.0",
         "phpunit/phpunit": "^10.5 || ^11.5",
-        "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
         "symfony/mercure": "^0.6 || ^1.0"
+    },
+    "suggest": {
+        "doctrine/orm": "Enables the Doctrine-backed bulk-job storage, data source and browsable resource (DoctrineBulkJobStorage). Gated on the ORM being installed; without it the host app must register its own BulkJobStorageInterface implementation.",
+        "symfony/mercure": "Enables live bulk-job progress over SSE via MercureBulkJobBroadcaster. Gated on the Mercure component being installed; falls back to Stimulus polling when absent."
     },
     "autoload": {
         "psr-4": {
