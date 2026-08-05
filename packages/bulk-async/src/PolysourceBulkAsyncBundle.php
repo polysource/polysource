@@ -27,7 +27,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  * The DI extension lives in {@see PolysourceBulkAsyncExtension} —
  * Doctrine-dependent services are gated on
  * `interface_exists(EntityManagerInterface)` and the Mercure
- * broadcaster on `class_exists(\Symfony\Component\Mercure\HubInterface)`
+ * broadcaster on `interface_exists(\Symfony\Component\Mercure\HubInterface)`
  * per ADR-024 §4 / §8.
  *
  * Implements {@see AdminPluginInterface} per ADR-018 — the bundle

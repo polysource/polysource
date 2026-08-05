@@ -17,7 +17,7 @@ use Polysource\Filter\SavedView\Storage\Doctrine\SavedViewRecord;
  *
  * Per ADR-019 §4 this ships as the v0.1 default storage when the host
  * has Doctrine installed. The DI extension only registers the service
- * if `class_exists(EntityManagerInterface::class)` is true, so hosts
+ * if `interface_exists(EntityManagerInterface::class)` is true, so hosts
  * without Doctrine never instantiate this class.
  *
  * Hosts MUST run a migration to create the `polysource_saved_views`

@@ -99,7 +99,7 @@ return static function (ContainerConfigurator $container): void {
      * Mercure broadcaster — optional; only registered when the
      * Mercure component is installed (cf. ADR-024 §8).
      * --------------------------------------------------------------- */
-    if (class_exists(HubInterface::class)) {
+    if (interface_exists(HubInterface::class)) {
         $services->set(MercureBulkJobBroadcaster::class)
             ->arg('$hub', service(HubInterface::class))
             ->arg('$logger', service('logger')->nullOnInvalid())
