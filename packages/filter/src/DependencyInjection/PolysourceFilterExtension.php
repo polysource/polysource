@@ -4,36 +4,28 @@ declare(strict_types=1);
 
 namespace Polysource\Filter\DependencyInjection;
 
-use Polysource\Filter\Form\Type\FilterCollectionType;
-use Polysource\Filter\Pipeline\FilterFormatterInterface;
-use Polysource\Filter\Pipeline\FilterMapperInterface;
-use Polysource\Filter\Pipeline\FilterRendererInterface;
-use Polysource\Filter\Pipeline\Registry\FormatterRegistry;
-use Polysource\Filter\Pipeline\Registry\MapperRegistry;
-use Polysource\Filter\Pipeline\Registry\RendererRegistry;
-use Polysource\Filter\Service\FilterService;
-use Polysource\Filter\Twig\Extension\FilterTagsExtension;
-use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
+use Polysource\Filter\DependencyInjection\Loader\BulkActionHistoryLoader;
+use Polysource\Filter\DependencyInjection\Loader\ColumnPreferenceLoader;
+use Polysource\Filter\DependencyInjection\Loader\FilterTagsLoader;
+use Polysource\Filter\DependencyInjection\Loader\FilterUrlTokenLoader;
+use Polysource\Filter\DependencyInjection\Loader\PipelineLoader;
+use Polysource\Filter\DependencyInjection\Loader\RecentRecordsLoader;
+use Polysource\Filter\DependencyInjection\Loader\SavedViewLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
- * DI extension for `polysource/filter`.
+ * DI extension for `polysource/filter` — a table of contents over
+ * per-feature loaders (ADR-0032): the always-on filter pipeline,
+ * then one loader per optional feature (filter tags, saved views,
+ * column preferences, bulk-action history, recent records, filter
+ * URL tokens). Each loader carries its own gate and the rationale
+ * comments for its wiring.
  *
- * Registers:
- * - `FilterService` (RequestStack-backed session persistence).
- * - The 3 pipeline registries (`MapperRegistry`, `FormatterRegistry`,
- *   `RendererRegistry`), each receiving a tagged_iterator of their
- *   respective interface implementations + the list of known filter
- *   names (filled at compile-time by `PipelineCompilerPass`).
- *
- * Auto-config wires the 3 pipeline interfaces — host services
- * implementing them get the right tag automatically without manual
- * tagging in services.yaml.
- *
- * The known-names list is populated by the compiler pass; here the
- * registries are seeded with an empty list and patched at compile.
+ * The pipeline registries' known-names list is populated by
+ * `PipelineCompilerPass`; the loaders seed them with an empty list
+ * patched at compile.
  */
 final class PolysourceFilterExtension extends Extension implements PrependExtensionInterface
 {
@@ -140,296 +132,38 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
 
     public function load(array $configs, ContainerBuilder $container): void
     {
-        // Auto-configure tag for each pipeline phase so host services
-        // implementing the interface are picked up without explicit
-        // tagging in services.yaml / configurator.
-        $container
-            ->registerForAutoconfiguration(FilterMapperInterface::class)
-            ->addTag('polysource.filter.mapper')
-        ;
-        $container
-            ->registerForAutoconfiguration(FilterFormatterInterface::class)
-            ->addTag('polysource.filter.formatter')
-        ;
-        $container
-            ->registerForAutoconfiguration(FilterRendererInterface::class)
-            ->addTag('polysource.filter.renderer')
-        ;
-
-        // FilterService — agnostic of EasyAdmin / any host.
-        $container
-            ->register(FilterService::class)
-            ->setAutowired(true)
-            ->setPublic(true)
-        ;
-
-        // The 3 pipeline registries — second constructor arg (known
-        // names) is patched in the compiler pass.
-        $container
-            ->register(MapperRegistry::class)
-            ->setArguments([new TaggedIteratorArgument('polysource.filter.mapper'), []])
-            ->setPublic(true)
-        ;
-        $container
-            ->register(FormatterRegistry::class)
-            ->setArguments([new TaggedIteratorArgument('polysource.filter.formatter'), []])
-            ->setPublic(true)
-        ;
-        $container
-            ->register(RendererRegistry::class)
-            ->setArguments([new TaggedIteratorArgument('polysource.filter.renderer'), []])
-            ->setPublic(true)
-        ;
-
-        // FilterCollectionType — Symfony Form auto-discovers FormType
-        // services tagged `form.type` via the AbstractType
-        // auto-configuration (which is enabled by default in
-        // FrameworkBundle). The class extends AbstractType so
-        // declaring it autowired is enough; FrameworkBundle's
-        // registerForAutoconfiguration tags it on top.
-        $container
-            ->register(FilterCollectionType::class)
-            ->setAutowired(true)
-            ->setAutoconfigured(true)
-            ->setPublic(true)
-        ;
-
-        // FilterTagsExtension — Twig function `filter_tags()`. Register
-        // it explicitly + tag `twig.extension` because the bundle ships
-        // its Twig extension (host apps can't autowire foreign-bundle
-        // services, and we don't ship a services.xml).
-        //
-        // Guarded on TwigBundle presence so non-Twig hosts (rare, but
-        // possible: a console-only app, a unit test kernel) don't get
-        // an unused service that fails to autowire `Twig\Environment`.
         // The `kernel.bundles` param check uses `hasParameter()` first
         // because some test container builders don't seed it.
         $bundles = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
-        if (FeatureGate::hasTwigBundle($bundles)) {
-            $container
-                ->register(FilterTagsExtension::class)
-                ->setAutowired(true)
-                ->addTag('twig.extension')
-            ;
-        }
 
-        // SavedView wiring (cf. ADR-019). Requires DoctrineBundle
-        // (storage) + SecurityBundle (voter). Hosts missing either
-        // get no SavedView services — Twig function returns empty
-        // markup, controller route absent.
-        $hasStorage = false;
-
-        if (
-            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && FeatureGate::savedViewsAvailable($bundles)
-        ) {
-            $container
-                ->register(\Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class)
-                ->setAutowired(true)
-            ;
-            $container->setAlias(
-                \Polysource\Filter\SavedView\Storage\SavedViewStorageInterface::class,
-                \Polysource\Filter\SavedView\Storage\DoctrineSavedViewStorage::class,
-            );
-            $hasStorage = true;
-        }
-
-        if ($hasStorage) {
-            $container
-                ->register(\Polysource\Filter\SavedView\SavedViewService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-
-            // SavedViewApplyService — shared core for the two listeners
-            // (`SavedViewApplySubscriber` in EA bridge, `PolysourceSavedViewApplyListener`
-            // in the standalone admin) that translate `?view=<id>` into
-            // a filtered URL redirect. Extracted in v0.10.0 per audit
-            // task #66 (MEDIUM DRY).
-            $container
-                ->register(\Polysource\Filter\SavedView\SavedViewApplyService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-
-            $container
-                ->register(\Polysource\Filter\SavedView\Security\SavedViewVoter::class)
-                ->setAutowired(true)
-                ->addTag('security.voter')
-            ;
-
-            // ClearSavedViewListener — consumes `?clear-view=1` to wipe
-            // the session-remembered last-used view + redirect to a
-            // clean URL. Without it the dropdown's "Clear current
-            // view" item only strips the URL query, leaving the
-            // session entry dangling so `defaultFor()` resurrects
-            // the view as `current` on the next render.
-            $container
-                ->register(\Polysource\Filter\SavedView\EventListener\ClearSavedViewListener::class)
-                ->setAutowired(true)
-                ->addTag('kernel.event_subscriber')
-            ;
-        }
-
-        // SavedViewExtension — Twig function `saved_views_dropdown()`.
-        // Registered UNCONDITIONALLY when TwigBundle is loaded, with
-        // the SavedView service stack passed as nullable (cf. the
-        // extension's constructor docblock). When storage isn't
-        // wired the function returns an empty string — templates
-        // that call it unconditionally still parse on bridge-alone
-        // installs, which is the v0.1.4 architectural fix for the
-        // v0.1.1 install-time crash.
-        if (FeatureGate::hasTwigBundle($bundles)) {
-            $extensionDef = $container
-                ->register(\Polysource\Filter\SavedView\Twig\SavedViewExtension::class)
-                ->addTag('twig.extension')
-            ;
-            if ($hasStorage) {
-                // Autowire the full deps (SavedViewService, Twig
-                // Environment, optional Router + TeamResolver).
-                $extensionDef->setAutowired(true);
-            } else {
-                // Construct with all-null deps so the function is
-                // registered but returns empty when called.
-                // setAutowired stays false so missing services
-                // don't fail DI compilation.
-                // v0.9.0 PR 1: 5th arg is the optional CsrfTokenManager;
-                // `polysource_csrf_token()` returns '' when null.
-                $extensionDef->setArguments([null, null, null, null, null]);
+        // One loader per feature (ADR-0032). Each loader owns its
+        // feature's ENTIRE gate in supports() and its wiring — with
+        // the "why" comments — in load(). The list is declared here,
+        // in reading order, on purpose: no tag-based discovery, DI
+        // wiring stays greppable top-to-bottom.
+        foreach ($this->featureLoaders() as $loader) {
+            if ($loader->supports($bundles)) {
+                $loader->load($container, $bundles);
             }
         }
+    }
 
-        // ColumnPreference wiring (v0.3.0, parallel to SavedView).
-        //
-        // Gated on the same DoctrineBundle + SecurityBundle pair: the
-        // service needs an EntityManager to persist + a TokenStorage
-        // to resolve the current user.
-        if (
-            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && FeatureGate::hasDoctrineBundle($bundles)
-            && FeatureGate::hasSecurityBundle($bundles)
-        ) {
-            $container
-                ->register(\Polysource\Filter\ColumnPreference\Storage\DoctrineColumnPreferenceStorage::class)
-                ->setAutowired(true)
-            ;
-            $container->setAlias(
-                \Polysource\Filter\ColumnPreference\Storage\ColumnPreferenceStorageInterface::class,
-                \Polysource\Filter\ColumnPreference\Storage\DoctrineColumnPreferenceStorage::class,
-            );
-            $container
-                ->register(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-        }
-
-        // BulkActionHistory wiring (v0.5.0).
-        // Same gating as ColumnPreference: needs Doctrine + Security.
-        if (
-            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && FeatureGate::hasDoctrineBundle($bundles)
-            && FeatureGate::hasSecurityBundle($bundles)
-        ) {
-            $container
-                ->register(\Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class)
-                ->setAutowired(true)
-            ;
-            $container->setAlias(
-                \Polysource\Filter\BulkActionHistory\Storage\BulkActionHistoryStorageInterface::class,
-                \Polysource\Filter\BulkActionHistory\Storage\DoctrineBulkActionHistoryStorage::class,
-            );
-            $container
-                ->register(\Polysource\Filter\BulkActionHistory\BulkActionHistoryService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-
-            // Periodic purge command (v0.6.1) — opt-in via cron in
-            // non-regulated hosts. Compliance hosts MUST NOT run it
-            // (cf. docblock).
-            $container
-                ->register(\Polysource\Filter\BulkActionHistory\Command\PurgeBulkActionHistoryCommand::class)
-                ->setAutowired(true)
-                ->addTag('console.command')
-            ;
-        }
-
-        // RecentRecords wiring (v0.5.0).
-        if (
-            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && FeatureGate::hasDoctrineBundle($bundles)
-            && FeatureGate::hasSecurityBundle($bundles)
-        ) {
-            $container
-                ->register(\Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class)
-                ->setAutowired(true)
-            ;
-            $container->setAlias(
-                \Polysource\Filter\RecentRecords\Storage\RecentRecordsStorageInterface::class,
-                \Polysource\Filter\RecentRecords\Storage\DoctrineRecentRecordsStorage::class,
-            );
-            $container
-                ->register(\Polysource\Filter\RecentRecords\RecentRecordsService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-        }
-
-        // FilterUrlToken wiring (v0.5.0). Doctrine-only — no
-        // Security dependency: tokens are user-agnostic by design.
-        if (
-            interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && FeatureGate::hasDoctrineBundle($bundles)
-        ) {
-            $container
-                ->register(\Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class)
-                ->setAutowired(true)
-            ;
-            $container->setAlias(
-                \Polysource\Filter\FilterUrlToken\Storage\FilterUrlTokenStorageInterface::class,
-                \Polysource\Filter\FilterUrlToken\Storage\DoctrineFilterUrlTokenStorage::class,
-            );
-            $container
-                ->register(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
-                ->setAutowired(true)
-                ->setPublic(true)
-            ;
-
-            // Periodic purge command (v0.6.1) — hosts wire it to a
-            // nightly cron, otherwise the polysource_filter_url_tokens
-            // table grows unbounded.
-            $container
-                ->register(\Polysource\Filter\FilterUrlToken\Command\PurgeFilterUrlTokensCommand::class)
-                ->setAutowired(true)
-                ->addTag('console.command')
-            ;
-        }
-
-        // ColumnPreferenceExtension — Twig functions
-        // `polysource_column_hidden(...)` and `polysource_hidden_columns(...)`.
-        // Same nullable-service pattern as SavedViewExtension: the
-        // extension is always registered when TwigBundle is loaded so
-        // templates parse on bridge-alone installs; the service is
-        // null when storage isn't wired, in which case the functions
-        // return safe defaults (false / []).
-        if (FeatureGate::hasTwigBundle($bundles)) {
-            $extensionDef = $container
-                ->register(\Polysource\Filter\ColumnPreference\Twig\ColumnPreferenceExtension::class)
-                ->addTag('twig.extension')
-            ;
-            if (
-                interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-                && FeatureGate::hasDoctrineBundle($bundles)
-                && FeatureGate::hasSecurityBundle($bundles)
-            ) {
-                $extensionDef->setAutowired(true);
-            } else {
-                $extensionDef->setArguments([null]);
-            }
-        }
+    /**
+     * @return list<FeatureLoaderInterface>
+     */
+    private function featureLoaders(): array
+    {
+        return [
+            new PipelineLoader(),
+            new FilterTagsLoader(),
+            new SavedViewLoader(),
+            new ColumnPreferenceLoader(),
+            new BulkActionHistoryLoader(),
+            new RecentRecordsLoader(),
+            new FilterUrlTokenLoader(),
+        ];
     }
 
     public function getAlias(): string
