@@ -36,8 +36,9 @@ update: ## Update Composer dependencies
 ##@ Quality
 
 .PHONY: test
-test: ## Run PHPUnit tests across all packages
-	$(PHP_RUN) vendor/bin/phpunit
+test: ## Run PHPUnit tests across all packages (mirrors CI: strict unit+functional, then integration with --do-not-fail-on-risky — Kernel::handle() leaks an exception handler PHPUnit 11 flags as risky)
+	$(PHP_RUN) vendor/bin/phpunit --testsuite=unit,functional
+	$(PHP_RUN) vendor/bin/phpunit --testsuite=integration --do-not-fail-on-risky
 
 .PHONY: test-unit
 test-unit: ## Run only unit tests
