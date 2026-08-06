@@ -88,20 +88,27 @@ routes, open-redirect + XSS hardening, decompositions — tracker in
 v0.9.1 thawed the dependency freeze and cleaned the per-package dist
 (explicit deps, export-ignores, derived plugin versions).
 
+### v0.10 — host-app genericity + audit closure (v0.10.0, 2026-08-06)
+
+Shipped the deferred audit refactors and the host-genericity batch:
+bridge theming via `--polysource-*` CSS variables (bundle stylesheet,
+no inline CSS/JS — CSP-friendly), full EN+FR catalogs (5 → 57 keys),
+operator-translation strategy closed and documented
+([ADR-0031](./docs/adr/0031-operator-translation-strategy.md)),
+`FeatureGate` adoption completed, an open redirect closed in
+`FilterUrlTokenController`, and the README rebuilt as an
+adoption-first landing page with fresh showcase screenshots.
+
 ## Next
 
-### v0.10 — remaining large refactors (in progress)
+### v0.11 — FeatureLoader split (in progress)
 
-The audit items deferred from v0.9 with documented rationale, plus
-host-app genericity work:
+The last open audit item (M2/#67 phase 2):
 
-- **Bridge theming / i18n / CSP** — bundle stylesheet with
-  `--polysource-*` variables, full EN+FR catalogs, no inline
-  CSS/JS (shipped on main, releases with v0.9.2/v0.10)
-- **`OperatorTranslator`** — deduplicate the FilterOperator → query
-  translation across the 6 adapters
-- **`FeatureGate` DI predicates** — finish the migration started in
-  [#71](https://github.com/polysource/polysource/pull/71)
+- **FeatureLoader class split** — decompose the two large DI
+  extensions (`PolysourceFilterExtension`,
+  `PolysourceEasyAdminFilterBridgeExtension`) into per-feature
+  loader classes; convention to be ratified as ADR-0032
 
 ### Pre-1.0 polish (not committed)
 
