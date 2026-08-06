@@ -49,6 +49,15 @@ parameters:
             identifier: offsetAccess.nonOffsetAccessible
             paths:
                 - packages/*/tests/*
+        # EA made CrudContext generic during the 5.x line; the docblock
+        # follows the newer stubs (the pinned CI matrix), while local
+        # platforms resolving EA 5.0.x see it as non-generic. Version-
+        # dependent by nature — reportUnmatchedIgnoredErrors is off, so
+        # this entry is harmless where the error doesn't occur.
+        -
+            identifier: generics.notGeneric
+            paths:
+                - packages/easyadmin-filter-bridge/tests/Unit/EventListener/FilterFormThemeRegistrationSubscriberTest.php
     # Inline strict-rules level (cf. phpstan/phpstan-strict-rules)
     # Provided by phpstan/extension-installer auto-loading
     bootstrapFiles: []
