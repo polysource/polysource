@@ -65,3 +65,15 @@ body.ea a.text-decoration-underline {
     font-weight: 600;
     letter-spacing: 0.02em;
 }
+
+/* EA 5.5 restyles .btn-secondary with a light background but leaves
+ * Bootstrap's own --bs-btn-color (#fff) in place when the full
+ * Bootstrap stylesheet is ALSO loaded — which is the case on the
+ * Polysource standalone pages (their layout links Bootstrap before
+ * EA's app.css). Re-anchor the button text to a dark foreground so
+ * "Filters"-style secondary buttons stay readable. No-op on EA
+ * bundle pages, which no longer load the full Bootstrap. */
+body.ea .btn-secondary {
+    --bs-btn-color: var(--bs-body-color, #212529);
+    --bs-btn-hover-color: var(--bs-body-color, #212529);
+}
