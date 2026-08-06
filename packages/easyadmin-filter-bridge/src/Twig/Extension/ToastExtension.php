@@ -8,6 +8,7 @@ use Stringable;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -49,6 +50,8 @@ use Twig\TwigFunction;
  */
 final class ToastExtension extends AbstractExtension
 {
+    use TranslatorFallbackTrait;
+
     /**
      * z-index reserved for floating notifications — must sit
      * above modals (1050+) and dropdowns (1000+) so bulk-action
@@ -69,8 +72,10 @@ final class ToastExtension extends AbstractExtension
         'notice' => 'alert-info',
     ];
 
-    public function __construct(private readonly ?RequestStack $requestStack = null)
-    {
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
+    ) {
     }
 
     /**
@@ -100,6 +105,11 @@ final class ToastExtension extends AbstractExtension
             return new Markup('', 'UTF-8');
         }
 
+        $textClose = htmlspecialchars(
+            $this->transWithFallback('polysource.toasts.close', 'Close'),
+            \ENT_QUOTES | \ENT_HTML5,
+            'UTF-8',
+        );
         $items = [];
         foreach ($allFlashes as $type => $messages) {
             $variant = self::VARIANT_BY_TYPE[$type] ?? 'alert-info';
@@ -111,7 +121,7 @@ final class ToastExtension extends AbstractExtension
                 $items[] = <<<HTML
                     <div class="alert {$variant} alert-dismissible polysource-toast" role="alert">
                         {$escaped}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{$textClose}"></button>
                     </div>
                     HTML;
             }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -41,8 +42,12 @@ use Twig\TwigFunction;
  */
 final class BulkScopeExtension extends AbstractExtension
 {
-    public function __construct(private readonly ?RequestStack $requestStack = null)
-    {
+    use TranslatorFallbackTrait;
+
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
+    ) {
     }
 
     /**
@@ -64,8 +69,9 @@ final class BulkScopeExtension extends AbstractExtension
         ];
     }
 
-    public function renderScopeToggle(string $label = 'Apply to all matching rows'): Markup
+    public function renderScopeToggle(?string $label = null): Markup
     {
+        $label ??= $this->transWithFallback('polysource.bulk.apply_all', 'Apply to all matching rows');
         $labelEsc = htmlspecialchars($label, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $checked = $this->scopeActive() ? ' checked' : '';
 

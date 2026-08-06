@@ -1,0 +1,387 @@
+/* polysource/easyadmin-filter-bridge — bundle stylesheet.
+ *
+ * Published to `public/bundles/polysourceeasyadminfilterbridge/` by
+ * `assets:install` (run automatically by Symfony Flex on install)
+ * and linked from the bridge's `crud/index.html.twig` override.
+ *
+ * Theming — every colour and key dimension flows through a
+ * `--polysource-*` custom property declared on `:root` below.
+ * Override any of them from your app stylesheet, e.g.:
+ *
+ *     :root {
+ *         --polysource-accent: #0d6efd;
+ *         --polysource-subpanel-width: 640px;
+ *     }
+ *
+ * Defaults resolve to Bootstrap 5.3 CSS variables (the ones
+ * EasyAdmin ships), so the bridge follows the host's light/dark
+ * theme automatically. The hex fallbacks only kick in on stacks
+ * without Bootstrap variables (EA 4 / Bootstrap < 5.3).
+ */
+
+:root {
+    --polysource-accent: var(--bs-primary, #4f46e5);
+    --polysource-accent-contrast: #fff;
+    --polysource-danger: var(--bs-danger, #dc3545);
+    --polysource-border-color: var(--bs-border-color, #dee2e6);
+    --polysource-muted-color: var(--bs-secondary-color, #6c757d);
+    --polysource-emphasis-color: var(--bs-emphasis-color, #212529);
+    --polysource-body-color: var(--bs-body-color, #212529);
+    --polysource-surface-bg: var(--bs-body-bg, #fff);
+    --polysource-surface-muted-bg: var(--bs-tertiary-bg, #f5f5f5);
+    --polysource-radius: 0.375rem;
+    --polysource-subpanel-width: 560px;
+    --polysource-subpanel-width-tablet: 480px;
+}
+
+/* ─── Chips bar ─── */
+.ea-filter-chips-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--polysource-surface-muted-bg);
+    border: 1px solid var(--polysource-border-color);
+    border-radius: var(--polysource-radius);
+}
+.ea-filter-chips-bar__heading {
+    font-size: 0.875rem;
+    color: var(--polysource-muted-color);
+    font-weight: 500;
+    margin-right: 0.25rem;
+}
+.ea-filter-chips-bar__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    flex: 1 1 auto;
+}
+.ea-filter-chips-bar__clear {
+    font-size: 0.8125rem;
+    color: var(--polysource-muted-color);
+    text-decoration: underline;
+    margin-left: auto;
+    white-space: nowrap;
+}
+.ea-filter-chips-bar__clear:hover {
+    color: var(--polysource-danger);
+}
+
+/* Single chip — pill shape with subtle EA-styled border. */
+.ea-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    background: var(--polysource-surface-bg);
+    border: 1px solid var(--polysource-border-color);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+.ea-filter-chip__label {
+    font-weight: 600;
+    color: var(--polysource-emphasis-color);
+}
+.ea-filter-chip__sep {
+    color: var(--polysource-muted-color);
+    margin: 0 0.125rem;
+}
+.ea-filter-chip__value {
+    color: var(--polysource-body-color);
+}
+.ea-filter-chip__operator {
+    color: var(--polysource-muted-color);
+    font-style: italic;
+    margin-right: 0.25rem;
+}
+.ea-filter-chip__arrow {
+    color: var(--polysource-muted-color);
+    margin: 0 0.125rem;
+}
+.ea-filter-chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-left: 0.25rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--polysource-muted-color);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    /* Reset <a> defaults — the X is an anchor so the server-driven
+       fallback works on EA 4 + Sf 5.4 stacks that can't load the
+       Stimulus controller. */
+    text-decoration: none;
+}
+.ea-filter-chip__remove:hover,
+.ea-filter-chip__remove:focus {
+    background: var(--polysource-danger);
+    color: var(--polysource-accent-contrast);
+    outline: none;
+}
+
+/* ─── Modal body padding (EA strips it via .p-0; we add ours
+     back so the form doesn't kiss the modal edges). ─── */
+#modal-filters .modal-body {
+    padding: 1rem 1.25rem !important;
+}
+
+/* ─── EA-style tabs (underline, no boxes) — server-rendered via
+     `<details name="polysource-tab">` exclusive accordion (HTML
+     Living Standard, Chrome 120+ / Safari 17.2+ / Firefox 121+).
+     Older browsers gracefully fall back to "every tab
+     independently expandable".
+
+     The tab strip and the panes live in SEPARATE sibling
+     containers: tabs render as summary-only `<details>` inside
+     `.polysource-filter-tabs-strip`, panes as children of
+     `.polysource-filter-tab-panes`. The i-th tab[open] drives the
+     i-th pane via the `:has()` pairing rules further down. A
+     single `<details>` wrapping both tab and pane is block-level
+     and stacks vertically — not a tab strip (surfaced 2026-05-14
+     dogfooding round 3, friction C4/C4-bis; `display: contents`
+     on `<details>` is not layout-transparent in Safari). ─── */
+.polysource-filter-tabs-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    column-gap: 1.5rem;
+    row-gap: 0;
+    border-bottom: 1px solid var(--polysource-border-color);
+    margin-bottom: 0.5rem;
+}
+.polysource-filter-tab-panes {
+    padding: 1rem 0 0 0.25rem;
+}
+details.polysource-filter-tab {
+    margin: 0;
+    border: 0;
+    background: transparent;
+}
+details.polysource-filter-tab > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin: 0;
+    display: inline-block;
+    color: var(--polysource-muted-color);
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    user-select: none;
+    line-height: 1.5;
+}
+details.polysource-filter-tab > summary::-webkit-details-marker {
+    display: none;
+}
+details.polysource-filter-tab > summary::marker {
+    content: '';
+}
+details.polysource-filter-tab > summary:hover {
+    color: var(--polysource-emphasis-color);
+}
+/* Open state: same font-weight as closed (avoids baseline shift),
+   differentiated by color + underline — matches EA's flat-tab look. */
+details.polysource-filter-tab[open] > summary {
+    color: var(--polysource-accent);
+    border-bottom-color: var(--polysource-accent);
+}
+/* Per-tab applied-filter counter — server-rendered by the
+   filters.html.twig override only when at least one filter in the
+   tab is currently applied. Pill in accent color so the user sees
+   at a glance which tabs hold active filters. */
+details.polysource-filter-tab > summary .polysource-filter-tab__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.125rem;
+    height: 1.125rem;
+    padding: 0 0.375rem;
+    margin-left: 0.5rem;
+    border-radius: 999px;
+    background: var(--polysource-accent);
+    color: var(--polysource-accent-contrast);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+/* ─── Tab-pane pairing — the i-th tab[open] in the strip shows the
+     i-th pane. CSS can't loop, so the rules are pregenerated for
+     tabs 1..12 (more than 12 filter tabs is a UX mistake; panes
+     beyond 12 stay always visible via the n+13 rule below).
+
+     The whole section is gated on `@supports selector(:has())`
+     (Safari 14.5+/Chrome 83+/Firefox 69+ — strictly older than
+     `:has()` itself): browsers without `:has()` never apply the
+     `display: none` default, so every pane stays visible and each
+     tab degrades to an independent accordion — the documented
+     fallback. Without the gate they would hide every pane forever.
+     `:has()`: Safari 15.4+, Chrome 105+, Firefox 121+. Zero JS. ─── */
+@supports selector(.polysource-filter-tabs-strip:has(details[open])) {
+    .polysource-filter-tab-panes > .polysource-filter-tab__pane {
+        display: none;
+    }
+    .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(n+13) {
+        display: block;
+    }
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(1)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(1),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(2)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(2),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(3)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(3),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(4)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(4),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(5)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(5),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(6)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(6),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(7)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(7),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(8)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(8),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(9)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(9),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(10)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(10),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(11)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(11),
+    .polysource-filter-tabs-strip:has(.polysource-filter-tab:nth-of-type(12)[open]) ~ .polysource-filter-tab-panes > .polysource-filter-tab__pane:nth-of-type(12) {
+        display: block;
+    }
+}
+
+/* ─── Group sections (subtle, EA-aligned) ─── */
+details.polysource-filter-group {
+    margin: 0 0 0.75rem 0;
+    padding-left: 0.5rem;
+    border: 0;
+    background: transparent;
+}
+details.polysource-filter-group > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+}
+details.polysource-filter-group > summary::-webkit-details-marker {
+    display: none;
+}
+details.polysource-filter-group > summary::before {
+    content: '';
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    border-right: 2px solid var(--polysource-muted-color);
+    border-bottom: 2px solid var(--polysource-muted-color);
+    transform: rotate(-45deg);
+    transition: transform 0.2s;
+    margin-right: 0.25rem;
+    opacity: 0.55;
+}
+details.polysource-filter-group[open] > summary::before {
+    transform: rotate(45deg);
+}
+details.polysource-filter-group > summary > strong {
+    color: var(--polysource-muted-color);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex: 1;
+}
+/* Per-group applied-filter counter — same server-rendered contract
+   as the tab counter. Bold + count in accent color. */
+details.polysource-filter-group > summary > .polysource-filter-group__count {
+    color: var(--polysource-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0;
+    background: transparent;
+    margin-left: 0.5rem;
+}
+details.polysource-filter-group .polysource-filter-group__body {
+    padding-left: 0.25rem;
+}
+
+/* ─── First filter inside a tab pane / group body has no top border
+     (the EA filter form theme sets one between siblings; we strip
+     it on the first child to avoid a double line right under the
+     group header). ─── */
+.polysource-filter-tab__pane > .filter-field:first-child,
+.polysource-filter-group__body > .filter-field:first-child {
+    border-top: 0 !important;
+}
+
+/* ─── Subpanel mode (opt-in via `crud/index_subpanel.html.twig`) —
+     repositions EA's `#modal-filters` as a right-anchored slide-in
+     panel WITHOUT touching the inner markup: same header, body,
+     and footer as the centered modal, just docked to the right
+     edge. Gated on the `polysource-filter-subpanel` body class set
+     by the subpanel template.
+
+     Why CSS over JS: replacing EA's modal with a real Bootstrap
+     offcanvas would mean re-implementing EA's filter-form AJAX
+     loader and button wiring, all of which target `.modal-*`
+     selectors. Restyling keeps EA's JS and Bootstrap's modal
+     lifecycle (focus trap, ESC, backdrop) intact. ─── */
+body.polysource-filter-subpanel #modal-filters .modal-dialog {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: 0;
+    max-width: none;
+    width: var(--polysource-subpanel-width);
+    height: 100vh;
+    /* override Bootstrap's default flex centering on .modal-dialog
+       so .modal-content can stretch full height without stacking
+       weirdly. */
+    display: block;
+    pointer-events: none;
+}
+body.polysource-filter-subpanel #modal-filters .modal-content {
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+/* The 3 sections of the modal: header pinned top, footer pinned
+   bottom, body scrolls between. */
+body.polysource-filter-subpanel #modal-filters .modal-header,
+body.polysource-filter-subpanel #modal-filters .modal-footer {
+    flex: 0 0 auto;
+}
+body.polysource-filter-subpanel #modal-filters .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+/* Slide-in from the right edge. */
+body.polysource-filter-subpanel #modal-filters.fade .modal-dialog {
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
+}
+body.polysource-filter-subpanel #modal-filters.show .modal-dialog {
+    transform: none;
+}
+/* Mobile: flush-right, full-width. */
+@media (max-width: 575.98px) {
+    body.polysource-filter-subpanel #modal-filters .modal-dialog {
+        width: 100%;
+    }
+}
+/* Tablet (576-991px): narrower to leave breathing room. */
+@media (min-width: 576px) and (max-width: 991.98px) {
+    body.polysource-filter-subpanel #modal-filters .modal-dialog {
+        width: var(--polysource-subpanel-width-tablet);
+    }
+}

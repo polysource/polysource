@@ -6,6 +6,7 @@ namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -44,9 +45,12 @@ use Twig\TwigFunction;
  */
 final class ColumnReorderExtension extends AbstractExtension
 {
+    use TranslatorFallbackTrait;
+
     public function __construct(
         private readonly ?UrlGeneratorInterface $urlGenerator = null,
         private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
+        private readonly ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -98,10 +102,15 @@ final class ColumnReorderExtension extends AbstractExtension
         $leftEscaped = htmlspecialchars($leftUrl, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $rightEscaped = htmlspecialchars($rightUrl, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
 
+        $esc = static fn (string $v): string => htmlspecialchars($v, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $textGroup = $esc($this->transWithFallback('polysource.columns.reorder', 'Reorder column'));
+        $textLeft = $esc($this->transWithFallback('polysource.columns.move_left', 'Move left'));
+        $textRight = $esc($this->transWithFallback('polysource.columns.move_right', 'Move right'));
+
         $html = <<<HTML
-            <span class="polysource-column-reorder" role="group" aria-label="Reorder column">
-                <a href="{$leftEscaped}" {$leftAttrs} aria-label="Move left">←</a>
-                <a href="{$rightEscaped}" {$rightAttrs} aria-label="Move right">→</a>
+            <span class="polysource-column-reorder" role="group" aria-label="{$textGroup}">
+                <a href="{$leftEscaped}" {$leftAttrs} aria-label="{$textLeft}">←</a>
+                <a href="{$rightEscaped}" {$rightAttrs} aria-label="{$textRight}">→</a>
             </span>
             HTML;
 

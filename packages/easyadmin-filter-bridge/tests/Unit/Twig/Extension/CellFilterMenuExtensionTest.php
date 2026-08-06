@@ -45,9 +45,11 @@ final class CellFilterMenuExtensionTest extends TestCase
         // Three action items
         self::assertSame(3, substr_count($html, 'class="dropdown-item"'));
         // Eq link — literal " around the value in text content
-        self::assertStringContainsString('Filter where Status = "paid"', $html);
+        // The full translated string is escaped once before interpolation
+        // (since v0.9.2 i18n) — literal quotes render as &quot;.
+        self::assertStringContainsString('Filter where Status = &quot;paid&quot;', $html);
         // Neq link
-        self::assertStringContainsString('Exclude Status = "paid"', $html);
+        self::assertStringContainsString('Exclude Status = &quot;paid&quot;', $html);
         // Show-only link
         self::assertStringContainsString('Show only this Status', $html);
     }
@@ -147,7 +149,7 @@ final class CellFilterMenuExtensionTest extends TestCase
         // literal quotes around the value are part of the heredoc
         // template — not HTML-escaped because they aren't inside
         // an attribute.
-        self::assertStringContainsString('Filter where Client = "Jane Doe #42"', $html);
+        self::assertStringContainsString('Filter where Client = &quot;Jane Doe #42&quot;', $html);
         // URL uses the primary key, not the display label.
         self::assertStringContainsString('filters%5Bcustomer%5D%5Bvalue%5D=42', $html);
         self::assertStringNotContainsString('filters%5Bcustomer%5D%5Bvalue%5D=Jane', $html);

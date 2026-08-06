@@ -11,10 +11,16 @@ by status, state, or any single-property condition.
 In your `templates/bundles/EasyAdminBundle/crud/index.html.twig`
 (EA's standard host-side override path), override the
 `table_body` block (or the inner row rendering — depending on
-your EA version) and add the class via the helper:
+your EA version) and add the class via the helper.
+
+> **Extend the bridge's template, not `@!EasyAdmin` directly.**
+> `@!EasyAdmin/crud/index.html.twig` bypasses the bridge's spliced
+> index template, silently removing the chips bar and the
+> column-visibility / saved-views dropdowns from every index page.
+> See [theming.md](./theming.md#the-safe-way-to-extend-the-index-page--read-this-first).
 
 ```twig
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block table_body %}
     {% for entity in entities %}

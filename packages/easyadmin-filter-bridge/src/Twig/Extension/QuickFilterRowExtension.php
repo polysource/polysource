@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -35,8 +36,12 @@ use Twig\TwigFunction;
  */
 final class QuickFilterRowExtension extends AbstractExtension
 {
-    public function __construct(private readonly ?RequestStack $requestStack = null)
-    {
+    use TranslatorFallbackTrait;
+
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
+    ) {
     }
 
     /**
@@ -58,7 +63,7 @@ final class QuickFilterRowExtension extends AbstractExtension
         $request = $this->requestStack?->getCurrentRequest();
         $action = null !== $request ? $request->getPathInfo() : '';
         $current = $this->currentValueFor($property);
-        $placeholder ??= 'filter…';
+        $placeholder ??= $this->transWithFallback('polysource.quick_filter.placeholder', 'filter…');
 
         $propertyEsc = htmlspecialchars($property, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $actionEsc = htmlspecialchars($action, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');

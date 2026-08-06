@@ -54,7 +54,18 @@ final class FilterUrlTokenController
         }
 
         $index = (string) $request->query->get('index', '');
-        if ('' === $index || !str_starts_with($index, '/')) {
+        // Same-origin redirect target only. A single leading slash is
+        // an absolute PATH; `//host` is a protocol-RELATIVE URL and
+        // `/\host` is treated the same by browsers that normalise
+        // backslashes — both would turn this endpoint into an open
+        // redirect. Surfaced 2026-08-06 while writing the endpoint's
+        // regression suite.
+        if (
+            '' === $index
+            || !str_starts_with($index, '/')
+            || str_starts_with($index, '//')
+            || str_starts_with($index, '/\\')
+        ) {
             throw new NotFoundHttpException('Missing or invalid `index` redirect target.');
         }
 

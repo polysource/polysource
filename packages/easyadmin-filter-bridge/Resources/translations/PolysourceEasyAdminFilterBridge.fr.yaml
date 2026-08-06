@@ -4,6 +4,52 @@ polysource:
             heading: 'Filtres actifs :'
             remove: 'Retirer ce filtre'
             clear_all: 'Tout effacer'
+        applied_count: '{1} %count% filtre appliqué|]1,Inf[ %count% filtres appliqués'
     columns:
         toggle: 'Colonnes'
         apply: 'Appliquer'
+        reorder: 'Réordonner la colonne'
+        move_left: 'Déplacer à gauche'
+        move_right: 'Déplacer à droite'
+    cell_menu:
+        options: 'Options de filtre pour %label%'
+        filter_where: 'Filtrer où %label% = « %value% »'
+        exclude: 'Exclure %label% = « %value% »'
+        show_only: 'Afficher uniquement ce %label%'
+    density:
+        label: 'Densité des lignes'
+        normal: 'Normale'
+        compact: 'Compacte'
+    quick_filter:
+        placeholder: 'filtrer…'
+    bulk:
+        apply_all: 'Appliquer à toutes les lignes correspondantes'
+    share:
+        copy_link: 'Copier le lien de partage'
+    toasts:
+        close: 'Fermer'
+    shortcuts:
+        title: 'Raccourcis clavier (recommandés)'
+        footnote: "L'application hôte câble les raccourcis via un contrôleur Stimulus — voir la documentation Polysource pour un extrait de référence."
+        header:
+            key: 'Touche'
+            action: 'Action'
+            scope: 'Portée'
+        action:
+            next_row: 'Ligne suivante'
+            previous_row: 'Ligne précédente'
+            open_row: 'Ouvrir la ligne sélectionnée'
+            focus_search: 'Activer le champ de recherche'
+            open_filters: 'Ouvrir la fenêtre des filtres'
+            toggle_columns: 'Afficher/masquer le menu des colonnes'
+            create_record: 'Créer un enregistrement'
+            toggle_help: "Afficher/masquer ce panneau d'aide"
+            close_modal: 'Fermer la fenêtre ou le panneau ouvert'
+        scope:
+            listing: 'Liste'
+            search: 'Recherche'
+            filters: 'Filtres'
+            columns: 'Colonnes'
+            actions: 'Actions'
+            help: 'Aide'
+            global: 'Global'
