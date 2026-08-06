@@ -4,6 +4,41 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] — 2026-08-06
+
+**Audit closed.** The last open item from the v0.9.0 architectural
+audit (M2/#67 phase 2) lands: per-feature DI decomposition. Zero
+behaviour change. Merged as #111.
+
+### Changed
+
+- **FeatureLoader split (ADR-0032).** The two large DI extensions
+  become tables of contents over per-feature loader classes:
+  `PolysourceFilterExtension` 440 → 174 lines (7 loaders — pipeline
+  core, filter tags, saved views, column preferences, bulk-action
+  history, recent records, filter URL tokens);
+  `PolysourceEasyAdminFilterBridgeExtension` 549 → 147 lines
+  (8 loaders — enhancers, chips, listing-UX helpers, filter tree,
+  saved-view controller, export, filter URL tokens, column
+  preferences). Each loader owns its feature's entire gate in
+  `supports()` and its wiring — with the historical rationale
+  comments — in `load()`. Loaders are listed explicitly in the
+  extension: no tag-based discovery, DI wiring stays readable
+  top-to-bottom. `@internal FeatureLoaderInterface` lives in
+  `polysource/filter` and is reused by the bridge (same precedent
+  as `FeatureGate`).
+- Inter-package constraints union `^0.1 → ^0.11` across all 16
+  packages.
+
+### Added
+
+- **ADR-0032** — the FeatureLoader convention (gate placement,
+  nullable-service pattern ownership, explicit listing, when NOT to
+  split: single-feature packages keep their monolithic extension).
+- `FeatureLoaderGateTest` per package — locks the `supports()`
+  matrix: which bundle combination activates which feature
+  (10 tests).
+
 ## [0.10.0] — 2026-08-06
 
 **Host-app genericity + audit closure.** The EasyAdmin bridge becomes
