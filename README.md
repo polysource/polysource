@@ -114,13 +114,13 @@ Symfony's admin landscape is mature for one shape of resource: a Doctrine ORM en
 - **50 browser E2E tests** (Symfony Panther) + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) on every push
 - **PHPStan level max** across all packages · **PHP-CS-Fixer** PSR-12 + Symfony rules
 - **Core coverage gate ≥ 90%** (`polysource/core` sits at 99%+)
-- **CI matrix**: PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0, plus a Symfony 5.4 floor smoke
+- **CI matrix**: PHP 8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0, plus a bridge-alone floor smoke (Sf 6.4 + EA 4)
 
 ## Status & compatibility
 
 **v0.10.0** — 16 packages on [Packagist](https://packagist.org/?query=polysource%2F), split automatically from this monorepo ([ADR-026](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md)). The public API is release-candidate stable; SemVer freezes at v1.0 — breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).
 
-**Baseline** ([ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md)): PHP 8.1 → 8.4 · Symfony 5.4 / 6.4 / 7.2 / 7.4 LTS · EasyAdmin 4.24+ / 5.0+ · Doctrine ORM 2.20+ / 3.6+.
+**Baseline** ([ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md), v1.0 floors per [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md)): PHP 8.2 → 8.4 · Symfony 6.4 / 7.2 / 7.4 LTS · EasyAdmin 4.24+ / 5.0+ · Doctrine ORM 2.20+ / 3.6+.
 
 Adopt early with eyes open — the honest limitations list (minimal UI surfaces, field helpers, cursor pagination trade-offs) lives in [docs/user/installation.md](./docs/user/installation.md) and [ADR-028 scope discipline](./docs/adr/0028-scope-discipline.md).
 
@@ -129,7 +129,7 @@ Adopt early with eyes open — the honest limitations list (minimal UI surfaces,
 
 | Package | What it does |
 |---|---|
-| `polysource/core` | 26 public types, zero Symfony dep — pure PHP 8.1+ contracts |
+| `polysource/core` | 26 public types, zero Symfony dep — pure PHP 8.2+ contracts |
 | `polysource/filter` | Filter primitives (collection, criteria, session persistence, **saved views**) — usable standalone in any Symfony app |
 | `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin (4.24+ or 5.0+) — enhanced filter types, chips, saved views dropdown, column prefs |
 | `polysource/symfony-bundle` | Symfony wiring for the standalone admin: DI, routing, controllers, CSRF, pagination caps |

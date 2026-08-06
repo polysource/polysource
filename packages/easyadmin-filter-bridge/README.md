@@ -269,8 +269,8 @@ Configurators never read either argument.
 Cf. [ADR-015 — multi-version baseline](../../docs/adr/0015-multi-version-compatibility-baseline.md);
 CI runs the full matrix.
 
-- **PHP** `>=8.1`
-- **Symfony** `^5.4 || ^6.0 || ^7.0 || ^8.0`
+- **PHP** `>=8.2`
+- **Symfony** `^6.4 || ^7.0 || ^8.0`
 - **EasyAdmin** `^4.24 || ^5.0`
 - **Doctrine ORM** `^2.20 || ^3.0`
 

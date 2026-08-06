@@ -183,30 +183,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # ADR-015 amendement 2026-05-05: per-package matrix.
-        #
-        # `polysource/symfony-bundle` and `polysource/adapter-messenger`
-        # use Sf 6.2+ APIs (`ValueResolverInterface`, renamed
-        # `SecurityBundle\Security`) so they require `^6.4 || ^7.0 || ^8.0`.
-        # `polysource/filter` and `polysource/easyadmin-filter-bridge`
-        # advertise the wider `^5.4 || ^6.0 || ^7.0 || ^8.0` because
-        # they don't use 6.2+ APIs — but the monorepo-wide test job below
-        # tests the WHOLE suite (incl. symfony-bundle), so its floor is
-        # Sf 6.4. Sf 5.4 compat for filter+bridge is composer-validated
-        # (the bridge advertises `^5.4`) but not test-gated by this matrix.
+        # ADR-015 amendement 2026-08-06 (v1.0 floors): PHP 8.2+ /
+        # Symfony 6.4 LTS+ across every package — the pre-1.0
+        # per-package split (filter+bridge advertising ^5.4) ended
+        # with the v1.0 freeze, cf. ADR-011 floor targets.
         #
         # Each row is listed by hand; cartesian-product matrices generate
-        # impossible combos (e.g. PHP 8.1 × Sf 7.4 — Sf 7 needs 8.2+).
-        #   1. Legacy floor:   PHP 8.1 + Sf 6.4 LTS   + EA 4.x
-        #   2. Mainstream:     PHP 8.2 + Sf 6.4 LTS   + EA 4.x
-        #   3. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
-        #   4. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
-        #   5. Modern:         PHP 8.3 + Sf 7.4 LTS   + EA 5.x
-        #   6. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
+        # impossible combos (e.g. PHP 8.2 × Sf 8.0 — Sf 8 needs 8.4+).
+        #   1. Floor:          PHP 8.2 + Sf 6.4 LTS   + EA 4.x
+        #   2. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
+        #   3. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
+        #   4. Modern:         PHP 8.3 + Sf 7.4 LTS   + EA 5.x
+        #   5. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
         include:
-          - php: '8.1'
-            symfony: '6.4.*'
-            easyadmin: '^4.24'
           - php: '8.2'
             symfony: '6.4.*'
             easyadmin: '^4.24'
@@ -280,31 +269,29 @@ jobs:
         run: vendor/bin/phpunit --testsuite=unit,functional --testdox
 
   sf54-floor:
-    name: Sf 5.4 floor smoke (filter + bridge alone)
+    name: Sf 6.4 floor smoke (filter + bridge alone)
     runs-on: ubuntu-24.04
-    # The main `test` matrix can't include Sf 5.4 because
-    # polysource/symfony-bundle requires Sf 6.4+ (`ValueResolverInterface`
-    # is Sf 6.2+), so the full-suite install would fail. This
-    # dedicated job installs ONLY filter + easyadmin-filter-bridge
-    # from Packagist on a vanilla Sf 5.4 + EA 4 skeleton — gates
-    # the documented Sf 5.4 floor without breaking the matrix.
+    # Dedicated floor gate: installs ONLY filter +
+    # easyadmin-filter-bridge from Packagist on a vanilla skeleton at
+    # the documented v1.0 floor (Sf 6.4 LTS + EA 4) — proves the
+    # bridge-alone install path at the floor independently of the
+    # full-suite matrix.
     steps:
       - uses: actions/checkout@v6
 
       - uses: shivammathur/setup-php@v2
         with:
-          # PHP 8.1 — the legacy floor. EA 5 requires PHP 8.2+, so we
-          # gate the Sf 5.4 floor against EA 4 (the realistic
-          # combination of an app that hasn't bumped its Symfony in
-          # 4 years).
-          php-version: '8.1'
+          # PHP 8.2 — the v1.0 floor. Gated against EA 4 (the
+          # realistic combination of an app that hasn't bumped its
+          # admin in years).
+          php-version: '8.2'
           tools: composer:v2
 
-      - name: Bootstrap vanilla Symfony 5.4 skeleton + EA 4
+      - name: Bootstrap vanilla Symfony 6.4 skeleton + EA 4
         run: |
           mkdir -p /tmp/sf54-smoke
           cd /tmp/sf54-smoke
-          composer create-project symfony/skeleton:^5.4 . --no-interaction --no-progress 2>&1 | tail -3
+          composer create-project symfony/skeleton:^6.4 . --no-interaction --no-progress 2>&1 | tail -3
           composer require --no-interaction --no-progress \
             easycorp/easyadmin-bundle:^4.24 \
             polysource/easyadmin-filter-bridge:^0.6 \
@@ -316,14 +303,14 @@ jobs:
           cd /tmp/sf54-smoke
           # symfony-bundle requires Sf 6.4+ — MUST not be installed transitively.
           if [ -d vendor/polysource/symfony-bundle ]; then
-              echo 'FAIL: polysource/symfony-bundle was installed on Sf 5.4 — that should be impossible.'
+              echo 'FAIL: polysource/symfony-bundle must not be pulled by a bridge-alone install.'
               exit 1
           fi
           # filter + bridge MUST be installed.
           for pkg in core filter easyadmin-filter-bridge; do
               [ -d "vendor/polysource/$pkg" ] || { echo "FAIL: polysource/$pkg missing"; exit 1; }
           done
-          echo 'OK: polysource/{core,filter,easyadmin-filter-bridge} on Sf 5.4 + EA 4'
+          echo 'OK: polysource/{core,filter,easyadmin-filter-bridge} at the Sf 6.4 + EA 4 floor'
 
       - name: Cache clear succeeds (bundles auto-register cleanly)
         run: |

@@ -53,8 +53,8 @@ test-integration: ## Run bridge integration tests (TestKernel + SQLite); --do-no
 	$(PHP_RUN) vendor/bin/phpunit --testsuite=integration --do-not-fail-on-risky
 
 .PHONY: smoke-sf54
-smoke-sf54: ## Smoke install of polysource/easyadmin-filter-bridge on Symfony 5.4 + EA 4.x (the documented floor; main CI matrix can't gate this because symfony-bundle requires Sf 6.4+)
-	SYMFONY_SKELETON_VERSION='^5.4' EASYADMIN_VERSION='^4.24' VERSION_CONSTRAINT='^0.6' ./scripts/smoke-packagist-bridge.sh
+smoke-sf54: ## Smoke install of polysource/easyadmin-filter-bridge at the v1.0 floor: Symfony 6.4 LTS + EA 4.x
+	SYMFONY_SKELETON_VERSION='^6.4' EASYADMIN_VERSION='^4.24' VERSION_CONSTRAINT='^1.0' ./scripts/smoke-packagist-bridge.sh
 
 .PHONY: phpstan
 phpstan: ## Run PHPStan static analysis (level max)

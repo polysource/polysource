@@ -31,8 +31,8 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 
 | Component | Required |
 |---|---|
-| PHP | `>=8.1` (any 8.1+, 9.x forward-compat) |
-| Symfony | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` (every minor since 5.4, LTS + non-LTS) |
+| PHP | `>=8.2` (any 8.2+, 9.x forward-compat) |
+| Symfony | `^6.4 \|\| ^7.0 \|\| ^8.0` (LTS + non-LTS since 6.4) |
 | EasyAdmin | `^4.24 \|\| ^5.0` |
 | Doctrine ORM | `^2.20 \|\| ^3.6` |
 | Twig | `^3.0` |
@@ -106,9 +106,9 @@ later, the existing host code starts working without changes.
 ### CI / version matrix
 
 The bridge advertises **the same constraints as `easycorp/easyadmin-bundle` 4.29**
-(`php: >=8.1`, `symfony/*: ^5.4|^6.0|^7.0|^8.0`) so any host that can install
+(`php: >=8.2`, `symfony/*: ^6.4|^7.0|^8.0`) so any host that can install
 EA 4 can install the bridge. Composer's resolver picks the right combination
-automatically — a host on PHP 8.1 + Sf 5.4 will get EA 4 (EA 5 itself
+automatically — a host on PHP 8.2 + Sf 6.4 will get EA 4 (EA 5 itself
 requires PHP 8.2+); a host on PHP 8.4 + Sf 7.4 will get EA 5.
 
 **Note on Sf 5.4** — only the bridge + the standalone `polysource/filter`
@@ -121,7 +121,7 @@ The bridge is gated by CI on 5 explicit combos covering the realistic
 profiles of EA-using Symfony apps in 2026 (cf.
 [ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)):
 
-- PHP 8.1 + Symfony 5.4 + EA 4.x (legacy stack)
+- PHP 8.2 + Symfony 6.4 LTS + EA 4.x (legacy stack)
 - PHP 8.2 + Symfony 6.4 + EA 4.x (mainstream 2024-2025)
 - PHP 8.2 + Symfony 6.4 + EA 5.x (bridge transfer audience)
 - PHP 8.3 + Symfony 7.4 + EA 5.x (modern)

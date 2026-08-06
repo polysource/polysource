@@ -9,14 +9,14 @@ and bundle/adapter packages that use Symfony 6.2+ APIs.
 
 | Package | PHP | Symfony | Notes |
 |---|---|---|---|
-| `polysource/core` | `>=8.1` | none | Pure PHP, zero Symfony dependency. |
-| `polysource/filter` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Standalone-usable. |
-| `polysource/easyadmin-filter-bridge` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Plus EasyAdmin `^4.24 \|\| ^5.0`. |
-| `polysource/twig-theme` | `>=8.1` | n/a (templates) | Pure Twig, no PHP. |
-| `polysource/symfony-bundle` | `>=8.1` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Uses Sf 6.2+ APIs (`ValueResolverInterface`, renamed `SecurityBundle\Security`). |
-| `polysource/adapter-messenger` | `>=8.1` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Same baseline as `symfony-bundle`. |
-| `polysource/adapter-{doctrine,redis,flysystem,http,meilisearch}` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Plus the adapter's own backend constraint. |
-| `polysource/{audit,bulk-async,widgets,search,workflow-bridge}` | `>=8.1` | `^5.4 \|\| ^6.0 \|\| ^7.0 \|\| ^8.0` | Capability plugins, opt-in. |
+| `polysource/core` | `>=8.2` | none | Pure PHP, zero Symfony dependency. |
+| `polysource/filter` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Standalone-usable. |
+| `polysource/easyadmin-filter-bridge` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Plus EasyAdmin `^4.24 \|\| ^5.0`. |
+| `polysource/twig-theme` | `>=8.2` | n/a (templates) | Pure Twig, no PHP. |
+| `polysource/symfony-bundle` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Uses Sf 6.2+ APIs (`ValueResolverInterface`, renamed `SecurityBundle\Security`). |
+| `polysource/adapter-messenger` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Same baseline as `symfony-bundle`. |
+| `polysource/adapter-{doctrine,redis,flysystem,http,meilisearch}` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Plus the adapter's own backend constraint. |
+| `polysource/{audit,bulk-async,widgets,search,workflow-bridge}` | `>=8.2` | `^6.4 \|\| ^7.0 \|\| ^8.0` | Capability plugins, opt-in. |
 | Composer | **2.x** | — | — |
 
 You also need a working Symfony Security firewall protecting the URL
@@ -264,7 +264,7 @@ Polysource Doctor
  ----------------------- ----------- -------------------------------------------
   Check                   Status      Detail
  ----------------------- ----------- -------------------------------------------
-  PHP version             ✓ PASS     8.4.20 (>= 8.1)
+  PHP version             ✓ PASS     8.4.20 (>= 8.2)
   Polysource bundles      ✓ PASS     3 registered (PolysourceBundle, …)
   EA bridge co-load       ✓ PASS     EasyAdminBundle is loaded alongside the bridge.
   Polysource plugins      ✓ PASS     7 discovered (polysource/core 0.6.0, …)
