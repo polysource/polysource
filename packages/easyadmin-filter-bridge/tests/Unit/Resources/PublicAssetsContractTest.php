@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Tests\Unit\Resources;
 
+use FilesystemIterator;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
 
 /**
  * Contract tests for the bundle's published assets (`Resources/public/`).
@@ -54,7 +58,7 @@ final class PublicAssetsContractTest extends TestCase
             '--polysource-surface-muted-bg',
             '--polysource-subpanel-width',
         ] as $variable) {
-            self::assertStringContainsString($variable . ':', $content, sprintf(
+            self::assertStringContainsString($variable . ':', $content, \sprintf(
                 'The theming variable "%s" is documented public API and must stay declared in %s.',
                 $variable,
                 self::CSS_FILENAME,
@@ -106,12 +110,12 @@ final class PublicAssetsContractTest extends TestCase
     {
         $viewsDir = self::bridgeRoot() . '/Resources/views';
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($viewsDir, \FilesystemIterator::SKIP_DOTS),
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($viewsDir, FilesystemIterator::SKIP_DOTS),
         );
         $checked = 0;
         foreach ($iterator as $file) {
-            if (!$file instanceof \SplFileInfo || 'twig' !== $file->getExtension()) {
+            if (!$file instanceof SplFileInfo || 'twig' !== $file->getExtension()) {
                 continue;
             }
             ++$checked;
@@ -119,14 +123,14 @@ final class PublicAssetsContractTest extends TestCase
             $relative = substr((string) $file, \strlen($viewsDir) + 1);
 
             $allowedStyleBlocks = 'crud/index.html.twig' === $relative ? 1 : 0;
-            self::assertSame($allowedStyleBlocks, substr_count($content, '<style'), sprintf(
+            self::assertSame($allowedStyleBlocks, substr_count($content, '<style'), \sprintf(
                 '%s must not carry static inline CSS (CSP contract) — move it to Resources/public/%s. '
                 . 'Only the request-dependent hidden-columns block in crud/index.html.twig is allowed.',
                 $relative,
                 self::CSS_FILENAME,
             ));
 
-            self::assertSame(0, substr_count($content, '<script>'), sprintf(
+            self::assertSame(0, substr_count($content, '<script>'), \sprintf(
                 '%s must not carry inline JS (CSP contract) — move it to Resources/public/ '
                 . 'and reference it with <script src="...">.',
                 $relative,

@@ -119,7 +119,7 @@
             <summary class="polysource-filter-group__summary">
                 <strong>{{ group.label }}</strong>
                 {% if group_count > 0 %}
-                    <span class="polysource-filter-group__count" aria-label="{{ group_count }} {{ group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ group_count }}</span>
+                    <span class="polysource-filter-group__count" aria-label="{{ 'polysource.filter.applied_count'|trans({'%count%': group_count}, 'PolysourceEasyAdminFilterBridge') }}">{{ group_count }}</span>
                 {% endif %}
             </summary>
             <div class="polysource-filter-group__body">
@@ -162,7 +162,7 @@
                 <summary class="polysource-filter-tab__summary">
                     {{ tab.label }}
                     {% if tab_count > 0 %}
-                        <span class="polysource-filter-tab__count" aria-label="{{ tab_count }} {{ tab_count > 1 ? 'filters applied' : 'filter applied' }}">{{ tab_count }}</span>
+                        <span class="polysource-filter-tab__count" aria-label="{{ 'polysource.filter.applied_count'|trans({'%count%': tab_count}, 'PolysourceEasyAdminFilterBridge') }}">{{ tab_count }}</span>
                     {% endif %}
                 </summary>
             </details>
@@ -185,7 +185,7 @@
                         <summary class="polysource-filter-group__summary">
                             <strong>{{ group.label }}</strong>
                             {% if inner_group_count > 0 %}
-                                <span class="polysource-filter-group__count" aria-label="{{ inner_group_count }} {{ inner_group_count > 1 ? 'filters applied' : 'filter applied' }}">{{ inner_group_count }}</span>
+                                <span class="polysource-filter-group__count" aria-label="{{ 'polysource.filter.applied_count'|trans({'%count%': inner_group_count}, 'PolysourceEasyAdminFilterBridge') }}">{{ inner_group_count }}</span>
                             {% endif %}
                         </summary>
                         <div class="polysource-filter-group__body">

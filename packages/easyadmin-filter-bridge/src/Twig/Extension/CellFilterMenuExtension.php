@@ -9,6 +9,7 @@ use Polysource\Filter\Url\FilterUrlBuilder;
 use Polysource\Filter\Url\OperatorMap;
 use Stringable;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -41,8 +42,12 @@ use UnitEnum;
  */
 final class CellFilterMenuExtension extends AbstractExtension
 {
-    public function __construct(private readonly ?RequestStack $requestStack = null)
-    {
+    use TranslatorFallbackTrait;
+
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
+    ) {
     }
 
     /**
@@ -93,9 +98,17 @@ final class CellFilterMenuExtension extends AbstractExtension
         $resolvedFilterValue = null !== $filterValue ? $filterValue : $value;
 
         $label ??= ucfirst(str_replace('_', ' ', $property));
-        $labelEscaped = htmlspecialchars($label, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $valueDisplay = mb_strimwidth($stringValue, 0, 32, '…', 'UTF-8');
-        $valueEscaped = htmlspecialchars($valueDisplay, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+
+        // Translate first with RAW params, escape the final strings
+        // once — avoids double-escaping the label/value while still
+        // covering unsafe characters coming from the catalog itself.
+        $params = ['%label%' => $label, '%value%' => $valueDisplay];
+        $esc = static fn (string $v): string => htmlspecialchars($v, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $textOptions = $esc($this->transWithFallback('polysource.cell_menu.options', 'Filter options for %label%', $params));
+        $textWhere = $esc($this->transWithFallback('polysource.cell_menu.filter_where', 'Filter where %label% = "%value%"', $params));
+        $textExclude = $esc($this->transWithFallback('polysource.cell_menu.exclude', 'Exclude %label% = "%value%"', $params));
+        $textOnly = $esc($this->transWithFallback('polysource.cell_menu.show_only', 'Show only this %label%', $params));
 
         $urlEq = htmlspecialchars($this->urlFor($property, $resolvedFilterValue, 'eq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
         $urlNeq = htmlspecialchars($this->urlFor($property, $resolvedFilterValue, 'neq'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
@@ -107,14 +120,14 @@ final class CellFilterMenuExtension extends AbstractExtension
                         class="btn btn-sm btn-link polysource-cell-filter-menu__trigger"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
-                        aria-label="Filter options for {$labelEscaped}">
+                        aria-label="{$textOptions}">
                     <span aria-hidden="true">⋮</span>
                 </button>
                 <ul class="dropdown-menu polysource-cell-filter-menu__list">
-                    <li><a class="dropdown-item" href="{$urlEq}">Filter where {$labelEscaped} = "{$valueEscaped}"</a></li>
-                    <li><a class="dropdown-item" href="{$urlNeq}">Exclude {$labelEscaped} = "{$valueEscaped}"</a></li>
+                    <li><a class="dropdown-item" href="{$urlEq}">{$textWhere}</a></li>
+                    <li><a class="dropdown-item" href="{$urlNeq}">{$textExclude}</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{$urlOnly}">Show only this {$labelEscaped}</a></li>
+                    <li><a class="dropdown-item" href="{$urlOnly}">{$textOnly}</a></li>
                 </ul>
             </span>
             HTML;

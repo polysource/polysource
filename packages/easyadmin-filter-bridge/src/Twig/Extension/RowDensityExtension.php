@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -40,11 +41,15 @@ use Twig\TwigFunction;
  */
 final class RowDensityExtension extends AbstractExtension
 {
+    use TranslatorFallbackTrait;
+
     /** @var list<string> the two supported density modes */
     private const DENSITIES = ['compact', 'normal'];
 
-    public function __construct(private readonly ?RequestStack $requestStack = null)
-    {
+    public function __construct(
+        private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
+    ) {
     }
 
     /**
@@ -117,10 +122,15 @@ final class RowDensityExtension extends AbstractExtension
         $normalAria = $normalActive ? 'true' : 'false';
         $compactAria = $compactActive ? 'true' : 'false';
 
+        $esc = static fn (string $v): string => htmlspecialchars($v, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $textGroup = $esc($this->transWithFallback('polysource.density.label', 'Row density'));
+        $textNormal = $esc($this->transWithFallback('polysource.density.normal', 'Normal'));
+        $textCompact = $esc($this->transWithFallback('polysource.density.compact', 'Compact'));
+
         $html = <<<HTML
-            <div class="btn-group btn-group-sm polysource-row-density-toggle" role="group" aria-label="Row density">
-                <a href="{$normalUrl}" class="{$normalClass}" aria-pressed="{$normalAria}">Normal</a>
-                <a href="{$compactUrl}" class="{$compactClass}" aria-pressed="{$compactAria}">Compact</a>
+            <div class="btn-group btn-group-sm polysource-row-density-toggle" role="group" aria-label="{$textGroup}">
+                <a href="{$normalUrl}" class="{$normalClass}" aria-pressed="{$normalAria}">{$textNormal}</a>
+                <a href="{$compactUrl}" class="{$compactClass}" aria-pressed="{$compactAria}">{$textCompact}</a>
             </div>
             HTML;
 

@@ -8,6 +8,7 @@ use Polysource\Filter\FilterUrlToken\FilterUrlTokenService;
 use Polysource\Filter\Url\FilterArrayExtractor;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -32,10 +33,13 @@ use Twig\TwigFunction;
  */
 final class FilterShortUrlExtension extends AbstractExtension
 {
+    use TranslatorFallbackTrait;
+
     public function __construct(
         private readonly ?FilterUrlTokenService $service = null,
         private readonly ?UrlGeneratorInterface $urlGenerator = null,
         private readonly ?RequestStack $requestStack = null,
+        private readonly ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -101,8 +105,9 @@ final class FilterShortUrlExtension extends AbstractExtension
      * clipboard JS (or for the user to right-click + copy link
      * address). Empty markup when no filters / no service wired.
      */
-    public function renderShareButton(string $resource, string $label = 'Copy share link'): Markup
+    public function renderShareButton(string $resource, ?string $label = null): Markup
     {
+        $label ??= $this->transWithFallback('polysource.share.copy_link', 'Copy share link');
         $url = $this->shortUrl($resource);
         if ('' === $url) {
             return new Markup('', 'UTF-8');

@@ -4,6 +4,52 @@ polysource:
             heading: 'Active filters:'
             remove: 'Remove this filter'
             clear_all: 'Clear all'
+        applied_count: '{1} %count% filter applied|]1,Inf[ %count% filters applied'
     columns:
         toggle: 'Columns'
         apply: 'Apply'
+        reorder: 'Reorder column'
+        move_left: 'Move left'
+        move_right: 'Move right'
+    cell_menu:
+        options: 'Filter options for %label%'
+        filter_where: 'Filter where %label% = "%value%"'
+        exclude: 'Exclude %label% = "%value%"'
+        show_only: 'Show only this %label%'
+    density:
+        label: 'Row density'
+        normal: 'Normal'
+        compact: 'Compact'
+    quick_filter:
+        placeholder: 'filter…'
+    bulk:
+        apply_all: 'Apply to all matching rows'
+    share:
+        copy_link: 'Copy share link'
+    toasts:
+        close: 'Close'
+    shortcuts:
+        title: 'Keyboard shortcuts (recommended)'
+        footnote: 'Hosts wire the actual bindings via a Stimulus controller — see the Polysource docs for a reference snippet.'
+        header:
+            key: 'Key'
+            action: 'Action'
+            scope: 'Scope'
+        action:
+            next_row: 'Next row'
+            previous_row: 'Previous row'
+            open_row: 'Open the focused row'
+            focus_search: 'Focus the search field'
+            open_filters: 'Open the filters modal'
+            toggle_columns: 'Toggle column visibility menu'
+            create_record: 'Create new record'
+            toggle_help: 'Toggle this help panel'
+            close_modal: 'Close any open modal / panel'
+        scope:
+            listing: 'Listing'
+            search: 'Search'
+            filters: 'Filters'
+            columns: 'Columns'
+            actions: 'Actions'
+            help: 'Help'
+            global: 'Global'

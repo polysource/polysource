@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\Twig\Extension;
 
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Markup;
 use Twig\TwigFunction;
@@ -44,21 +45,29 @@ use Twig\TwigFunction;
  */
 final class KeyboardShortcutsExtension extends AbstractExtension
 {
+    use TranslatorFallbackTrait;
+
+    public function __construct(private readonly ?TranslatorInterface $translator = null)
+    {
+    }
+
     /**
-     * @var list<array{key: string, label: string, scope: string}>
-     *      the recommended shortcut set — hosts can use this list
-     *      verbatim or as inspiration for their own bindings
+     * @var list<array{key: string, id: string, label: string, scope_id: string, scope: string}>
+     *      the recommended shortcut set — `label`/`scope` are the
+     *      English fallbacks, `id`/`scope_id` the translation-key
+     *      suffixes under `polysource.shortcuts.*`. Hosts consume
+     *      the translated list via {@see shortcutsList()}.
      */
     private const RECOMMENDED_SHORTCUTS = [
-        ['key' => 'j',     'label' => 'Next row',                     'scope' => 'Listing'],
-        ['key' => 'k',     'label' => 'Previous row',                 'scope' => 'Listing'],
-        ['key' => 'Enter', 'label' => 'Open the focused row',         'scope' => 'Listing'],
-        ['key' => '/',     'label' => 'Focus the search field',       'scope' => 'Search'],
-        ['key' => 'f',     'label' => 'Open the filters modal',       'scope' => 'Filters'],
-        ['key' => 'c',     'label' => 'Toggle column visibility menu', 'scope' => 'Columns'],
-        ['key' => 'n',     'label' => 'Create new record',            'scope' => 'Actions'],
-        ['key' => '?',     'label' => 'Toggle this help panel',       'scope' => 'Help'],
-        ['key' => 'Esc',   'label' => 'Close any open modal / panel', 'scope' => 'Global'],
+        ['key' => 'j',     'id' => 'next_row',       'label' => 'Next row',                     'scope_id' => 'listing', 'scope' => 'Listing'],
+        ['key' => 'k',     'id' => 'previous_row',   'label' => 'Previous row',                 'scope_id' => 'listing', 'scope' => 'Listing'],
+        ['key' => 'Enter', 'id' => 'open_row',       'label' => 'Open the focused row',         'scope_id' => 'listing', 'scope' => 'Listing'],
+        ['key' => '/',     'id' => 'focus_search',   'label' => 'Focus the search field',       'scope_id' => 'search',  'scope' => 'Search'],
+        ['key' => 'f',     'id' => 'open_filters',   'label' => 'Open the filters modal',       'scope_id' => 'filters', 'scope' => 'Filters'],
+        ['key' => 'c',     'id' => 'toggle_columns', 'label' => 'Toggle column visibility menu', 'scope_id' => 'columns', 'scope' => 'Columns'],
+        ['key' => 'n',     'id' => 'create_record',  'label' => 'Create new record',            'scope_id' => 'actions', 'scope' => 'Actions'],
+        ['key' => '?',     'id' => 'toggle_help',    'label' => 'Toggle this help panel',       'scope_id' => 'help',    'scope' => 'Help'],
+        ['key' => 'Esc',   'id' => 'close_modal',    'label' => 'Close any open modal / panel', 'scope_id' => 'global',  'scope' => 'Global'],
     ];
 
     /**
@@ -88,13 +97,22 @@ final class KeyboardShortcutsExtension extends AbstractExtension
      */
     public function shortcutsList(): array
     {
-        return self::RECOMMENDED_SHORTCUTS;
+        $out = [];
+        foreach (self::RECOMMENDED_SHORTCUTS as $shortcut) {
+            $out[] = [
+                'key' => $shortcut['key'],
+                'label' => $this->transWithFallback('polysource.shortcuts.action.' . $shortcut['id'], $shortcut['label']),
+                'scope' => $this->transWithFallback('polysource.shortcuts.scope.' . $shortcut['scope_id'], $shortcut['scope']),
+            ];
+        }
+
+        return $out;
     }
 
     public function renderHelp(): Markup
     {
         $rows = '';
-        foreach (self::RECOMMENDED_SHORTCUTS as $shortcut) {
+        foreach ($this->shortcutsList() as $shortcut) {
             $key = htmlspecialchars($shortcut['key'], \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
             $label = htmlspecialchars($shortcut['label'], \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
             $scope = htmlspecialchars($shortcut['scope'], \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
@@ -107,19 +125,26 @@ final class KeyboardShortcutsExtension extends AbstractExtension
                 HTML;
         }
 
+        $esc = static fn (string $v): string => htmlspecialchars($v, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+        $textTitle = $esc($this->transWithFallback('polysource.shortcuts.title', 'Keyboard shortcuts (recommended)'));
+        $textKey = $esc($this->transWithFallback('polysource.shortcuts.header.key', 'Key'));
+        $textAction = $esc($this->transWithFallback('polysource.shortcuts.header.action', 'Action'));
+        $textScope = $esc($this->transWithFallback('polysource.shortcuts.header.scope', 'Scope'));
+        $textFootnote = $esc($this->transWithFallback('polysource.shortcuts.footnote', 'Hosts wire the actual bindings via a Stimulus controller — see the Polysource docs for a reference snippet.'));
+
         $html = <<<HTML
             <details class="polysource-keyboard-shortcuts" data-polysource-shortcuts-help>
-                <summary>Keyboard shortcuts (recommended)</summary>
+                <summary>{$textTitle}</summary>
                 <table class="table table-sm polysource-keyboard-shortcuts__table">
                     <thead>
-                        <tr><th scope="col">Key</th><th scope="col">Action</th><th scope="col">Scope</th></tr>
+                        <tr><th scope="col">{$textKey}</th><th scope="col">{$textAction}</th><th scope="col">{$textScope}</th></tr>
                     </thead>
                     <tbody>
                         {$rows}
                     </tbody>
                 </table>
                 <p class="text-muted small mb-0">
-                    Hosts wire the actual bindings via a Stimulus controller — see the Polysource docs for a reference snippet.
+                    {$textFootnote}
                 </p>
             </details>
             HTML;

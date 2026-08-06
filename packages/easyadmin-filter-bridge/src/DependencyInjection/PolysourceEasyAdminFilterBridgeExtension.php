@@ -330,9 +330,11 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
 
         // KeyboardShortcutsExtension (v0.5.0) — renders a
         // server-side cheat sheet of the recommended shortcuts via
-        // `polysource_keyboard_shortcuts_help()`. Stateless.
+        // `polysource_keyboard_shortcuts_help()`. Autowired since
+        // v0.9.2 for the optional translator.
         $container
             ->register(KeyboardShortcutsExtension::class)
+            ->setAutowired(true)
             ->setAutoconfigured(true)
         ;
 
