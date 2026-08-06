@@ -42,6 +42,14 @@ final class FeatureGate
     /**
      * @param array<string, mixed>|mixed $bundles
      */
+    public static function hasFrameworkBundle(mixed $bundles): bool
+    {
+        return self::hasBundle($bundles, 'FrameworkBundle');
+    }
+
+    /**
+     * @param array<string, mixed>|mixed $bundles
+     */
     public static function hasDoctrineBundle(mixed $bundles): bool
     {
         return self::hasBundle($bundles, 'DoctrineBundle');

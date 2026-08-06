@@ -9,6 +9,7 @@ use Polysource\Core\Plugin\Attribute\AsPlugin;
 use Polysource\Core\Plugin\HasPluginMetadata;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\PolysourceEasyAdminFilterBridgeExtension;
 use Polysource\EasyAdminFilterBridge\Routing\BundleRouteLoader;
+use Polysource\Filter\DependencyInjection\FeatureGate;
 use Symfony\Component\DependencyInjection\Exception\ExceptionInterface as ContainerExceptionInterface;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -86,7 +87,7 @@ final class PolysourceEasyAdminFilterBridgeBundle extends Bundle implements Admi
         $bundles = $this->container->hasParameter('kernel.bundles')
             ? $this->container->getParameter('kernel.bundles')
             : [];
-        if (!\is_array($bundles) || !\array_key_exists('EasyAdminBundle', $bundles)) {
+        if (!FeatureGate::hasEasyAdminBundle($bundles)) {
             return;
         }
 

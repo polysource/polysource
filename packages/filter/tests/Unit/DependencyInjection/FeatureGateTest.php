@@ -37,16 +37,20 @@ final class FeatureGateTest extends TestCase
     public function namedShortcutsDelegateToHasBundle(): void
     {
         $bundles = [
+            'FrameworkBundle' => stdClass::class,
             'DoctrineBundle' => stdClass::class,
             'SecurityBundle' => stdClass::class,
             'TwigBundle' => stdClass::class,
             'EasyAdminBundle' => stdClass::class,
         ];
 
+        self::assertTrue(FeatureGate::hasFrameworkBundle($bundles));
         self::assertTrue(FeatureGate::hasDoctrineBundle($bundles));
         self::assertTrue(FeatureGate::hasSecurityBundle($bundles));
         self::assertTrue(FeatureGate::hasTwigBundle($bundles));
         self::assertTrue(FeatureGate::hasEasyAdminBundle($bundles));
+
+        self::assertFalse(FeatureGate::hasFrameworkBundle([]));
     }
 
     #[Test]
