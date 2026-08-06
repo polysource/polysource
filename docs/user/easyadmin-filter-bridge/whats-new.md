@@ -30,10 +30,10 @@ keep the upstream layout intact when not enabled.
 |---|---|---|---|---|
 | **`TextFilter`** | `min_length: int` | Adds `data-polysource--filter-min-length-value` to the wrapper. Intended for client-side validation. | No. | None shipped — host wires its own listener. |
 | **`NumericFilter`** | `step: float` | Forwarded to `<input step>`. | Partially (you can pass `step` via `value_type_options`, but the bridge surfaces it as a top-level option for symmetry). | None shipped. |
-| | `quick_ranges: list<{label, min?, max?}>` | Renders a row of `<button>` below the inputs. Clicking fills `value` (and `value2` if both bounds set), then sets the `comparison` select to `between`/`>=`/`<=` accordingly. | **No.** | `applyQuickRange` ✓ |
+| | ~~`quick_ranges`~~ | **Removed in v0.2.0** (required JS — ADR-027). | — | — |
 | **`ComparisonFilter`** | `comparisons: list<string>` | Whitelists which comparison operators show up in the dropdown (e.g. `['=', '>=', '<=']`). | **No.** Upstream always exposes the full list including `between`, even when `between` is meaningless for `ComparisonFilter` (which has no `value2`). | None — applied at render time via Symfony's `choice_filter`. |
-| **`DateTimeFilter`** | `presets: list<string>` | Renders a row of `<button>` below the date inputs. Recognised presets: `today`, `yesterday`, `last_7_days`, `last_30_days`, `this_month`, `last_month`, `this_year`. Clicking computes the date(s) and fills `value`/`value2` with the right format for the input type. | **No.** | `applyPreset` ✓ |
-| | `show_clear: bool` | Adds a "Clear" `<button>` that empties `value` and `value2`. | No. | `clearValues` ✓ |
+| **`DateTimeFilter`** | Dedicated block prefix (`polysource_enhanced_datetime_filter`) for theme overrides. | — | None shipped. |
+| | ~~`presets`~~ / ~~`show_clear`~~ | **Removed in v0.2.0** (required JS — ADR-027; native HTML5 pickers + EA's Reset cover the ground). | — | — |
 | **`BooleanFilter`** | `include_null: bool` | Adds a third "Null" radio choice so you can filter rows where the boolean is NULL (common with nullable `boolean` columns). | **No** — upstream is hard-coded to true/false only. | None shipped. |
 | **`ChoiceFilter`** | `inline: bool` | Adds a `data-polysource--filter-inline-value` attr. Intended as a hint that the host theme can use to render choices as inline radios instead of a dropdown. | Partially (you can already pass `expanded: true` via `value_type_options`). | None shipped. |
 | **`ArrayFilter`** | `chip_display: bool` | Adds a `data-polysource--filter-chip-display-value` attr. Intended as a hook for host CSS/JS to render selected items as removable chips. | No. | None shipped — host wires its own UI. |
@@ -303,26 +303,18 @@ Full per-release detail in [`CHANGELOG.md`](../../../CHANGELOG.md).
 ```php
 // host app's CrudController
 ->add(NumericFilter::new('price')
-    ->setFormTypeOption('quick_ranges', [
-        ['label' => '< 50€', 'min' => null, 'max' => 50],
-        ['label' => '50–200€', 'min' => 50, 'max' => 200],
-        ['label' => '200–400€', 'min' => 200, 'max' => 400],
-    ]))
+    ->setFormTypeOption('step', 0.01))          // granularity hint on <input step>
+->add(BooleanFilter::new('archivedAt')
+    ->setFormTypeOption('include_null', true))  // third "Null" choice
+->add(ComparisonFilter::new('stock')
+    ->setFormTypeOption('comparisons', ['=', '>=', '<=']))  // operator whitelist
 ```
 
-Renders + works (clicking a button fills inputs, sets comparison to
-`between`/`>=`/`<=`, the second input becomes visible if `between`).
-**No JS to write, no theme override.**
-
-```php
-->add(DateTimeFilter::new('createdAt')
-    ->setFormTypeOption('presets', ['today', 'last_7_days', 'this_month'])
-    ->setFormTypeOption('show_clear', true))
-```
-
-Same: clicking "Last 7 days" fills the two date inputs to today − 6 and
-today, sets comparison to `between`, reveals the second date picker.
-"Clear" empties both. Out of the box.
+Renders + works server-side — **no JS to write, no theme override**.
+(The v0.1 `quick_ranges` / `presets` / `show_clear` button options were
+removed in v0.2.0 per ADR-027: they required a Stimulus pipeline and
+were inert without one. Native HTML5 date pickers + EA's built-in Reset
+cover the same ground.)
 
 ## Multi-version support since v0.1
 

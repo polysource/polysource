@@ -98,23 +98,23 @@ your controller, in a service, in a configuration file, anywhere.
 
 ```php
 use Polysource\Filter\Model\FilterDefinition;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 
 $definitions = [
     FilterDefinition::new('text', 'name', 'Name'),
 
+    // `formSpec` is passed verbatim to the resolved Symfony FormType
+    // (minus the `form_type` routing key), so any option that FormType
+    // accepts is fair game:
     FilterDefinition::new('numeric', 'price', 'Price')
         ->withFormSpec([
-            'quick_ranges' => [
-                ['label' => '< 50€',     'min' => null, 'max' => 50],
-                ['label' => '50–200€',   'min' => 50,   'max' => 200],
-                ['label' => '200–400€',  'min' => 200,  'max' => 400],
-            ],
+            'attr' => ['step' => '0.01'],       // granularity on <input step>
         ]),
 
     FilterDefinition::new('datetime', 'createdAt', 'Created at')
         ->withFormSpec([
-            'presets' => ['today', 'last_7_days', 'this_month'],
-            'show_clear' => true,
+            'form_type' => DateType::class,     // override the renderer's default FormType
+            'widget' => 'single_text',
         ]),
 
     FilterDefinition::new('choice', 'status', 'Status')

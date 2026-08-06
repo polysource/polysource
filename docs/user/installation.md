@@ -33,8 +33,8 @@ UI features:
 
 | Package | Controller(s) | What needs Stimulus |
 |---|---|---|
-| `polysource/filter` | `polysource--filter-modal-layout`, `polysource--filter-chips`, `polysource--filter-subpanel` | tab / group filter layout, chip × close button, subpanel mode |
-| `polysource/easyadmin-filter-bridge` | `polysource--filter` | numeric `quick_ranges` buttons, datetime `presets` buttons, `show_clear` button |
+| `polysource/filter` | `polysource--filter-chips` | in-place chip removal + "+N more" overflow (the chips bar itself and its × links are server-rendered) |
+| `polysource/easyadmin-filter-bridge` | `polysource--filter` | value-only data attrs (`step`, `min_length`, `include_null`, …) for host-side JS layers to read — no behaviour of its own since v0.2.0 |
 | `polysource/bulk-async` | `polysource--bulk-async--progress` | live progress bar for async bulk actions |
 | `polysource/search` | `polysource--search--cmdk` | command-palette overlay |
 
@@ -49,7 +49,7 @@ Every Polysource package that ships Stimulus controllers declares
 them via the canonical Symfony UX manifest in `assets/package.json`
 (`symfony.controllers`), with an explicit `name` override that
 preserves the short identifier used by templates
-(`polysource--filter`, `polysource--filter-modal-layout`, etc.).
+(`polysource--filter`, `polysource--filter-chips`, etc.).
 
 - **Webpack Encore + `@symfony/stimulus-bridge`**: auto-discovery
   works out-of-the-box once you `composer require` a Polysource
@@ -65,9 +65,7 @@ preserves the short identifier used by templates
   {
       "controllers": {
           "@polysource/filter": {
-              "polysource--filter-modal-layout": { "enabled": true },
-              "polysource--filter-chips":        { "enabled": true },
-              "polysource--filter-subpanel":     { "enabled": true }
+              "polysource--filter-chips": { "enabled": true }
           },
           "@polysource/easyadmin-filter-bridge": {
               "polysource--filter": { "enabled": true }

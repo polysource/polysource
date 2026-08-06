@@ -1,6 +1,6 @@
 {
     "name": "@polysource/easyadmin-filter-bridge",
-    "description": "Stimulus controller shipped with polysource/easyadmin-filter-bridge — adds presets, quick-ranges, clear, and validation behaviour to enhanced EasyAdmin filters.",
+    "description": "Stimulus controller shipped with polysource/easyadmin-filter-bridge — value-only since v0.2.0: exposes the enhanced filters' typed data attributes (step, min_length, include_null, ...) for host-side progressive-enhancement layers.",
     "license": "MIT",
     "private": true,
     "symfony": {

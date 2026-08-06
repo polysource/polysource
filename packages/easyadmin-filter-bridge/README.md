@@ -1,19 +1,19 @@
 # polysource/easyadmin-filter-bridge
 
-> Drop-in package that **enriches the filters of an existing EasyAdmin v5
-> app** without forking EasyAdmin. Plugs into EasyAdmin's
+> Drop-in package that **enriches the filters of an existing EasyAdmin
+> app (4.24+ or 5.0+)** without forking EasyAdmin. Plugs into EasyAdmin's
 > `FilterConfiguratorInterface` extension point.
 
 ## Status
 
-**v0.5.7 published (2026-05-15).** API release-candidate stable —
-committed for v0.5.x, breaking changes allowed before v1.0 (cf.
+**v0.9.1 published (2026-08-06).** API release-candidate stable —
+committed for v0.9.x, breaking changes allowed before v1.0 (cf.
 [ADR-012](../../docs/adr/0012-dual-product-positioning.md)).
 Distributed on Packagist as
 [`polysource/easyadmin-filter-bridge`](https://packagist.org/packages/polysource/easyadmin-filter-bridge).
 
 Feature-complete on the bridge side, dogfooded on multi-tenant
-client integrations through v0.5.7:
+client integrations since v0.5.7:
 
 - **All 8 built-in EasyAdmin filters covered** by an Enhancer
   (`DateTime`, `Boolean`, `Text`, `Numeric`, `Choice`, `Comparison`,
@@ -41,10 +41,10 @@ Once installed, EasyAdmin's built-in filters gain richer form types,
 
 | Built-in filter | Enhancement |
 |---|---|
-| `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) + `presets` (today / last 7 days / …) + `show_clear` button. |
+| `DateTimeFilter` | Dedicated block prefix (`polysource_enhanced_datetime_filter`) for theme overrides. |
 | `BooleanFilter` | Optional `include_null` flag — adds a third "Empty / Null" choice to filter rows where the column is `NULL`. |
 | `TextFilter` | Optional `min_length` flag — skip filter for input shorter than the threshold (default 0 = no threshold). |
-| `NumericFilter` | `step` option (granularity hint, e.g. `0.01` for currency) + `quick_ranges` buttons. |
+| `NumericFilter` | `step` option (granularity hint, e.g. `0.01` for currency). |
 | `ChoiceFilter` | `inline` option — render choices as pills/badges instead of dropdown. |
 | `ComparisonFilter` | `comparisons` option — whitelist of operators to expose in the dropdown (default `[]` = all). |
 | `ArrayFilter` | `chip_display` option — selected items as removable chips instead of multi-line list. |
@@ -82,35 +82,33 @@ shipped Configurators auto-tag themselves via EasyAdmin's
 and EasyAdmin's `FilterFactory` picks them up to mutate filter DTOs
 right after they are created.
 
-### Frontend assets (filter modal tabs / chips / saved-views)
+### Frontend assets — server-rendered first, Stimulus optional
 
-The richer modal layout (tabs + accordions for dozens of filters) and
-the chips bar above the table are powered by Stimulus controllers
-shipped under `assets/controllers/`. EasyAdmin auto-loads them when
-the bundle is autoconfigured **only** if your host app uses
-[Symfony AssetMapper](https://symfony.com/doc/current/frontend/asset_mapper.html)
-or Webpack Encore + StimulusBundle.
+**The filter modal tabs, group accordions, and the chips bar are
+server-rendered — zero JavaScript required** (since v0.2.0, per
+[ADR-027 progressive enhancement](../../docs/adr/0027-progressive-enhancement.md)).
+Tabs use native `<details name="...">` exclusive accordions, pane
+switching is pure CSS, and every chip's × button is a plain link.
 
-If the modal opens flat (no tabs, all filters stacked) or the chips
-do not appear, your host is most likely missing the AssetMapper
-wiring. Two-step fix:
+Two kinds of assets ship with the bundle:
 
-1. Make sure `symfony/asset-mapper` and `symfony/stimulus-bundle` are
-   installed and `framework.yaml` enables both.
-2. In your `assets/bootstrap.js` (or `app.js`), confirm the auto-load
-   line is present:
+1. **A stylesheet + a small defensive script** in `Resources/public/`,
+   published to `public/bundles/polysourceeasyadminfilterbridge/` by
+   `assets:install` (Symfony Flex runs it automatically). The bridge's
+   index template links them itself — nothing to wire. Theming is done
+   through `--polysource-*` CSS variables — see
+   [the theming guide](../../docs/user/easyadmin-filter-bridge/theming.md).
+2. **One optional Stimulus controller** (`polysource--filter`, under
+   `assets/controllers/`) that progressively enhances the filter
+   widgets: preset buttons, quick-ranges, clear buttons, validation
+   hints. Hosts using AssetMapper or Webpack Encore + StimulusBundle
+   get it auto-loaded via the `assets/package.json` advertisement;
+   hosts without any JS pipeline simply keep the server-rendered
+   behaviour.
 
-```js
-import { startStimulusApp } from '@symfony/stimulus-bundle';
-
-const app = startStimulusApp();
-// no manual import needed — Stimulus auto-loads
-// vendor/polysource/easyadmin-filter-bridge/assets/controllers/*.js
-```
-
-3. Then make sure EasyAdmin pages include your importmap. EasyAdmin
-   uses its own bundled assets by default and ignores the host
-   importmap, so add it back via your Dashboard:
+If you use AssetMapper, remember EasyAdmin ignores the host importmap
+by default — add it back via your Dashboard so the optional controller
+boots on admin pages:
 
 ```php
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
@@ -125,9 +123,6 @@ final class DashboardController extends AbstractDashboardController
 }
 ```
 
-Without this last step the Stimulus controllers ship in the bundle
-but never boot on EasyAdmin pages — the modal stays flat.
-
 ### Saved views (POST routes)
 
 `polysource/filter` ships a saved-views feature (dropdown, save,
@@ -137,14 +132,12 @@ EasyAdmin out of the box — they live at:
 - `POST /admin/saved-views` (`polysource_saved_view_create`)
 - `POST /admin/saved-views/{id}/delete` (`polysource_saved_view_delete`)
 
-To enable them, add the bridge controller directory to your
-`config/routes.yaml`:
-
-```yaml
-polysource_easyadmin_filter_bridge:
-    resource: '../vendor/polysource/easyadmin-filter-bridge/src/Controller/'
-    type: attribute
-```
+They are auto-imported — along with the 6 other `polysource_*`
+routes — by `Bundle::boot()` since v0.5.4, so no `routes.yaml`
+change is needed. Multi-tenant hosts mounting EA under a custom
+prefix can opt out with `auto_register_routes: false` and import
+`@PolysourceEasyAdminFilterBridge/Resources/config/routes.php`
+under their own prefix instead.
 
 A `BeforeCrudActionEvent` subscriber also expands `?view=<id>` into
 the EA `filters[...]=...` query and redirects to a clean URL — no
@@ -273,9 +266,13 @@ Configurators never read either argument.
 
 ## Compatibility
 
-- **PHP** 8.4+ (will widen to 8.2+ in v0.5+)
-- **Symfony** 7.4 LTS (will widen to 6.4+ in v0.5+)
+Cf. [ADR-015 — multi-version baseline](../../docs/adr/0015-multi-version-compatibility-baseline.md);
+CI runs the full matrix.
+
+- **PHP** `>=8.1`
+- **Symfony** `^5.4 || ^6.0 || ^7.0 || ^8.0`
 - **EasyAdmin** `^4.24 || ^5.0`
+- **Doctrine ORM** `^2.20 || ^3.0`
 
 ## Architectural decisions
 

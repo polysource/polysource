@@ -65,22 +65,45 @@ lessons into permanent tooling:
 - **i18n docs** + **CSP / WCAG 2.2 AA audit page** + **Flex recipes
   prep** + **TestKernel patterns guide** + **Sf 5.4 → 8.0 compat audit**
 
+### v0.7 — public API freeze prep (v0.7.0 → v0.7.3, 2026-05-15/16)
+
+Closed the 6 outstanding items from
+[ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md) so that v1.0
+can ship without API drift — notably `FilterCriterion::$operator:
+string` → `enum FilterOperator` (breaking, signalled) and the
+[AdminContext decomposition design ADR-029](./docs/adr/0029-admin-context-decomposition.md).
+
+### v0.8 — Redis adapter reshape (v0.8.0 → v0.8.2, 2026-05-16/17)
+
+5 type-pure Redis data sources (string / list / hash / set /
+sorted-set) closing the dogfood-surfaced `WRONGTYPE` crash, plus the
+shared `FilterUrlBuilder` as single source of truth for the
+`filters[...]` URL shape.
+
+### v0.9 — architectural cleanup (v0.9.0 2026-05-18, v0.9.1 2026-08-06)
+
+Full-codebase audit: 17 of 22 findings resolved (CSRF on saved-view
+routes, open-redirect + XSS hardening, decompositions — tracker in
+[docs/maintainers/v0.9.0-architectural-cleanup.md](./docs/maintainers/v0.9.0-architectural-cleanup.md)).
+v0.9.1 thawed the dependency freeze and cleaned the per-package dist
+(explicit deps, export-ignores, derived plugin versions).
+
 ## Next
 
-### v0.7 — public API freeze prep (in progress)
+### v0.10 — remaining large refactors (in progress)
 
-Closes the 6 outstanding items from
-[ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md) so that v1.0
-can ship without API drift:
+The audit items deferred from v0.9 with documented rationale, plus
+host-app genericity work:
 
-- `BatchableDataSourceInterface` — decision (cut or implement)
-- `DataRecord::$rawSource: mixed` — escape-hatch tightening
-- `FilterCriterion::$operator: string` → `enum FilterOperator`
-- `ResourceInterface::configureSearch()` — doc/code alignment
-- `AdminContext` decomposition — design ADR for v1.x evolution
-- `DataPage::isEmpty()` Generator one-shot — doc visibility
+- **Bridge theming / i18n / CSP** — bundle stylesheet with
+  `--polysource-*` variables, full EN+FR catalogs, no inline
+  CSS/JS (shipped on main, releases with v0.9.2/v0.10)
+- **`OperatorTranslator`** — deduplicate the FilterOperator → query
+  translation across the 6 adapters
+- **`FeatureGate` DI predicates** — finish the migration started in
+  [#71](https://github.com/polysource/polysource/pull/71)
 
-### v0.8 onwards — pre-1.0 polish (not committed)
+### Pre-1.0 polish (not committed)
 
 - ORM 3.x CI matrix row (gap identified in the
   [Symfony compat audit](./docs/maintainers/symfony-compat-audit.md))
