@@ -82,13 +82,16 @@ final class FilterTreeBuilder
             $tab = \is_string($rawTab) && '' !== $rawTab ? $rawTab : null;
             $group = \is_string($rawGroup) && '' !== $rawGroup ? $rawGroup : null;
 
-            if (null === $tab && null === $group) {
-                $ungrouped[] = $property;
+            // Narrow $tab FIRST (nested rather than compound
+            // conditions) so static analysis proves it non-null past
+            // this block on every PHPStan build in the matrix.
+            if (null === $tab) {
+                if (null === $group) {
+                    $ungrouped[] = $property;
 
-                continue;
-            }
+                    continue;
+                }
 
-            if (null === $tab && null !== $group) {
                 $topGroups = $this->appendToGroup($topGroups, $group, $property);
 
                 continue;
