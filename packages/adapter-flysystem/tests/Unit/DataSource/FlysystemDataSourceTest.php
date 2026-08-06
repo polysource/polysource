@@ -101,6 +101,86 @@ final class FlysystemDataSourceTest extends TestCase
         self::assertCount(2, $items);
     }
 
+    /**
+     * Since v0.9's InMemoryValueMatcher adoption the data source
+     * supports all 12 FilterOperator cases (previously only Eq/In/
+     * Like — the rest matched unconditionally). These lock the
+     * routing per operator family; exhaustive value semantics live
+     * in core's InMemoryValueMatcherTest. `isDirectory = false` is
+     * combined in so directory rows (null-ish extension/size) don't
+     * make the assertions order-dependent.
+     */
+    private function filesOnly(DataQuery $query): DataQuery
+    {
+        return $query->withFilter(
+            'isDirectory',
+            new FilterCriterion('isDirectory', FilterOperator::Eq, false),
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function pathsFor(DataQuery $query): array
+    {
+        $paths = array_map(
+            static fn ($r): string => (string) $r->identifier,
+            $this->source->search($query)->asArray(),
+        );
+        sort($paths);
+
+        return $paths;
+    }
+
+    public function testFilterByNeqOperator(): void
+    {
+        $query = $this->filesOnly(new DataQuery('files'))
+            ->withFilter('extension', new FilterCriterion('extension', FilterOperator::Neq, 'pdf'));
+
+        self::assertSame(['notes.txt'], $this->pathsFor($query));
+    }
+
+    public function testFilterByGteOperator(): void
+    {
+        $query = $this->filesOnly(new DataQuery('files'))
+            ->withFilter('sizeBytes', new FilterCriterion('sizeBytes', FilterOperator::Gte, 5));
+
+        self::assertSame(
+            ['2026/05/invoice-001.pdf', '2026/05/invoice-002.pdf', 'notes.txt'],
+            $this->pathsFor($query),
+        );
+    }
+
+    public function testFilterByBetweenOperator(): void
+    {
+        $query = $this->filesOnly(new DataQuery('files'))
+            ->withFilter('sizeBytes', new FilterCriterion('sizeBytes', FilterOperator::Between, [4, 6]));
+
+        self::assertSame(
+            ['2026/05/invoice-001.pdf', '2026/05/invoice-002.pdf'],
+            $this->pathsFor($query),
+        );
+    }
+
+    public function testFilterByNinOperator(): void
+    {
+        $query = $this->filesOnly(new DataQuery('files'))
+            ->withFilter('extension', new FilterCriterion('extension', FilterOperator::Nin, ['pdf']));
+
+        self::assertSame(['notes.txt'], $this->pathsFor($query));
+    }
+
+    public function testFilterByLikeOperatorOnFileName(): void
+    {
+        $query = $this->filesOnly(new DataQuery('files'))
+            ->withFilter('fileName', new FilterCriterion('fileName', FilterOperator::Like, 'invoice'));
+
+        self::assertSame(
+            ['2026/05/invoice-001.pdf', '2026/05/invoice-002.pdf'],
+            $this->pathsFor($query),
+        );
+    }
+
     public function testCreateWritesAndReturnsRecord(): void
     {
         $record = $this->source->create(new DataPayload([

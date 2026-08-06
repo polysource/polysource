@@ -11,7 +11,6 @@ use Polysource\Core\Query\DataPage;
 use Polysource\Core\Query\DataPayload;
 use Polysource\Core\Query\DataQuery;
 use Polysource\Core\Query\DataRecord;
-use Polysource\Core\Query\FilterOperator;
 
 /**
  * Read+write data source over a namespaced collection of Redis lists
@@ -148,21 +147,7 @@ final class RedisListDataSource implements WritableDataSourceInterface
 
     private function scanPattern(DataQuery $query): string
     {
-        $criterion = $query->filters['id'] ?? null;
-        if (null === $criterion) {
-            return $this->keyPrefix . '*';
-        }
-        $op = $criterion->operator;
-        $isLike = $op instanceof FilterOperator ? FilterOperator::Like === $op : 'like' === (string) $op;
-        if (!$isLike || !\is_string($criterion->value) || '' === $criterion->value) {
-            return $this->keyPrefix . '*';
-        }
-        $glob = $criterion->value;
-        if (!str_contains($glob, '*') && !str_contains($glob, '?')) {
-            $glob = '*' . $glob . '*';
-        }
-
-        return $this->keyPrefix . $glob;
+        return ScanPatternResolver::resolve($query, $this->keyPrefix);
     }
 
     private function requireStringProp(DataPayload $payload, string $key): string

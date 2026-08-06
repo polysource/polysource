@@ -13,7 +13,10 @@ use Polysource\Adapter\Messenger\DataSource\MessengerFailedDataSource;
 use Polysource\Adapter\Messenger\Tests\Fixture\InMemoryListableReceiver;
 use Polysource\Adapter\Messenger\Tests\Fixture\PlainMessage;
 use Polysource\Core\Query\DataQuery;
+use Polysource\Core\Query\FilterCriterion;
+use Polysource\Core\Query\FilterOperator;
 use Polysource\Core\Query\Pagination;
+use stdClass;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\TransportMessageIdStamp;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
@@ -121,6 +124,112 @@ final class MessengerFailedDataSourceTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('ListableReceiverInterface');
         new MessengerFailedDataSource($nonListable, new EnvelopeMapper());
+    }
+
+    /**
+     * Operator routing tests — the data source dispatches every
+     * criterion through core's InMemoryValueMatcher (all 12
+     * FilterOperator cases). These lock representative routing per
+     * operator family; exhaustive value semantics live in core's
+     * InMemoryValueMatcherTest.
+     */
+    #[Test]
+    public function filterByEqOperatorOnMessageClass(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+            self::env('2', new stdClass()),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        $query = (new DataQuery('failed-messages'))->withFilter(
+            'message_class',
+            new FilterCriterion('message_class', FilterOperator::Eq, PlainMessage::class),
+        );
+
+        $items = $dataSource->search($query)->asArray();
+        self::assertCount(1, $items);
+        self::assertSame('1', $items[0]->identifier);
+    }
+
+    #[Test]
+    public function filterByNeqOperatorOnMessageClass(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+            self::env('2', new stdClass()),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        $query = (new DataQuery('failed-messages'))->withFilter(
+            'message_class',
+            new FilterCriterion('message_class', FilterOperator::Neq, PlainMessage::class),
+        );
+
+        $items = $dataSource->search($query)->asArray();
+        self::assertCount(1, $items);
+        self::assertSame('2', $items[0]->identifier);
+    }
+
+    #[Test]
+    public function filterByLikeOperatorOnMessageClass(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+            self::env('2', new stdClass()),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        $query = (new DataQuery('failed-messages'))->withFilter(
+            'message_class',
+            new FilterCriterion('message_class', FilterOperator::Like, 'plainmessage'),
+        );
+
+        $items = $dataSource->search($query)->asArray();
+        self::assertCount(1, $items);
+        self::assertSame('1', $items[0]->identifier);
+    }
+
+    #[Test]
+    public function filterByInOperatorOnMessageClass(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+            self::env('2', new stdClass()),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        $query = (new DataQuery('failed-messages'))->withFilter(
+            'message_class',
+            new FilterCriterion('message_class', FilterOperator::In, [PlainMessage::class, 'App\\Other']),
+        );
+
+        $items = $dataSource->search($query)->asArray();
+        self::assertCount(1, $items);
+        self::assertSame('1', $items[0]->identifier);
+    }
+
+    #[Test]
+    public function filterByIsNullOperatorOnAbsentProperty(): void
+    {
+        $receiver = new InMemoryListableReceiver([
+            self::env('1', new PlainMessage('a', 1)),
+        ]);
+        $dataSource = new MessengerFailedDataSource($receiver, new EnvelopeMapper());
+
+        // No FlushFailedStamp on the fixture envelope → exception_class
+        // is null → IsNull matches, IsNotNull doesn't.
+        $isNull = (new DataQuery('failed-messages'))->withFilter(
+            'exception_class',
+            new FilterCriterion('exception_class', FilterOperator::IsNull, null),
+        );
+        self::assertCount(1, $dataSource->search($isNull)->asArray());
+
+        $isNotNull = (new DataQuery('failed-messages'))->withFilter(
+            'exception_class',
+            new FilterCriterion('exception_class', FilterOperator::IsNotNull, null),
+        );
+        self::assertCount(0, $dataSource->search($isNotNull)->asArray());
     }
 
     private static function env(string $id, object $message): Envelope
