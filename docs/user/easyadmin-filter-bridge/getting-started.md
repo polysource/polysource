@@ -499,7 +499,7 @@ To customise the markup, override the override at the app level:
 
 ```twig
 {# templates/bundles/EasyAdminBundle/crud/index.html.twig #}
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block main %}
     {# your custom chips markup here, BEFORE parent() #}

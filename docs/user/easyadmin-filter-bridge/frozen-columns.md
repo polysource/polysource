@@ -17,7 +17,7 @@ In your `templates/bundles/EasyAdminBundle/crud/index.html.twig`
 and `table_body` and decorate the cells you want to freeze:
 
 ```twig
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block table_head %}
     <tr>

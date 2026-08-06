@@ -19,7 +19,7 @@ override, render the reorder buttons next to each column header
 inside the `table_head` block:
 
 ```twig
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block table_head %}
     {% set resource = ea.entity.fqcn %}

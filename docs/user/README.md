@@ -33,6 +33,7 @@ what Doctrine-ORM-centric solutions don't cover.
 | Build filter UIs (standalone primitive) | [filter/](./filter/) |
 | Enrich an existing EasyAdmin app's filters — 4.24+ or 5.0+ (install + walk-through) | [easyadmin-filter-bridge/getting-started.md](./easyadmin-filter-bridge/getting-started.md) |
 | Honest per-filter matrix vs upstream EA | [easyadmin-filter-bridge/whats-new.md](./easyadmin-filter-bridge/whats-new.md) |
+| Retheme the bridge (CSS variables, template overrides, CSP) | [easyadmin-filter-bridge/theming.md](./easyadmin-filter-bridge/theming.md) |
 | Copy-paste a runnable recipe | [cookbook/](./cookbook/) |
 | Look up a public interface signature | [api/](./api/) |
 

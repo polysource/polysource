@@ -18,7 +18,7 @@ output into the `<table>` element's class list and render the
 toggle wherever you want the control to appear:
 
 ```twig
-{% extends '@!EasyAdmin/crud/index.html.twig' %}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
 
 {% block content_header %}
     {{ parent() }}

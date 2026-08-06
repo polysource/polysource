@@ -19,9 +19,11 @@
    Inputs:
    - `applied_filters` (array<string, array>) — `ea.request.query.all['filters']`
 
-   Default styling lives in the bridge CSS file
-   `Resources/public/css/chips.css` (auto-mounted via
-   `@PolysourceEasyAdminFilterBridge` AssetMapper namespace).
+   Default styling lives in the bundle stylesheet
+   `Resources/public/polysource-filter-bridge.css` (published by
+   `assets:install`, linked from the `crud/index.html.twig`
+   override). Colours are themable via `--polysource-*` CSS
+   variables — see docs/user/easyadmin-filter-bridge/theming.md.
 #}
 {% macro is_slice_applied(slice) %}
     {%- if slice is iterable -%}
