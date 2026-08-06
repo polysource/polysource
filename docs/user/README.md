@@ -96,7 +96,7 @@ allowed and signalled in the [CHANGELOG](../../CHANGELOG.md).
 1932 assertions in the package matrix, 29 Panther browser E2E tests,
 and 15 adapter integration tests on real containers (Redis, S3 MinIO,
 Meilisearch, HTTP API). PHPStan max + cs-fixer clean. CI runs PHP
-8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0.
+8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0.
 
 ## License
 

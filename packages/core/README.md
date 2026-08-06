@@ -1,6 +1,6 @@
 # polysource/core
 
-> Core contracts and value objects for Polysource. Pure PHP 8.1+. **Zero Symfony dependency.**
+> Core contracts and value objects for Polysource. Pure PHP 8.2+. **Zero Symfony dependency.**
 
 The contract layer the rest of Polysource builds on — and the contract layer **your extensions implement**. 26 public types total. Coverage gate ≥ 90% (currently 99.17%).
 
@@ -43,7 +43,7 @@ All `final` with `readonly` properties. Mutations return new instances via `with
 composer require polysource/core
 ```
 
-Requires PHP 8.1+ (cf. [ADR-015](../../docs/adr/0015-multi-version-compatibility-baseline.md)).
+Requires PHP 8.2+ (cf. [ADR-015](../../docs/adr/0015-multi-version-compatibility-baseline.md)).
 
 ## Why "zero Symfony dependency"
 

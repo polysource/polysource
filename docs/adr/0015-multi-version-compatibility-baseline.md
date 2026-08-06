@@ -1,5 +1,15 @@
 # ADR-015 — Multi-version compatibility baseline (PHP 8.1+ / Symfony 5.4+ / EA 4.24+)
 
+> **Addendum 2026-08-06 (v1.0)** — les planchers v1.0 prévus par
+> ADR-011 sont appliqués : **PHP 8.2+** (drop 8.1) et **Symfony 6.4
+> LTS+** (drop 5.4/6.0) sur les 16 packages, y compris `filter` et
+> `easyadmin-filter-bridge` qui advertisaient `^5.4` pré-1.0. La
+> matrice CI perd la ligne PHP 8.1 ; le job « floor smoke » gate
+> désormais Sf 6.4 + EA 4 (bridge-alone). EasyAdmin 4.24+ et
+> Doctrine ORM 2.20+ inchangés. Les lignées `^0.x` sur Packagist
+> restent installables sur les anciens planchers.
+
+
 - **Date** : 2026-05-04
 - **Statut** : Accepté
 - **Décide pour** : v0.1.0+
