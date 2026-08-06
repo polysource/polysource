@@ -139,7 +139,14 @@
                                        id="polysource-col-{{ property }}"
                                        {% if not is_hidden %}checked{% endif %}>
                                 <label class="form-check-label" for="polysource-col-{{ property }}">
-                                    {{ field.label|default(property|humanize) }}
+                                    {# `field.label` may be a TranslatableMessage (hosts
+                                       using `t()` labels on EA 5) — printing it raw
+                                       throws "could not be converted to string". The
+                                       `trans` filter renders both plain strings (no-op
+                                       when the id has no catalog entry) and
+                                       TranslatableInterface objects. Surfaced 2026-08-06
+                                       by the bridge demo refresh. #}
+                                    {{ field.label|default(property|humanize)|trans(domain: ea.i18n.translationDomain) }}
                                 </label>
                             </div>
                         {% endfor %}

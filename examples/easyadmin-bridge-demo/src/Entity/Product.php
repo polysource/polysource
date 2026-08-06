@@ -14,11 +14,11 @@ use Doctrine\ORM\Mapping as ORM;
  *
  *   - `name`        → TextFilter        (min_length option)
  *   - `description` → TextFilter        (min_length option)
- *   - `price`       → NumericFilter     (step + quick_ranges options)
+ *   - `price`       → NumericFilter     (step option)
  *   - `stock`       → ComparisonFilter  (comparisons whitelist option)
  *   - `isActive`    → BooleanFilter     (include_null option)
- *   - `archivedAt`  → DateTimeFilter    (presets + show_clear options) — nullable
- *   - `createdAt`   → DateTimeFilter    (presets + show_clear options)
+ *   - `archivedAt`  → DateTimeFilter    (enhanced block prefix) — nullable
+ *   - `createdAt`   → DateTimeFilter    (enhanced block prefix)
  *   - `status`      → ChoiceFilter      (inline option) — backed by enum
  *   - `tags`        → ArrayFilter       (chip_display option)
  *   - `category`    → EntityFilter      (placeholder option)

@@ -37,17 +37,22 @@ composer require polysource/easyadmin-filter-bridge
 
 Symfony Flex registers the bundles automatically. Full guide (manual registration, dev install from the monorepo, package picker) in [`docs/user/installation.md`](./docs/user/installation.md). Five-minute path to a working dashboard in [`docs/user/getting-started.md`](./docs/user/getting-started.md).
 
-## Status — v0.5.7 published (2026-05-15)
+## Status — v0.9.1 published (2026-08-06)
 
-16 packages distributed on Packagist as [`polysource/*`](https://packagist.org/?query=polysource%2F), mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.5.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
+16 packages distributed on Packagist as [`polysource/*`](https://packagist.org/?query=polysource%2F), mirrored from this monorepo via [an automated subtree-split pipeline (ADR-026)](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md). The public API is **release-candidate stable** — committed for v0.9.x but not SemVer-frozen until v1.0. Breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by the freeze checklist in [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md). License: MIT. See [ROADMAP.md](./ROADMAP.md) for the next minors and the [ADRs](./docs/adr/) for the choices that landed.
 
-**v0.2.0 → v0.5.7 highlights** (since the v0.1.0 base — full per-version detail in [CHANGELOG.md](./CHANGELOG.md)):
+**v0.2.0 → v0.9.1 highlights** (since the v0.1.0 base — full per-version detail in [CHANGELOG.md](./CHANGELOG.md)):
 
 - **v0.2.0** — Simplification: Stimulus controllers replaced by native `<details>` HTML, [ADR-027 progressive enhancement](./docs/adr/0027-progressive-enhancement.md) + [ADR-028 scope discipline](./docs/adr/0028-scope-discipline.md) ratified.
 - **v0.3.0** — Column visibility toggle (per-user prefs), default saved view per user (`★`), row conditional styles, streaming CSV/XLSX export.
 - **v0.4.0** — Filter-from-cell dropdown, per-column quick filter row, cross-page bulk selection + dry-run preview, empty-state design system.
 - **v0.5.0** — Filter-aware export, frozen/sticky columns, row density toggle, toast notifications, column widths on saved views, column reordering, bulk action history audit log, keyboard shortcut cheat sheet, recently viewed records, short filter URL tokens.
 - **v0.5.1 → v0.5.7** — Six dogfooding-driven patch releases hardening the install path (multi-kernel + multi-tenant safety), runtime (Doctrine ORM 2.x export streaming, IN/NULL filter DQL, PHP 8.4 deprecations, stale-schema degrade), and UX (horizontal filter tab strip, ISO 8601 date export). Zero breaking change.
+- **v0.6.0** — `polysource:doctor` install/runtime diagnostics command, plus the bridge endpoints' integration-test kernel.
+- **v0.7.x** — Pre-v1.0 freeze prep: `FilterOperator` enum replaces free-form operator strings, remaining [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md) items closed (two breaking changes, both signalled).
+- **v0.8.x** — Redis adapter reshaped into 5 type-pure data sources (string / list / hash / set / sorted-set), shared `FilterUrlBuilder` for the `filters[...]` URL shape.
+- **v0.9.0** — Architectural cleanup: CSRF on all saved-view POST routes, open-redirect + XSS hardening, 17 of 22 audit items resolved ([tracker](./docs/maintainers/v0.9.0-architectural-cleanup.md)); the large refactors are scheduled for v0.10.
+- **v0.9.1** — Maintenance: dependency-freeze thaw, per-package dist hygiene (explicit deps, export-ignores, derived plugin versions), Mercure bulk-async broadcaster registration fix.
 
 Each helper is a Twig function or DI-wired service composable from the host's templates — never auto-injected into pages the host didn't opt into. See [`whats-new.md`](./docs/user/easyadmin-filter-bridge/whats-new.md) for the full feature index.
 
@@ -132,7 +137,7 @@ Read the full design in [`docs/architecture/target-architecture.md`](./docs/arch
 - [Cookbook — permissions with roles](./docs/user/cookbook/permissions-with-roles.md)
 - [Strategy / vision](./docs/strategy/product-vision.md)
 - [Architecture decisions (ADR)](./docs/adr/) — 26 ADRs covering identifiers, routing, immutability, multi-version baseline (ADR-015), dual-product positioning (ADR-012), plugin architecture (ADR-018), showcase demo (ADR-025), monorepo split + Packagist mirrors (ADR-026), etc.
-- [Roadmap](./ROADMAP.md) — what's planned for v0.2 and beyond
+- [Roadmap](./ROADMAP.md) — what's planned for v0.10 and the road to v1.0
 - [Changelog](./CHANGELOG.md) — versioned history of releases
 
 ## Bring your own everything — the contract reference
@@ -166,17 +171,17 @@ The opening pitch in one table. **Most contracts are 1-5 methods** — that's th
 - **Core coverage gate ≥ 90%** (`polysource/core` sits at 99.17%)
 - **CI matrix** runs PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0
 
-## Known limitations in v0.1
+## Known limitations pre-v1.0
 
-Polysource v0.1.0 is published but not yet production-hardened. Adopt early, with eyes open:
+Polysource is published and dogfooded against real client integrations, but not yet SemVer-frozen. Adopt early, with eyes open:
 
-- **Some UI surfaces are intentionally minimal** and will be polished in v0.2 (drag-drop dashboard composition, fluent form builders, real-time collaborative cursors).
+- **Some UI surfaces are intentionally minimal** (drag-drop dashboard composition, fluent form builders, real-time collaborative cursors are out of scope pre-v1.0 — cf. [ADR-028](./docs/adr/0028-scope-discipline.md)).
 - **The standalone admin is not a replacement for EasyAdmin on pure Doctrine CRUD.** Keep using EasyAdmin for that. The Polysource standalone admin shines on resources outside Doctrine (Messenger, Redis, S3, REST, Meilisearch).
 - **Concrete field helpers are still limited.** The bundled `Field` API covers common types (text, datetime, money, boolean, code) but advanced renderers (rich-text editors, dependent dropdowns, file uploaders with progress) are app-side for now.
 - **Some advanced capabilities are opt-in packages and require host wiring.** Audit log, bulk-async, widgets, search palette, workflow bridge each ship as a separate Composer package — install and register only what you use.
-- **The public API is release-candidate stable but not SemVer-frozen until v1.0.** Breaking changes between v0.1.x minors are allowed, signalled in the CHANGELOG, and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).
+- **The public API is release-candidate stable but not SemVer-frozen until v1.0.** Breaking changes between minors are allowed, signalled in the CHANGELOG, and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).
 - **Cursor pagination is best-effort on adapters that don't expose a total count** (Redis SCAN, some HTTP APIs, Meilisearch in some configurations). The UI gracefully degrades to "Previous / Next" without page-of-N counts.
-- **Browser-driven UX (Cmd+K, modal Stimulus reshuffle, Mercure SSE)** is exercised by the Panther suite against Chromium 128. Older browsers / Safari quirks are not yet pinned in CI.
+- **Browser-driven UX (Cmd+K palette, filter modal, Mercure SSE)** is exercised by the Panther suite against Chromium 128. Older browsers / Safari quirks are not yet pinned in CI.
 
 ## Contributing
 

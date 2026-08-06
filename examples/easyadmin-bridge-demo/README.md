@@ -5,20 +5,17 @@ dashboard with [`polysource/easyadmin-filter-bridge`](../../packages/easyadmin-f
 installed. Every one of the **8 enhanced filter types** is wired on a
 sample `Product` entity so you can see the bridge in action.
 
-## Status — known issue
+## Status
 
-The infrastructure (Docker image, composer install, Doctrine schema +
-seed, dashboard at `/admin/`) is wired and boots green. The CRUD
-listing pages (`/admin/product`, `/admin/category`) currently hit a
-template-level bug in EasyAdmin 4.29 / 5.0 where a `ButtonVariant` enum
-is rendered without calling `->value`, raising
-`Object of class EasyCorp\Bundle\EasyAdminBundle\Twig\Component\Option\ButtonVariant
-could not be converted to string`. This is **not a bridge bug** — it's
-upstream — but it blocks the visual demo of the enhanced filters until
-the version pin is sorted.
+Fully working: Docker image, composer install, Doctrine schema + seed,
+dashboard at `/admin/`, and the CRUD listing pages (`/admin/product`,
+`/admin/category`) render the enhanced filters end-to-end — filter
+modal with tabs + group accordions, chips bar, column-visibility
+dropdown.
 
-Tracking: a follow-up session will pin a specific older 4.x patch
-known to render cleanly, or override the offending template.
+(The v0.1-era "known issue" — an upstream EasyAdmin `ButtonVariant`
+enum rendered without `->value` — was fixed upstream and no longer
+reproduces on the EA 5.0.7+ this demo locks. Verified 2026-08-06.)
 
 ## Five-minute walkthrough
 

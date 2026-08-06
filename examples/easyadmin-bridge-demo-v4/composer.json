@@ -37,6 +37,9 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "conflict": {
+        "doctrine/orm": "3.6.8"
+    },
     "repositories": [
         { "type": "path", "url": "../../packages/easyadmin-filter-bridge" },
         { "type": "path", "url": "../../packages/filter" }

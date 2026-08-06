@@ -42,7 +42,7 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
  * Every filter declaration uses marker mode
  * (`Polysource::tab()` / `Polysource::group()`) for ergonomic
  * sequential reading. Per-filter bridge enhancements
- * (presets, quick_ranges, include_null, …) are layered on top.
+ * (step, min_length, include_null, …) are layered on top.
  */
 final class ProductCrudController extends AbstractCrudController
 {
@@ -96,13 +96,7 @@ final class ProductCrudController extends AbstractCrudController
             ->add(Polysource::group('Price'))
             ->add(
                 NumericFilter::new('price')
-                    ->setFormTypeOption('step', 0.01)
-                    ->setFormTypeOption('quick_ranges', [
-                        ['label' => '< 50€', 'min' => null, 'max' => 50],
-                        ['label' => '50–200€', 'min' => 50, 'max' => 200],
-                        ['label' => '200–400€', 'min' => 200, 'max' => 400],
-                        ['label' => '> 400€', 'min' => 400, 'max' => null],
-                    ]),
+                    ->setFormTypeOption('step', 0.01),
             )
             ->add(Polysource::group('Stock'))
             ->add(

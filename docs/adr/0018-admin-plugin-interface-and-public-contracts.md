@@ -2,6 +2,17 @@
 
 - **Date** : 2026-05-05
 - **Statut** : Accepté
+
+> **Addendum 2026-08-06 (v0.9.1)** — le paramètre `version` de
+> `#[AsPlugin]` est devenu **optionnel** (`?string $version = null`).
+> Quand il est omis, la version est dérivée à l'exécution de
+> `Composer\InstalledVersions` (la vérité du lockfile), ce qui
+> élimine la double maintenance version-attribut / version-tag qui
+> avait dérivé sur les 15 bundles (tous figés à `'0.1.0'`). Les
+> exemples ci-dessous, qui passent `version: '0.1.0'`
+> explicitement, documentent l'API telle que décidée en mai 2026 —
+> la forme recommandée aujourd'hui est
+> `#[AsPlugin(name: 'polysource/<package>')]`, sans version.
 - **Décide pour** : Phase 10+ — préalable à la release v0.1.0
 - **En lien avec** : [ADR-005 — Configuration via interface methods + PHP attributes](./0005-configuration-mechanism.md), [ADR-012 — Dual-product positioning](./0012-dual-product-positioning.md), [ADR-017 — Cherry-picking from Filament study](./0017-cherry-picking-from-filament-study.md)
 

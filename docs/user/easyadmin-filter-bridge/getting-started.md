@@ -38,25 +38,26 @@ positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 | Twig | `^3.0` |
 | Bootstrap | 5 (the chips bar markup uses Bootstrap 5 classes) |
 
-### Stimulus (required for interactive features)
+### Stimulus (optional — progressive enhancement only)
 
-The bridge ships a Stimulus controller layer that powers every
-**interactive** feature. The server-side surface (filter rendering,
-chips bar markup, session persistence, custom filter types,
-chip text formatting) works fine without it; the **interactive**
-surface does not.
+Every feature has a server-side baseline (since v0.2.0, per
+[ADR-027 progressive enhancement](../../adr/0027-progressive-enhancement.md)).
+The bridge ships ONE optional Stimulus controller
+(`polysource--filter`) that enhances the filter widgets in place;
+without it, everything still works through plain links, forms, and
+native `<details>` elements.
 
 | Feature | Needs Stimulus? |
 |---|---|
 | Chips bar render | no (server-rendered HTML) |
+| Chip × close buttons | no (server-driven links; enhanced in place when JS is present) |
 | Chip text via `chipFormatter()` | no (server-rendered) |
 | Custom filter types (`BetweenDateFilter`, `InFilter`, `NotNullFilter`, `FullTextSearchFilter`) | no |
 | Session persistence | no |
 | `placeholder` on `EntityFilter` | no (HTML attribute only) |
-| `NumericFilter` `quick_ranges` buttons | **yes — clicks dispatched by `polysource--filter#applyQuickRange`** |
-| Chip × close buttons | **yes — `polysource--filter-chips`** |
-| Tab + group layout (multi-tab filter modal) | **yes — `polysource--filter-modal-layout`** |
-| Subpanel mode (right-anchored slide-in) | **yes — `polysource--filter-subpanel`** |
+| Tab + group layout (multi-tab filter modal) | no (native `<details name>` accordions + CSS `:has()` pairing — zero JS) |
+| Subpanel mode (right-anchored slide-in) | no (CSS-only restyling of EA's modal) |
+| The `polysource--filter` controller itself | value-only since v0.2.0 — it exposes typed data attrs (`step`, `min_length`, `include_null`, …) for host-side JS layers to read; on its own it changes nothing |
 
 **Auto-discovery is already wired** — the bridge declares its
 controller in `assets/package.json symfony.controllers` with an
