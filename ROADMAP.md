@@ -101,7 +101,7 @@ adoption-first landing page with fresh showcase screenshots.
 
 ## Next
 
-### v0.11 — FeatureLoader split (in progress)
+### v0.11 — FeatureLoader split (v0.11.0, 2026-08-06)
 
 The last open audit item (M2/#67 phase 2):
 
