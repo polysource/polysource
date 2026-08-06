@@ -47,6 +47,7 @@ use Polysource\EasyAdminFilterBridge\Twig\Extension\RowClassExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\RowDensityExtension;
 use Polysource\EasyAdminFilterBridge\Twig\Extension\ToastExtension;
 use Polysource\EasyAdminFilterBridge\Twig\FilterTreeBuilder;
+use Polysource\Filter\DependencyInjection\FeatureGate;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -75,7 +76,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
     public function prepend(ContainerBuilder $container): void
     {
         $bundles = $container->getParameter('kernel.bundles');
-        if (!\is_array($bundles) || !\in_array('TwigBundle', array_keys($bundles), true)) {
+        if (!FeatureGate::hasTwigBundle($bundles)) {
             return;
         }
 
@@ -86,7 +87,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         // EA-only Twig globals (`ea`, …) and crashes lint:twig /
         // cache:warmup. Short-circuit when EA is absent.
         // Surfaced 2026-05-14 by dogfooding round 3 (friction C1).
-        if (!\array_key_exists('EasyAdminBundle', $bundles)) {
+        if (!FeatureGate::hasEasyAdminBundle($bundles)) {
             return;
         }
 
@@ -135,7 +136,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         $bundlesForEaGate = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
-        if (!\is_array($bundlesForEaGate) || !\array_key_exists('EasyAdminBundle', $bundlesForEaGate)) {
+        if (!FeatureGate::hasEasyAdminBundle($bundlesForEaGate)) {
             return;
         }
 
@@ -451,8 +452,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             : [];
         if (
             interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && \is_array($bundlesForExport)
-            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+            && FeatureGate::hasDoctrineBundle($bundlesForExport)
         ) {
             $container
                 ->register(UrlFilterApplier::class)
@@ -482,8 +482,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         if (
             class_exists(\Polysource\Filter\FilterUrlToken\FilterUrlTokenService::class)
             && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && \is_array($bundlesForExport)
-            && \array_key_exists('DoctrineBundle', $bundlesForExport)
+            && FeatureGate::hasDoctrineBundle($bundlesForExport)
         ) {
             $container
                 ->register(FilterUrlTokenController::class)
@@ -508,13 +507,11 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
         $bundles = $container->hasParameter('kernel.bundles')
             ? $container->getParameter('kernel.bundles')
             : [];
-        $hasDoctrineBundle = \is_array($bundles) && \array_key_exists('DoctrineBundle', $bundles);
-        $hasSecurity = \is_array($bundles) && \array_key_exists('SecurityBundle', $bundles);
         if (
             class_exists(\Polysource\Filter\ColumnPreference\ColumnPreferenceService::class)
             && interface_exists(\Doctrine\ORM\EntityManagerInterface::class)
-            && $hasDoctrineBundle
-            && $hasSecurity
+            && FeatureGate::hasDoctrineBundle($bundles)
+            && FeatureGate::hasSecurityBundle($bundles)
         ) {
             $container
                 ->register(\Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController::class)

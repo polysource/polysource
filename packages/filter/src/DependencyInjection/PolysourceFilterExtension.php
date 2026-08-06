@@ -41,9 +41,9 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
      * Register the bundle's `assets/` directory as an AssetMapper path
      * AND its `assets/controllers.json` as a StimulusBundle source.
      *
-     * Without these prepends, the controllers declared in
-     * `assets/package.json` (`polysource--filter-chips`,
-     * `polysource--filter-subpanel`) are invisible to host apps —
+     * Without these prepends, the controller declared in
+     * `assets/package.json` (`polysource--filter-chips`) is
+     * invisible to host apps —
      * AssetMapper only scans paths it has been told about, and
      * StimulusBundle's auto-discovery only reads
      * `assets/controllers.json` files registered as sources.
@@ -71,7 +71,7 @@ final class PolysourceFilterExtension extends Extension implements PrependExtens
         //    standalone demo) — we no-op there. Hosts that do have
         //    AssetMapper continue to receive the prepend.
         if (
-            \array_key_exists('FrameworkBundle', $bundles)
+            FeatureGate::hasFrameworkBundle($bundles)
             && class_exists(\Symfony\Component\AssetMapper\AssetMapper::class)
         ) {
             $container->prependExtensionConfig('framework', [
