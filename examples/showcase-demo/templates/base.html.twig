@@ -8,7 +8,15 @@
        Disable globally for the showcase. #}
     <meta name="turbo-prefetch" content="false">
     <title>{% block title %}ShopCo — Polysource Showcase{% endblock %}</title>
-    {% block stylesheets %}{% endblock %}
+    {% block stylesheets %}
+        {# Full Bootstrap for the non-EA pages (home, login, showcase
+           pages). EA pages ship EasyAdmin's own Bootstrap variant —
+           loading this one on top clashes with it (white-on-white
+           buttons since EA 5.5's restyle), so it moved out of app.js
+           (which configureAssets() injects into EA pages) into this
+           block that EA pages never render. #}
+        <link rel="stylesheet" href="{{ asset('vendor/bootstrap/dist/css/bootstrap.min.css') }}">
+    {% endblock %}
     {% block javascripts %}
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% endblock %}

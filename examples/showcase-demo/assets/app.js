@@ -1,6 +1,5 @@
 import './stimulus_bootstrap.js';
 import './styles/app.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
 // Turbo intentionally NOT imported. EA's app.js binds modal/dropdown/
 // filter handlers on `DOMContentLoaded`, which Turbo's body-swap
 // navigation does NOT re-fire. The showcase has been losing the EA

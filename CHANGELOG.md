@@ -4,6 +4,108 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] — 2026-08-06
+
+**Host-app genericity + audit closure.** The EasyAdmin bridge becomes
+properly themable, translatable, and CSP-friendly; the documentation
+corpus is truth-synced against what actually ships; and the two large
+refactors deferred from the v0.9.0 audit land, closing the audit.
+Merged as #104 / #105 / #106.
+
+### Added
+
+- **Bridge theming via CSS variables.** The bridge's ~350 lines of
+  inline CSS (index, subpanel mode, per-tab `:has()` pairing rules)
+  move to a published stylesheet
+  (`Resources/public/polysource-filter-bridge.css`, installed by
+  `assets:install`). Every colour and key dimension flows through a
+  `--polysource-*` custom property with `--bs-*` fallbacks — the
+  bridge follows the host's Bootstrap 5.3 light/dark theme
+  automatically, and hosts recolor with a 3-line override. New
+  [theming guide](docs/user/easyadmin-filter-bridge/theming.md)
+  documents the variables, the Twig override points, and the
+  `@EasyAdmin` splicing trap.
+- **Complete bridge i18n (5 → 57 keys, en + fr).** Every
+  user-visible string renders through the translator: cell filter
+  menu, column reorder, row density, quick filter, bulk scope,
+  share link, toasts, the keyboard-shortcuts panel, and pluralized
+  applied-filter counters. The 7 HTML-emitting Twig extensions take
+  a nullable `TranslatorInterface` (translator-less hosts keep
+  byte-identical English output). `CatalogCompletenessTest` locks
+  key-set parity across locales.
+- **`ScanPatternResolver`** unifies the four byte-identical
+  `scanPattern()` copies in the Redis string/list/set/sorted-set
+  data sources (with a full unit suite — three of the four copies
+  had none) and drops a dead pre-v0.7 `instanceof` branch.
+- **ADR-0031** retro-documents the operator-translation strategy
+  shipped since v0.9: shared `InMemoryValueMatcher` for the
+  in-memory adapter family, native per-dialect translation with
+  documented silent degradation for the query-string family, and
+  why the audit's proposed `OperatorTranslatorInterface` was
+  rejected.
+- **Coverage for the previously-untested bridge surface**:
+  ColumnPreferenceController, FilterUrlTokenController,
+  BundleRouteLoader, ColumnReorder/FilterShortUrl/FilterTree
+  extensions, operator-routing tests for Flysystem and Messenger
+  (+55 tests total across the release).
+
+### Security
+
+- **Open redirect closed in `FilterUrlTokenController`.** The
+  `?index=` redirect-target guard only required a leading slash, so
+  protocol-relative `//evil.example` (and the `/\` variant browsers
+  normalise) passed it. Both now 404, with unit + integration
+  regression coverage.
+
+### Fixed
+
+- **`TranslatableMessage` labels crashed the bridge.** Hosts
+  labelling fields/filters with `t()` (EA 5) hit "Object of class
+  TranslatableMessage could not be converted to string" in the
+  column-visibility dropdown and the filter chips — both render
+  through `|trans` now (a no-op for plain string labels).
+- **Tab panes were invisible on browsers without `:has()`.** The
+  pane-hiding default was not gated on `:has()` support, so the
+  documented "every tab degrades to its own accordion" fallback
+  actually hid every pane forever. The rules now sit under
+  `@supports selector()`.
+- **The 12-tab cap is real.** It was documented but never enforced;
+  panes beyond 12 now stay always-visible (graceful) instead of
+  depending on unbounded generated CSS.
+- Both bridge demos 500'd on stale configuration: removed-in-v0.2
+  Stimulus controllers in `controllers.json`, the removed
+  `quick_ranges` form option, and the broken upstream
+  doctrine/orm 3.6.8 (exact-version conflict now mirrored into the
+  demos).
+
+### Changed
+
+- **CSP posture**: the bridge no longer emits static inline
+  `<style>`/`<script>` — host policies don't need
+  `'unsafe-inline'`, with one documented exception (the per-user
+  hidden-columns block, which is request-dependent).
+- `BulkScopeExtension` / `FilterShortUrlExtension` label parameters
+  became `?string $label = null` (explicit host labels keep
+  working; the defaults are now translated).
+- `symfony/asset` promoted to an explicit bridge require (its
+  templates call `asset()`; previously reached transitively).
+- `FeatureGate` adoption completed across the bridge and the filter
+  extension's AssetMapper prepend (audit task #67 predicate phase;
+  the FeatureLoader class split stays scheduled for v0.11).
+- Inter-package constraints union `^0.1 → ^0.10` across all 16
+  packages.
+
+### Docs
+
+- Truth-sync sweep: root and bridge READMEs unfrozen from v0.5.7
+  (including a false "PHP 8.4+/Symfony 7.4" compatibility claim —
+  composer says `>=8.1` / `^5.4`), ROADMAP updated to real v0.10
+  scope, the options and Stimulus controllers removed in v0.2.0
+  purged from every page that still promoted them, ADR-018 addendum
+  for the optional-version `#[AsPlugin]`, and five docs no longer
+  recommend the `@!EasyAdmin` extends that silently disables the
+  bridge on every index page.
+
 ## [0.9.1] — 2026-08-06
 
 **Maintenance release** — dependency-freeze thaw, distribution

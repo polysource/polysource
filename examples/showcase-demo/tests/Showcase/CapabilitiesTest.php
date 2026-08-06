@@ -178,7 +178,10 @@ final class CapabilitiesTest extends AbstractShowcasePantherTestCase
         );
 
         // EA chrome elements injected by the showcase override.
-        $sidebar = $client->findElements(WebDriverBy::cssSelector('aside.sidebar'));
+        // `aside.ea-sidebar` since EA 5.5 renamed the sidebar
+        // vocabulary (the layout mirrors the rendered markup of a
+        // real EA page — this assertion moves with it).
+        $sidebar = $client->findElements(WebDriverBy::cssSelector('aside.ea-sidebar'));
         $mainContent = $client->findElements(WebDriverBy::cssSelector('section.main-content'));
 
         self::assertGreaterThan(0, \count($sidebar), 'showcase override must inject EA sidebar on Polysource pages.');

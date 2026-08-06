@@ -328,6 +328,15 @@ final class ShowcaseScreenshotsCommand extends Command
         // Bootstrap fonts) finish before the capture.
         usleep(300_000);
 
+        // The showcase runs APP_ENV=dev, so every page carries the
+        // Symfony profiler toolbar — accurate for a dev machine, noise
+        // in documentation (these captures land in the README and the
+        // showcase tour). Remove it from the DOM before capturing; the
+        // page content itself is untouched.
+        $client->executeScript(
+            "document.querySelectorAll('.sf-toolbar, .sf-minitoolbar').forEach(function (el) { el.remove(); });",
+        );
+
         $path = $outputDir . '/' . $page['slug'] . '.png';
         $client->takeScreenshot($path);
 
