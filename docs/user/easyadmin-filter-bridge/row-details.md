@@ -104,22 +104,17 @@ protected function context(object $entity): array
 
 ### Example C — related records ("nested listing")
 
-Render the row's children as a table — the most common master/detail
-shape:
+Two ways, by increasing power:
+
+**C1 — a plain table in your template.** Render the row's children
+yourself:
 
 ```twig
 {# templates/admin/order/_row_detail.html.twig #}
 <table class="table table-sm mb-0">
-    <thead>
-        <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
-    </thead>
     <tbody>
         {% for item in entity.items %}
-            <tr>
-                <td>{{ item.productName }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.price|format_currency('EUR') }}</td>
-            </tr>
+            <tr><td>{{ item.productName }}</td><td>{{ item.quantity }}</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -129,10 +124,31 @@ Because the template renders lazily server-side, `entity.items`
 initializes its Doctrine collection for **one** row per request —
 opening a row never triggers an N+1 across the listing.
 
-> A *full* embedded Polysource listing (own filters, sorting,
-> pagination inside the detail zone) is deliberately not part of
-> v1.1 — it needs request-context isolation that is on the roadmap.
-> The related-records table above covers the read-only 80 % case.
+**C2 — a real embedded Polysource listing** (paginated,
+datasource-agnostic). Return `RowDetail::listing()` instead of a
+template:
+
+```php
+use Polysource\Core\RowDetail\RowDetail;
+
+public function getRowDetail(object $entity): RowDetail
+{
+    return RowDetail::listing('order-items', [
+        'orderId' => $entity->getId(),
+    ], pageSize: 10);
+}
+```
+
+Requirements: `polysource/symfony-bundle` installed with an
+`order-items` Polysource resource registered, whose data source
+accepts the `orderId` filter (e.g. Doctrine `allowedFilters`). The
+embedded listing is **read-only** (table + pagination, no actions —
+ADR-028); its pagination rides on a dedicated `rd_page` param of the
+panel URL, so it never collides with the outer listing's query
+string, works without JS on the standalone page, and refreshes
+in place when the panel is injected. See
+[the native row-details guide](../row-details.md) for the full
+embedded-listing reference.
 
 ## Permissions
 

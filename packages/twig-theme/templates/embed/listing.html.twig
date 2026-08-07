@@ -1,0 +1,66 @@
+{# Read-only embedded listing rendered inside an expanded row detail
+   (v1.1.0, cf. EmbeddedListingRenderer). Table + pager only — no
+   actions, no bulk toolbar, no nested chevrons (ADR-028 read-only
+   boundary, and no detail-in-detail recursion).
+
+   Pager links rebuild the panel URL with only `rd_page` swapped, so
+   they work as plain navigation on the no-JS standalone page
+   (ADR-027) and are intercepted for in-place refresh by the
+   polysource--row-details controller when the panel is injected. #}
+<div class="polysource-embed-listing" data-polysource-embed="{{ embed_resource.name }}">
+    <div class="table-responsive">
+        <table class="table table-sm table-striped mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    {% for field in embed_fields %}
+                        <th scope="col">{{ field.label|default(field.property) }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in embed_records %}
+                    <tr>
+                        {% for field in embed_fields %}
+                            <td>
+                                {% include field.template|default('@Polysource/field/generic.html.twig')
+                                    with {value: record.get(field.property), field: field, record: record}
+                                    only
+                                %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="{{ embed_fields|length > 0 ? embed_fields|length : 1 }}" class="text-center text-body-secondary py-3">
+                            {{ 'polysource.chrome.no_records'|trans({}, 'Polysource') }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if embed_total_pages is not null and embed_total_pages > 1 %}
+        <nav class="d-flex justify-content-between align-items-center mt-2"
+             aria-label="{{ embed_resource.label }}">
+            {% set prev_query = embed_base_query|merge({(embed_page_param): embed_page_number - 1}) %}
+            {% set next_query = embed_base_query|merge({(embed_page_param): embed_page_number + 1}) %}
+            <span class="text-body-secondary small">
+                {{ embed_page_number }} / {{ embed_total_pages }}
+                {% if embed_total is not null %}({{ embed_total }}){% endif %}
+            </span>
+            <span class="btn-group btn-group-sm">
+                {% if embed_page_number > 1 %}
+                    <a class="btn btn-outline-secondary"
+                       data-polysource-embed-nav
+                       href="{{ embed_path }}?{{ prev_query|url_encode }}">&laquo;</a>
+                {% endif %}
+                {% if embed_page_number < embed_total_pages %}
+                    <a class="btn btn-outline-secondary"
+                       data-polysource-embed-nav
+                       href="{{ embed_path }}?{{ next_query|url_encode }}">&raquo;</a>
+                {% endif %}
+            </span>
+        </nav>
+    {% endif %}
+</div>

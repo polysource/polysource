@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
+use Polysource\Bundle\RowDetail\EmbeddedListingRenderer;
 use Polysource\Bundle\RowDetail\HasRowDetailsInterface;
 use Polysource\Bundle\View\PolysourceView;
 use Polysource\Core\Permission\PermissionInterface;
@@ -36,6 +37,7 @@ final class RowDetailPanelController
     public function __construct(
         private readonly ControllerSupport $support,
         private readonly PermissionInterface $permission,
+        private readonly EmbeddedListingRenderer $embeddedListingRenderer,
     ) {
     }
 
@@ -67,15 +69,30 @@ final class RowDetailPanelController
             throw new NotFoundHttpException(\sprintf('Record "%s" in resource "%s" has no row detail.', $context->recordId, $resource->getName()));
         }
 
-        $variables = [
-            'context' => $context,
-            'resource' => $resource,
-            'record' => $record,
-        ] + $detail->context;
+        if ($detail->isListing()) {
+            // Embedded-listing detail: the renderer reads its own
+            // `rd_page` param off THIS panel request — each expanded
+            // row is its own HTTP fetch, so nothing collides with
+            // the outer listing's query string.
+            $template = EmbeddedListingRenderer::TEMPLATE;
+            $variables = [
+                'context' => $context,
+                'resource' => $resource,
+                'record' => $record,
+            ] + $this->embeddedListingRenderer->buildView($detail, $context->request);
+        } else {
+            \assert(null !== $detail->template);
+            $template = $detail->template;
+            $variables = [
+                'context' => $context,
+                'resource' => $resource,
+                'record' => $record,
+            ] + $detail->context;
+        }
 
         if ($context->request->query->getBoolean('fragment')) {
             return new PolysourceView(
-                template: $detail->template,
+                template: $template,
                 variables: $variables,
                 headers: self::NO_STORE,
             );
@@ -83,7 +100,7 @@ final class RowDetailPanelController
 
         return new PolysourceView(
             template: '@Polysource/row_detail_page.html.twig',
-            variables: $variables + ['content_template' => $detail->template],
+            variables: $variables + ['content_template' => $template],
             headers: self::NO_STORE,
         );
     }

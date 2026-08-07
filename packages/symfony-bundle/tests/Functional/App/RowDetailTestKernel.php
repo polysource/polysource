@@ -27,6 +27,14 @@ final class RowDetailTestKernel extends TestKernel
             ->setPublic(true)
             ->addTag('polysource.resource')
         ;
+
+        // Nested-listing fixtures (RowDetailNestedListingTest).
+        foreach ([ParentOrdersResource::class, ChildItemsResource::class, SecretItemsResource::class] as $class) {
+            $container->register($class, $class)
+                ->setPublic(true)
+                ->addTag('polysource.resource')
+            ;
+        }
     }
 
     public function getCacheDir(): string

@@ -88,6 +88,45 @@ casser le listing, `aria-expanded`, plusieurs lignes ouvertes
 simultanément. Labels passés en values Stimulus depuis le template
 (le JS reste sans catalogue).
 
+### Moteur natif (phase 2, même minor)
+
+Le même modèle est porté sur le listing natif :
+`HasRowDetailsInterface` opt-in sur la Resource (`hasRowDetail()`
+gate par ligne appelé au rendu de l'index — donc bon marché —,
+`getRowDetail()` appelé uniquement par l'endpoint lazy,
+`getRowDetailPermission()` avec le `DataRecord` en subject),
+5e route générée `GET {prefix}/{slug}/{id}/detail-panel` servie par
+`RowDetailPanelController` sur le pipeline `PolysourceView` (qui
+gagne un champ additif `headers` pour le `no-store`). Le VO
+`RowDetail` déménage dans `polysource/core` (2 consommateurs =
+budget ADR-018 respecté) et le contrôleur Stimulus dans
+`polysource/filter` (dépendance commune, précédent
+`saved_views_dropdown` v0.1.4).
+
+### Listing imbriqué (phase 3, même minor) — le blocker contexte est levé PAR DESIGN
+
+`RowDetail::listing(resource, parentFilters, pageSize)` embarque un
+listing Polysource natif comme détail. Le blocker documenté
+(`AdminContextProvider` mono-contexte) ne s'applique **pas** :
+l'`EmbeddedListingRenderer` construit sa `DataQuery` et rend la
+table sans repasser par `IndexController`/`AdminContextResolver` —
+aucun second `AdminContext` n'est créé. Chaque panneau étant sa
+propre requête HTTP (architecture lazy-fetch), la pagination
+embarquée vit sur un paramètre dédié `rd_page` de l'URL du panneau
+et ne peut pas entrer en collision avec la query-string du listing
+extérieur. Sans JS, les liens du pager naviguent en pleine page
+(baseline ADR-027) ; injectés, ils sont interceptés et rafraîchissent
+le panneau en place.
+
+Bornes du listing embarqué : read-only strict (table + pager — pas
+d'actions, pas de bulk, pas de chevrons imbriqués, donc pas de
+récursion), permission de vue de la ressource enfant vérifiée, tri
+et filtres utilisateur internes hors périmètre v1.1 (le scoping
+vient de `parentFilters` uniquement). Côté bridge, le renderer est
+une référence optionnelle : `RowDetail::listing()` sur un hôte
+bridge-alone lève une `LogicException` explicite demandant
+d'installer `polysource/symfony-bundle`.
+
 ## Conséquences
 
 - Un listing sans provider est strictement inchangé (opt-in, zéro
@@ -95,13 +134,11 @@ simultanément. Labels passés en values Stimulus depuis le template
 - Le mode accordéon (`multiple=false`) n'est pas retenu : chaque
   chevron est autonome, un mode exclusif imposerait un état partagé
   inter-contrôleurs pour un gain UX discutable.
-- **Listing Polysource imbriqué différé** : un vrai listing embarqué
-  (filtres/tri/pagination propres) exige l'isolation du contexte
-  requête (`AdminContextProvider` mono-contexte, collisions de
-  query-string) — chantier d'architecture séparé, tracké roadmap
-  v1.x. Le VO `RowDetail` est le point d'extension prévu (un futur
-  `RowDetail::listing(...)` s'ajoutera sans casser les providers
-  existants).
 - La duplication `routes.php` / `BundleRouteLoader::CONTROLLERS`
   gagne un 7e élément — le test `BundleRouteLoaderTest` casse si on
   oublie l'un des deux.
+- Correctif embarqué : les contrôleurs du bundle jetaient la
+  `ResourceNotFoundException` de core (RuntimeException nue → 500)
+  pour un record inconnu ; ils jettent désormais
+  `NotFoundHttpException` → 404 corrects sur detail, action et
+  detail-panel.

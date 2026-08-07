@@ -21,6 +21,7 @@ use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
+use Polysource\Bundle\RowDetail\EmbeddedListingRenderer;
 use Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission;
 use Polysource\Bundle\Twig\PolysourceFilterExtension;
 use Polysource\Core\Permission\PermissionInterface;
@@ -114,8 +115,18 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $services
+        ->set(EmbeddedListingRenderer::class)
+        ->args([service(ResourceRegistry::class), service(ControllerSupport::class)])
+        ->public()
+    ;
+
+    $services
         ->set(RowDetailPanelController::class)
-        ->args([service(ControllerSupport::class), service(PermissionInterface::class)])
+        ->args([
+            service(ControllerSupport::class),
+            service(PermissionInterface::class),
+            service(EmbeddedListingRenderer::class),
+        ])
         ->public()
         ->tag('controller.service_arguments')
     ;

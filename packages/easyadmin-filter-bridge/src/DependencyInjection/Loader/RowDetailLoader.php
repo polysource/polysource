@@ -75,6 +75,14 @@ final class RowDetailLoader implements FeatureLoaderInterface
                 new Reference(\Doctrine\ORM\EntityManagerInterface::class),
                 new Reference('twig'),
                 $authChecker,
+                // The bundle's embedded-listing renderer, when
+                // polysource/symfony-bundle is installed alongside the
+                // bridge — unlocks RowDetail::listing(). Resolves to
+                // null on bridge-alone hosts.
+                new Reference(
+                    'Polysource\Bundle\RowDetail\EmbeddedListingRenderer',
+                    ContainerInterface::NULL_ON_INVALID_REFERENCE,
+                ),
             ])
             ->setPublic(true)
             ->addTag('controller.service_arguments')

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Polysource\EasyAdminFilterBridge\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
+use LogicException;
+use Polysource\Core\RowDetail\RowDetail;
 use Polysource\EasyAdminFilterBridge\Http\SafeReferer;
 use Polysource\EasyAdminFilterBridge\RowDetail\RowDetailRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,11 +39,20 @@ use Twig\Environment;
  */
 final class RowDetailController
 {
+    /**
+     * @param object|null $embeddedListingRenderer The bundle's
+     *                                             `EmbeddedListingRenderer` when
+     *                                             `polysource/symfony-bundle` is
+     *                                             installed; null on a bridge-alone
+     *                                             host. Typed `object` so this class
+     *                                             loads without the bundle package.
+     */
     public function __construct(
         private readonly RowDetailRegistry $registry,
         private readonly EntityManagerInterface $em,
         private readonly Environment $twig,
         private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
+        private readonly ?object $embeddedListingRenderer = null,
     ) {
     }
 
@@ -75,7 +86,7 @@ final class RowDetailController
         }
 
         $detail = $provider->getRowDetail($entity);
-        $html = $this->twig->render($detail->template, ['entity' => $entity] + $detail->context);
+        $html = $this->renderDetail($detail, $entity, $request);
 
         if (!$request->query->getBoolean('fragment')) {
             $html = $this->twig->render(
@@ -91,6 +102,30 @@ final class RowDetailController
         $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
 
         return $response;
+    }
+
+    private function renderDetail(RowDetail $detail, object $entity, Request $request): string
+    {
+        if (!$detail->isListing()) {
+            \assert(null !== $detail->template);
+
+            return $this->twig->render($detail->template, ['entity' => $entity] + $detail->context);
+        }
+
+        // Embedded native listing — requires polysource/symfony-bundle
+        // (resource registry + adapters + @Polysource templates). A
+        // provider returning RowDetail::listing() on a bridge-alone
+        // host is a wiring mistake, reported as such rather than
+        // silently rendering nothing.
+        $renderer = $this->embeddedListingRenderer;
+        if (null === $renderer || !method_exists($renderer, 'buildView')) {
+            throw new LogicException(\sprintf('RowDetail::listing() requires polysource/symfony-bundle (embedded-listing renderer not wired). Install it and register the "%s" resource, or return RowDetail::template() instead.', (string) $detail->listingResource));
+        }
+
+        /** @var array<string, mixed> $variables */
+        $variables = $renderer->buildView($detail, $request);
+
+        return $this->twig->render('@Polysource/embed/listing.html.twig', ['entity' => $entity] + $variables);
     }
 
     /**

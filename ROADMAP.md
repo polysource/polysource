@@ -122,9 +122,13 @@ The last open audit item (M2/#67 phase 2):
   `DataRecord` as subject; `isDisplayed()` gets a real context —
   unblocks per-row action visibility and fixes the workflow-bridge
   transition buttons.
-- Deferred explicitly: nested Polysource listing inside a row
-  detail (needs request-context isolation — cf. ADR-0033
-  consequences), row details on the native symfony-bundle theme.
+- **Row details on the native theme** (`HasRowDetailsInterface`,
+  fifth `detail-panel` route, all six adapters) and **nested
+  Polysource listing as detail** (`RowDetail::listing()`, read-only,
+  `rd_page` panel-scoped pagination — the context-isolation blocker
+  was dissolved by the lazy-fetch renderer design, cf. ADR-0033).
+- Deferred explicitly: sorting and user filters *inside* the
+  embedded listing (scoping via `parentFilters` only in v1.1).
 
 ### Pre-1.0 polish (not committed)
 

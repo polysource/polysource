@@ -136,6 +136,33 @@ describe('polysource--row-details Stimulus controller', () => {
         expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
+    it('intercepts embedded-listing pager links and refreshes the panel in place', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockImplementationOnce(() => okResponse(
+                '<div id="embed-page-1">page one'
+                + '<a data-polysource-embed-nav href="/admin/orders/1/detail-panel?fragment=1&rd_page=2">next</a>'
+                + '</div>',
+            ))
+            .mockImplementationOnce(() => okResponse('<div id="embed-page-2">page two</div>'));
+        vi.stubGlobal('fetch', fetchMock);
+
+        await bootApp(ROW_HTML);
+        await clickChevron();
+        expect(document.querySelector('#embed-page-1')).not.toBeNull();
+
+        document.querySelector('a[data-polysource-embed-nav]')
+            .dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        await vi.waitFor(() => {
+            if (!document.querySelector('#embed-page-2')) throw new Error('page 2 not loaded');
+        });
+
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(fetchMock.mock.calls[1][0]).toContain('rd_page=2');
+        // Still inside the same detail row — no navigation happened.
+        expect(document.querySelector('#host-row + tr.polysource-row-detail-row #embed-page-2')).not.toBeNull();
+    });
+
     it('shows a local error with retry on HTTP failure, then recovers', async () => {
         const fetchMock = vi
             .fn()

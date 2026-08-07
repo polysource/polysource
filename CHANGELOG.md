@@ -21,6 +21,28 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   controller (loading/error/retry states, client cache,
   `reloadOnOpen()`, ARIA). Docs:
   [row-details.md](./docs/user/easyadmin-filter-bridge/row-details.md).
+- **Native expandable row details** (`symfony-bundle` +
+  `twig-theme`) — opt-in `HasRowDetailsInterface` on any resource
+  (all six adapters), fifth generated route
+  `GET {prefix}/{slug}/{id}/detail-panel` on the PolysourceView
+  pipeline, per-row chevron gate, fragment + layout-wrapped no-JS
+  page. The `RowDetail` VO lives in `polysource/core`; the
+  `polysource--row-details` Stimulus controller moved to
+  `polysource/filter` (shared by bridge and native theme — same
+  controller name). `@Polysource/index.html.twig` gains named
+  blocks (`table_body_row`, `table_row_cells`,
+  `table_row_actions`); `PolysourceView` gains an additive
+  `headers` field.
+- **Nested listing as row detail** — `RowDetail::listing(resource,
+  parentFilters, pageSize)` embeds another registered Polysource
+  resource as the detail, read-only (table + pagination), scoped by
+  equality filters, child-resource view permission enforced.
+  Embedded paging rides on a dedicated `rd_page` param of the panel
+  URL (each panel is its own request — no collision with the outer
+  listing), works without JS and refreshes in place when injected.
+  On the bridge, requires `polysource/symfony-bundle` (explicit
+  `LogicException` otherwise). Docs:
+  [row-details.md](./docs/user/row-details.md).
 - **Per-record action gating** (`symfony-bundle`) — inline-action
   permission checks now receive the `DataRecord` as voter subject
   (render and execute paths), and `isDisplayed()` receives a
@@ -30,6 +52,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   behave exactly as before.
 
 ### Fixed
+
+- Bundle controllers returned **500 instead of 404** for unknown
+  records (core `ResourceNotFoundException` is a plain
+  RuntimeException): detail, action and detail-panel routes now
+  throw `NotFoundHttpException`.
 
 - Workflow-bridge transition buttons were never rendered by the
   bundle theme: `isDisplayed()` was collected with an empty context,

@@ -71,7 +71,7 @@ export default class extends Controller {
         this.load();
     }
 
-    async load() {
+    async load(url = null) {
         this.setState('loading');
         this.ensureDetailRow();
         this.detailCell().innerHTML = '';
@@ -81,7 +81,7 @@ export default class extends Controller {
         this.abortController = new AbortController();
 
         try {
-            const response = await fetch(this.urlValue, {
+            const response = await fetch(url ?? this.urlValue, {
                 headers: { Accept: 'text/html' },
                 signal: this.abortController.signal,
             });
@@ -151,6 +151,18 @@ export default class extends Controller {
         const cell = document.createElement('td');
         cell.colSpan = hostRow.cells.length;
         cell.className = 'polysource-row-detail-content';
+        // Embedded-listing pagination: pager links inside the panel
+        // (marked data-polysource-embed-nav) refresh the panel in
+        // place instead of navigating. Delegated on the cell so it
+        // survives innerHTML swaps; plain navigation remains the
+        // no-JS baseline.
+        cell.addEventListener('click', (event) => {
+            const link = event.target.closest('a[data-polysource-embed-nav]');
+            if (!link) return;
+            event.preventDefault();
+            event.stopPropagation();
+            this.load(link.href);
+        });
         row.append(cell);
         hostRow.after(row);
         this.detailRow = row;
