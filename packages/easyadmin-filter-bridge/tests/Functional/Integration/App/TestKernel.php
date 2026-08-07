@@ -150,6 +150,16 @@ final class TestKernel extends Kernel
         ]);
 
         $container->loadFromExtension('polysource_easyadmin_filter_bridge', []);
+
+        // Row-detail fixtures (v1.1.0): a provider for TestItem plus a
+        // subject-only voter denying archived items, so the endpoint
+        // tests exercise the entity-as-voter-subject gate end-to-end.
+        $container->register(RowDetail\TestItemRowDetailProvider::class)
+            ->addTag('polysource.row_detail_provider')
+        ;
+        $container->register(RowDetail\TestItemRowDetailVoter::class)
+            ->addTag('security.voter')
+        ;
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void

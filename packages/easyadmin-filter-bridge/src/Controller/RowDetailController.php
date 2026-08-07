@@ -51,7 +51,7 @@ final class RowDetailController
         methods: ['GET'],
         requirements: ['resource' => '[A-Za-z0-9_\\\\:.-]+', 'id' => '[^/]+'],
     )]
-    public function __invoke(Request $request, string $resource, string $id): Response
+    public function show(Request $request, string $resource, string $id): Response
     {
         $entityClass = $this->resolveEntityClass($resource);
 
