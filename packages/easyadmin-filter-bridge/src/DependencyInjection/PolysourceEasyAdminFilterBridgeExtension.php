@@ -11,6 +11,7 @@ use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\ExportLoader;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\FilterTreeLoader;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\FilterUrlTokenLoader;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\ListingUxLoader;
+use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\RowDetailLoader;
 use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\SavedViewControllerLoader;
 use Polysource\Filter\DependencyInjection\FeatureGate;
 use Polysource\Filter\DependencyInjection\FeatureLoaderInterface;
@@ -133,6 +134,7 @@ final class PolysourceEasyAdminFilterBridgeExtension extends Extension implement
             new ExportLoader(),
             new FilterUrlTokenLoader(),
             new ColumnPreferenceLoader(),
+            new RowDetailLoader(),
         ];
     }
 

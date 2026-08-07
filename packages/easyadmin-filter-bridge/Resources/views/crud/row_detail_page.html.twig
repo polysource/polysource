@@ -1,0 +1,21 @@
+{# Standalone wrapper for the no-JS path (ADR-027): the chevron's
+   plain-link navigation lands here — the same fragment the Stimulus
+   controller would inject, as a minimal self-contained page with a
+   same-host back link (validated by SafeReferer in the controller). #}
+<!DOCTYPE html>
+<html lang="{{ app.request.locale|default('en') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ 'polysource.row_detail.title'|trans({}, 'PolysourceEasyAdminFilterBridge') }}</title>
+</head>
+<body class="polysource-row-detail-page">
+    <main style="max-width: 60rem; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif;">
+        {% if back_url is defined and back_url %}
+            <p><a href="{{ back_url }}">&larr; {{ 'polysource.row_detail.back'|trans({}, 'PolysourceEasyAdminFilterBridge') }}</a></p>
+        {% endif %}
+        {{ content|raw }}
+    </main>
+</body>
+</html>

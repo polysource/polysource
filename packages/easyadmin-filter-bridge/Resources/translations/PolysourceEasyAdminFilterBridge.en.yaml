@@ -22,6 +22,14 @@ polysource:
         compact: 'Compact'
     quick_filter:
         placeholder: 'filter…'
+    row_detail:
+        title: 'Record details'
+        expand: 'Show details'
+        collapse: 'Hide details'
+        loading: 'Loading details…'
+        error: 'Failed to load details.'
+        retry: 'Retry'
+        back: 'Back to listing'
     bulk:
         apply_all: 'Apply to all matching rows'
     share:

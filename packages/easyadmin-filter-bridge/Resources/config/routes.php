@@ -7,6 +7,7 @@ use Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\FilterUrlTokenController;
 use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
+use Polysource\EasyAdminFilterBridge\Controller\RowDetailController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
@@ -27,6 +28,7 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
  *   - GET  /admin/polysource/matching-count/{resource}       → polysource_matching_count (v0.5.0)
  *   - GET  /admin/polysource/column-order/{resource}/move    → polysource_column_order_move (v0.5.0)
  *   - GET  /admin/polysource/f/{token}                       → polysource_filter_url_token_resolve (v0.5.0)
+ *   - GET  /admin/polysource/row-detail/{resource}/{id}      → polysource_row_detail (v1.1.0)
  *
  * Host can override by declaring routes with the same names BEFORE
  * this resource is loaded.
@@ -38,4 +40,5 @@ return static function (RoutingConfigurator $routes): void {
     $routes->import(MatchingCountController::class, 'attribute');
     $routes->import(ColumnOrderController::class, 'attribute');
     $routes->import(FilterUrlTokenController::class, 'attribute');
+    $routes->import(RowDetailController::class, 'attribute');
 };
