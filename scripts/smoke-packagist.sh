@@ -28,7 +28,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SMOKE_DIR="${SMOKE_DIR:-/tmp/polysource-smoke-packagist-$$}"
 DOCKER_COMPOSE="${DOCKER_COMPOSE:-docker compose}"
-VERSION_CONSTRAINT="${VERSION_CONSTRAINT:-^0.1}"
+# Default: caret on the latest tag, so the smoke always exercises the
+# release that was just published (a hardcoded default drifted to ^0.1
+# once and silently smoked the wrong lineage — never again).
+LATEST_TAG="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')"
+VERSION_CONSTRAINT="${VERSION_CONSTRAINT:-^${LATEST_TAG:-1.0}}"
 
 cleanup() {
     rm -rf "$SMOKE_DIR"

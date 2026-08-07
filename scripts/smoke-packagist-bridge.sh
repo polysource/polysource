@@ -68,7 +68,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SMOKE_DIR="${SMOKE_DIR:-/tmp/polysource-smoke-bridge-$$}"
 DOCKER_COMPOSE="${DOCKER_COMPOSE:-docker compose}"
-VERSION_CONSTRAINT="${VERSION_CONSTRAINT:-^0.1}"
+# Default: caret on the latest tag — see smoke-packagist.sh for why
+# a hardcoded default is forbidden here.
+LATEST_TAG="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')"
+VERSION_CONSTRAINT="${VERSION_CONSTRAINT:-^${LATEST_TAG:-1.0}}"
 
 # Symfony skeleton version. Default to 7.4 (the current LTS).
 # Override to `^5.4` to validate the Sf 5.4 floor — the bridge +
