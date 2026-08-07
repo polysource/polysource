@@ -4,6 +4,34 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — 2026-08-07
+
+Documentation truth-sync release — no behaviour change.
+
+### Fixed
+
+- `Polysource::VERSION` reported `0.1.0-dev` since the first
+  release; it now tracks the release version (`1.1.1`).
+- `dev-main` branch-aliases were stuck on the `0.1.x-dev` lineage
+  across all 17 composer manifests, breaking `^1.0` constraint
+  resolution against the dev branch; now `1.2.x-dev`.
+- Package READMEs: 7 phantom class names corrected, wrong method
+  signatures in copy-paste examples fixed, and every relative link
+  that escaped the package directory rewritten as an absolute URL
+  (they 404'd on the Packagist mirrors).
+- `polysource/easyadmin-filter-bridge` now `suggest`s
+  `polysource/symfony-bundle` (required for `RowDetail::listing()`).
+- The two floor demos were pinned below the v1.0 PHP floor
+  (Dockerfiles + manifests raised to PHP 8.2 / Symfony 6.4).
+
+### Changed
+
+- Whole-tree documentation resynchronised with the v1.1.0 reality
+  (status banners, feature lists incl. row details, route/type/test
+  counts, showcase tour step 31 + screenshot). A blocking
+  `make docs-check` gate now runs in CI and in the release flow to
+  keep it that way.
+
 ## [1.1.0] — 2026-08-07
 
 ### Added

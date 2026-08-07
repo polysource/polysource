@@ -9,7 +9,7 @@ namespace Polysource\Core;
  */
 final class Polysource
 {
-    public const VERSION = '1.1.0';
+    public const VERSION = '1.1.1';
 
     /** Page identifiers used in {@see Field\FieldDto::$pages}. */
     public const PAGE_INDEX = 'index';

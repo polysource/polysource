@@ -119,7 +119,7 @@ Symfony's admin landscape is mature for one shape of resource: a Doctrine ORM en
 
 ## Status & compatibility
 
-**v1.1.0** — API frozen since v1.0.0 (2026-08-06) per [ADR-018](./docs/adr/0018-admin-plugin-interface-and-public-contracts.md); SemVer applies strictly — breaking changes ship in major versions only, signalled in the [CHANGELOG](./CHANGELOG.md). 16 packages on [Packagist](https://packagist.org/?query=polysource%2F), split automatically from this monorepo ([ADR-026](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md)).
+**v1.1.1** — API frozen since v1.0.0 (2026-08-06) per [ADR-018](./docs/adr/0018-admin-plugin-interface-and-public-contracts.md); SemVer applies strictly — breaking changes ship in major versions only, signalled in the [CHANGELOG](./CHANGELOG.md). 16 packages on [Packagist](https://packagist.org/?query=polysource%2F), split automatically from this monorepo ([ADR-026](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md)).
 
 **Baseline** ([ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md), v1.0 floors per [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md)): PHP 8.2 → 8.4 · Symfony 6.4 / 7.2 / 7.4 LTS (`^8.0` allowed by constraints, forward-compat, not yet in CI) · EasyAdmin 4.24+ / 5.0+ · Doctrine ORM 2.20+ / 3.6+.
 
