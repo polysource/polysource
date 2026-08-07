@@ -17,7 +17,9 @@ import { startStimulusApp } from '@symfony/stimulus-bundle';
 // reason. No JS registration is needed for either feature now.
 import cmdkController from '@polysource/search/controllers/cmdk_controller.js';
 import progressController from '@polysource/bulk-async/controllers/progress_controller.js';
+import rowDetailsController from '@polysource/filter/controllers/row_details_controller.js';
 
 const app = startStimulusApp();
 app.register('polysource--search--cmdk', cmdkController);
 app.register('polysource-bulk-progress', progressController);
+app.register('polysource--row-details', rowDetailsController);
