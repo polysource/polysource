@@ -47,7 +47,7 @@ final class DetailController
                 'resource' => $context->resource,
                 'record' => $record,
                 'fields' => $fields,
-                'inline_actions' => $this->support->collectActionViews($context->resource)['inline'],
+                'inline_actions' => $this->support->collectRecordActionViews($context->resource, $record, 'detail'),
             ],
         );
     }

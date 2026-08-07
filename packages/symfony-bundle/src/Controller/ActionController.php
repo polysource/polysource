@@ -84,12 +84,18 @@ final class ActionController
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not an inline action.', $context->action, $context->resource->getName()));
         }
 
-        $this->support->assertActionAccess($action);
-
+        // Load the record BEFORE the action-permission gate so the
+        // voter receives it as subject — per-record grants ("retry
+        // only your own jobs") are impossible otherwise. Revealing
+        // record existence to a user denied the *action* is fine:
+        // assertResourceAccess() above already established they can
+        // list the resource.
         $record = $context->resource->getDataSource()->find($context->recordId);
         if (null === $record) {
             throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
+
+        $this->support->assertActionAccess($action, $record);
 
         $result = $this->safelyRun(
             static fn (): ActionResult => $action->execute($record),

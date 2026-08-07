@@ -63,6 +63,15 @@
                 </thead>
                 <tbody>
                     {% for record in page.items %}
+                        {# Per-record action views (since v1.1.0): the
+                         # controller pre-filters with the record as
+                         # voter subject + populated isDisplayed()
+                         # context. `inline_actions` (resource-level)
+                         # remains the fallback for host controllers
+                         # or overrides that don't pass the map. #}
+                        {% set row_actions = record_actions is defined
+                            ? (record_actions[record.identifier] ?? [])
+                            : inline_actions %}
                         <tr>
                             {% for field in fields %}
                                 <td>
@@ -79,7 +88,7 @@
                                        data-polysource-action="detail">
                                         {{ 'polysource.chrome.detail'|trans({}, 'Polysource') }}
                                     </a>
-                                    {% for action in inline_actions %}
+                                    {% for action in row_actions %}
                                         <form method="POST"
                                               action="{{ path(route_prefix ~ '_action', {resourceName: resource.name, id: record.identifier, action: action.name}) }}"
                                               {% if action.confirmation %}onsubmit="return confirm('{{ action.confirmation|e('js') }}');"{% endif %}
