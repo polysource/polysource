@@ -4,6 +4,31 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-08-06
+
+**API freeze.** The public surface (`Polysource\Plugin\*` + the
+documented `*Interface` types in each package) is frozen per
+ADR-018; **SemVer applies strictly from this release** — breaking
+changes ship in major versions only. The ADR-011 freeze checklist
+is fully satisfied; the v0.9.0 architectural audit is closed.
+
+### Changed
+
+- **BREAKING — v1.0 floors (ADR-011)**: PHP 8.2+ (drops 8.1),
+  Symfony 6.4 LTS+ (drops 5.4/6.0) across all 16 packages. The CI
+  matrix follows; the floor-smoke job gates Sf 6.4 + EA 4
+  bridge-alone. EasyAdmin 4.24+ / Doctrine ORM 2.20+ unchanged.
+  The `^0.x` lineages remain installable on the old floors.
+- Inter-package constraints union `^0.1 → ^1.0`.
+- Root dev lock pinned to the floor via `config.platform.php` so
+  local analysis permanently mirrors the pinned CI.
+
+### Security
+
+- 37 upstream advisories published 2026-08-06 (twig/twig ×17,
+  symfony/security-http, easyadmin, …) cleared from the dev stack —
+  `composer audit` clean.
+
 ## [0.11.0] — 2026-08-06
 
 **Audit closed.** The last open item from the v0.9.0 architectural
