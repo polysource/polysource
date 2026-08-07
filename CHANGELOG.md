@@ -4,7 +4,7 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] — Unreleased
+## [1.1.0] — 2026-08-07
 
 ### Added
 
@@ -50,6 +50,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   `ControllerSupport::collectRecordActionViews()` is new public
   surface; existing voters/actions that ignore subject and context
   behave exactly as before.
+- Showcase: the order listing demos expandable row details (chevron
+  → lazy line-items panel), with Panther E2E coverage of the
+  enhanced and no-JS paths.
 
 ### Fixed
 

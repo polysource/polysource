@@ -234,6 +234,9 @@ final class OrderCrudController extends AbstractCrudController
     {
         // Index — flat columns, no tabs (would break grid layout).
         if ($pageName === Crud::PAGE_INDEX) {
+            // v1.1.0 expandable row details — chevron cell expanding
+            // into the order's line items (cf. OrderRowDetailProvider).
+            yield Polysource::rowDetail();
             yield TextField::new('reference');
             yield ChoiceField::new('status')->setChoices(self::STATUS_CHOICES)->renderAsBadges([
                 Order::STATUS_CART => 'secondary',

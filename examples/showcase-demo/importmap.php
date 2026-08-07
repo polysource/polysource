@@ -36,4 +36,7 @@ return [
     '@polysource/bulk-async/controllers/progress_controller.js' => [
         'path' => '@polysource/bulk-async/controllers/progress_controller.js',
     ],
+    '@polysource/filter/controllers/row_details_controller.js' => [
+        'path' => '@polysource/filter/controllers/row_details_controller.js',
+    ],
 ];

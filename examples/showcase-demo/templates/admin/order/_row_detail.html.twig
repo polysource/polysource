@@ -1,0 +1,29 @@
+{# Row detail for an order (v1.1.0 expandable rows demo): the line
+   items, rendered lazily — this template only runs when the row is
+   expanded, so the items collection is initialized for one order
+   per request, never for the whole listing. #}
+<div class="p-2" data-showcase-order-detail="{{ entity.reference }}">
+    <h6 class="text-body-secondary mb-2">{{ entity.reference }} — {{ entity.items|length }} item(s)</h6>
+    <table class="table table-sm table-striped mb-0">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Unit price</th>
+                <th class="text-end">Line total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in entity.items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td class="text-end">{{ item.quantity }}</td>
+                    <td class="text-end">{{ (item.unitPriceCents / 100)|format_currency('EUR') }}</td>
+                    <td class="text-end">{{ (item.totalCents / 100)|format_currency('EUR') }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" class="text-center text-body-secondary">No items.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

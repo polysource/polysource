@@ -111,7 +111,7 @@ The last open audit item (M2/#67 phase 2):
 
 ## Next
 
-### v1.1 — expandable row details (in progress)
+### v1.1 — expandable row details (v1.1.0, 2026-08-07)
 
 - **Expandable row details** on the EA bridge
   ([ADR-0033](./docs/adr/0033-expandable-row-details.md)):
