@@ -213,6 +213,17 @@ visible-but-non-functional UI in hosts without a Stimulus pipeline.
   `polysource_active_filters_summary()`. Auto-rendered by the
   bridge's chips bar.
 
+### v1.1.0 — Expandable row details
+
+- Per-entity `RowDetailProviderInterface` + `Polysource::rowDetail()`
+  chevron field; lazy fragment endpoint with per-row permission
+  (entity as voter subject); `polysource--row-details` Stimulus
+  controller over a no-JS standalone-page baseline. Full guide:
+  [row-details.md](./row-details.md).
+- `RowDetail::listing()` — embed a native Polysource listing
+  (paginated, read-only) as a row's detail; requires
+  `polysource/symfony-bundle` alongside the bridge.
+
 ### v0.5.0 — Simplification + polish (10 features)
 
 - #1 Column reordering — `polysource_column_reorder_buttons(

@@ -186,9 +186,19 @@ public function isDisplayed(array $context = []): bool
 }
 ```
 
-The `$context` array is open-ended; the bundle currently passes
-`'record'` and `'page'` keys. Treat unknown keys as "may appear in a
-future version" rather than hard-failing on them.
+The `$context` array is open-ended; since v1.1.0 the bundle passes
+`'record'` (the `DataRecord`), `'subject'` (the domain object behind
+it — Doctrine entity, Messenger envelope, … — i.e. what
+`DataRecord::$rawSource` holds) and `'page'` (`'index'` or
+`'detail'`). Bulk and global actions are still collected once per
+resource with an empty context — only inline actions get the
+record-aware pass. Treat unknown keys as "may appear in a future
+version" rather than hard-failing on them.
+
+Since v1.1.0 the permission check also receives the `DataRecord` as
+voter `$subject` for inline actions — both when deciding whether to
+render the button and, authoritatively, before executing the POST.
+Voters that ignore their subject keep their exact previous behavior.
 
 ## Testing an action
 

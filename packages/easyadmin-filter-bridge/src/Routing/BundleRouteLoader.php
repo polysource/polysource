@@ -9,6 +9,7 @@ use Polysource\EasyAdminFilterBridge\Controller\ColumnPreferenceController;
 use Polysource\EasyAdminFilterBridge\Controller\ExportController;
 use Polysource\EasyAdminFilterBridge\Controller\FilterUrlTokenController;
 use Polysource\EasyAdminFilterBridge\Controller\MatchingCountController;
+use Polysource\EasyAdminFilterBridge\Controller\RowDetailController;
 use Polysource\EasyAdminFilterBridge\Controller\SavedViewController;
 use Symfony\Bundle\FrameworkBundle\Routing\AttributeRouteControllerLoader;
 use Symfony\Component\Routing\RouteCollection;
@@ -35,6 +36,7 @@ final class BundleRouteLoader
         MatchingCountController::class,
         ColumnOrderController::class,
         FilterUrlTokenController::class,
+        RowDetailController::class,
     ];
 
     public function loadAll(): RouteCollection

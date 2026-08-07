@@ -1,0 +1,25 @@
+{% extends polysource_layout|default('@Polysource/layout.html.twig') %}
+
+{# Standalone page for the no-JS row-detail path (ADR-027): the
+   chevron's plain-link navigation lands here — the same template the
+   Stimulus controller would inject as a fragment, wrapped in the
+   Polysource layout with a back link to the listing. Rendered by
+   RowDetailPanelController without `?fragment=1`. #}
+
+{% block title %}{{ 'polysource.row_detail.title'|trans({}, 'Polysource') }} — {{ resource.label }}{% endblock %}
+
+{% block content %}
+    {% set route_prefix = 'polysource_' ~ resource.name|replace({'-': '_'}) %}
+
+    <nav class="mb-3">
+        <a href="{{ path(route_prefix ~ '_index', {resourceName: resource.name}) }}">
+            &larr; {{ 'polysource.row_detail.back'|trans({}, 'Polysource') }}
+        </a>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-body polysource-row-detail-content">
+            {% include content_template %}
+        </div>
+    </div>
+{% endblock %}

@@ -7,6 +7,16 @@ polysource:
         no_fields_configured: 'Aucun champ configuré pour cette vue.'
         close: 'Fermer'
 
+    # Row details extensibles (v1.1.0) — chevron de l'index + états du panneau.
+    row_detail:
+        title: "Détail de l'enregistrement"
+        expand: 'Voir le détail'
+        collapse: 'Masquer le détail'
+        loading: 'Chargement du détail…'
+        error: 'Échec du chargement du détail.'
+        retry: 'Réessayer'
+        back: 'Retour au listing'
+
     # UI des filtres — templates _filters_form + _filter_chips de twig-theme.
     filter:
         button_label: 'Filtres'

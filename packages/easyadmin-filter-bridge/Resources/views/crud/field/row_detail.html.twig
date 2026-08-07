@@ -1,0 +1,41 @@
+{# Expansion-control cell rendered by RowDetailField (v1.1.0).
+
+   Renders nothing when no RowDetailProviderInterface is registered
+   for this CRUD's entity, when the provider's permission attribute
+   is denied for THIS row (render gate only — the endpoint re-checks
+   authoritatively), or when the host didn't import the bridge
+   routes.
+
+   ADR-027 baseline: the chevron is a real link to the standalone
+   row-detail page. The `polysource--row-details` Stimulus controller
+   upgrades it in place: preventDefault, fetch the `?fragment=1`
+   variant, inject a detail <tr> under this row. Every label the
+   controller needs ships as a Stimulus value so JS stays
+   catalog-free. #}
+{% if entity.instance is not null
+   and polysource_row_detail_available(ea.crud.entityFqcn, entity.instance)
+   and polysource_route_exists('polysource_row_detail') %}
+    {% set polysource_rd_url = path('polysource_row_detail', {
+        resource: ea.crud.entityFqcn,
+        id: entity.primaryKeyValueAsString,
+    }) %}
+    <a href="{{ polysource_rd_url }}"
+       class="polysource-row-detail-toggle btn btn-sm btn-link p-0 text-decoration-none"
+       role="button"
+       aria-expanded="false"
+       aria-label="{{ 'polysource.row_detail.expand'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-controller="polysource--row-details"
+       data-polysource--row-details-url-value="{{ polysource_rd_url }}{{ polysource_rd_url matches '/\\?/' ? '&' : '?' }}fragment=1"
+       data-polysource--row-details-reload-value="{{ field.customOption(constant('Polysource\\EasyAdminFilterBridge\\Bridge\\RowDetailField::OPTION_RELOAD_ON_OPEN')) ? 'true' : 'false' }}"
+       data-polysource--row-details-expand-label-value="{{ 'polysource.row_detail.expand'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-polysource--row-details-collapse-label-value="{{ 'polysource.row_detail.collapse'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-polysource--row-details-loading-label-value="{{ 'polysource.row_detail.loading'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-polysource--row-details-error-label-value="{{ 'polysource.row_detail.error'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-polysource--row-details-retry-label-value="{{ 'polysource.row_detail.retry'|trans({}, 'PolysourceEasyAdminFilterBridge') }}"
+       data-action="polysource--row-details#toggle">
+        {# Unicode glyphs, same rationale as the column-visibility
+           toggle: EA's icon set varies across versions. Decorative;
+           the aria-label carries the meaning. #}
+        <span aria-hidden="true" data-polysource--row-details-target="icon">▸</span>
+    </a>
+{% endif %}

@@ -14,12 +14,16 @@ namespace Polysource\Bundle\View;
 final class PolysourceView
 {
     /**
-     * @param array<string, mixed> $variables passed verbatim to the renderer
+     * @param array<string, mixed>  $variables passed verbatim to the renderer
+     * @param array<string, string> $headers   response headers set by the
+     *                                         listener (both on the Twig
+     *                                         render and the JSON fallback)
      */
     public function __construct(
         public readonly string $template,
         public readonly array $variables = [],
         public readonly int $statusCode = 200,
+        public readonly array $headers = [],
     ) {
     }
 }

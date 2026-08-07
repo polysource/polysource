@@ -35,6 +35,7 @@ final class BundleRouteLoaderTest extends TestCase
         'polysource_matching_count',
         'polysource_column_order_move',
         'polysource_filter_url_token_resolve',
+        'polysource_row_detail',
     ];
 
     #[Test]

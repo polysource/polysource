@@ -6,7 +6,7 @@ namespace Polysource\Bundle\Controller;
 
 use Polysource\Bundle\Context\AdminContext;
 use Polysource\Bundle\View\PolysourceView;
-use Polysource\Core\Exception\ResourceNotFoundException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Front controller for `GET /{prefix}/{resourceName}/{id}` (single record detail).
@@ -23,12 +23,12 @@ final class DetailController
         $this->support->assertResourceAccess($context->resource);
 
         if (null === $context->recordId) {
-            throw new ResourceNotFoundException(\sprintf('Detail route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
+            throw new NotFoundHttpException(\sprintf('Detail route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
         }
 
         $record = $context->resource->getDataSource()->find($context->recordId);
         if (null === $record) {
-            throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
+            throw new NotFoundHttpException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
 
         // Empty-fields fallback: same as IndexController. When the
@@ -47,7 +47,7 @@ final class DetailController
                 'resource' => $context->resource,
                 'record' => $record,
                 'fields' => $fields,
-                'inline_actions' => $this->support->collectActionViews($context->resource)['inline'],
+                'inline_actions' => $this->support->collectRecordActionViews($context->resource, $record, 'detail'),
             ],
         );
     }

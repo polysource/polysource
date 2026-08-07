@@ -10,6 +10,7 @@ use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
+use Polysource\Bundle\Controller\RowDetailPanelController;
 use Polysource\Bundle\Doctor\Check\BundleCheck;
 use Polysource\Bundle\Doctor\Check\DoctrineSchemaCheck;
 use Polysource\Bundle\Doctor\Check\EasyAdminCoLoadCheck;
@@ -20,6 +21,7 @@ use Polysource\Bundle\Plugin\PluginRegistry;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Polysource\Bundle\Routing\PolysourceRouteLoader;
 use Polysource\Bundle\Routing\PolysourceUrlGenerator;
+use Polysource\Bundle\RowDetail\EmbeddedListingRenderer;
 use Polysource\Bundle\Security\SymfonyAuthorizationCheckerPermission;
 use Polysource\Bundle\Twig\PolysourceFilterExtension;
 use Polysource\Core\Permission\PermissionInterface;
@@ -108,6 +110,23 @@ return static function (ContainerConfigurator $container): void {
     $services
         ->set(DetailController::class)
         ->args([service(ControllerSupport::class)])
+        ->public()
+        ->tag('controller.service_arguments')
+    ;
+
+    $services
+        ->set(EmbeddedListingRenderer::class)
+        ->args([service(ResourceRegistry::class), service(ControllerSupport::class)])
+        ->public()
+    ;
+
+    $services
+        ->set(RowDetailPanelController::class)
+        ->args([
+            service(ControllerSupport::class),
+            service(PermissionInterface::class),
+            service(EmbeddedListingRenderer::class),
+        ])
         ->public()
         ->tag('controller.service_arguments')
     ;

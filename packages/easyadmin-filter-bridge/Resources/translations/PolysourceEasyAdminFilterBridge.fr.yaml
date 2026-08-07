@@ -22,6 +22,14 @@ polysource:
         compact: 'Compacte'
     quick_filter:
         placeholder: 'filtrer…'
+    row_detail:
+        title: "Détail de l'enregistrement"
+        expand: 'Voir le détail'
+        collapse: 'Masquer le détail'
+        loading: 'Chargement du détail…'
+        error: 'Échec du chargement du détail.'
+        retry: 'Réessayer'
+        back: 'Retour au listing'
     bulk:
         apply_all: 'Appliquer à toutes les lignes correspondantes'
     share:

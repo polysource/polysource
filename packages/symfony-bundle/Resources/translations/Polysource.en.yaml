@@ -6,6 +6,16 @@ polysource:
         no_fields_configured: 'No fields configured for this view.'
         close: 'Close'
 
+    # Expandable row details (v1.1.0) — index chevron + panel states.
+    row_detail:
+        title: 'Record details'
+        expand: 'Show details'
+        collapse: 'Hide details'
+        loading: 'Loading details…'
+        error: 'Failed to load details.'
+        retry: 'Retry'
+        back: 'Back to listing'
+
     # Filter UI — twig-theme's _filters_form + _filter_chips templates.
     filter:
         button_label: 'Filters'

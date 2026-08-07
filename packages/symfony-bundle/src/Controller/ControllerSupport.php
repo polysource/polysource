@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Controller;
 
+use Polysource\Bundle\RowDetail\HasRowDetailsInterface;
 use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\BulkActionInterface;
@@ -46,10 +47,15 @@ final class ControllerSupport
     /**
      * Throw {@see AccessDeniedHttpException} when the current user
      * cannot invoke the action.
+     *
+     * When a {@see DataRecord} is given it is passed to the voter as
+     * `$subject`, so hosts can grant an attribute on some records and
+     * deny it on others (e.g. "edit only your own drafts"). Voters
+     * that ignore their subject behave exactly as before.
      */
-    public function assertActionAccess(ActionInterface $action): void
+    public function assertActionAccess(ActionInterface $action, ?DataRecord $record = null): void
     {
-        if (!$this->isActionAllowed($action)) {
+        if (!$this->isActionAllowed($action, $record)) {
             $attribute = $action->getPermission() ?? PermissionAttributes::ACTION_INVOKE;
             throw new AccessDeniedHttpException(\sprintf('Access denied on action "%s" (attribute %s).', $action->getName(), $attribute));
         }
@@ -58,12 +64,15 @@ final class ControllerSupport
     /**
      * Whether the current user is allowed to invoke the action
      * (used to decide whether to render its button in the index).
+     *
+     * `$record` becomes the voter subject when provided — see
+     * {@see self::assertActionAccess()}.
      */
-    public function isActionAllowed(ActionInterface $action): bool
+    public function isActionAllowed(ActionInterface $action, ?DataRecord $record = null): bool
     {
         $attribute = $action->getPermission() ?? PermissionAttributes::ACTION_INVOKE;
 
-        return $this->permission->isGranted($attribute);
+        return $this->permission->isGranted($attribute, $record);
     }
 
     /**
@@ -180,19 +189,16 @@ final class ControllerSupport
             // Honour ActionInterface::isDisplayed() — hosts use it
             // to hide actions conditionally (e.g. "Cancel" on a
             // terminal job). The context array stays empty here
-            // because the index page collects per-resource (no
-            // record yet); per-record gating is the template's job
-            // (it has the DataRecord in scope).
+            // because this collects per-resource (no record). Inline
+            // actions get the record-aware pass in
+            // {@see self::collectRecordActionViews()}; this
+            // resource-level list is kept for bulk actions and as
+            // the fallback for host templates predating
+            // `record_actions`.
             if (!$action->isDisplayed()) {
                 continue;
             }
-            $view = [
-                'name' => $action->getName(),
-                'label' => $action->getLabel(),
-                'icon' => $action->getIcon(),
-                'cssVariant' => $action instanceof StyledActionInterface ? $action->getCssVariant() : 'secondary',
-                'confirmation' => $action instanceof StyledActionInterface ? $action->getConfirmation() : null,
-            ];
+            $view = self::viewFor($action);
             if ($action instanceof InlineActionInterface) {
                 $inline[] = $view;
             }
@@ -202,5 +208,86 @@ final class ControllerSupport
         }
 
         return ['inline' => $inline, 'bulk' => $bulk];
+    }
+
+    /**
+     * Record-aware variant of {@see self::collectActionViews()} for
+     * inline actions: the permission check receives the record as
+     * voter subject, and `isDisplayed()` receives a populated context
+     * — `record` (the {@see DataRecord}), `subject` (the domain
+     * object behind it, e.g. the Doctrine entity or Messenger
+     * envelope), and `page` (`'index'` or `'detail'`).
+     *
+     * `subject` mirrors what {@see DataRecord::$rawSource} holds so
+     * actions like the workflow-bridge transitions can ask their
+     * domain layer ("can this object transition?") without coupling
+     * to the DataRecord wrapper.
+     *
+     * @return list<array{name: string, label: string, icon: ?string, cssVariant: string, confirmation: ?string}>
+     *
+     * @since 1.1.0
+     */
+    public function collectRecordActionViews(ResourceInterface $resource, DataRecord $record, string $page = 'index'): array
+    {
+        $context = [
+            'record' => $record,
+            'subject' => $record->rawSource,
+            'page' => $page,
+        ];
+
+        $views = [];
+        foreach ($resource->configureActions() as $action) {
+            if (!$action instanceof InlineActionInterface) {
+                continue;
+            }
+            if (!$this->isActionAllowed($action, $record)) {
+                continue;
+            }
+            if (!$action->isDisplayed($context)) {
+                continue;
+            }
+            $views[] = self::viewFor($action);
+        }
+
+        return $views;
+    }
+
+    /**
+     * Whether the index should render the row-detail chevron for one
+     * row: the resource opts in via {@see HasRowDetailsInterface},
+     * the row-detail permission (if any) is granted with the record
+     * as voter subject, and the row actually has a detail.
+     *
+     * Render gate only — RowDetailPanelController re-checks
+     * authoritatively.
+     *
+     * @since 1.1.0
+     */
+    public function isRowDetailAvailable(ResourceInterface $resource, DataRecord $record): bool
+    {
+        if (!$resource instanceof HasRowDetailsInterface) {
+            return false;
+        }
+
+        $attribute = $resource->getRowDetailPermission();
+        if (null !== $attribute && !$this->permission->isGranted($attribute, $record)) {
+            return false;
+        }
+
+        return $resource->hasRowDetail($record);
+    }
+
+    /**
+     * @return array{name: string, label: string, icon: ?string, cssVariant: string, confirmation: ?string}
+     */
+    private static function viewFor(ActionInterface $action): array
+    {
+        return [
+            'name' => $action->getName(),
+            'label' => $action->getLabel(),
+            'icon' => $action->getIcon(),
+            'cssVariant' => $action instanceof StyledActionInterface ? $action->getCssVariant() : 'secondary',
+            'confirmation' => $action instanceof StyledActionInterface ? $action->getConfirmation() : null,
+        ];
     }
 }

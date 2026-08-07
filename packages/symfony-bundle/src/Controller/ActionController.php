@@ -12,7 +12,6 @@ use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\ActionResult;
 use Polysource\Core\Action\BulkActionInterface;
 use Polysource\Core\Action\InlineActionInterface;
-use Polysource\Core\Exception\ResourceNotFoundException;
 use Polysource\Core\Exception\UnsupportedOperationException;
 use Polysource\Core\Resource\ResourceInterface;
 use Psr\Log\LoggerInterface;
@@ -23,6 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -76,7 +76,7 @@ final class ActionController
         $this->assertCsrf($context);
 
         if (null === $context->recordId) {
-            throw new ResourceNotFoundException(\sprintf('Action route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
+            throw new NotFoundHttpException(\sprintf('Action route for resource "%s" requires an "id" parameter.', $context->resource->getName()));
         }
 
         $action = $this->support->findAction($context->resource, $context->action);
@@ -84,12 +84,18 @@ final class ActionController
             throw new UnsupportedOperationException(\sprintf('Action "%s" on resource "%s" is not an inline action.', $context->action, $context->resource->getName()));
         }
 
-        $this->support->assertActionAccess($action);
-
+        // Load the record BEFORE the action-permission gate so the
+        // voter receives it as subject — per-record grants ("retry
+        // only your own jobs") are impossible otherwise. Revealing
+        // record existence to a user denied the *action* is fine:
+        // assertResourceAccess() above already established they can
+        // list the resource.
         $record = $context->resource->getDataSource()->find($context->recordId);
         if (null === $record) {
-            throw new ResourceNotFoundException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
+            throw new NotFoundHttpException(\sprintf('Record "%s" not found in resource "%s".', $context->recordId, $context->resource->getName()));
         }
+
+        $this->support->assertActionAccess($action, $record);
 
         $result = $this->safelyRun(
             static fn (): ActionResult => $action->execute($record),
@@ -115,7 +121,7 @@ final class ActionController
 
         $actionName = $context->request->attributes->get('action');
         if (!\is_string($actionName) || '' === $actionName) {
-            throw new ResourceNotFoundException(\sprintf('Bulk action route for resource "%s" requires an "action" parameter.', $context->resource->getName()));
+            throw new NotFoundHttpException(\sprintf('Bulk action route for resource "%s" requires an "action" parameter.', $context->resource->getName()));
         }
 
         $action = $this->support->findAction($context->resource, $actionName);

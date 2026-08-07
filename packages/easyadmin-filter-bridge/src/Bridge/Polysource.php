@@ -51,6 +51,17 @@ final class Polysource
         return PolysourceField::on($field);
     }
 
+    /**
+     * Expansion-control field for expandable row details — yield it
+     * first in `configureFields()`. Cf. {@see RowDetailField}.
+     *
+     * @since 1.1.0
+     */
+    public static function rowDetail(): RowDetailField
+    {
+        return RowDetailField::new();
+    }
+
     public static function tab(string $label): PolysourceMarker
     {
         return PolysourceMarker::tab($label);

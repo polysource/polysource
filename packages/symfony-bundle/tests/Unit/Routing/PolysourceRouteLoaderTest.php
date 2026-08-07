@@ -25,7 +25,7 @@ final class PolysourceRouteLoaderTest extends TestCase
     }
 
     #[Test]
-    public function generatesFourRoutesPerResource(): void
+    public function generatesFiveRoutesPerResource(): void
     {
         $loader = new PolysourceRouteLoader(new ResourceRegistry([
             new FakeResource('flags'),
@@ -34,9 +34,10 @@ final class PolysourceRouteLoaderTest extends TestCase
 
         $collection = $loader->load('.', 'polysource');
 
-        self::assertCount(8, $collection);
+        self::assertCount(10, $collection);
         self::assertNotNull($collection->get('polysource_flags_index'));
         self::assertNotNull($collection->get('polysource_flags_detail'));
+        self::assertNotNull($collection->get('polysource_flags_detail_panel'));
         self::assertNotNull($collection->get('polysource_flags_action'));
         self::assertNotNull($collection->get('polysource_flags_bulk_action'));
         self::assertNotNull($collection->get('polysource_failed_messages_index'));

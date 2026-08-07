@@ -8,6 +8,7 @@ use LogicException;
 use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
+use Polysource\Bundle\Controller\RowDetailPanelController;
 use Polysource\Bundle\Registry\ResourceRegistry;
 use Symfony\Component\Config\Loader\Loader;
 use Symfony\Component\Routing\Route;
@@ -16,11 +17,12 @@ use Symfony\Component\Routing\RouteCollection;
 /**
  * Generates physical routes for every registered Polysource resource.
  *
- * Cf. ADR-003 — for each resource we generate four routes:
- *   - GET    {prefix}/{slug}                  → IndexController::__invoke
- *   - GET    {prefix}/{slug}/{id}             → DetailController::__invoke
- *   - POST   {prefix}/{slug}/{id}/{action}    → ActionController::__invoke
- *   - POST   {prefix}/{slug}/batch/{action}   → ActionController::bulk
+ * Cf. ADR-003 — for each resource we generate five routes:
+ *   - GET    {prefix}/{slug}                     → IndexController::__invoke
+ *   - GET    {prefix}/{slug}/{id}                → DetailController::__invoke
+ *   - GET    {prefix}/{slug}/{id}/detail-panel   → RowDetailPanelController::__invoke (v1.1.0)
+ *   - POST   {prefix}/{slug}/{id}/{action}       → ActionController::__invoke
+ *   - POST   {prefix}/{slug}/batch/{action}      → ActionController::bulk
  *
  * Activate in the host app's `config/routes/polysource.yaml`:
  *
@@ -81,6 +83,23 @@ final class PolysourceRouteLoader extends Loader
                     defaults: $defaults + [
                         '_controller' => DetailController::class . '::__invoke',
                         self::ATTR_ACTION => 'detail',
+                    ],
+                    requirements: ['id' => '(?!batch$)[^/]+'],
+                    methods: ['GET'],
+                ),
+            );
+
+            // Registered before the POST action route by symmetry with
+            // the bulk route below; methods differ (GET vs POST) so
+            // there is no actual ambiguity with `/{id}/{action}`, but
+            // explicit ordering keeps route dumps deterministic.
+            $collection->add(
+                'polysource_' . $routeKey . '_detail_panel',
+                new Route(
+                    path: $base . '/{id}/detail-panel',
+                    defaults: $defaults + [
+                        '_controller' => RowDetailPanelController::class . '::__invoke',
+                        self::ATTR_ACTION => 'detail-panel',
                     ],
                     requirements: ['id' => '(?!batch$)[^/]+'],
                     methods: ['GET'],

@@ -4,6 +4,67 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — Unreleased
+
+### Added
+
+- **Expandable row details** (`easyadmin-filter-bridge`,
+  [ADR-033](./docs/adr/0033-expandable-row-details.md)) — opt-in
+  per-entity row expansion for EA listings:
+  `RowDetailProviderInterface` / `AbstractRowDetailProvider` +
+  `Polysource::rowDetail()` chevron field (virtual EA field — no
+  `table_body_row` fork, EA 4.24 & 5.x identical), lazy
+  `GET /admin/polysource/row-detail/{resource}/{id}` endpoint
+  (fragment + standalone no-JS page per ADR-027), provider
+  permission attribute checked with the row's entity as voter
+  subject (fail-closed), `polysource--row-details` Stimulus
+  controller (loading/error/retry states, client cache,
+  `reloadOnOpen()`, ARIA). Docs:
+  [row-details.md](./docs/user/easyadmin-filter-bridge/row-details.md).
+- **Native expandable row details** (`symfony-bundle` +
+  `twig-theme`) — opt-in `HasRowDetailsInterface` on any resource
+  (all six adapters), fifth generated route
+  `GET {prefix}/{slug}/{id}/detail-panel` on the PolysourceView
+  pipeline, per-row chevron gate, fragment + layout-wrapped no-JS
+  page. The `RowDetail` VO lives in `polysource/core`; the
+  `polysource--row-details` Stimulus controller moved to
+  `polysource/filter` (shared by bridge and native theme — same
+  controller name). `@Polysource/index.html.twig` gains named
+  blocks (`table_body_row`, `table_row_cells`,
+  `table_row_actions`); `PolysourceView` gains an additive
+  `headers` field.
+- **Nested listing as row detail** — `RowDetail::listing(resource,
+  parentFilters, pageSize)` embeds another registered Polysource
+  resource as the detail, read-only (table + pagination), scoped by
+  equality filters, child-resource view permission enforced.
+  Embedded paging rides on a dedicated `rd_page` param of the panel
+  URL (each panel is its own request — no collision with the outer
+  listing), works without JS and refreshes in place when injected.
+  On the bridge, requires `polysource/symfony-bundle` (explicit
+  `LogicException` otherwise). Docs:
+  [row-details.md](./docs/user/row-details.md).
+- **Per-record action gating** (`symfony-bundle`) — inline-action
+  permission checks now receive the `DataRecord` as voter subject
+  (render and execute paths), and `isDisplayed()` receives a
+  populated context (`record`, `subject`, `page`).
+  `ControllerSupport::collectRecordActionViews()` is new public
+  surface; existing voters/actions that ignore subject and context
+  behave exactly as before.
+
+### Fixed
+
+- Bundle controllers returned **500 instead of 404** for unknown
+  records (core `ResourceNotFoundException` is a plain
+  RuntimeException): detail, action and detail-panel routes now
+  throw `NotFoundHttpException`.
+
+- Workflow-bridge transition buttons were never rendered by the
+  bundle theme: `isDisplayed()` was collected with an empty context,
+  so `ApplyTransitionAction` (which needs `$context['subject']`)
+  always returned false. The record-aware pass above fixes them.
+- `docs/user/concepts/action.md` claimed the bundle passes `record`
+  / `page` context keys — now it actually does.
+
 ## [1.0.0] — 2026-08-06
 
 **API freeze.** The public surface (`Polysource\Plugin\*` + the
