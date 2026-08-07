@@ -4,6 +4,40 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — Unreleased
+
+### Added
+
+- **Expandable row details** (`easyadmin-filter-bridge`,
+  [ADR-033](./docs/adr/0033-expandable-row-details.md)) — opt-in
+  per-entity row expansion for EA listings:
+  `RowDetailProviderInterface` / `AbstractRowDetailProvider` +
+  `Polysource::rowDetail()` chevron field (virtual EA field — no
+  `table_body_row` fork, EA 4.24 & 5.x identical), lazy
+  `GET /admin/polysource/row-detail/{resource}/{id}` endpoint
+  (fragment + standalone no-JS page per ADR-027), provider
+  permission attribute checked with the row's entity as voter
+  subject (fail-closed), `polysource--row-details` Stimulus
+  controller (loading/error/retry states, client cache,
+  `reloadOnOpen()`, ARIA). Docs:
+  [row-details.md](./docs/user/easyadmin-filter-bridge/row-details.md).
+- **Per-record action gating** (`symfony-bundle`) — inline-action
+  permission checks now receive the `DataRecord` as voter subject
+  (render and execute paths), and `isDisplayed()` receives a
+  populated context (`record`, `subject`, `page`).
+  `ControllerSupport::collectRecordActionViews()` is new public
+  surface; existing voters/actions that ignore subject and context
+  behave exactly as before.
+
+### Fixed
+
+- Workflow-bridge transition buttons were never rendered by the
+  bundle theme: `isDisplayed()` was collected with an empty context,
+  so `ApplyTransitionAction` (which needs `$context['subject']`)
+  always returned false. The record-aware pass above fixes them.
+- `docs/user/concepts/action.md` claimed the bundle passes `record`
+  / `page` context keys — now it actually does.
+
 ## [1.0.0] — 2026-08-06
 
 **API freeze.** The public surface (`Polysource\Plugin\*` + the

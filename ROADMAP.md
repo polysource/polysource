@@ -99,8 +99,6 @@ operator-translation strategy closed and documented
 `FilterUrlTokenController`, and the README rebuilt as an
 adoption-first landing page with fresh showcase screenshots.
 
-## Next
-
 ### v0.11 — FeatureLoader split (v0.11.0, 2026-08-06)
 
 The last open audit item (M2/#67 phase 2):
@@ -108,7 +106,25 @@ The last open audit item (M2/#67 phase 2):
 - **FeatureLoader class split** — decompose the two large DI
   extensions (`PolysourceFilterExtension`,
   `PolysourceEasyAdminFilterBridgeExtension`) into per-feature
-  loader classes; convention to be ratified as ADR-0032
+  loader classes; convention ratified as
+  [ADR-0032](./docs/adr/0032-featureloader-di-decomposition.md)
+
+## Next
+
+### v1.1 — expandable row details (in progress)
+
+- **Expandable row details** on the EA bridge
+  ([ADR-0033](./docs/adr/0033-expandable-row-details.md)):
+  per-entity providers, lazy fragment endpoint, per-row permission
+  (entity as voter subject), Stimulus enhancement over a no-JS
+  baseline. Read-only per ADR-028.
+- **Per-record action gating** in the bundle: voters receive the
+  `DataRecord` as subject; `isDisplayed()` gets a real context —
+  unblocks per-row action visibility and fixes the workflow-bridge
+  transition buttons.
+- Deferred explicitly: nested Polysource listing inside a row
+  detail (needs request-context isolation — cf. ADR-0033
+  consequences), row details on the native symfony-bundle theme.
 
 ### Pre-1.0 polish (not committed)
 

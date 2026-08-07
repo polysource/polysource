@@ -38,6 +38,8 @@
 | [ADR-028](./0028-scope-discipline.md) | Scope discipline : couche UX filter+listing, pas une plateforme d'admin | Accepté |
 | [ADR-029](./0029-admin-context-decomposition.md) | `AdminContext` décomposition planifiée en sous-VOs au seuil ADR-004 | Accepté (planification) |
 | [ADR-031](./0031-operator-translation-strategy.md) | Traduction des opérateurs : `InMemoryValueMatcher` partagé + traduction native par adapter (interface commune rejetée) | Accepté (rétro-documentation) |
+| [ADR-032](./0032-featureloader-di-decomposition.md) | Décomposition DI : un `<Feature>Loader` par feature optionnelle, extension = table des matières | Accepté |
+| [ADR-033](./0033-expandable-row-details.md) | Expandable row details : champ EA virtuel + provider par entité, permission par ligne, pas de fork de table | Accepté |
 
 ## Convention
 
