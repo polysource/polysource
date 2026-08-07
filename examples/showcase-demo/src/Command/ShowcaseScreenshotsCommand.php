@@ -137,6 +137,12 @@ final class ShowcaseScreenshotsCommand extends Command
         // capture lands on the redirected page with the alerts
         // visible top-right.
         ['slug' => '30-toast-notifications', 'path' => '/admin/showcase/toast-demo', 'wait' => '.polysource-toast-container .alert-success', 'assertMinRows' => 5],
+
+        // v1.1.0 — Expandable row details. Click the first chevron on
+        // the order listing, wait for the lazily-fetched line-items
+        // panel to reach the `expanded` state (same selectors as
+        // RowDetailExpandTest — spinner-only captures fail the wait).
+        ['slug' => '31-row-details', 'path' => '/admin/order', 'wait' => '.polysource-row-detail-toggle', 'click' => '.polysource-row-detail-toggle', 'waitAfterClick' => 'tr.polysource-row-detail-row[data-polysource-row-detail-state="expanded"] [data-showcase-order-detail]', 'assertMinRows' => 5],
     ];
 
     /** @var list<string> Warnings collected during the run; printed at the end + return non-zero. */

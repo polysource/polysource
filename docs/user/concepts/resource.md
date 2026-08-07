@@ -8,7 +8,7 @@ resource. A feature-flag dashboard would be another.
 ## What a resource declares
 
 A class implementing `Polysource\Core\Resource\ResourceInterface`
-declares **seven** things:
+declares **eight** things:
 
 | Method | Returns | Purpose |
 |---|---|---|
@@ -91,9 +91,9 @@ services:
         tags: ['polysource.resource']
 ```
 
-The route loader iterates over every tagged service and generates four
-routes per resource (index, detail, action, bulk action) under
-`{polysource.url_prefix}/{slug}`.
+The route loader iterates over every tagged service and generates five
+routes per resource (index, detail, row-detail panel, bulk action,
+action) under `{polysource.url_prefix}/{slug}`.
 
 ## What the routes look like
 
@@ -102,9 +102,15 @@ For `getName(): 'feature-flags'` and `url_prefix: /admin`:
 ```
 GET   /admin/feature-flags
 GET   /admin/feature-flags/{id}
+GET   /admin/feature-flags/{id}/detail-panel
 POST  /admin/feature-flags/batch/{action}
 POST  /admin/feature-flags/{id}/{action}
 ```
+
+The `detail-panel` route (added in v1.1.0) serves the lazily-loaded
+contents of an expanded row. It is generated for every resource, but
+it only returns a panel when the resource implements
+`HasRowDetailsInterface` — see [../row-details.md](../row-details.md).
 
 Slug normalisation: a slug with non-word characters is converted to
 underscores in the Symfony route name (e.g. `my-resource` →
@@ -165,13 +171,16 @@ to resolve it back to a record.
 - It is **not** a database entity. There is no Doctrine mapping. The
   resource is a *declaration*; the actual data lives behind the
   `DataSourceInterface`.
-- It is **not** a controller. The bundle ships
-  `IndexController`, `DetailController` and `ActionController` that
-  read the resource declaration and render the appropriate page. You
-  do not write controllers per resource.
+- It is **not** a controller. The bundle ships `IndexController`,
+  `DetailController`, `ActionController` and `RowDetailPanelController`
+  that read the resource declaration and render the appropriate page.
+  You do not write controllers per resource.
 - It is **not** a form. Fields are render hints, not Symfony Form
-  types. (Form integration arrives in v0.3+ — see the
-  [ROADMAP](../../../ROADMAP.md).)
+  types. Polysource renders read screens (index, detail, row detail)
+  and runs actions; it ships no edit/new form UI, and none is on the
+  [roadmap](../../../ROADMAP.md). Writes go through your own
+  controllers, or through `WritableDataSourceInterface` driven by an
+  action.
 
 ## See also
 

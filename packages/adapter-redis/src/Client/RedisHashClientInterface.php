@@ -8,7 +8,8 @@ namespace Polysource\Adapter\Redis\Client;
  * @deprecated since 0.8.0 — use {@see RedisClientInterface} instead.
  *             v0.8.0 expanded the surface from hashes only to all 5
  *             Redis types. This interface is kept as a sub-set view
- *             for backward compatibility but will be removed at v1.0.
+ *             for backward compatibility; it shipped in the frozen
+ *             v1.0 surface, so its removal now waits for v2.0.
  *
  * Inherits the full 21-method surface so existing implementations
  * (typically `PredisRedisClient` aliased to this interface in DI)

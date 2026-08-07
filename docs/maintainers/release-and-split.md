@@ -52,35 +52,63 @@
 
 ## Le release flow (cas nominal)
 
-> Faire un nouveau release v0.X.Y, partant d'un `main` propre.
+> Faire un nouveau release vX.Y.Z, partant d'un `main` propre.
+>
+> Poser la version une fois en variable de shell rend tout le flow
+> copiable tel quel :
+>
+> ```bash
+> VERSION=1.1.0
+> ```
 
 1. **Sur le monorepo, prepare le release**
    ```bash
-   # CHANGELOG.md : déplacer [Unreleased] → [0.X.Y] avec la date
+   # CHANGELOG.md : déplacer [Unreleased] → [X.Y.Z] avec la date
    # composer.json : mettre à jour les contraintes inter-packages si besoin
-   git add CHANGELOG.md packages/*/composer.json
-   git commit -m "release: v0.X.Y"
+   # packages/core/src/Polysource.php : bump Polysource::VERSION à X.Y.Z
+   # composer.json + packages/*/composer.json : branch-alias dev-main → X.(Y+1).x-dev
+   git add CHANGELOG.md composer.json packages/*/composer.json packages/core/src/Polysource.php
+   git commit -m "release: v$VERSION"
    ```
 
-2. **Tag annoté** (jamais de tag léger sur le monorepo, l'annoté
+2. **Gate pré-tag : docs truth-sync + smoke d'installation**
+   (obligatoires, jamais sautées — le drift docs de v0.5.7 → v1.1.0
+   a coûté une journée d'audit complet ; un bug de chemin d'install
+   ne se voit pas autrement)
+   ```bash
+   make docs-check   # version constant, branch-aliases, banners,
+                     # compteurs ADR/packages/screenshots vs le code
+   make smoke
+   ```
+   `docs-check` vérifie le mécanique ; le non-mécanique se vérifie à
+   la main à chaque minor : le README (feature lists + quality bar),
+   `docs/user/README.md`, le ROADMAP (section Shipped), la
+   `whats-new.md` du bridge, et un tour d'écran
+   (`make showcase-screenshots`) si l'UI a changé.
+   Installe `polysource/symfony-bundle` sur un skeleton Sf 7.4 vanilla
+   via les path repos. Optionnellement `make smoke-sf54` pour couvrir
+   le plancher Sf 6.4 LTS + EA 4.x sur le chemin bridge-seul.
+   **Si ça casse, on ne tague pas.**
+
+3. **Tag annoté** (jamais de tag léger sur le monorepo, l'annoté
    transporte un message + la signature)
    ```bash
-   git tag -a v0.X.Y -m "Polysource v0.X.Y — <highlight>"
+   git tag -a "v$VERSION" -m "Polysource v$VERSION — <highlight>"
    ```
 
-3. **Push commit + tag**
+4. **Push commit + tag**
    ```bash
    git push origin main
-   git push origin v0.X.Y
+   git push origin "v$VERSION"
    ```
 
-4. **Vérifier le run d'auto-split**
+5. **Vérifier le run d'auto-split**
    ```bash
    gh run watch --workflow=auto-split.yml --repo polysource/polysource --exit-status
    ```
    Attendu : 16/16 jobs verts en < 2 min.
 
-5. **Cross-check les SHAs**
+6. **Cross-check les SHAs**
    ```bash
    gh run view <run-id> --repo polysource/polysource --log \
      | grep "Split SHA:"
@@ -91,26 +119,38 @@
    Chaque `Split SHA` du run doit matcher exactement le HEAD du mirror
    correspondant.
 
-6. **Vérifier que les tags ont été mirrorés**
+7. **Vérifier que les tags ont été mirrorés**
    ```bash
    for pkg in core symfony-bundle …; do
-     gh api "repos/polysource/$pkg/git/refs/tags/v0.X.Y" --jq '.ref'
+     gh api "repos/polysource/$pkg/git/refs/tags/v$VERSION" --jq '.ref'
    done
    ```
 
-7. **Vérifier que Packagist a vu** (compter ~30-60 s après le push tag)
+8. **Vérifier que Packagist a vu** (compter ~30-60 s après le push tag)
    ```bash
    curl -sf https://repo.packagist.org/p2/polysource/core.json \
      | jq '.packages."polysource/core" | map(.version) | sort'
    ```
-   La version `v0.X.Y` (ou `0.X.Y`) doit apparaître.
+   La version `v$VERSION` (ou `$VERSION`) doit apparaître.
 
-8. **Créer la GitHub Release** (extrait du CHANGELOG)
+9. **Gate post-publication : smoke depuis le vrai Packagist**
+   (obligatoire — c'est la seule étape qui exerce ce que voit un
+   consommateur réel, path repos exclus)
    ```bash
-   gh release create v0.X.Y --title "v0.X.Y" \
-     --notes-file <(awk '/## \[0\.X\.Y\]/,/## \[/{print}' CHANGELOG.md \
-                   | sed '$d')
+   make smoke-packagist          # bundle complet, skeleton Sf 7.4 vanilla
+   make smoke-packagist-bridge   # bridge seul — attrape les erreurs Twig type B2
    ```
+
+10. **Créer la GitHub Release** (extrait du CHANGELOG)
+    ```bash
+    gh release create "v$VERSION" --title "v$VERSION" \
+      --notes-file <(awk -v v="$VERSION" \
+          '$0 ~ "^## \\[" v "\\]" {f=1; print; next} f && /^## \[/ {exit} f {print}' \
+          CHANGELOG.md)
+    ```
+    Le motif ancre sur `^## [<version>]` et s'arrête au titre de
+    version suivant : il marche indifféremment sur `## [0.11.0]` et
+    `## [1.1.0]`.
 
 ## Ajouter un nouveau package au monorepo
 
@@ -118,7 +158,7 @@
    ses sources, ses tests
 2. **Créer le repo mirror vide** sur GitHub
    ```bash
-   ./scripts/split-packages.sh --tag v0.X.Y <new-pkg>
+   ./scripts/split-packages.sh --tag "v$VERSION" <new-pkg>
    ```
    Le script appelle `gh repo create polysource/<new-pkg> --public`
    puis pousse le premier split + tag.

@@ -1,13 +1,12 @@
 # Theming the EasyAdmin filter bridge
 
-> Since `polysource/easyadmin-filter-bridge` v0.9.2.
-> Before v0.9.2 the bridge inlined its CSS in the page; the
+> Since `polysource/easyadmin-filter-bridge` v0.10.0.
+> Before v0.10.0 the bridge inlined its CSS in the page; the
 > variables and override points below did not exist.
 
-Everything the bridge renders — chips bar, filter-modal tabs and
-groups, subpanel mode — is styled by **one stylesheet** shipped with
-the bundle and themable at three levels, from cheapest to most
-invasive:
+The bridge's own chrome — chips bar, filter-modal tabs and groups,
+subpanel mode — is styled by **one stylesheet** shipped with the
+bundle and themable at three levels, from cheapest to most invasive:
 
 1. [CSS variables](#css-variables) — recolor / resize without
    touching any template. Covers "I want chips in my company
@@ -53,7 +52,8 @@ only.
 
 ## CSS variables
 
-Every color and key dimension flows through a `--polysource-*`
+The colors and key dimensions of the chips bar, the filter-modal tabs
+and groups, and the subpanel all flow through a `--polysource-*`
 custom property declared on `:root`. Override any of them from your
 app stylesheet — no build step, no template override:
 
@@ -85,6 +85,17 @@ EasyAdmin ships), the bridge **follows your admin's light/dark theme
 automatically** — you only need overrides for deliberate deviations.
 The hex fallbacks kick in on stacks without Bootstrap CSS variables
 (EA 4 / Bootstrap < 5.3).
+
+**Not covered by a variable yet:** the row-details chevron added in
+v1.1 (`.polysource-row-detail-toggle`, rendered by
+`crud/field/row_detail.html.twig`). It carries no rules in
+`polysource-filter-bridge.css` — it rides on Bootstrap's
+`btn btn-sm btn-link` utilities and inherits your admin's link color
+as-is. To restyle it, target the class from your own stylesheet:
+
+```css
+.polysource-row-detail-toggle { color: #0f766e; }
+```
 
 Variables can also be scoped instead of global — e.g. recolor chips
 on one CRUD only, keyed off EA's per-page body id:

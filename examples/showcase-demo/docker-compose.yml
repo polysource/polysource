@@ -1,7 +1,7 @@
 # Polysource Showcase Demo — 8-service stack.
 #
-# Hero of the v0.1.0 launch (cf. ADR-025). Boots a complete ShopCo
-# SaaS environment exercising the 15 packages.
+# Hero of the v1.1.0 launch (cf. ADR-025). Boots a complete ShopCo
+# SaaS environment exercising the 16 packages.
 #
 # Services:
 #   - php          (FPM 8.4 + extensions)

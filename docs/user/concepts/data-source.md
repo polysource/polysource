@@ -169,26 +169,34 @@ Supports both offset/limit and cursor styles. The constructor rejects
 ### `FilterCriterion`
 
 ```php
-final readonly class FilterCriterion
+final class FilterCriterion
 {
     public function __construct(
-        public string $property,
-        public string $operator,
-        public mixed $value = null,
+        public readonly string $property,
+        public readonly FilterOperator $operator,
+        public readonly mixed $value = null,
     ) {}
 }
 ```
 
-Standard operators (an adapter may declare additional ones):
+`$operator` is the `Polysource\Core\Query\FilterOperator` enum — it
+has been since v0.7.0, and the enum is **closed at these 12 cases**.
+An adapter cannot add one; adapters that need extra selectivity
+express it through the criterion's `$value` or through a dedicated
+`FilterInterface` whose `applyToQuery()` does the work.
 
-| Operator | Meaning |
-|---|---|
-| `eq`, `neq` | equality / inequality |
-| `gt`, `gte`, `lt`, `lte` | numeric / date comparisons |
-| `like` | substring (semantics adapter-dependent) |
-| `in`, `nin` | membership in a list |
-| `between` | range — value must be a 2-element array |
-| `null`, `notnull` | presence check — value ignored |
+| Case | Backing value | Meaning |
+|---|---|---|
+| `Eq`, `Neq` | `eq`, `neq` | equality / inequality |
+| `Gt`, `Gte`, `Lt`, `Lte` | `gt`, `gte`, `lt`, `lte` | numeric / date comparisons |
+| `Like` | `like` | substring (semantics adapter-dependent) |
+| `In`, `Nin` | `in`, `nin` | membership in a list |
+| `Between` | `between` | range — value must be a 2-element array |
+| `IsNull`, `IsNotNull` | `null`, `notnull` | presence check — value ignored |
+
+The backing values are what appears in URLs
+(`?filter[name][op]=…`) and in saved-view JSON, so they are stable.
+Parse untrusted input with `FilterOperator::tryFrom($string)`.
 
 Adapters translate operators into their native query language
 (Doctrine DQL, Redis `SCAN MATCH`, HTTP query string, Meilisearch

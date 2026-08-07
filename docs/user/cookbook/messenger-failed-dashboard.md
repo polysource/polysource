@@ -11,7 +11,8 @@ run `make demo` from the repository root — it boots the bundled
 
 ## Prerequisites
 
-- Symfony 7.4 on PHP 8.4.
+- Symfony 6.4 LTS, 7.x or 8.x on PHP 8.2+ (this recipe was written
+  against Symfony 7.4 on PHP 8.4).
 - A Messenger `failed` transport using a listable backend
   (Doctrine, Redis, AMQP, InMemory). See the
   [adapter reference → supported transports](../adapters/messenger.md#supported-transports).
@@ -24,7 +25,7 @@ run `make demo` from the repository root — it boots the bundled
 composer require polysource/symfony-bundle polysource/adapter-messenger
 ```
 
-(Both packages are on Packagist since v0.1.0; current stable: v0.5.7.)
+(Both packages are on Packagist since v0.1.0; current stable: v1.1.0.)
 
 ## 2. Register the bundles
 
@@ -66,105 +67,46 @@ polysource_messenger:
     max_purge: 1000
 ```
 
-## 4. Declare your field types
+## 4. Pick your field types
 
-v0.1 of `polysource/core` ships only the abstract `FieldInterface` +
-`FieldTrait`; concrete types live in your application until the core
-ships built-in fields. Five short classes cover the usual
-Messenger-failed columns. Drop them in `src/Polysource/Field/`:
+Nothing to write here — `polysource/core` ships the field types this
+dashboard needs under `Polysource\Core\Field\`:
+
+| Class | Renders |
+|---|---|
+| `IdField` | identifiers, monospace with a copy affordance |
+| `TextField` | plain escaped text |
+| `DateTimeField` | locale-aware timestamps |
+| `CodeField` | monospace block for payloads and stack traces |
+| `BooleanField` | true / false badge |
+
+Import them and move on to step 5. Write your own field class only
+when none of the five fits — for example, a status chip that maps a
+column's value onto your own colour vocabulary:
 
 ```php
-// src/Polysource/Field/IdField.php
+// src/Polysource/Field/StatusChipField.php
 namespace App\Polysource\Field;
 
 use Polysource\Core\Field\FieldInterface;
 use Polysource\Core\Field\FieldTrait;
 
-final class IdField implements FieldInterface
+final class StatusChipField implements FieldInterface
 {
     use FieldTrait;
 
     public static function new(string $property, ?string $label = null): self
     {
-        return (new self($property, $label))->setTemplate('@Polysource/field/id.html.twig');
+        return (new self($property, $label))->setTemplate('admin/field/_status_chip.html.twig');
     }
 }
 ```
 
-```php
-// src/Polysource/Field/TextField.php
-namespace App\Polysource\Field;
-
-use Polysource\Core\Field\FieldInterface;
-use Polysource\Core\Field\FieldTrait;
-
-final class TextField implements FieldInterface
-{
-    use FieldTrait;
-
-    public static function new(string $property, ?string $label = null): self
-    {
-        return (new self($property, $label))->setTemplate('@Polysource/field/text.html.twig');
-    }
-}
-```
-
-```php
-// src/Polysource/Field/DateTimeField.php
-namespace App\Polysource\Field;
-
-use Polysource\Core\Field\FieldInterface;
-use Polysource\Core\Field\FieldTrait;
-
-final class DateTimeField implements FieldInterface
-{
-    use FieldTrait;
-
-    public static function new(string $property, ?string $label = null): self
-    {
-        return (new self($property, $label))->setTemplate('@Polysource/field/datetime.html.twig');
-    }
-}
-```
-
-```php
-// src/Polysource/Field/CodeField.php
-namespace App\Polysource\Field;
-
-use Polysource\Core\Field\FieldInterface;
-use Polysource\Core\Field\FieldTrait;
-
-final class CodeField implements FieldInterface
-{
-    use FieldTrait;
-
-    public static function new(string $property, ?string $label = null): self
-    {
-        return (new self($property, $label))->setTemplate('@Polysource/field/code.html.twig');
-    }
-}
-```
-
-```php
-// src/Polysource/Field/BooleanField.php
-namespace App\Polysource\Field;
-
-use Polysource\Core\Field\FieldInterface;
-use Polysource\Core\Field\FieldTrait;
-
-final class BooleanField implements FieldInterface
-{
-    use FieldTrait;
-
-    public static function new(string $property, ?string $label = null): self
-    {
-        return (new self($property, $label))->setTemplate('@Polysource/field/boolean.html.twig');
-    }
-}
-```
-
-(Boolean isn't strictly used by the Messenger adapter; ship it anyway
-— you'll need it for the next dashboard.)
+`FieldTrait` supplies every builder method (`setSortable()`,
+`onlyOnIndex()`, `setPermission()`, …) and the `getAsDto()`
+materialisation, so a custom field really is that short. The template
+receives the record and the field DTO — see
+[../concepts/field.md](../concepts/field.md).
 
 ## 5. Subclass `FailedMessageResource`
 
@@ -173,11 +115,11 @@ final class BooleanField implements FieldInterface
 ```php
 namespace App\Polysource;
 
-use App\Polysource\Field\CodeField;
-use App\Polysource\Field\DateTimeField;
-use App\Polysource\Field\IdField;
-use App\Polysource\Field\TextField;
 use Polysource\Adapter\Messenger\Resource\FailedMessageResource;
+use Polysource\Core\Field\CodeField;
+use Polysource\Core\Field\DateTimeField;
+use Polysource\Core\Field\IdField;
+use Polysource\Core\Field\TextField;
 
 final class AppFailedMessageResource extends FailedMessageResource
 {
@@ -270,11 +212,17 @@ bin/console debug:router | grep failed-messages
 Expected:
 
 ```
-polysource_failed_messages_index         GET    /admin/failed-messages
-polysource_failed_messages_detail        GET    /admin/failed-messages/{id}
-polysource_failed_messages_bulk_action   POST   /admin/failed-messages/batch/{action}
-polysource_failed_messages_action        POST   /admin/failed-messages/{id}/{action}
+polysource_failed_messages_index          GET    /admin/failed-messages
+polysource_failed_messages_detail         GET    /admin/failed-messages/{id}
+polysource_failed_messages_detail_panel   GET    /admin/failed-messages/{id}/detail-panel
+polysource_failed_messages_bulk_action    POST   /admin/failed-messages/batch/{action}
+polysource_failed_messages_action         POST   /admin/failed-messages/{id}/{action}
 ```
+
+Five routes per resource. The `detail_panel` one (v1.1.0) serves
+expanded-row content and is generated unconditionally; it 404s until
+the resource implements `HasRowDetailsInterface` — see
+[../row-details.md](../row-details.md).
 
 Open `http://localhost/admin/failed-messages`, log in with a user
 holding `ROLE_ADMIN`. If your `failed` transport is currently empty
@@ -290,8 +238,9 @@ bin/console messenger:consume async --limit=1
 
 ## What you should see
 
-- A table with five columns: **Message**, **Exception**, **Reason**,
-  **Failed at**, plus row-level **Detail / Retry / Dismiss** buttons.
+- A table with four data columns — **Message**, **Exception**,
+  **Reason**, **Failed at** — plus an actions column carrying the
+  row-level **Detail / Retry / Dismiss** buttons.
 - A page-level **Retry all** and **Purge** dropdown.
 - A detail view showing the same columns plus the `Payload` column
   (`@Polysource/field/code.html.twig` renders it as a `<pre>` block).

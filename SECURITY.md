@@ -20,7 +20,7 @@ When reporting, please include:
 
 1. A clear description of the vulnerability and its impact.
 2. The package(s) and version(s) affected (e.g.
-   `polysource/symfony-bundle@0.1.0`).
+   `polysource/symfony-bundle@1.1.0`).
 3. Steps to reproduce, ideally with a minimal proof-of-concept
    (a test case, a curl command, or a tiny Symfony app).
 4. Any mitigations or workarounds you've identified.
@@ -36,16 +36,16 @@ When reporting, please include:
 | Fix + advisory drafted | within 30 days for High / Critical, best-effort otherwise |
 | Public disclosure | coordinated with the reporter, typically 14-90 days after fix is shipped |
 
-These targets are best-effort for a single-maintainer project at
-the v0.1 stage. They will tighten as the project matures and a
-broader security team forms.
+These targets are best-effort for a single-maintainer project.
+They will tighten as the project matures and a broader security
+team forms.
 
 ## Supported versions
 
 | Version | Status |
 |---|---|
-| `0.1.x` | ✅ Active — security fixes shipped as patch releases |
-| `< 0.1` | ❌ Pre-release — no longer supported, please upgrade |
+| `1.x` | ✅ Active — security fixes shipped as patch releases |
+| `< 1.0` | ❌ Pre-1.0 releases — no longer supported, please upgrade |
 
 The compatibility matrix (PHP / Symfony / EasyAdmin / Doctrine
 versions) is documented in

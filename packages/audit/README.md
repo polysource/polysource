@@ -19,7 +19,7 @@ You're running a regulated workload (healthcare, finance, B2B SaaS) and need a w
 - **`ExportAuditCsvAction`** — GDPR Art. 30 export with 12 locked columns (RFC 4180), gated on `POLYSOURCE_AUDIT_EXPORT`.
 - **`polysource:audit:purge --before`** — retention command with cutoff exclusive, `--dry-run`, exit codes.
 
-See [ADR-020](../../docs/adr/0020-audit-non-doctrine-actions.md).
+See [ADR-020](https://github.com/polysource/polysource/blob/main/docs/adr/0020-audit-non-doctrine-actions.md).
 
 ## Install
 
@@ -59,8 +59,8 @@ final class SplunkAuditLogger implements AuditLoggerInterface
 }
 ```
 
-The `AggregateAuditLogger` fan-outs across every tagged logger with try/catch isolation — Splunk timing out doesn't break the Doctrine write. See [extensibility map](../../docs/user/extensibility.md#4-pipe-audit-log-to-your-siem).
+The `AggregateAuditLogger` fan-outs across every tagged logger with try/catch isolation — Splunk timing out doesn't break the Doctrine write. See [extensibility map](https://github.com/polysource/polysource/blob/main/docs/user/extensibility.md#4-pipe-audit-log-to-your-siem).
 
 ## Documentation
 
-- [Audit walkthrough](../../docs/user/audit/)
+- [Audit walkthrough](https://github.com/polysource/polysource/tree/main/docs/user/audit/)

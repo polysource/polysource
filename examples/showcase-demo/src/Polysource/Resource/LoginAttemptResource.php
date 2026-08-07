@@ -22,8 +22,9 @@ use Polysource\Bundle\Attribute\AsResource;
  * instead, with filters tuned for security triage (find a brute-
  * force burst by IP, see who got rate-limited, etc.).
  *
- * Concrete FieldDto wiring is deferred to v0.2 (cf. ADR-011) —
- * for v0.1 the Twig theme renders raw DataRecord properties.
+ * `configureFields()` yields a curated security-triage view (when /
+ * email / ip / status, plus id + user agent on the detail page)
+ * built on the showcase's `Field` factory.
  */
 #[AsResource]
 final class LoginAttemptResource extends DoctrineEntityResource

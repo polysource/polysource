@@ -7,11 +7,10 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 ## What it ships
 
 - **`MeilisearchIndexInterface`** (4 methods) — minimal abstraction over the Meilisearch client.
-- **`MeilisearchPhpAdapter`** — production implementation against `meilisearch/meilisearch-php`.
-- **`InMemoryMeilisearchFake`** — test double parsing a subset of Meilisearch's filter expression syntax.
+- **`MeilisearchPhpIndexClient`** — production implementation against `meilisearch/meilisearch-php`.
 - **`MeilisearchDataSource`** — search-first design (Meilisearch is a search engine, not a CRUD store).
 - **Filter property sanitisation** — anti-injection via whitelist.
-- **`MeilisearchResource`** — non-final convenience base.
+- **`MeilisearchIndexResource`** — non-final convenience base.
 
 ## Install
 
@@ -29,4 +28,4 @@ return [
 
 ## Documentation
 
-- [Adapter meilisearch guide](../../docs/user/adapters/meilisearch.md)
+- [Adapter meilisearch guide](https://github.com/polysource/polysource/blob/main/docs/user/adapters/meilisearch.md)

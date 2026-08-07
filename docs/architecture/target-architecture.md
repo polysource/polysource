@@ -7,10 +7,11 @@
 ## 6.1 Découpage en packages
 
 ```
-polysource/                          Monorepo — 16 packages livrés, v0.1.0 publiée 2026-05-10
+polysource/                          Monorepo — 16 packages livrés, v1.1.0 publiée 2026-08-07
 │
 ├── PRIMITIVES (zéro dep Symfony dans core)
-│   ├── polysource/core              Contracts + value objects (26 types publics)
+│   ├── polysource/core              Contracts + value objects (38 types publics),
+│   │                                dont le VO RowDetail (v1.1.0 — template | listing)
 │   └── polysource/filter            FilterCollection, FilterService session, saved views,
 │                                    enhanced form types — utilisable standalone
 │
@@ -28,7 +29,8 @@ polysource/                          Monorepo — 16 packages livrés, v0.1.0 pu
 │   └── polysource/easyadmin-filter-bridge
 │                                    FilterConfiguratorInterface auto-tagués, 4 custom
 │                                    filters, EventSubscriber session + saved-view apply,
-│                                    override Twig (zéro fork EA)
+│                                    RowDetailProviderInterface + Polysource::rowDetail()
+│                                    (v1.1.0), override Twig (zéro fork EA)
 │
 └── CAPABILITÉS TRANSVERSES (opt-in, packages séparés — cf. ADR-018 plugin architecture)
     ├── polysource/audit             GDPR Art. 30 / HIPAA action log
@@ -38,7 +40,7 @@ polysource/                          Monorepo — 16 packages livrés, v0.1.0 pu
     └── polysource/workflow-bridge   Symfony Workflow integration (transitions + state chip)
 ```
 
-**Pour le minimum viable v0.1** : `core` + `symfony-bundle` + `twig-theme` + 1 adapter selon le cas d'usage. Tout le reste est opt-in via `composer require polysource/<package>`.
+**Installation minimale** : `core` + `symfony-bundle` + `twig-theme` + 1 adapter selon le cas d'usage. Tout le reste est opt-in via `composer require polysource/<package>`.
 
 ## 6.2 Contrat de stockage — interfaces principales
 
@@ -287,7 +289,46 @@ HTTP GET /admin/{resourceName}                     ex: /admin/failed-message
 - `Edit` : `find($id)` → form pré-rempli → submit → `update($id, $payload)` → redirect
 - `Delete` : `delete($id)` → flash + redirect
 
-### 6.3.3 InlineAction et BulkAction
+### 6.3.3 Row detail panel (v1.1.0)
+
+Cinquième route générée par `PolysourceRouteLoader`, à côté d'`index`,
+`detail`, `action` et `bulk_action` (cf. ADR-003 + [ADR-033](../adr/0033-expandable-row-details.md)) :
+
+```
+polysource_{routeKey}_detail_panel
+HTTP GET /admin/{resourceName}/{id}/detail-panel     → RowDetailPanelController::__invoke
+```
+
+```
+RowDetailPanelController::__invoke(AdminContext $ctx)
+│
+├─ assertResourceAccess($ctx->resource)
+├─ la resource doit implémenter HasRowDetailsInterface, sinon 404
+├─ $record = $ctx->resource->getDataSource()->find($ctx->recordId)   — 404 si absent
+├─ garde PAR ENREGISTREMENT :
+│     $attribute = $resource->getRowDetailPermission();
+│     isGranted($attribute, $record) — le DataRecord est le sujet du voter, 403 sinon
+├─ $detail = $resource->getRowDetail($record)                        — 404 si null
+│
+├─ $detail->isListing() ?
+│     oui → EmbeddedListingRenderer : un listing Polysource imbriqué, paginé par le
+│           param `rd_page` porté par CETTE requête de panneau (aucune collision avec
+│           la query string du listing extérieur)
+│     non → le template déclaré par le VO RowDetail + son contexte
+│
+└─ `?fragment=1` → le fragment seul (injecté dans la ligne dépliée)
+   sinon        → `@Polysource/row_detail_page.html.twig`, page autonome complète
+                  = le chemin sans JS, puisque le chevron est un vrai `<a href>`
+```
+
+Les deux réponses portent des en-têtes `no-store`.
+
+Côté bridge EasyAdmin le même contrat passe par
+`RowDetailProviderInterface` (autoconfiguré) + `Polysource::rowDetail()`
+dans `configureFields()`, servi par `RowDetailController` — mêmes gardes,
+même distinction fragment / page autonome.
+
+### 6.3.4 InlineAction et BulkAction
 
 ```
 HTTP POST /admin/{resourceName}/{id}/{action}        — InlineAction
@@ -301,7 +342,16 @@ HTTP POST /admin/{resourceName}/batch/{action}       — BulkAction (avec les id
 │  └─ ActionResult → flash + redirect or response
 ```
 
-### 6.3.4 Pagination
+**Désambiguïsation des routes.** La route bulk `/{slug}/batch/{action}`
+est enregistrée AVANT la route paramétrée `/{slug}/{id}/{action}`, et
+toutes les routes portant un `{id}` (detail, detail-panel, action) le
+contraignent par `requirements: ['id' => '(?!batch$)[^/]+']`. Le
+lookahead négatif rejette le littéral `batch` comme identifiant : ceinture
+et bretelles, l'ordre d'enregistrement suffirait mais la contrainte rend
+l'intention explicite et résiste à un réordonnancement accidentel. Les
+`{action}` sont bornés par `[a-z][a-z0-9_-]*`.
+
+### 6.3.5 Pagination
 
 `DataPage` porte trois informations : `items`, `total ?int`, `nextCursor ?string`. Le template paginator détecte :
 
@@ -484,19 +534,21 @@ final class MessengerFailedMessagesDataSource implements DataSourceInterface
 | **Translator** | Tous les labels/messages acceptent `string\|TranslatableInterface` |
 | **HttpKernel** | Listener `kernel.request` détecte les routes polysource, listener `kernel.view` rend les `KeyValueStore` |
 
-## 6.6 Bridge EasyAdmin (option)
+## 6.6 Bridge EasyAdmin — livré
 
-Deux directions possibles :
+Cette section décrivait deux directions envisagées. C'est tranché et
+livré : `polysource/easyadmin-filter-bridge` est en production depuis
+la 0.1.0 et fait partie du gel d'API v1.0.
 
-### A. EasyAdmin comme adapter Doctrine pour Polysource
+### A. EasyAdmin comme adapter Doctrine pour Polysource — écartée
 
-Un `EasyAdminBackedDoctrineDataSource` qui délègue à `EasyCorp\Bundle\EasyAdminBundle\Orm\EntityRepository` pour les CRUD Doctrine. Avantage : on hérite de toute la logique de search/filter d'EasyAdmin sans la réimplémenter. Inconvénient : on dépend du rythme de release EasyAdmin.
+Un `EasyAdminBackedDoctrineDataSource` qui aurait délégué à `EasyCorp\Bundle\EasyAdminBundle\Orm\EntityRepository`. Avantage théorique : hériter de la logique search/filter d'EasyAdmin sans la réimplémenter. Écartée parce qu'elle attachait le rythme de release de Polysource à celui d'EasyAdmin. `polysource/adapter-doctrine` parle directement à l'ORM.
 
-### B. Polysource comme bundle invité dans un dashboard EasyAdmin
+### B. Polysource enrichit un dashboard EasyAdmin existant — retenue et livrée
 
-Une `MenuItem::linkToPolysource('failed-messages')` côté EasyAdmin, qui rend un panel Polysource dans le layout EasyAdmin. Avantage : projets qui ont déjà un EasyAdmin peuvent ajouter des resources non-Doctrine sans changer leur stack. Cible : adoption progressive.
+C'est la voie prise, sous une forme plus fine que le « panel Polysource dans le layout EA » esquissé ici. Le bridge n'injecte pas de pages : il enrichit les listings EA existants — `FilterConfiguratorInterface` auto-tagués qui substituent les form types enrichis, 4 filtres custom absents d'EA amont, la barre de chips, les vues sauvegardées, et depuis la v1.1.0 les row details dépliables. Zéro fork d'EasyAdmin, uniquement des overrides Twig. Cible atteinte : adoption progressive, un `composer require` suffit.
 
-Les deux peuvent coexister.
+Les deux produits coexistent bien : un hôte peut faire tourner le bridge sur ses CRUD Doctrine EA **et** le bundle standalone sur ses resources non-Doctrine, dans la même application (c'est exactement ce que démontre `examples/showcase-demo`).
 
 ## 6.7 Synthèse — qu'est-ce qui est neuf vs hérité
 
@@ -514,7 +566,12 @@ Les deux peuvent coexister.
 | Security Voters | utilise Symfony directement | aucune réinvention |
 | Events lifecycle | inspirés, simplifiés à 8 events | nouveau |
 
-**Coût estimé** v0.1 (resources read-only + 1-2 adapters + index/detail seulement) : **6–8 semaines pour 1 senior**.
-**Coût v1.0** (CRUD complet + 4-5 adapters + actions + filters complets + bridge EasyAdmin) : **6 mois temps complet**.
+**Coût — estimations initiales, conservées pour mémoire.** Au moment
+d'écrire ce document, la v0.1 (resources read-only + 1-2 adapters +
+index/detail) était chiffrée à **6–8 semaines pour 1 senior**, et la
+v1.0 (CRUD complet + 4-5 adapters + actions + filtres complets + bridge
+EasyAdmin) à **6 mois temps complet**. La v0.1.0 a été publiée le
+2026-05-10 et la v1.0.0 le 2026-08-06, avec un périmètre plus large que
+prévu (16 packages, capabilités transverses incluses).
 
 Voir [`CHANGELOG.md`](../../CHANGELOG.md) pour ce qui a été livré et [`ROADMAP.md`](../../ROADMAP.md) pour ce qui reste à venir. Le plan de construction phase-par-phase reste un document de travail interne du mainteneur (non publié).

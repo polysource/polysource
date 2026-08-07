@@ -1,7 +1,8 @@
 # Showcase — manual filter test plan
 
-Comprehensive walkthrough of every filter-related feature shipped by
-`polysource/filter` and `polysource/easyadmin-filter-bridge`, exercised
+Comprehensive walkthrough of the listing-UX features shipped by
+`polysource/filter` and `polysource/easyadmin-filter-bridge` — filters,
+chips, saved views, and since v1.1.0 expandable row details — exercised
 in the showcase demo (`make showcase`, http://localhost:8084).
 
 Use this when validating a release candidate, or after a refactor that
@@ -9,10 +10,12 @@ touches the filter packages, to make sure no UX regression slipped in.
 Each test is a 30-second click sequence with a clear pass/fail signal.
 
 > **Automation status**: see [§ Automation](#-automation) at the bottom.
-> 17 of these scenarios are already covered by Panther E2E tests
-> (`examples/showcase-demo/tests/Showcase/`). Gaps are explicitly
-> flagged so you know when you have to walk through manually vs. when
-> `make test-panther` is enough.
+> About 30 of the 47 numbered scenarios below are now covered by the
+> showcase E2E suite — 25 files in
+> `examples/showcase-demo/tests/Showcase/`, 47 Panther methods plus 24
+> WebTestCase methods. Gaps are explicitly flagged so you know when you
+> have to walk through manually vs. when
+> `make -C examples/showcase-demo panther` is enough.
 
 ---
 
@@ -91,13 +94,17 @@ on EA pages.
 
 ### A5 — EntityFilter (Tom Select via `EnhancedEntityFilterType`)
 
-- ⚠️ Not wired in the current showcase (no `EntityFilter::new()` calls).
+- ⚠️ Still not wired in the showcase (verified 2026-08-07 — no
+  `EntityFilter::new()` calls in `src/Controller/Admin/`).
 - To exercise, add to `OrderCrudController::configureFilters()`:
-  `->add(EntityFilter::new('customer'))`. **Skipped for v0.1**.
+  `->add(EntityFilter::new('customer'))`. **Open backlog** — the
+  configurator ships and is unit-tested, but no showcase surface
+  exercises it end to end.
 
 ### A6 — BooleanFilter (`EnhancedBooleanFilterType`)
 
-- ⚠️ Not wired in the current showcase. **Skipped for v0.1**.
+- ⚠️ Still not wired in the showcase (verified 2026-08-07).
+  **Open backlog**, same shape as A5.
 
 ### A7 — ComparisonFilter (`EnhancedComparisonFilterType`)
 
@@ -106,7 +113,8 @@ on EA pages.
 
 ### A8 — ArrayFilter (`EnhancedArrayFilterType`)
 
-- ⚠️ Not wired in the showcase. **Skipped for v0.1**.
+- ⚠️ Still not wired in the showcase (verified 2026-08-07).
+  **Open backlog**, same shape as A5.
 
 ---
 
@@ -348,6 +356,70 @@ For each wired filter, save + replay:
 
 ---
 
+## I — Expandable row details (v1.1.0)
+
+Shipped in v1.1.0 (cf. [ADR-033](../adr/0033-expandable-row-details.md)).
+On the showcase, the Order listing declares `Polysource::rowDetail()`
+in `OrderCrudController::configureFields()` and the panel content
+comes from `App\Polysource\RowDetail\OrderRowDetailProvider`
+(autoconfigured on `RowDetailProviderInterface`).
+
+### I1 — Chevron renders, details are NOT preloaded
+
+- Page: `/admin/order`
+- **Expected**: a chevron control (`.polysource-row-detail-toggle`) in
+  the leading cell of every row, `aria-expanded="false"`
+- **Expected**: no `.polysource-row-detail-row` in the initial HTML —
+  the panel is lazy, nothing is fetched until you click
+
+### I2 — Click expands the row and injects the line items
+
+- Click a chevron
+- **Expected**: a detail row appears with
+  `data-polysource-row-detail-state="expanded"`, containing the
+  provider's template output (the order's line items)
+- Click again → the detail row is removed (collapse)
+
+### I3 — No-JS baseline: the chevron is a real link
+
+- Inspect the chevron's `href` → points at
+  `/admin/polysource/row-detail/…`
+- Navigate that URL directly (or disable JavaScript first)
+- **Expected**: the server renders a standalone wrapper page
+  (`polysource-row-detail-page`) with the same panel content. The
+  chevron is progressive enhancement over a working link, per
+  [ADR-027](../adr/0027-progressive-enhancement.md).
+
+### I4 — Nested listing as row detail (`RowDetail::listing()`)
+
+- ⚠️ **Not exercised by the showcase** — `OrderRowDetailProvider`
+  returns a template, not a nested listing. The nested-listing path
+  (an embedded Polysource listing inside the panel, paged via the
+  `rd_page` query param without touching the outer listing's page) is
+  covered by package-level tests only:
+  `packages/symfony-bundle/tests/Functional/RowDetailNestedListingTest.php`
+  and
+  `packages/easyadmin-filter-bridge/tests/Unit/Controller/RowDetailControllerListingTest.php`.
+- **Open backlog**: add a showcase surface returning
+  `RowDetail::listing()` so the manual sweep can cover it too.
+
+### I5 — Per-row permission gate
+
+- The panel controller gates **per record**: the entity (bridge path)
+  or the `DataRecord` (native path) is passed to the voter as the
+  subject, and a denial raises a 403 before any panel is rendered.
+  It fails closed — a declared attribute with no security layer wired
+  denies rather than silently allowing.
+- ⚠️ **Not exercised by the showcase**: `OrderRowDetailProvider` does
+  not override `getPermission()`, which defaults to `null`, so no gate
+  fires on `/admin/order`. To test manually, override
+  `getPermission(): ?string { return 'ORDER_VIEW'; }` on the provider
+  and re-run as `viewer@shop.co`.
+- **Open backlog**: give the showcase provider a real attribute so the
+  403 path is demoed and E2E-covered.
+
+---
+
 ## 5-minute quick sweep
 
 ```
@@ -372,75 +444,97 @@ For each wired filter, save + replay:
 (headless Chrome). The showcase already has the infra — see
 `examples/showcase-demo/tests/Showcase/AbstractShowcasePantherTestCase.php`.
 
-### Existing coverage (~17 scenarios covered)
+### Existing coverage
 
-| Test file | Manual scenarios covered |
-|---|---|
-| `EasyAdminSmokeTest` | A1 (renders) |
-| `EasyAdminNonRegressionTest` | EA pagination/sort/search baseline |
-| `FilterModalTest` | C1 (modal opens), E1 (chip after apply) |
-| `SavedViewDropdownTest` | G1 (dropdown opens, seeded views), G3 (apply redirects) |
-| `SavedViewRoundtripTest` | G11 partial (TextFilter, ChoiceFilter multi, BetweenDateFilter) |
-| `CapabilitiesTest` | G2 (private scope cross-user invisible) |
-| `PermissionsByRoleTest` | role matrix |
-| `JourneyTest` | login + auth flow |
-| `PolysourceStandaloneTest` | H1, H2 (resource indexes render) |
+25 files in `examples/showcase-demo/tests/Showcase/` — 47 Panther
+methods (classes extending `AbstractShowcasePantherTestCase`) plus 24
+`WebTestCase` methods. Verified 2026-08-07.
 
-### Priority gaps to automate
-
-| Test | Priority | Notes |
+| Test file | Kind | Manual scenarios covered |
 |---|---|---|
-| **A4 (DateTime presets)** | HIGH | preset clicks populate the input |
-| **A2 (ChoiceFilter Tom Select)** | HIGH | multi-select Stimulus interaction |
-| **B1 (NotNullFilter tri-state + Any chip)** | HIGH | pin regression of `d70953b` |
-| **G4 (switch view A → B first click)** | HIGH | pin regression of `3f91cce` |
-| **G7 (cross-user delete 403)** | HIGH | pin regression of `a6e0cbb` |
-| **G8 (clear current view)** | MEDIUM | regression of `0dc1f55` |
-| **G9 (cache buster `_t`)** | MEDIUM | DOM attribute check |
-| **G10 (no-store headers)** | LOW | curl-able, no browser needed |
-| **E5/E6 (chip X / Clear all)** | MEDIUM | DOM interaction Stimulus + server-driven |
-| **E7 (no-JS fallback)** | LOW | requires Panther JS toggling |
-| **F1/F2 (session persist)** | MEDIUM | multi-request Panther |
-| **C3 (per-tab badge count)** | LOW | DOM check |
+| `EasyAdminSmokeTest` | WebTestCase | A1 (enhanced text filter renders) |
+| `EasyAdminNonRegressionTest` | Panther | EA pagination / sort / search / detail / batch baseline |
+| `FilterModalTest` | Panther | C1 + D1 (modal opens, AJAX content), E1 (chip after apply) |
+| `TomSelectInteractionTest` | Panther | A2 (ChoiceFilter multi-select via Tom Select) |
+| `FilterRoundtripExtendedTest` | WebTestCase | A3 (numeric `>=`), B1, B3, B4, plus TextFilter `like` — the G11 envelope shapes |
+| `NotNullFilterChipTest` | WebTestCase | B1 in full (Any / Has value / Empty chips — regression `d70953b`) |
+| `ChipInteractionTest` | Panther | E5 (individual X), E6 (Clear all); the X is a plain `<a href>`, which is also the E7 mechanism |
+| `SessionPersistenceTest` | WebTestCase | F1 (survives navigation), F2 (explicit reset clears session) |
+| `SavedViewDropdownTest` | Panther | G1 (dropdown, seeded views), G3 (apply redirects) |
+| `SavedViewSwitchTest` | WebTestCase | G4 (switch A → B on first click — regression `3f91cce`) |
+| `SavedViewRoundtripTest` | WebTestCase | G11 partial (Text, Choice multi, BetweenDate) + cross-resource and unknown-id rejection |
+| `SavedViewAccessDeniedTest` | WebTestCase | G6 (owner can delete), G7 (cross-user → 403, regression `a6e0cbb`) |
+| `PolysourceSavedViewApplyTest` | WebTestCase | H4 (`?view=` redirect on native pages, incl. wrong-resource no-op) |
+| `CapabilitiesTest` | Panther | G2 (private scope invisible cross-user), bulk progress JSON, audit detail, custom layout |
+| `PermissionsByRoleTest` | WebTestCase | role decision matrix + every role sees the dashboard |
+| `JourneyTest` | Panther | login + firewall redirects |
+| `PolysourceStandaloneTest` | Panther | H1, H2 (native indexes render, pagination, empty state, detail) |
+| `PolysourceFilterModalTest` | Panther | H1, H2, H3 (declared filters exposed on the 3 native resources) |
+| `RowDetailExpandTest` | Panther | I1 (lazy chevron), I2 (expand + collapse), I3 (no-JS standalone page) |
+| `CmdkPaletteTest` | Panther | Cmd+K palette open / escape |
+| `V050TableHelpersTest` | Panther | frozen column, column reorder, quick-filter row, row classes, cell filter menu |
+| `V050ColumnVisibilityTest` | Panther | column visibility dropdown |
+| `V050PageLevelHelpersTest` | Panther | row density, shortcuts cheat sheet, filter share button |
+| `V050BackendIntegrationTest` | Panther | export actions + endpoint, bulk scope toggle, recent records |
+
+### Automation status — the 2026 roadmap is closed
+
+The three-sprint automation roadmap that used to live here is done,
+bar one item. For the record, what it asked for and what shipped:
+
+| Planned test | Status |
+|---|---|
+| `FilterPresetsTest` (A4 DateTime presets) | ❌ **never written** — still the one open gap |
+| `SavedViewSwitchTest` (G4) | ✅ shipped |
+| `SavedViewAccessDeniedTest` (G7) | ✅ shipped |
+| `NotNullFilterChipTest` (B1) | ✅ shipped |
+| `TomSelectInteractionTest` (A2) | ✅ shipped |
+| `ChipInteractionTest` (E5/E6) | ✅ shipped |
+| `SessionPersistenceTest` (F1/F2) | ✅ shipped |
+| `FilterRoundtripTest` (per-type matrix) | ✅ shipped as `FilterRoundtripExtendedTest` |
+| `PolysourceFilterModalTest` (H1–H3) | ✅ shipped |
+| `PolysourceSavedViewApplyTest` (H4) | ✅ shipped |
+
+### Remaining gaps (still manual)
+
+| Scenario | Why it's still manual |
+|---|---|
+| **A4** — DateTime presets click → input populated | no test written; the highest-value remaining gap |
+| **A5 / A6 / A8** — Entity / Boolean / Array filters | not wired into any showcase CRUD, so there is nothing to drive |
+| **C2** — accordion groups inside a tab | modal opening is asserted, group structure is not |
+| **C3** — per-tab applied-count badge | DOM check, never written |
+| **E2 / E3** — chip label + 5-stage value formatting | asserted incidentally by `NotNullFilterChipTest`; no dedicated matrix test |
+| **E7** — explicit no-JS toggle | the server-driven `<a href>` path is asserted by `ChipInteractionTest` and `RowDetailExpandTest`, but nothing runs the suite with JS disabled |
+| **G5** — save current view | modal + persistence never automated |
+| **G8** — clear current view | never written |
+| **G9 / G10** — `_t` cache buster + `no-store` headers | never written (G10 needs no browser — a curl assertion would do) |
+| **G11** — DateTimeFilter round-trip | the other 6 filter types are covered, this one is not |
+| **I4** — nested `RowDetail::listing()` | covered by package tests only, no showcase surface |
+| **I5** — per-row permission 403 | showcase provider declares no attribute, so nothing to deny |
 
 ### Running the existing Panther suite
 
 ```bash
-# Start the (headless) Chrome service
-docker compose -f examples/showcase-demo/docker-compose.yml --profile e2e up -d chrome
+# Boots headless Chrome and runs @group panther in one step
+make -C examples/showcase-demo panther
 
-# Run the Panther tests
-docker compose -f examples/showcase-demo/docker-compose.yml exec -T php \
-  /repo/examples/showcase-demo/vendor/bin/phpunit --group panther
+# Fast suite, excludes the panther group
+make -C examples/showcase-demo test
 ```
 
-CI YAML already wired (cf. `.github/workflows/showcase.yml` future). See
-`docs/user/cookbook/build-your-own-adapter.md` for the Panther test pattern.
+Under the hood that is:
 
-### Suggested automation roadmap
+```bash
+docker compose -f examples/showcase-demo/docker-compose.yml --profile e2e up -d chrome
+docker compose -f examples/showcase-demo/docker-compose.yml exec -T php \
+  php -d memory_limit=2G vendor/bin/phpunit --group panther
+```
 
-**Sprint 1 — close the critical regressions (~4h)**:
-1. `FilterPresetsTest` — DateTime presets click + value injection
-2. `SavedViewSwitchTest` — switch view A → view B on first click (regression `3f91cce`)
-3. `SavedViewAccessDeniedTest` — POST cross-user → assertResponseStatusCodeSame(403)
-4. `NotNullFilterChipTest` — "Any" chip render (regression `d70953b`)
-
-**Sprint 2 — broader coverage (~4h)**:
-5. `TomSelectInteractionTest` — multi-select Tom Select via Selenium WebDriver
-6. `ChipInteractionTest` — X individual + Clear all + no-JS fallback
-7. `SessionPersistenceTest` — navigate away + come back → filters restored
-8. `FilterRoundtripTest` (per-filter-type matrix) — extend `SavedViewRoundtripTest`
-   with NumericFilter, NotNullFilter, InFilter, FullTextSearchFilter,
-   EnhancedTextFilter min_length
-
-**Sprint 3 — cover the Polysource standalone resources (~2h)**:
-9. `PolysourceFilterModalTest` — `/admin/polysource/audit-log` + bulk-jobs +
-   failed-messages → modal opens, filter applies
-10. `PolysourceSavedViewApplyTest` — `?view=<id>` redirect on Polysource
-    native pages
-
-**Total ~10h** for full E2E coverage. Once in place, `make test-panther`
-gives non-regression confidence on this entire plan.
+CI runs the same suite in the `e2e` job of
+`.github/workflows/ci.yml`, which boots the full compose stack and
+invokes `phpunit -c phpunit.panther-ci.xml --group=panther`. See
+`docs/user/cookbook/build-your-own-adapter.md` for the Panther test
+pattern.
 
 ### New Panther test setup (template)
 

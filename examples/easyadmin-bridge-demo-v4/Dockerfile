@@ -1,12 +1,11 @@
-# Polysource easyadmin-bridge-demo-v4 — single-container PHP 8.1 image.
+# Polysource easyadmin-bridge-demo-v4 — single-container PHP 8.2 image.
 #
-# We deliberately pin to PHP 8.1, the FLOOR of polysource/filter's
-# advertised baseline (cf. ADR-015) AND the minimum required by
-# EasyAdmin 4.29. A user on a legacy stack (Sf 6.4 + PHP 8.1 + EA
-# 4.x) sees the bridge works in their environment without having
-# to upgrade anything first.
+# We deliberately pin to PHP 8.2, the FLOOR of the v1.0 baseline
+# (ADR-015 addendum, ADR-011). A user on a legacy stack (Sf 6.4 +
+# PHP 8.2 + EA 4.x) sees the bridge works in their environment
+# without having to upgrade anything first.
 
-FROM php:8.1-cli-alpine
+FROM php:8.2-cli-alpine
 
 ARG UID=1000
 ARG GID=1000

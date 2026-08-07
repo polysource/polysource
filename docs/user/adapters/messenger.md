@@ -75,8 +75,11 @@ Construction fails fast (`LogicException`) on a non-listable receiver.
 | Beanstalk | ❌ | ❌ |
 | Amazon SQS | ❌ | ❌ |
 
-For SQS / Beanstalk you'll need a different adapter — none ships with
-v0.1. The same DataSource pattern applies; cf.
+Beanstalk and Amazon SQS are excluded because their Symfony
+transports are not listable — there is nothing for the data source to
+page through. Polysource ships no adapter for them and none is
+planned; if you need one, the same DataSource pattern applies over
+whatever listing API your broker exposes. Cf.
 [../concepts/data-source.md](../concepts/data-source.md).
 
 ## What a failed envelope looks like as a `DataRecord`
@@ -170,15 +173,23 @@ for a granular role-to-attribute mapping example.
 
 ## Customising the displayed columns
 
-`FailedMessageResource` is **intentionally not `final`**. v0.1 of
-`polysource/core` ships only the abstract `FieldInterface` +
-`FieldTrait`, so the upstream `configureFields()` returns an empty
-list. Subclass to add your own field set:
+`FailedMessageResource` is **intentionally not `final`**, and its
+upstream `configureFields()` returns an empty list on purpose: with
+no fields configured, the theme derives columns from the record
+itself, which keeps the resource agnostic of your envelope shape.
+
+Subclass to curate the columns. You do not need to write field
+classes — `polysource/core` ships `IdField`, `TextField`,
+`DateTimeField`, `CodeField` and `BooleanField`:
 
 ```php
 namespace App\Polysource;
 
 use Polysource\Adapter\Messenger\Resource\FailedMessageResource;
+use Polysource\Core\Field\CodeField;
+use Polysource\Core\Field\DateTimeField;
+use Polysource\Core\Field\IdField;
+use Polysource\Core\Field\TextField;
 
 final class MyFailedMessageResource extends FailedMessageResource
 {

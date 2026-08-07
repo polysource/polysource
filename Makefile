@@ -95,8 +95,12 @@ smoke-packagist: ## Smoke test (post-publish, real Packagist): install polysourc
 smoke-packagist-bridge: ## Smoke test (post-publish, real Packagist, bridge-alone): install polysource/easyadmin-filter-bridge from Packagist — catches B2-style Twig parse errors on bridge-alone installs
 	./scripts/smoke-packagist-bridge.sh
 
+.PHONY: docs-check
+docs-check: ## Docs truth-sync gate: version constant, branch-aliases, status banners, ADR/screenshot counts vs the code
+	./scripts/docs-truth-check.sh
+
 .PHONY: ci
-ci: validate cs-check phpstan test coverage ## Reproduce the 5 GitHub Actions CI jobs locally (run before every push)
+ci: validate docs-check cs-check phpstan test coverage ## Reproduce the 5 GitHub Actions CI jobs locally + docs gate (run before every push)
 
 ##@ Preview
 
@@ -133,7 +137,7 @@ demo-bridge-clean: ## Wipe the bridge demo vendor + database
 	@$(MAKE) -C examples/easyadmin-bridge-demo clean
 
 .PHONY: demo-bridge-v4
-demo-bridge-v4: ## Start the EasyAdmin v4 filter bridge demo on http://localhost:8083 (PHP 8.1 + Sf 6.4 + EA 4.29 — proves the floor)
+demo-bridge-v4: ## Start the EasyAdmin v4 filter bridge demo on http://localhost:8083 (PHP 8.2 + Sf 6.4 + EA 4.29 — proves the v1.0 floor)
 	@$(MAKE) -C examples/easyadmin-bridge-demo-v4 up
 
 .PHONY: demo-bridge-v4-down
@@ -154,7 +158,7 @@ demo-filter-down: ## Stop the standalone filter demo container
 	@$(MAKE) -C examples/filter-standalone-demo clean
 
 .PHONY: showcase
-showcase: ## [HERO v0.1.0] Boot the ShopCo SaaS showcase on http://localhost:8084 (16 packages, 8 services — cf. ADR-025)
+showcase: ## Boot the ShopCo SaaS showcase on http://localhost:8084 (16 packages, 8 services — cf. ADR-025)
 	@$(MAKE) -C examples/showcase-demo up
 
 .PHONY: showcase-down

@@ -1,6 +1,6 @@
 {
     "name": "polysource/adapter-redis",
-    "description": "Polysource \u2014 Redis hash adapter: read+write Redis-backed records (feature flags, lightweight config, session metadata).",
+    "description": "Polysource \u2014 Redis adapter: 5 type-pure data sources (string, list, hash, set, sorted set) for read+write Redis-backed records (feature flags, lightweight config, session metadata).",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -46,7 +46,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "1.2.x-dev"
         }
     }
 }

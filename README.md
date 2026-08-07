@@ -32,8 +32,9 @@ That one `composer require` — no config, no template change — upgrades every
 | Columns | fixed | **per-user visibility + reordering + widths** |
 | Export | — | **filter-aware streaming CSV / XLSX** |
 | Sharing a filtered list | copy a 400-char URL | **short URL tokens** |
+| Row details | — | **expandable per-row panels** — lazy-loaded, per-row permission, no-JS fallback |
 
-Plus: session-persisted filters per CRUD, 8 enhanced built-in filter types, 4 custom filters (`Between`/`In`/`NotNull`/`FullText`), filter-from-cell menu, per-column quick filter row, frozen columns, row density toggle, conditional row styles, bulk dry-run counts, toasts, keyboard-shortcuts panel. Everything is opt-in per page, [themable via CSS variables](./docs/user/easyadmin-filter-bridge/theming.md), translated (en/fr), and CSP-friendly (no inline CSS/JS).
+Plus: session-persisted filters per CRUD, 8 enhanced built-in filter types, 4 custom filters (`Between`/`In`/`NotNull`/`FullText`), filter-from-cell menu, per-column quick filter row, frozen columns, row density toggle, conditional row styles, bulk dry-run counts, toasts, keyboard-shortcuts panel, [expandable row details](./docs/user/easyadmin-filter-bridge/row-details.md) (per-entity providers, lazy fragment, even a nested Polysource listing as the panel). Everything is opt-in per page, [themable via CSS variables](./docs/user/easyadmin-filter-bridge/theming.md), translated (en/fr), and CSP-friendly (no inline CSS/JS).
 
 <table>
 <tr>
@@ -54,7 +55,7 @@ Every feature has a server-side baseline ([ADR-027](./docs/adr/0027-progressive-
 composer require polysource/symfony-bundle polysource/adapter-messenger
 ```
 
-The contract a resource must satisfy is **3 read methods + 3 write methods** — no Doctrine inheritance, no entity manager. Once satisfied, every capability applies uniformly: filters, saved views, audit trail, async bulk actions, search palette, dashboard widgets, workflow integration.
+The contract a resource must satisfy is **3 read methods + 3 write methods** — no Doctrine inheritance, no entity manager. Once satisfied, every capability applies uniformly: filters, saved views, [expandable row details](./docs/user/row-details.md), audit trail, async bulk actions, search palette, dashboard widgets, workflow integration.
 
 <table>
 <tr>
@@ -67,7 +68,7 @@ The contract a resource must satisfy is **3 read methods + 3 write methods** —
 </tr>
 </table>
 
-**6 adapters ready** (Doctrine cohabitation, Messenger, Redis, S3/Flysystem, HTTP REST, Meilisearch — each ~80-300 LOC and a model for the next one you'll write), plus the opt-in capability packages: Cmd+K cross-resource search, dashboard widgets, async bulk with live Mercure progress + mid-flight cancel, GDPR Art. 30 / HIPAA audit trail, Symfony Workflow integration, field/action/resource-level permissions.
+**6 adapters ready** (Doctrine cohabitation, Messenger, Redis, S3/Flysystem, HTTP REST, Meilisearch — each ~80-300 LOC and a model for the next one you'll write), plus the opt-in capability packages: Cmd+K cross-resource search, dashboard widgets, async bulk with live Mercure progress + mid-flight cancel, GDPR Art. 30 / HIPAA audit trail, Symfony Workflow integration, field/action/resource-level permissions — down to **per-record action gating** (your voters receive the row's `DataRecord` as subject). Row details work on every adapter (`HasRowDetailsInterface`), including a **nested Polysource listing as the panel** (`RowDetail::listing()`).
 
 ## See it run in 5 minutes
 
@@ -110,17 +111,17 @@ Symfony's admin landscape is mature for one shape of resource: a Doctrine ORM en
 
 ## Quality bar
 
-- **1214 unit + functional tests** and **22 integration tests** (real kernel + SQLite) in the package matrix
-- **50 browser E2E tests** (Symfony Panther) + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) on every push
+- **1256 unit + functional tests** and **28 integration tests** (real kernel + SQLite) in the package matrix
+- **47 browser E2E tests** (Symfony Panther) + **24 showcase WebTestCase tests** + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) on every push
 - **PHPStan level max** across all packages · **PHP-CS-Fixer** PSR-12 + Symfony rules
 - **Core coverage gate ≥ 90%** (`polysource/core` sits at 99%+)
 - **CI matrix**: PHP 8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0, plus a bridge-alone floor smoke (Sf 6.4 + EA 4)
 
 ## Status & compatibility
 
-**v1.0.0** — API frozen (SemVer strict since 2026-08-06). 16 packages on [Packagist](https://packagist.org/?query=polysource%2F), split automatically from this monorepo ([ADR-026](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md)). The public API is release-candidate stable; SemVer freezes at v1.0 — breaking changes between minors are allowed, signalled in the [CHANGELOG](./CHANGELOG.md), and bounded by [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md).
+**v1.1.0** — API frozen since v1.0.0 (2026-08-06) per [ADR-018](./docs/adr/0018-admin-plugin-interface-and-public-contracts.md); SemVer applies strictly — breaking changes ship in major versions only, signalled in the [CHANGELOG](./CHANGELOG.md). 16 packages on [Packagist](https://packagist.org/?query=polysource%2F), split automatically from this monorepo ([ADR-026](./docs/adr/0026-monorepo-split-and-packagist-mirrors.md)).
 
-**Baseline** ([ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md), v1.0 floors per [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md)): PHP 8.2 → 8.4 · Symfony 6.4 / 7.2 / 7.4 LTS · EasyAdmin 4.24+ / 5.0+ · Doctrine ORM 2.20+ / 3.6+.
+**Baseline** ([ADR-015](./docs/adr/0015-multi-version-compatibility-baseline.md), v1.0 floors per [ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md)): PHP 8.2 → 8.4 · Symfony 6.4 / 7.2 / 7.4 LTS (`^8.0` allowed by constraints, forward-compat, not yet in CI) · EasyAdmin 4.24+ / 5.0+ · Doctrine ORM 2.20+ / 3.6+.
 
 Adopt early with eyes open — the honest limitations list (minimal UI surfaces, field helpers, cursor pagination trade-offs) lives in [docs/user/installation.md](./docs/user/installation.md) and [ADR-028 scope discipline](./docs/adr/0028-scope-discipline.md).
 
@@ -129,11 +130,11 @@ Adopt early with eyes open — the honest limitations list (minimal UI surfaces,
 
 | Package | What it does |
 |---|---|
-| `polysource/core` | 26 public types, zero Symfony dep — pure PHP 8.2+ contracts |
-| `polysource/filter` | Filter primitives (collection, criteria, session persistence, **saved views**) — usable standalone in any Symfony app |
-| `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin (4.24+ or 5.0+) — enhanced filter types, chips, saved views dropdown, column prefs |
-| `polysource/symfony-bundle` | Symfony wiring for the standalone admin: DI, routing, controllers, CSRF, pagination caps |
-| `polysource/twig-theme` | Default Bootstrap 5 templates for index/detail/forms/fields |
+| `polysource/core` | 38 public types, zero Symfony dep — pure PHP 8.2+ contracts |
+| `polysource/filter` | Filter primitives (collection, criteria, session persistence, **saved views**) + shared Stimulus controllers — usable standalone in any Symfony app |
+| `polysource/easyadmin-filter-bridge` | Drop-in for EasyAdmin (4.24+ or 5.0+) — enhanced filter types, chips, saved views dropdown, column prefs, expandable row details |
+| `polysource/symfony-bundle` | Symfony wiring for the standalone admin: DI, routing, controllers, CSRF, pagination caps, row detail panels |
+| `polysource/twig-theme` | Default Bootstrap 5 templates for index/detail/forms/fields/row-detail panels |
 | `polysource/adapter-messenger` | Browse + retry / dismiss / retry-all / purge Messenger failed envelopes |
 | `polysource/adapter-doctrine` | Doctrine ORM cohabitation case (whitelisted filter properties) |
 | `polysource/adapter-redis` | 5 type-pure Redis data sources (string/list/hash/set/sorted-set), SCAN cursor pagination |
@@ -150,7 +151,7 @@ Adopt early with eyes open — the honest limitations list (minimal UI surfaces,
 
 ## Documentation
 
-[User docs](./docs/user/) · [Installation](./docs/user/installation.md) · [Getting started](./docs/user/getting-started.md) · [Bridge getting started](./docs/user/easyadmin-filter-bridge/getting-started.md) · [Theming](./docs/user/easyadmin-filter-bridge/theming.md) · [i18n](./docs/user/i18n.md) · [Cookbook](./docs/user/cookbook/) · [ADRs](./docs/adr/) · [Roadmap](./ROADMAP.md) · [Changelog](./CHANGELOG.md)
+[User docs](./docs/user/) · [Installation](./docs/user/installation.md) · [Getting started](./docs/user/getting-started.md) · [Bridge getting started](./docs/user/easyadmin-filter-bridge/getting-started.md) · [Row details (bridge)](./docs/user/easyadmin-filter-bridge/row-details.md) · [Row details (native)](./docs/user/row-details.md) · [Theming](./docs/user/easyadmin-filter-bridge/theming.md) · [i18n](./docs/user/i18n.md) · [Cookbook](./docs/user/cookbook/) · [ADRs](./docs/adr/) · [Roadmap](./ROADMAP.md) · [Changelog](./CHANGELOG.md)
 
 ## Contributing
 

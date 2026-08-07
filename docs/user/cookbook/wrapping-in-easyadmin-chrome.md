@@ -106,8 +106,11 @@ Create `templates/admin/_polysource_layout.html.twig`:
 {% endblock %}
 ```
 
-That's it. Refresh `/admin/polysource/{resource}` — the page now
-renders inside EA's chrome.
+That's it. Refresh a Polysource page — `/admin/cache-keys`, or
+whatever `{url_prefix}/{slug}` your resource resolves to — and it now
+renders inside EA's chrome. (Standalone Polysource resources live
+directly under the configured `url_prefix`; `/admin/polysource/*` is
+the EasyAdmin-bridge route namespace, a different thing.)
 
 ## What about the sidebar?
 

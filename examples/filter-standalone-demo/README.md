@@ -9,9 +9,10 @@ This demo deliberately runs on the **floor** of Polysource's
 multi-version baseline (cf.
 [ADR-015](../../docs/adr/0015-multi-version-compatibility-baseline.md)):
 
-- **PHP 8.1** (the lowest version the bundle advertises)
-- **Symfony 5.4 LTS** (the lowest minor of the wider
-  `^5.4 || ^6.0 || ^7.0 || ^8.0` constraint)
+- **PHP 8.2** (the lowest version the bundle advertises since v1.0)
+- **Symfony 6.4 LTS** (the lowest minor of the
+  `^6.4 || ^7.0 || ^8.0` constraint; the lockfile resolves
+  `symfony/framework-bundle` 6.4.x)
 - No AssetMapper, no Stimulus Bundle (server-rendered chips)
 
 A user on a legacy stack can clone this demo and verify the
@@ -101,9 +102,11 @@ Host side:
 
 - Session persistence (`FilterService::save() / load()`) — the demo
   reads filters from the URL only
-- The 3 UI modes (`integrated`, `subpanel`) shipped with the
-  bundle — those expect a Symfony Form + Stimulus, deferred to a
-  future demo iteration
+- The 2 UI mode templates shipped with the bundle
+  (`Resources/views/modes/integrated.html.twig` and
+  `subpanel.html.twig`) — those expect a Symfony Form, deferred to a
+  future demo iteration. This demo renders its own chips markup
+  instead.
 
 ## Why this demo matters
 

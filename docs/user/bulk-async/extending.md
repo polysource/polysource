@@ -49,7 +49,10 @@ directly. If you go fully non-Doctrine, ship your own
 
 ## Retention
 
-`v0.1` does not ship a purge command. Strategies that work today:
+`polysource/bulk-async` ships no purge command — as of v1.1.0 there
+is no `polysource:bulk-jobs:purge`. (`polysource:audit:purge` exists,
+but it prunes the audit log, not the job table.) Strategies that
+work today:
 
 - **Doctrine cron job** — a one-line SQL works:
 
@@ -60,9 +63,8 @@ directly. If you go fully non-Doctrine, ship your own
   ```
 
 - **Custom Symfony command** mirroring the `polysource:audit:purge`
-  signature. The `polysource:bulk-jobs:purge --before=YYYY-MM-DD`
-  command is on the v0.2 roadmap (cf.
-  [ADR-024](../../adr/0024-bulk-async-mercure.md) §Suite).
+  signature (`--before=YYYY-MM-DD`). `PurgeAuditCommand` in
+  `polysource/audit` is a short, readable model to copy.
 
 If you keep more than ~3 months of jobs, partition the table by
 month — the `created_at` index keeps queries fast even at 10M+ rows.

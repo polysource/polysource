@@ -8,7 +8,7 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 
 You're modelling an ecommerce / CRM / claims / HR / regulated workflow with `symfony/workflow` and want the admin UI to expose only the transitions actually enabled by the workflow guards. This package wraps Symfony's `Workflow\Registry` into auto-generated Polysource actions and a state chip Twig helper.
 
-See [ADR-021](../../docs/adr/0021-symfony-workflow-bridge.md). Separate package so `polysource/symfony-bundle` doesn't pull `symfony/workflow` for hosts that don't use it.
+See [ADR-021](https://github.com/polysource/polysource/blob/main/docs/adr/0021-symfony-workflow-bridge.md). Separate package so `polysource/symfony-bundle` doesn't pull `symfony/workflow` for hosts that don't use it.
 
 ## What it ships
 
@@ -16,6 +16,7 @@ See [ADR-021](../../docs/adr/0021-symfony-workflow-bridge.md). Separate package 
 - **`WorkflowResolver`** — wraps Symfony Workflow `Registry` with graceful null-on-failure.
 - **`TransitionDiscovery`** — delegates to `Workflow::getEnabledTransitions()` (guards natifs Symfony intacts).
 - **`ApplyTransitionAction`** — auto-generated per transition, granular permission `POLYSOURCE_WORKFLOW_TRANSITION_<UPPER>`, `TransitionException` → `ActionResult::failure`.
+- **`TransitionActionFactory`** — builds one `ApplyTransitionAction` per transition currently activable on a given record; returns `[]` (never throws) when the record has no resolvable workflow or no enabled transitions.
 - **`WorkflowChipPalette`** + **`WorkflowChipExtension`** Twig (`polysource_workflow_chip_palette()` + `polysource_workflow_state_label()`).
 - `_state_chip.html.twig` partial Bootstrap.
 - Config `polysource_workflow_bridge.palettes.<workflow>.<state>` with wildcard fallback.
@@ -38,4 +39,4 @@ return [
 
 ## Documentation
 
-- [Workflow-bridge walkthrough](../../docs/user/workflow-bridge/)
+- [Workflow-bridge walkthrough](https://github.com/polysource/polysource/tree/main/docs/user/workflow-bridge/)

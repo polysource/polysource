@@ -1,4 +1,4 @@
-# Security (CSP) and accessibility (WCAG) audit — polysource v0.6.x
+# Security (CSP) and accessibility (WCAG) audit
 
 This page covers two concerns that don't fit elsewhere:
 
@@ -7,104 +7,134 @@ This page covers two concerns that don't fit elsewhere:
 2. **Accessibility** — what's covered, what's verified, what
    hosts may want to extend
 
-Both are live concerns — the audit baseline below is current as of
-v0.6.1. Hosts whose stack adds a CSP layer or pushes beyond WCAG
-2.2 AA should treat this page as the contract surface.
+Both are live concerns — the audit baseline below was re-verified
+against the templates shipped in **v1.1.0 (2026-08-07)**. Hosts whose
+stack adds a CSP layer or pushes beyond WCAG 2.2 AA should treat this
+page as the contract surface.
 
 ## 1. Content Security Policy
 
 ### Summary
 
-Polysource templates **work under a `style-src 'self' 'unsafe-inline'`
-CSP** without further configuration. Strict no-inline CSPs need
-either:
+Polysource templates work out of the box under a CSP that allows
+`'unsafe-inline'` for both `style-src` and `script-src`. Tightening
+beyond that is possible, but the required work differs per construct,
+so it is worth knowing exactly what ships.
 
-- a CSP nonce wired through Symfony Security's `csp_nonce`
-  request listener, OR
-- a host-level template override that moves the inline CSS out
+Nothing needs `'unsafe-eval'`: there is no `eval()`, no
+`new Function()`, no string-argument `setTimeout`, no `javascript:`
+URI, and no inline `onclick=`/`onchange=` handler anywhere in the
+templates. All event wiring goes through Stimulus controllers or
+`addEventListener`.
 
-No `script-src 'unsafe-inline'` or `'unsafe-eval'` is needed —
-Polysource doesn't use inline event handlers (`onclick`, etc.) or
-`eval`.
+### The full inline inventory
 
-### Where inline CSS lives today
+Three templates emit an inline block — `filter/modes/subpanel.html.twig`
+emits both a `<style>` and a `<script>`. This is the complete list,
+verified against v1.1.0 sources.
 
-| Template | Block | Why inline | Workaround |
-|---|---|---|---|
-| `easyadmin-filter-bridge/crud/index.html.twig` | `<style>…</style>` (≈ 250 lines) | Bridge-wide filter chip / tab / dropdown styles. Inline so the bridge ships zero CSS files (hosts don't need an asset pipeline). | Override the `configured_stylesheets` block at the app level + ship the same CSS as a `.css` file via AssetMapper/Encore. |
-| `easyadmin-filter-bridge/crud/index_subpanel.html.twig` | `<style>` (subpanel slide-in) | Same rationale. | Same. |
-| `easyadmin-filter-bridge/crud/filters.html.twig` | `<style>` generated per-tab via `:has()` for tab→pane visibility | Number of rules is host-config-dependent (one per `Polysource::tab(...)`), so it has to be emitted from the template. | Use a CSP nonce — see "Adopting a strict CSP" below. |
-| `filter/modes/subpanel.html.twig` | `<style>` (subpanel mode CSS) | Same as bridge index. | Same. |
-| `bulk-async/_progress.html.twig` | Inline `style="width: {{ progress_pct }}%"` | Dynamic progress-bar width — value comes from runtime state. | Use a CSP nonce (the only realistic option for a dynamic computed width). |
+**Inline `<style>` blocks:**
+
+| Template | What it emits | Why it can't be a static file |
+|---|---|---|
+| `easyadmin-filter-bridge/crud/index.html.twig` | One `[data-column="X"] { display: none !important; }` rule per column the user has hidden | The rule set is per-user runtime state (the column-visibility preference), not authorable ahead of time |
+| `filter/modes/subpanel.html.twig` | The subpanel mode's CSS (~120 lines) | Ships with the template so the subpanel works with no asset pipeline at all |
+
+Note what is **not** on that list any more: the bridge's bulk of
+CSS is a real stylesheet,
+`Resources/public/polysource-filter-bridge.css`, published by
+`assets:install`, as is the standalone theme's
+`twig-theme/public/polysource.css`. `crud/index_subpanel.html.twig`
+and `crud/filters.html.twig` emit no `<style>` at all.
+
+**Inline `<script>` blocks:**
+
+| Template | What it does | Degrades to |
+|---|---|---|
+| `filter/modes/subpanel.html.twig` | ESC-to-close and focus-the-first-control-on-open for the `<details>` panel | The panel still opens and closes — it's a native `<details>` |
+| `twig-theme/_filters_form.html.twig` | Auto-ticks a filter's checkbox when its value/operator input is touched, and disables unchecked fields on submit so they stay out of the URL | Users tick the checkbox themselves |
+
+Both blocks are pure enhancement (ADR-027) and both are removable by
+overriding the template in your own `templates/bundles/` directory —
+the subpanel template says so in a comment.
+
+The EasyAdmin bridge's filter shim is deliberately an **external**
+file (`<script src="…/polysource-filter-shim.js" defer>`) precisely so
+that hosts don't need `script-src 'unsafe-inline'` for the bridge.
+
+**Inline `style="…"` attributes** (four, all small): the bulk-async
+progress bar's `height: 8px` and computed `width: {{ progress_pct }}%`,
+a `max-width: 12rem` on the operator `<select>` in the standalone
+filter form, and the layout rule on the bridge's standalone
+row-detail page.
+
+**One external origin:** `twig-theme/layout.html.twig` loads Bootstrap
+from `https://cdn.jsdelivr.net`. If you enforce CSP you must allow
+that origin in `script-src`, or (better) override the layout and serve
+Bootstrap from your own asset pipeline. The template carries a
+standing note to add an `integrity=` SRI hash — do that if you keep
+the CDN.
 
 ### Adopting a strict CSP — recipe
 
-If your host enforces `Content-Security-Policy: style-src 'self'`
-(no `'unsafe-inline'`), wire Symfony's CSP nonce mechanism:
+Symfony's FrameworkBundle has **no** CSP configuration: there is no
+`framework.csp` node and no `CspNonceListener`. You need either a
+bundle or a few lines of your own.
+
+**Recommended: `nelmio/security-bundle`.** It sends the header and
+provides `csp_nonce()` in Twig; calling the function is what adds
+the matching `'nonce-…'` to the header for that request.
+
+```bash
+composer require nelmio/security-bundle
+```
 
 ```yaml
-# config/packages/framework.yaml
-framework:
+# config/packages/nelmio_security.yaml
+nelmio_security:
     csp:
-        # Symfony Security 7.1+ ships a CspNonceListener that
-        # generates a per-request nonce and exposes it as
-        # `csp_nonce` in Twig.
-        nonce: true
+        enforce:
+            default-src: ["'self'"]
+            script-src:
+                - "'self'"
+                # Only if you keep the CDN Bootstrap in the standalone theme:
+                - "https://cdn.jsdelivr.net"
+            style-src: ["'self'"]
+            # Inline style="…" attributes are governed separately and
+            # a nonce does NOT cover them — see the caveat below.
+            style-src-attr: ["'unsafe-inline'"]
 ```
 
-Then override the bridge's `configured_stylesheets` block at the
-app level to inject the nonce on every `<style>` tag:
+Then override the two templates that emit inline blocks and stamp
+the nonce on them:
 
 ```twig
-{# templates/bundles/EasyAdminBundle/crud/index.html.twig #}
-{% extends '@!PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
-{% block configured_stylesheets %}
-    {# parent() emits inline <style> blocks — wrap them in nonce attr #}
-    {% apply replace({'<style>': '<style nonce="' ~ csp_nonce() ~ '">'}) %}
-        {{ parent() }}
-    {% endapply %}
-{% endblock %}
+{# templates/bundles/PolysourceFilterBundle/modes/subpanel.html.twig #}
+{% extends '@!PolysourceFilter/modes/subpanel.html.twig' %}
 ```
 
-Same pattern for `_progress.html.twig`:
+…or, if you'd rather not fork the markup, copy the file into your own
+`templates/bundles/` tree and add `nonce="{{ csp_nonce('style') }}"`
+to its `<style>` tag and `nonce="{{ csp_nonce('script') }}"` to its
+`<script>` tag. The same applies to
+`@PolysourceEasyAdminFilterBridge/crud/index.html.twig` and
+`@Polysource/_filters_form.html.twig`.
 
-```twig
-{# templates/bundles/PolysourceBulkAsyncBundle/_progress.html.twig #}
-{% extends '@!PolysourceBulkAsync/_progress.html.twig' %}
-{% block progress_bar %}
-    <div class="progress-bar" style="width: {{ progress_pct }}%" nonce="{{ csp_nonce() }}">…</div>
-{% endblock %}
-```
+**Hand-rolled alternative.** If you don't want another dependency, a
+`kernel.response` listener that generates a nonce per request, exposes
+it as a request attribute (so Twig can read it), and sets the
+`Content-Security-Policy` header is around 30 lines. Use the same
+template overrides.
 
-**Future direction (v0.7+):** make CSP-nonce wiring opt-in via a
-bundle config flag (`polysource_easyadmin_filter_bridge.csp_nonce: true`)
-so hosts don't need template overrides. Out of scope for v0.6.x.
-
-### What polysource does NOT do (verified)
-
-- ✓ No `eval()` / `Function()` / `setTimeout("string")`
-- ✓ No inline `onclick=`, `onchange=`, etc. handlers — all JS lives
-  in Stimulus controllers under `assets/controllers/`
-- ✓ No `javascript:` URIs in `href` / `src`
-- ✓ No `<script>` blocks emitted from templates (a single inline
-  `<script>` in `easyadmin-filter-bridge/crud/index.html.twig`
-  exists for the filter-modal AJAX loader — see "Strict-CSP script
-  guidance" below)
-
-### Strict-CSP script guidance
-
-The bridge ships ONE inline `<script>` block in
-`crud/index.html.twig` for the modal AJAX loader. Same nonce
-pattern as inline `<style>` applies:
-
-```twig
-{# Override at the app level #}
-{% block configured_javascripts %}
-    {% apply replace({'<script>': '<script nonce="' ~ csp_nonce() ~ '">'}) %}
-        {{ parent() }}
-    {% endapply %}
-{% endblock %}
-```
+**The caveat that trips people up:** a nonce applies to `<style>` and
+`<script>` *elements* only. It cannot whitelist a `style="…"`
+*attribute* — those are governed by `style-src-attr`, which needs
+`'unsafe-inline'` (or `'unsafe-hashes'` plus a hash per value, which
+is impractical for the computed `width: {{ progress_pct }}%`). Either
+keep `style-src-attr: 'unsafe-inline'`, or override
+`bulk-async/_progress.html.twig` to drive the bar's width from a CSS
+custom property set by the Stimulus controller instead of an
+attribute.
 
 ## 2. Accessibility (WCAG 2.2 AA)
 
@@ -121,14 +151,16 @@ the showcase as part of the v0.5.0 release gates.
 
 | Feature | A11y guarantee |
 |---|---|
-| Filter modal / subpanel | `role="dialog"` + `aria-modal="true"` + focus trap (EA stock + bridge preserves) |
-| Filter tabs | `<details name="polysource-tab">` provides ARIA `disclosure` semantics natively; tab navigation via arrow keys works in modern browsers |
-| Chips bar | Each chip has `aria-label` describing label + value + remove action |
-| Saved-views dropdown | Bootstrap dropdown with `aria-haspopup` + `aria-expanded` |
-| Save-view modal | Form labels properly associated; modal trap on focus |
-| Bulk-async progress | `role="progressbar"` + `aria-valuenow` / `aria-valuemin` / `aria-valuemax` |
-| Search palette | `role="combobox"` + `aria-expanded` + `aria-controls` |
-| Tooltips / pop overs | Use Bootstrap 5's built-in ARIA wiring |
+| Filter subpanel | Native `<details>`/`<summary>` disclosure semantics; the panel body is a `role="region"` labelled by the panel title. ESC-to-close and focus-into-panel-on-open come from the template's enhancement script |
+| Filter modal (integrated mode) | Bootstrap 5 modal — its stock ARIA wiring and focus trap, plus an `aria-label`led close button |
+| Filter tabs | `<details name="…">` groups give mutually-exclusive disclosure semantics natively |
+| Chips bar | The chips region is `role="region"` with an `aria-label`; each chip's remove control carries its own `aria-label` |
+| Saved-views dropdown | Bootstrap dropdown with `aria-expanded`; the per-view "make default" toggle is `aria-pressed` and its `aria-label` names the view |
+| Save-view modal | Form labels properly associated; Bootstrap modal focus handling |
+| Bulk-async progress | `role="progressbar"` + `aria-label` + `aria-valuenow` / `aria-valuemin` / `aria-valuemax` |
+| Search palette | `role="dialog"` + `aria-label` on the palette, `role="listbox"` on the results; ↑/↓/↵/Esc keyboard model, with the shortcuts shown in the palette footer |
+| **Row-detail chevron** *(v1.1)* | The toggle is a real `<a href>` (it navigates to the standalone panel page without JS) marked `role="button"` with `aria-expanded="false"` and a translated `aria-label`. The glyph itself is `aria-hidden="true"` — decorative, the label carries the meaning. On toggle, the Stimulus controller flips `aria-expanded` and swaps the `aria-label` between the "expand" and "collapse" strings, so the control always announces what it will do next. `aria-expanded` reads `true` during loading and error states too, matching the fact that a row has been inserted |
+| Tooltips / popovers | Use Bootstrap 5's built-in ARIA wiring |
 
 ### Known gaps (host-side, not polysource issues)
 
@@ -146,12 +178,15 @@ itself from passing AA, but they need host attention:
   host changes the EA Sass theme to low-contrast colors, the
   bridge's button accents inherit them. Verify with axe-core or
   Lighthouse.
-- **Stimulus-less hosts**: chip × close buttons render as visible
-  but inert clickable elements (per ADR-027 progressive
-  enhancement). Hosts without Stimulus have a "buttons that don't
-  do anything" UX — not strictly an a11y bug but a usability one.
-  Either install Stimulus or hide the close buttons via the
-  documented CSS class.
+- **Stimulus-less hosts**: nothing renders inert. Per ADR-027 the
+  chip × control is a real `<a href>` to the same page minus that
+  filter, the row-detail chevron is a real `<a href>` to the
+  standalone panel page, and the subpanel is a native `<details>`.
+  Without Stimulus each of these costs a page load instead of
+  updating in place — a performance difference, not a broken
+  control. The one thing that does go away is the chips
+  overflow "+N more" `<button>`, which needs JS to reveal the
+  hidden chips.
 
 ### Recommended host-side audit tools
 

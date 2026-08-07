@@ -1,6 +1,6 @@
 # Polysource Showcase — guided tour
 
-> A 16-step walkthrough of `examples/showcase-demo/`, the **ShopCo
+> A 31-step walkthrough of `examples/showcase-demo/`, the **ShopCo
 > SaaS** application that exercises every Polysource package in a
 > single Symfony 7.4 app. Each step embeds the screenshot regenerated
 > on every release via `make screenshots` (Phase I pipeline, ADR-025).
@@ -76,8 +76,10 @@ without any per-CRUD code, plus 4 custom filters (`BetweenDateFilter`,
 
 `OrderCrudController` shows off the 4 custom bridge filters. The
 underlying `OrderWorkflow` (Symfony state machine, 7 places, 6
-transitions) is wired by [`polysource/workflow-bridge`](./workflow-bridge/);
-state chips and transition buttons land in a Phase H+1 polish.
+transitions) is wired by [`polysource/workflow-bridge`](./workflow-bridge/):
+the status column renders as badges on the index, and the bridge
+exposes the allowed transition buttons on the order detail page
+(unblocked in v1.1, when action rendering gained the record context).
 
 ### Refunds (61 fixtures, 3 statuses)
 
@@ -92,9 +94,14 @@ state chips and transition buttons land in a Phase H+1 polish.
 webhook timeouts). The Retry / Dismiss / Retry-all / Purge actions
 are gated by the `PolysourcePermissionVoter` (Phase D + G).
 
-> v0.1 ships an empty `configureFields()` per ADR-011 — the table
-> is functional but row content rendering is the topic of v0.2.
-> The detail page renders all DataRecord properties.
+> The index renders real columns — ID, Message, Failed at, Exception,
+> Reason — because the showcase subclasses the packaged resource
+> (`ShopcoFailedMessageResource`) and yields concrete field types from
+> `configureFields()`. The packaged resources ship an intentionally
+> empty `configureFields()` so they stay agnostic of the host's record
+> shape; the theme then derives columns from the record. Every
+> Polysource listing in this tour follows the same pattern. The detail
+> page additionally renders the payload as a code block.
 
 ## 8 · Login attempts — `polysource/adapter-doctrine` (cohabitation case)
 
@@ -353,6 +360,29 @@ In production, the bulk-action handlers
 (`OrderCrudController::bulkMarkCancelled`) emit the success
 flash that lands here automatically.
 
+## 31 · Expandable row details — `polysource/easyadmin-filter-bridge` (v1.1.0)
+
+![An order row expanded to show its line items below the row](./screenshots/31-row-details.png)
+
+Every row on the Orders index carries a `▸` chevron. Clicking it
+expands the row in place to show that order's line items, fetched
+from the server the first time it's opened and kept client-side for
+subsequent reopenings — nothing is preloaded with the listing.
+
+The whole wiring is two declarations. `OrderRowDetailProvider`
+extends `AbstractRowDetailProvider`, names `Order::class` as its
+supported entity and points at
+`admin/order/_row_detail.html.twig`; autoconfiguration on
+`RowDetailProviderInterface` registers it, no services.yaml entry.
+`OrderCrudController::configureFields()` then yields
+`Polysource::rowDetail()` for the chevron column. Listings whose
+entity has no provider are byte-identical to before.
+
+Without a Stimulus pipeline the chevron is still a working link: it
+navigates to a standalone page rendering the same detail template
+(ADR-027 progressive enhancement). The `polysource--row-details`
+controller upgrades it in place when present.
+
 ## Regenerate this tour
 
 ```bash
@@ -372,7 +402,7 @@ the exact same chrome:
 |  | EasyAdmin (Catalog / Sales) | Polysource (standalone + adapters) |
 |---|---|---|
 | Top bar | Search input + settings cog | Page title + breadcrumb only |
-| Column headers | Sort arrows on every column | No sort arrows in v0.1 |
+| Column headers | Sort arrows on every column | No sort arrows |
 | Status display | Coloured Bootstrap badges | Plain text |
 | Action buttons | Icon + label buttons (`Show` / `Edit`) | Plain text links (`Detail` / `Retry` / `Dismiss`) |
 | Layout shell | EA's own templates | `@Polysource/index.html.twig` (twig-theme package) |
@@ -392,16 +422,15 @@ the same Symfony app:
 
 Aligning the two visual languages — sort arrows on Polysource
 indexes, button-styled actions, status badges by convention,
-optional top search bar — is on the v0.2 roadmap (tracked as a
-"polish-shell" help-wanted issue at launch). For v0.1 the priority
-was correctness and the architectural separation; the visual gap
-is acknowledged here so the reader is not surprised.
+optional top search bar — is not shipped; it is tracked as a
+"polish-shell" help-wanted issue. The priority has been correctness
+and the architectural separation; the visual gap is acknowledged
+here so the reader is not surprised.
 
 If you're integrating Polysource into an existing EA app and want
 the two halves to feel uniform on day one, the showcase
 (`examples/showcase-demo/templates/`) is the reference for the
-layout-override pattern. A dedicated cookbook page is on the v0.2
-documentation backlog.
+layout-override pattern.
 
 ## What this showcase proves
 

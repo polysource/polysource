@@ -17,7 +17,7 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 - Stimulus **`cmdk_controller.js`** — Cmd+K / Ctrl+K / "/" hooks, debounce 150 ms, arrow-keys + Enter nav, Esc close, results grouped per resource.
 - Accessible overlay template `_palette.html.twig`.
 
-See [ADR-023](../../docs/adr/0023-global-search-cmdk.md). Future bridges (`search-meilisearch`, `search-algolia`, `search-elasticsearch`) extend via `SearchProviderInterface`.
+See [ADR-023](https://github.com/polysource/polysource/blob/main/docs/adr/0023-global-search-cmdk.md). Future bridges (`search-meilisearch`, `search-algolia`, `search-elasticsearch`) extend via `SearchProviderInterface`.
 
 ## Extend it
 
@@ -36,7 +36,7 @@ final class AlgoliaSearchProvider implements SearchProviderInterface
 }
 ```
 
-Done. The aggregator fan-outs across every tagged provider. See [extensibility map](../../docs/user/extensibility.md#2-plug-into-the-cmdk-search-palette).
+Done. The aggregator fan-outs across every tagged provider. See [extensibility map](https://github.com/polysource/polysource/blob/main/docs/user/extensibility.md#2-plug-into-the-cmdk-search-palette).
 
 ## Install
 
@@ -54,4 +54,4 @@ return [
 
 ## Documentation
 
-- [Search walkthrough](../../docs/user/search/)
+- [Search walkthrough](https://github.com/polysource/polysource/tree/main/docs/user/search/)

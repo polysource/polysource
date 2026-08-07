@@ -44,7 +44,8 @@ trait FieldTrait
 ```
 
 Concrete field types use `FieldTrait` plus a 1-line `new()` factory
-that preselects the Twig template:
+that preselects the Twig template. This is core's own `TextField`,
+verbatim:
 
 ```php
 use Polysource\Core\Field\FieldInterface;
@@ -74,16 +75,16 @@ final class TextField implements FieldInterface
 the UI consumes:
 
 ```php
-final readonly class FieldDto
+final class FieldDto
 {
     public function __construct(
-        public string $property,
-        public ?string $label = null,
-        public ?string $template = null,
-        public ?string $permission = null,
-        public bool $sortable = false,
-        public array $pages = ['index', 'detail', 'edit', 'new'],
-        public array $customOptions = [],
+        public readonly string $property,
+        public readonly ?string $label = null,
+        public readonly ?string $template = null,
+        public readonly ?string $permission = null,
+        public readonly bool $sortable = false,
+        public readonly array $pages = ['index', 'detail', 'edit', 'new'],
+        public readonly array $customOptions = [],
     ) {}
 
     public function isOnPage(string $page): bool;
@@ -93,52 +94,62 @@ final readonly class FieldDto
 The view layer reads `$pages` to decide whether the field renders on
 the current screen, and `$customOptions` for theme-specific tweaks.
 
-## What ships in v0.1
+## The field types core ships
 
-`polysource/core` v0.1 ships **only** the abstract `FieldInterface`
-and `FieldTrait`. There are **no built-in concrete field types** yet
-(see ADR-011 for the deferred decision). The Twig theme however
-already ships **six** templates ready to be referenced from your own
-field classes:
+Since v0.7.1, `polysource/core` ships **five concrete field types**
+under `Polysource\Core\Field\`. Use them directly — you do not need
+to declare your own for the common cases:
 
-| Template | What it renders |
-|---|---|
-| `@Polysource/field/text.html.twig` | Plain text, escaped. |
-| `@Polysource/field/id.html.twig` | An identifier styled as a chip. |
-| `@Polysource/field/datetime.html.twig` | Formatted timestamp. |
-| `@Polysource/field/code.html.twig` | A `<pre>` block for JSON / payloads. |
-| `@Polysource/field/boolean.html.twig` | True / false badge. |
-| `@Polysource/field/generic.html.twig` | Fallback — calls `var_export` on the value. |
+| Class | Template it preselects | What it renders |
+|---|---|---|
+| `TextField` | `@Polysource/field/text.html.twig` | Plain text, escaped. |
+| `IdField` | `@Polysource/field/id.html.twig` | An identifier, monospace with a copy-friendly affordance. |
+| `DateTimeField` | `@Polysource/field/datetime.html.twig` | Locale-aware timestamp; accepts ISO 8601 strings, `DateTimeInterface`, or Unix timestamps. |
+| `CodeField` | `@Polysource/field/code.html.twig` | Monospace block for JSON payloads, stack traces, log lines. |
+| `BooleanField` | `@Polysource/field/boolean.html.twig` | True / false badge. |
 
-You declare a field type in your host app by composing the trait with
-the appropriate template:
+All five are `final`, all use `FieldTrait`, so every builder method
+above is available on them.
+
+`polysource/twig-theme` ships one more template with no matching
+class: `@Polysource/field/generic.html.twig`, the fallback used when
+a field declares no template. Reference it explicitly with
+`->setTemplate()` if you want `var_export`-style output.
+
+### Writing your own field type
+
+When none of the five fits — a status chip with your domain's colour
+mapping, a currency renderer, a thumbnail — compose `FieldTrait` with
+a one-line factory that preselects your template:
 
 ```php
-final class IdField implements FieldInterface
+use Polysource\Core\Field\FieldInterface;
+use Polysource\Core\Field\FieldTrait;
+
+final class MoneyField implements FieldInterface
 {
     use FieldTrait;
 
     public static function new(string $property, ?string $label = null): self
     {
-        return (new self($property, $label))->setTemplate('@Polysource/field/id.html.twig');
+        return (new self($property, $label))->setTemplate('admin/field/_money.html.twig');
     }
 }
 ```
 
-The same pattern produces `TextField`, `DateTimeField`, `CodeField`,
-`BooleanField` — five short classes total. The full set lives under
-`examples/messenger-demo/src/Field/` in this repository if you want a
-concrete reference.
-
-A future Polysource release will ship those five concrete types in
-`polysource/core` so you don't need to re-declare them; until then,
-copy them into your application.
+That is the whole pattern — the shipped types are written exactly
+this way.
 
 ## Wiring fields into a resource
 
 Fields are produced by `ResourceInterface::configureFields()`:
 
 ```php
+use Polysource\Core\Field\CodeField;
+use Polysource\Core\Field\DateTimeField;
+use Polysource\Core\Field\IdField;
+use Polysource\Core\Field\TextField;
+
 public function configureFields(string $page): iterable
 {
     yield IdField::new('message_class', 'Message');
@@ -180,7 +191,7 @@ granted to the current user. Useful for redacting sensitive columns
 
 ## See also
 
-- [resource.md](./resource.md) — `configureFields()` is one of seven
+- [resource.md](./resource.md) — `configureFields()` is one of eight
   declarations a resource makes.
 - [data-source.md](./data-source.md) — where the rendered values come
   from.

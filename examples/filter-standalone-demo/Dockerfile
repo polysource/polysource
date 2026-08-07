@@ -1,12 +1,12 @@
-# filter-standalone-demo — single-container PHP 8.1 image.
+# filter-standalone-demo — single-container PHP 8.2 image.
 #
-# We deliberately pin to PHP 8.1, the FLOOR of polysource/filter's
-# advertised baseline (cf. ADR-015), so this demo proves the
-# primitive runs on the lowest supported version. A user on a
-# legacy stack (Symfony 5.4 + PHP 8.1) sees that the bundle works
-# in their environment without having to upgrade PHP first.
+# We deliberately pin to PHP 8.2, the FLOOR of the v1.0 baseline
+# (ADR-015 addendum, ADR-011), so this demo proves the primitive
+# runs on the lowest supported version. A user on a legacy stack
+# (Symfony 6.4 LTS + PHP 8.2) sees that the bundle works in their
+# environment without having to upgrade PHP first.
 
-FROM php:8.1-cli-alpine
+FROM php:8.2-cli-alpine
 
 ARG UID=1000
 ARG GID=1000

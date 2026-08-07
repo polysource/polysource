@@ -107,13 +107,13 @@ messenger-demo pattern).
 
 ```bash
 bin/console polysource:plugins:list
-# Expect: polysource/workflow-bridge   0.1.0-alpha.1
+# Expect: polysource/workflow-bridge   1.1.0
 ```
 
 ## See also
 
 - [walkthrough.md](./walkthrough.md) — once it's installed.
 - [extending.md](./extending.md) — palettes, multi-tenant
-  workflows, future hooks.
+  workflows, host-side extension points.
 - [ADR-021](../../adr/0021-symfony-workflow-bridge.md) — design
   rationale.

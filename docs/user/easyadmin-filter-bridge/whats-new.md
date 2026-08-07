@@ -7,9 +7,8 @@ installing in your stack.
 
 ## TL;DR
 
-The bridge adds **one extra option per filter type** (or a small handful)
-plus a **single Stimulus controller** that wires preset / quick-range /
-clear interactions. The visual styling is **100% upstream EasyAdmin** —
+The bridge adds **one extra option per filter type** (or a small
+handful). The visual styling is **100% upstream EasyAdmin** —
 the bridge form theme delegates to the upstream `ea_*_filter_widget`
 blocks via `{{ block('…') }}` and only wraps them in a `<div
 data-controller="polysource--filter">` carrying the new options as
@@ -32,7 +31,7 @@ keep the upstream layout intact when not enabled.
 | **`NumericFilter`** | `step: float` | Forwarded to `<input step>`. | Partially (you can pass `step` via `value_type_options`, but the bridge surfaces it as a top-level option for symmetry). | None shipped. |
 | | ~~`quick_ranges`~~ | **Removed in v0.2.0** (required JS — ADR-027). | — | — |
 | **`ComparisonFilter`** | `comparisons: list<string>` | Whitelists which comparison operators show up in the dropdown (e.g. `['=', '>=', '<=']`). | **No.** Upstream always exposes the full list including `between`, even when `between` is meaningless for `ComparisonFilter` (which has no `value2`). | None — applied at render time via Symfony's `choice_filter`. |
-| **`DateTimeFilter`** | Dedicated block prefix (`polysource_enhanced_datetime_filter`) for theme overrides. | — | None shipped. |
+| **`DateTimeFilter`** | — (no new option) | Dedicated block prefix (`polysource_enhanced_datetime_filter`) so a host form theme can restyle datetime filters without touching EA's built-in one. | No. | None shipped. |
 | | ~~`presets`~~ / ~~`show_clear`~~ | **Removed in v0.2.0** (required JS — ADR-027; native HTML5 pickers + EA's Reset cover the ground). | — | — |
 | **`BooleanFilter`** | `include_null: bool` | Adds a third "Null" radio choice so you can filter rows where the boolean is NULL (common with nullable `boolean` columns). | **No** — upstream is hard-coded to true/false only. | None shipped. |
 | **`ChoiceFilter`** | `inline: bool` | Adds a `data-polysource--filter-inline-value` attr. Intended as a hint that the host theme can use to render choices as inline radios instead of a dropdown. | Partially (you can already pass `expanded: true` via `value_type_options`). | None shipped. |
@@ -42,8 +41,8 @@ keep the upstream layout intact when not enabled.
 ## Beyond per-filter options — what the bridge layers on top
 
 The matrix above lists per-filter enhancements. The bridge also wires
-three **list-level** capabilities on top of EasyAdmin's filter
-sidebar, all powered by `polysource/filter`:
+several **list-level** capabilities on top of EasyAdmin's filter
+sidebar, most of them powered by `polysource/filter`:
 
 ### Chips bar above the list
 
@@ -128,11 +127,16 @@ return $filters
 Per-filter explicit declarations always override marker
 inheritance.
 
-**Rendering** (Stimulus `polysource--filter-modal-layout`):
+**Rendering** — server-side only, no Stimulus involved (the
+`polysource--filter-modal-layout` controller that did this
+client-side was deleted in v0.2.0):
 - **Top-level ungrouped** filters render flat at the top
-- **Top-level groups** render as `<details>` accordions
-- **Tabs** render as Bootstrap nav-tabs with nested `<details>`
-  accordions for groups inside each tab
+- **Top-level groups** render as native `<details>` accordions
+- **Tabs** render as a strip of `<details name="polysource-tab">`
+  summaries paired with their panes via CSS `:has()`, with nested
+  `<details>` accordions for groups inside each pane
+- Each tab/group summary shows how many of its filters are currently
+  applied
 - Empty/no-tabs/no-groups → flat layout (zero visual change vs
   upstream EA)
 
@@ -155,7 +159,30 @@ the last applied filters automatically. No URL noise.
 Cleared via the upstream EA "Reset" button (which the bridge
 intercepts and translates to a `FilterService::clear()` call).
 
-## What v0.2.0 → v0.5.0 added on top
+### Expandable row details (opt-in, since v1.1.0)
+
+**Upstream EasyAdmin has no row-expansion feature at all** — a row
+either links to the detail page or it doesn't. The bridge adds one:
+declare a `RowDetailProviderInterface` for an entity class, add the
+`Polysource::rowDetail()` chevron field to `configureFields()`, and
+each row grows an expand control that pulls a detail panel from the
+server the first time it's opened.
+
+Nothing is preloaded, and a listing whose entity has no provider is
+byte-identical to before. Permissions are per row: the provider names
+a voter attribute, checked with the row's entity as the subject —
+cosmetically before rendering the chevron, and authoritatively on the
+endpoint. Without JS the chevron is a plain link to a standalone
+detail page, so the feature works on hosts with no Stimulus pipeline.
+
+The panel content is a Twig template, or —
+via `RowDetail::listing()` — a nested read-only Polysource listing
+(paginated), which needs `polysource/symfony-bundle` installed
+alongside the bridge.
+
+Full guide: [row-details.md](./row-details.md).
+
+## What v0.2.0 → v1.1.0 added on top
 
 The matrix above documents the v0.1 baseline. Subsequent releases
 layered the following capabilities — each one is documented on its
@@ -212,17 +239,6 @@ visible-but-non-functional UI in hosts without a Stimulus pipeline.
   `polysource_clear_filters_url()`,
   `polysource_active_filters_summary()`. Auto-rendered by the
   bridge's chips bar.
-
-### v1.1.0 — Expandable row details
-
-- Per-entity `RowDetailProviderInterface` + `Polysource::rowDetail()`
-  chevron field; lazy fragment endpoint with per-row permission
-  (entity as voter subject); `polysource--row-details` Stimulus
-  controller over a no-JS standalone-page baseline. Full guide:
-  [row-details.md](./row-details.md).
-- `RowDetail::listing()` — embed a native Polysource listing
-  (paginated, read-only) as a row's detail; requires
-  `polysource/symfony-bundle` alongside the bridge.
 
 ### v0.5.0 — Simplification + polish (10 features)
 
@@ -288,9 +304,25 @@ polish.
   streaming on Doctrine 2.x, DateTime as ISO 8601, redirect
   fallback for multi-tenant, IN/NOT IN/IS [NOT] NULL DQL applier.
 
+### v1.1.0 — Expandable row details
+
+- Per-entity `RowDetailProviderInterface` (+ `AbstractRowDetailProvider`)
+  and the `Polysource::rowDetail()` chevron field; lazy fragment
+  endpoint with per-row permission (the entity is the voter subject);
+  `polysource--row-details` Stimulus controller layered over a no-JS
+  standalone-page baseline. Full guide:
+  [row-details.md](./row-details.md).
+- `RowDetail::listing()` — embed a native Polysource listing
+  (paginated, read-only) as a row's detail; requires
+  `polysource/symfony-bundle` alongside the bridge.
+
+The v0.6 → v1.0 releases in between are not summarised on this page;
+the two milestones worth knowing are that v1.0.0 froze the public API
+under strict SemVer and raised the floors to PHP 8.2+ / Symfony 6.4 LTS+.
+
 Full per-release detail in [`CHANGELOG.md`](../../../CHANGELOG.md).
 
-## Honest summary of what's **not** in v0.1
+## Honest summary of what's **still not** in v1.1
 
 - **No JS for `min_length`, `inline`, `chip_display`, `placeholder`.** The
   bridge surfaces those options as `data-*` attrs on the wrapper but
@@ -329,9 +361,10 @@ cover the same ground.)
 
 ## Multi-version support since v0.1
 
-The bridge is intentionally low-bar to install: PHP 8.1+, Symfony
-5.4 LTS|6.4 LTS|7.4 LTS, EasyAdmin 4.24+|5.0+, Doctrine ORM
-2.20+|3.6+. Five explicit CI combos run on each push (cf.
+The bridge is intentionally low-bar to install: PHP 8.2+, Symfony
+`^6.4 || ^7.0 || ^8.0`, EasyAdmin 4.24+|5.0+, Doctrine ORM
+2.20+|3.6+. (v1.0.0 raised the floors from PHP 8.1 / Symfony 5.4 —
+see ADR-011.) Five explicit CI combos run on each push (cf.
 [ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)) so
 the realistic profiles of EA-using Symfony apps in 2026 are gated.
 
@@ -353,8 +386,9 @@ unit tests.
   the same chips/subpanel/multi-group UI in a non-EasyAdmin
   controller, or if you want to add a custom filter type and
   understand the 3-tag pipeline.
-- [ROADMAP](../../../ROADMAP.md) — what's planned for v0.2 and beyond
-  (chip-display Stimulus, autocomplete enhancements, saved-filter UX).
+- [ROADMAP](../../../ROADMAP.md) — what's under consideration
+  post-v1.0 (chip-display Stimulus, autocomplete enhancements,
+  saved-filter UX).
 - [ADR-012](../../adr/0012-dual-product-positioning.md) — why the bridge
   exists at all (vs forking EasyAdmin).
 - [ADR-013](../../adr/0013-filter-package-architecture.md) — the

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "db99c93e41d319d79b7b8628d2ae2b8a",
+    "content-hash": "15d49dddb635c630c6368cd3529eec28",
     "packages": [
         {
             "name": "async-aws/core",
@@ -2235,31 +2235,31 @@
         },
         {
             "name": "polysource/adapter-doctrine",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-doctrine",
-                "reference": "9ec4df6f24bdd45490fe62375ae7be72c8a1cb87"
+                "reference": "41e45b12f0061585905a8b1ee8780af6639ffb30"
             },
             "require": {
                 "doctrine/orm": "^2.20 || ^3.0",
                 "doctrine/persistence": "^3.0 || ^4.0",
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "doctrine/dbal": "^3.6 || ^4.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/property-access": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/property-access": "^6.4 || ^7.0 || ^8.0"
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2294,31 +2294,31 @@
         },
         {
             "name": "polysource/adapter-flysystem",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-flysystem",
-                "reference": "4281f4d918199a45c1ff5308ddd1716e3d786c61"
+                "reference": "562ba0954995ca7e5642c448a5c272b4a88c193b"
             },
             "require": {
                 "league/flysystem": "^3.0",
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "async-aws/simple-s3": "^1.0 || ^2.0",
                 "league/flysystem-async-aws-s3": "^3.29",
                 "league/flysystem-memory": "^3.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9"
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0"
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2354,28 +2354,28 @@
         },
         {
             "name": "polysource/adapter-http",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-http",
-                "reference": "c70e552fe07ff9c38cfb8209b9dec993cfd8f882"
+                "reference": "ad95ca995ae47102584c6af9669d0b98d61b01c8"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-client": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-client": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9"
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0"
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2411,24 +2411,24 @@
         },
         {
             "name": "polysource/adapter-meilisearch",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-meilisearch",
-                "reference": "74b386ca38d34fdc66052aa0af14bf99f44f529a"
+                "reference": "74ccd23e6ebdb583a7baceb91564457439e86da6"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "meilisearch/meilisearch-php": "^1.0",
                 "nyholm/psr7": "^1.8",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9"
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0"
             },
             "suggest": {
                 "meilisearch/meilisearch-php": "Recommended client for the Meilisearch adapter (^1.0). Hosts can also wrap their own client through MeilisearchIndexInterface."
@@ -2436,7 +2436,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2471,16 +2471,17 @@
         },
         {
             "name": "polysource/adapter-messenger",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-messenger",
-                "reference": "df8021f3aeeb548608b96a4a61130cf7f4b4f8f1"
+                "reference": "6a22428a6a9d70fb075e5cf05c3c39c7b26ad6cd"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "psr/log": "^1.0 || ^2.0 || ^3.0",
                 "symfony/config": "^6.4 || ^7.0 || ^8.0",
                 "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
                 "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
@@ -2492,7 +2493,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2526,22 +2527,22 @@
         },
         {
             "name": "polysource/adapter-redis",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-redis",
-                "reference": "63b394e69e1318a7d303d4d5a3d6f9cf93e78ce1"
+                "reference": "013e6bc55581a5a3c11a163766417acc1cedc713"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
                 "predis/predis": "^2.2"
             },
             "suggest": {
@@ -2551,7 +2552,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2567,7 +2568,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Polysource — Redis hash adapter: read+write Redis-backed records (feature flags, lightweight config, session metadata).",
+            "description": "Polysource — Redis adapter: 5 type-pure data sources (string, list, hash, set, sorted set) for read+write Redis-backed records (feature flags, lightweight config, session metadata).",
             "homepage": "https://github.com/polysource/polysource",
             "keywords": [
                 "adapter",
@@ -2586,30 +2587,30 @@
         },
         {
             "name": "polysource/audit",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/audit",
-                "reference": "c83c8f24e36213a31e62621fb3b487faecb3e5ec"
+                "reference": "c67b3916bb3c922ff6daefaa06b2da554827e639"
             },
             "require": {
                 "doctrine/dbal": "^3.6 || ^4.0",
                 "doctrine/orm": "^2.20 || ^3.0",
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
                 "psr/log": "^1.0 || ^2.0 || ^3.0",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/event-dispatcher": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-foundation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/event-dispatcher": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-foundation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/uid": "^6.4 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "symfony/security-bundle": "^6.4 || ^7.0 || ^8.0"
             },
             "suggest": {
                 "easycorp/easyadmin-bundle": "Audits EasyAdmin CRUD edits (Edit / New / Delete on Doctrine entities) via the bundled EasyAdminAuditSubscriber. Gated on EA being installed; no effect when absent."
@@ -2617,7 +2618,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2653,35 +2654,40 @@
         },
         {
             "name": "polysource/bulk-async",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/bulk-async",
-                "reference": "2bbd1b80ee73fd4028260bd0796e3485f99f3262"
+                "reference": "805708b35cea5c13c845f4b6df9515b59d5eeb3b"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/messenger": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "psr/log": "^1.0 || ^2.0 || ^3.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/messenger": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/uid": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
                 "twig/twig": "^3.0"
             },
             "require-dev": {
                 "doctrine/dbal": "^3.6 || ^4.0",
                 "doctrine/orm": "^2.20 || ^3.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
                 "symfony/mercure": "^0.6 || ^1.0"
+            },
+            "suggest": {
+                "doctrine/orm": "Enables the Doctrine-backed bulk-job storage, data source and browsable resource (DoctrineBulkJobStorage). Gated on the ORM being installed; without it the host app must register its own BulkJobStorageInterface implementation.",
+                "symfony/mercure": "Enables live bulk-job progress over SSE via MercureBulkJobBroadcaster. Gated on the Mercure component being installed; falls back to Stimulus polling when absent."
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2728,14 +2734,15 @@
         },
         {
             "name": "polysource/core",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/core",
-                "reference": "19c96e94caa813d0da8b33a74c0468969a3cbad4"
+                "reference": "cb489ee8eaa005c7e9a6ac24c69fddccb7ee33b9"
             },
             "require": {
-                "php": ">=8.1"
+                "composer-runtime-api": "^2.0",
+                "php": ">=8.2"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5"
@@ -2743,7 +2750,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -2778,42 +2785,46 @@
         },
         {
             "name": "polysource/easyadmin-filter-bridge",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/easyadmin-filter-bridge",
-                "reference": "6801f91ed9b2b6bd84f84ced607d517b6a483aa1"
+                "reference": "341c929accb341ea5a0ce58948eecc96863cd9ea"
             },
             "require": {
+                "doctrine/orm": "^2.20 || ^3.0",
                 "easycorp/easyadmin-bundle": "^4.24 || ^5.0",
-                "php": ">=8.1",
-                "polysource/filter": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/filter": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/asset": "^6.4 || ^7.0 || ^8.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/form": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
+                "twig/twig": "^3.0"
             },
             "require-dev": {
                 "doctrine/doctrine-bundle": "^2.18",
-                "doctrine/orm": "^2.20 || ^3.6",
                 "openspout/openspout": "^4.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "symfony/browser-kit": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dom-crawler": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/phpunit-bridge": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "symfony/browser-kit": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dom-crawler": "^6.4 || ^7.0 || ^8.0",
+                "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
+                "symfony/phpunit-bridge": "^6.4 || ^7.0 || ^8.0",
+                "symfony/security-bundle": "^6.4 || ^7.0 || ^8.0",
+                "symfony/twig-bundle": "^6.4 || ^7.0 || ^8.0"
             },
             "suggest": {
-                "openspout/openspout": "^4.0 — needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`."
+                "openspout/openspout": "^4.0 — needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`.",
+                "polysource/symfony-bundle": "Required for RowDetail::listing() — embedding another Polysource resource as a row-detail panel"
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2859,37 +2870,40 @@
         },
         {
             "name": "polysource/filter",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/filter",
-                "reference": "043f3881a1ffcc1976e1c2a08a0c44fe3472afc9"
+                "reference": "505ec45a7a1126a176762b6d8eb305aa94739b74"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/event-dispatcher": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-foundation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/event-dispatcher": "^6.4 || ^7.0 || ^8.0",
+                "symfony/form": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-foundation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
                 "twig/twig": "^3.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "symfony/browser-kit": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dom-crawler": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/phpunit-bridge": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+                "symfony/browser-kit": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dom-crawler": "^6.4 || ^7.0 || ^8.0",
+                "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
+                "symfony/phpunit-bridge": "^6.4 || ^7.0 || ^8.0",
+                "symfony/twig-bundle": "^6.4 || ^7.0 || ^8.0"
+            },
+            "suggest": {
+                "doctrine/orm": "Enables the Doctrine-backed storages (saved views, column preferences, bulk-action history, filter URL tokens). Gated on the ORM being installed; session/in-memory storages are used when absent."
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2897,6 +2911,13 @@
                             "main": "./assets/controllers/filter_chips_controller.js",
                             "name": "polysource--filter-chips",
                             "fetch": "eager",
+                            "enabled": true,
+                            "autoimport": []
+                        },
+                        "polysource--row-details": {
+                            "main": "./assets/controllers/row_details_controller.js",
+                            "name": "polysource--row-details",
+                            "fetch": "lazy",
                             "enabled": true,
                             "autoimport": []
                         }
@@ -2934,22 +2955,22 @@
         },
         {
             "name": "polysource/search",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/search",
-                "reference": "699b1404ab7651826822db314cfe1ab82856bdb2"
+                "reference": "9630b1e3b50d787fca20fef64303a3ef89e7ca9d"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
                 "twig/twig": "^3.0"
             },
             "require-dev": {
@@ -2958,7 +2979,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -3004,17 +3025,18 @@
         },
         {
             "name": "polysource/symfony-bundle",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/symfony-bundle",
-                "reference": "087d1d7ff0b467473e86e9ae87ab0fa3b00bca6a"
+                "reference": "59f0e41bd9d892fc7060acaeac09dc9ce93cee8b"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "polysource/filter": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "polysource/twig-theme": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/filter": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "polysource/twig-theme": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "psr/log": "^1.0 || ^2.0 || ^3.0",
                 "symfony/config": "^6.4 || ^7.0 || ^8.0",
                 "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
                 "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
@@ -3024,7 +3046,8 @@
                 "symfony/security-bundle": "^6.4 || ^7.0 || ^8.0",
                 "symfony/translation": "^6.4 || ^7.0 || ^8.0",
                 "symfony/twig-bundle": "^6.4 || ^7.0 || ^8.0",
-                "symfony/yaml": "^6.4 || ^7.0 || ^8.0"
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
+                "twig/twig": "^3.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5",
@@ -3032,10 +3055,13 @@
                 "symfony/dom-crawler": "^6.4 || ^7.0 || ^8.0",
                 "symfony/phpunit-bridge": "^6.4 || ^7.0 || ^8.0"
             },
+            "suggest": {
+                "doctrine/orm": "Enables the `polysource:doctor` schema check (DoctrineSchemaCheck). The check degrades gracefully when the ORM is absent."
+            },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -3069,20 +3095,20 @@
         },
         {
             "name": "polysource/twig-theme",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/twig-theme",
-                "reference": "997135d4a2d920a62bdc59f082d276f14fd3e2f9"
+                "reference": "c3fcbee31598f34d37ae8f42d9a7a859e09e6868"
             },
             "require": {
-                "php": ">=8.1",
+                "php": ">=8.2",
                 "twig/twig": "^3.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "license": [
@@ -3106,20 +3132,20 @@
         },
         {
             "name": "polysource/widgets",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/widgets",
-                "reference": "b386edf16feb1877fb31f34e54639246d62d04be"
+                "reference": "7dfb73e4054d3f7cc01a81274c914defa592ef3e"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
                 "twig/twig": "^3.0"
             },
             "require-dev": {
@@ -3128,7 +3154,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -3163,31 +3189,31 @@
         },
         {
             "name": "polysource/workflow-bridge",
-            "version": "0.1.x-dev",
+            "version": "1.2.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/workflow-bridge",
-                "reference": "41911caf9421445eb21861491e7b0066c65f98ab"
+                "reference": "328266ec8d3edcb5e778f3bb4298b37766cdf11b"
             },
             "require": {
-                "php": ">=8.1",
-                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9",
-                "symfony/config": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/dependency-injection": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/workflow": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-                "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0",
+                "php": ">=8.2",
+                "polysource/core": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0",
+                "symfony/config": "^6.4 || ^7.0 || ^8.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0 || ^8.0",
+                "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0",
+                "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+                "symfony/workflow": "^6.4 || ^7.0 || ^8.0",
+                "symfony/yaml": "^6.4 || ^7.0 || ^8.0",
                 "twig/twig": "^3.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9"
+                "polysource/symfony-bundle": "^0.1 || ^0.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6 || ^0.7 || ^0.8 || ^0.9 || ^0.10 || ^0.11 || ^1.0"
             },
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {

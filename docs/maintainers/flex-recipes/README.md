@@ -71,6 +71,10 @@ the host app's own README.
 
 ## What's prepared
 
+14 recipes, one per bundle. The monorepo ships 16 packages, but
+`polysource/core` and `polysource/twig-theme` register no bundle and
+need no Flex recipe.
+
 | Package | Recipe | Default config? |
 |---|---|---|
 | [polysource/filter](polysource/filter/0.1/) | ✓ | – |
@@ -88,10 +92,17 @@ the host app's own README.
 | [polysource/adapter-http](polysource/adapter-http/0.1/) | ✓ | – |
 | [polysource/adapter-meilisearch](polysource/adapter-meilisearch/0.1/) | ✓ | – |
 
-All recipes target the `0.1` version directory — Flex picks the most
-specific compatible version at install time, so a `0.1/` recipe applies
-to every release in the `0.1.x`, `0.2.x`, … `0.x.x` lineage until a
-new `1.0/` directory is added at v1.0.
+All recipes still target the `0.1` version directory. Flex picks the
+most specific compatible version at install time, so a `0.1/` recipe
+keeps applying to every later release — including v1.0.0 and v1.1.0 —
+until a `1.0/` directory exists upstream.
+
+> ⚠️ **Overdue.** v1.0.0 shipped 2026-08-06 and v1.1.0 on 2026-08-07,
+> and no `1.0/` directory has been branched. See
+> [Maintaining recipes across versions](#maintaining-recipes-across-versions)
+> for the steps. Installs are not broken — the `0.1/` recipe is still
+> resolved and applied — but the recipes no longer reflect the 1.x
+> default config.
 
 ## Recipe format primer
 
@@ -193,7 +204,7 @@ The submission flow is the same for every package. Example for
 
 ### Submitting multiple packages
 
-If submitting all 14 packages, the recommendation from the Flex team
+If submitting all 14 recipes, the recommendation from the Flex team
 (based on their contributor guidelines) is **one PR per package** —
 not one bulk PR. This keeps each recipe reviewable independently and
 prevents one rejection from blocking the others. Open them in batches
@@ -220,16 +231,26 @@ cat config/packages/polysource_easyadmin_filter_bridge.yaml
 
 ## Maintaining recipes across versions
 
-The `0.1/` directory covers everything in the `0.x.x` lineage. When
-v1.0 ships:
+**Status: action overdue since 2026-08-06.** v1.0.0 (API freeze) and
+v1.1.0 both shipped without a `1.0/` recipe directory being branched
+upstream. Nothing is broken — Flex falls back to `0.1/` — but 1.x
+installs get 0.x-era default config.
 
-1. Branch off the existing `0.1/` directory into a new `1.0/` directory
-   inside `symfony/recipes-contrib`.
-2. Update default config if any options were renamed / added.
-3. Submit a follow-up PR titled `Update polysource/<pkg> recipe for v1.0`.
+The work, to be done in a `symfony/recipes-contrib` fork (not in this
+repo — the directories under `docs/maintainers/flex-recipes/polysource/`
+are the submission source, and deliberately still show only `0.1/`):
+
+1. Branch each existing `0.1/` directory into a sibling `1.0/`
+   directory inside `symfony/recipes-contrib`.
+2. Update default config for anything renamed or added since 0.1 —
+   in particular the v1.1.0 row-details options on
+   `polysource/symfony-bundle` and
+   `polysource/easyadmin-filter-bridge`.
+3. Submit one PR per package titled
+   `Update polysource/<pkg> recipe for v1.0`.
 
 The Flex client picks the most specific compatible version at install
-time, so old `0.x` users keep getting the `0.1/` recipe.
+time, so 0.x users keep getting the `0.1/` recipe once `1.0/` lands.
 
 ## Sanity checks before submitting
 

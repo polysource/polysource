@@ -3,7 +3,7 @@
 A runnable Symfony 7.4 application that ships the **Messenger
 failed-messages dashboard** wired through Polysource Admin.
 
-This is the cas tueur of v0.1: Symfony Messenger has no built-in admin
+This is the cas tueur: Symfony Messenger has no built-in admin
 UI for inspecting failed messages — only `bin/console messenger:failed:*`.
 Polysource turns the same failure transport into a clickable
 `/admin/failed-messages` page with retry / dismiss / retry-all / purge

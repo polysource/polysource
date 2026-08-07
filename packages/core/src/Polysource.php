@@ -9,7 +9,7 @@ namespace Polysource\Core;
  */
 final class Polysource
 {
-    public const VERSION = '0.1.0-dev';
+    public const VERSION = '1.1.0';
 
     /** Page identifiers used in {@see Field\FieldDto::$pages}. */
     public const PAGE_INDEX = 'index';
@@ -22,10 +22,10 @@ final class Polysource
     public const TAG_RESOURCE = 'polysource.resource';
 
     // The earlier draft also defined TAG_FIELD_CONFIGURATOR, TAG_ACTION
-    // and TAG_PERMISSION, but no Polysource code currently registers
-    // services under those tags. They were removed in Phase 7.x to
-    // avoid the YAGNI smell — re-introduce them when (and if) the
-    // bundle starts auto-discovering tagged services for those types.
+    // and TAG_PERMISSION constants. The bundle autoconfigures the
+    // string tags `polysource.action` and `polysource.row_detail_provider`
+    // directly (see PolysourceExtension / RowDetailLoader); constants here
+    // stay limited to the tags core itself names.
 
     private function __construct()
     {

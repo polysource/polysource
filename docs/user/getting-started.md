@@ -19,7 +19,9 @@ want to add Polysource to it.
 
 ## Prerequisites
 
-- A Symfony 7.4 application on PHP 8.4.
+- A Symfony application on PHP 8.2 or later. Polysource requires
+  PHP 8.2+ and Symfony 6.4 LTS+; the walk-through below uses Symfony
+  7.4 on PHP 8.4 as its example stack.
 - A configured Messenger `failed` transport. Doctrine, Redis, AMQP and
   InMemory all work; SQS and Beanstalk do not (see
   [adapters/messenger.md](./adapters/messenger.md#supported-transports)).
@@ -128,11 +130,12 @@ bin/console debug:router | grep polysource
 bin/console cache:clear
 ```
 
-You should see four routes:
+You should see five routes:
 
 ```
 polysource_failed_messages_index         GET     /admin/failed-messages
 polysource_failed_messages_detail        GET     /admin/failed-messages/{id}
+polysource_failed_messages_detail_panel  GET     /admin/failed-messages/{id}/detail-panel
 polysource_failed_messages_bulk_action   POST    /admin/failed-messages/batch/{action}
 polysource_failed_messages_action        POST    /admin/failed-messages/{id}/{action}
 ```
@@ -156,15 +159,23 @@ bin/console messenger:consume async --limit=1   # let it fail and land in `faile
 - Per-row **Retry** and **Dismiss** buttons.
 - Page-level **Retry all** and **Purge** buttons (capped at 1000 per
   click — see `polysource_messenger.max_retry_all` / `.max_purge`).
+- The option to let a row **expand in place** to show detail content
+  loaded lazily — implement `HasRowDetailsInterface` on the resource,
+  see [row-details.md](./row-details.md).
+
+## Configuring the columns
+
+`FailedMessageResource` ships an intentionally empty
+`configureFields()` so it stays agnostic of your envelope shape — the
+theme then derives columns from the record. To curate them, subclass
+the resource and yield the concrete field types `polysource/core`
+ships: `IdField`, `TextField`, `DateTimeField`, `BooleanField` and
+`CodeField`. See
+[cookbook/messenger-failed-dashboard.md](./cookbook/messenger-failed-dashboard.md)
+for a copy-paste template.
 
 ## What you don't get out of the box
 
-- **Concrete field types.** v0.1 of `polysource/core` ships only the
-  abstract `FieldInterface` + `FieldTrait`. To customise the columns
-  shown on the index/detail pages, subclass `FailedMessageResource` and
-  override `configureFields()` — see
-  [cookbook/messenger-failed-dashboard.md](./cookbook/messenger-failed-dashboard.md)
-  for a copy-paste template.
 - **Authentication.** Polysource integrates with whatever firewall and
   user provider your app already uses; it never ships its own login
   page.

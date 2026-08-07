@@ -6,9 +6,10 @@ copy/pasting URL fragments. The feature ships in
 `polysource/filter` and is consumed identically by the standalone
 filter primitive and the EasyAdmin bridge.
 
-This walkthrough covers a vanilla Symfony app. A dedicated
-zero-config EasyAdmin variant page (`docs/user/easyadmin-filter-bridge/saved-views.md`)
-will land alongside the bridge cookbook in a later docs sprint.
+This walkthrough covers a vanilla Symfony app. If you are on the
+EasyAdmin bridge, the wiring is zero-config and the bridge docs cover
+the surrounding column features — see
+[../easyadmin-filter-bridge/saved-column-configurations.md](../easyadmin-filter-bridge/saved-column-configurations.md).
 
 ## What you get
 
@@ -62,26 +63,34 @@ php bin/console doctrine:schema:create
 
 The resulting table:
 
+The resulting table (mapped by `SavedViewRecord`):
+
 | Column | Type | Notes |
 |---|---|---|
-| `id` | `string(36)` | UUID v7 generated host-side |
-| `name` | `string(120)` | View label shown in the dropdown |
-| `resource_name` | `string(120)` | Logical resource scope (e.g. `products`, an EA `entityFqcn`) — indexed |
-| `owner_id` | `string(120)` | The Symfony user identifier — indexed |
+| `id` | `string(64)`, primary key | Host-generated identifier |
+| `name` | `string(255)` | View label shown in the dropdown |
+| `resource_name` | `string(128)` | Logical resource scope (e.g. `products`, an EA `entityFqcn`) — indexed |
+| `owner_id` | `string(128)` | The Symfony user identifier — indexed |
 | `scope` | `string(16)` | `private` / `team` / `public` |
-| `team_id` | `string(120)` nullable | Required when `scope = team` |
-| `filters` | `json` | Serialised `FilterCollection` payload |
-| `columns` | `json` | Reserved for v0.2 (column visibility) |
-| `sort` | `json` | Reserved for v0.2 (sort state) |
-| `page_size` | `integer` nullable | Reserved for v0.2 |
-| `is_default` | `bool` | Reserved for v0.2 (per-role default) |
-| `role_as_default` | `string` nullable | Reserved for v0.2 |
-| `column_widths_json` | `text` nullable | Map column → pixel width override (since v0.5.0) |
+| `filters_json` | `text` | Serialised `FilterCollection` criteria — JSON list of `{property, operator, values}` |
+| `columns_json` | `text` | JSON `list<string>` of selected columns, in display order |
+| `sort_json` | `text` | JSON `map<string, "asc"\|"desc">` |
+| `page_size` | `integer` nullable | Rows per page for this view |
+| `team_id` | `string(128)` nullable | Required when `scope = team` |
+| `is_default` | `boolean` | Personal default (with `role_as_default` null) or role default (with it set) |
+| `role_as_default` | `string(64)` nullable | Role this view is the admin-configured default for |
+| `column_widths_json` | `text` nullable | JSON `map<string, int>` — column → pixel width override (since v0.5.0; nullable so pre-v0.5.0 rows stay valid without backfill) |
 
-The columns/sort/page-size/is-default fields are persisted today
-but the dropdown UI only reads `filters`. Hosts experimenting
-with column-visibility persistence can populate them; the v0.1
-contract does not expose them in the dropdown yet.
+Note the `_json` suffixes: the three payload columns are `text`
+holding JSON, not Doctrine `json` columns. `SavedView` (the value
+object) exposes them as `$filters`, `$columns`, `$sort` and
+`$columnWidths`; `DoctrineSavedViewStorage` does the conversion.
+
+By design, `SavedViewService` exposes no `apply()` — per
+[ADR-019](../../adr/0019-saved-views-architecture.md) §6 the host (or
+the EasyAdmin bridge) takes a view's filters, columns and sort and
+hydrates them into its own form, exactly as it does for URL-driven
+filter state.
 
 ### v0.5.0 migration (column widths)
 
@@ -302,19 +311,37 @@ voter:
 
 (The voter is `SavedViewVoter` in `Polysource\Filter\SavedView\Security` — drop in your own if your tenancy model needs sharper rules.)
 
-## 8. Limitations and roadmap
+## 8. Defaults, and what's still out of scope
 
-What's intentionally **out of v0.1**:
-- Per-role defaults (`isDefault` + `roleAsDefault` fields are
-  persisted but ignored by the dropdown).
-- Column visibility / sort / page-size persistence (fields exist;
-  no UI hook yet).
+**Default views are implemented** (since v0.3.0), in two flavours
+resolved by `SavedViewService::defaultFor()`:
+
+- **Personal default** — `is_default = true` with `role_as_default`
+  null. The owner marks their own view via `markAsDefault()` /
+  `unmarkAsDefault()` (both require `EDIT` on the view). At most one
+  personal default per user per resource: setting a new one clears
+  the flag on that user's other views for the same resource.
+- **Role default** — `is_default = true` with `role_as_default` set
+  to an attribute. An admin pre-configures it; it applies to every
+  user for whom that attribute is granted. Marking a personal default
+  never clears a role default — the two are separate policies.
+
+Resolution order on a request: an explicit `?view=<id>` wins; then,
+if the URL carries user-applied filters, no default fires at all (and
+the session's last-used entry is forgotten); then the current user's
+personal default; then a role default whose attribute is granted;
+otherwise none.
+
+**Column visibility also ships** — as its own per-user preference
+store rather than through saved views. See
+[column-preferences.md](./column-preferences.md).
+
+Genuinely out of scope today:
+
 - Export / import (downloading a view as JSON to share across
   environments).
-- A maker command for the migration.
-
-These are tracked under `polysource/filter` v0.2+ — the
-storage schema is forward-compatible so you can opt in early.
+- A maker command for the migration — use
+  `doctrine:migrations:diff`.
 
 ## See also
 

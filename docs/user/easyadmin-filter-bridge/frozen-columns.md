@@ -107,6 +107,6 @@ Hosts on strict CSP move the rules to a stylesheet:
 ## Browser support
 
 `position: sticky` is universally supported since 2017 (Chrome 56,
-Firefox 32, Safari 13, Edge 16+) — Polysource's PHP 8.1+ /
-Symfony 5.4-8.x compatibility window is narrower than the
+Firefox 32, Safari 13, Edge 16+) — Polysource's PHP 8.2+ /
+Symfony 6.4-8.x compatibility window is narrower than the
 browser baseline, so no fallback strategy is needed.

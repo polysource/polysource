@@ -18,7 +18,8 @@ no cost.
 
 ## Status
 
-**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable per ADR-022:
+**Shipped — v1.1.0 (2026-08-07).** Public API frozen since v1.0.0 under
+strict SemVer, per ADR-022:
 - `WidgetInterface` + `AbstractWidget`
 - `CounterWidget`, `ListWidget`, `ChartWidget`
 - `Dashboard` VO + `DashboardRegistry`

@@ -1,24 +1,24 @@
 {
     "name": "polysource/filter-standalone-demo",
-    "description": "Polysource — runnable demo: polysource/filter primitive on a vanilla Symfony app (no EasyAdmin, no Sonata). Pinned on the floor of the multi-version baseline (PHP 8.1 + Sf 5.4) per ADR-015, to prove the primitive runs anywhere.",
+    "description": "Polysource — runnable demo: polysource/filter primitive on a vanilla Symfony app (no EasyAdmin, no Sonata). Pinned on the floor of the multi-version baseline (PHP 8.2 + Sf 6.4 LTS, the v1.0 floors) per ADR-015, to prove the primitive runs anywhere.",
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.2",
         "doctrine/dbal": "^3.10 || ^4.4",
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/orm": "^2.20 || ^3.6",
-        "polysource/filter": "0.1.x-dev",
-        "symfony/console": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/dotenv": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/form": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/framework-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/runtime": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/security-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/translation": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/twig-bundle": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/uid": "^5.4 || ^6.0 || ^7.0 || ^8.0",
-        "symfony/yaml": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+        "polysource/filter": "1.2.x-dev",
+        "symfony/console": "^6.4 || ^7.0 || ^8.0",
+        "symfony/dotenv": "^6.4 || ^7.0 || ^8.0",
+        "symfony/form": "^6.4 || ^7.0 || ^8.0",
+        "symfony/framework-bundle": "^6.4 || ^7.0 || ^8.0",
+        "symfony/runtime": "^6.4 || ^7.0 || ^8.0",
+        "symfony/security-bundle": "^6.4 || ^7.0 || ^8.0",
+        "symfony/translation": "^6.4 || ^7.0 || ^8.0",
+        "symfony/twig-bundle": "^6.4 || ^7.0 || ^8.0",
+        "symfony/uid": "^6.4 || ^7.0 || ^8.0",
+        "symfony/yaml": "^6.4 || ^7.0 || ^8.0"
     },
     "config": {
         "allow-plugins": {

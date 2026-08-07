@@ -9,9 +9,9 @@ use Polysource\Audit\Resource\AuditLogResource;
 
 /**
  * Showcase override of polysource/audit's AuditLogResource — adds
- * concrete fields so the audit log index renders 8 columns instead
- * of empty rows. Per ADR-011 the upstream package returns `[]` from
- * `configureFields()` until v0.2 ships concrete field types.
+ * concrete fields so the audit log index renders a curated 8-column
+ * view instead of the synthesised all-properties fallback the
+ * upstream `[]` produces.
  *
  * DataRecord properties:
  *   id, occurredAt, actorId, actorLabel, resourceName, actionName,

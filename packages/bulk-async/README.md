@@ -8,7 +8,7 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 
 The synchronous bulk action ("Retry 5 000 failed messages") times out after 30 s in production. This package fans the work out to Messenger workers, persists per-job progress every 5 records or 500 ms, and exposes a JSON endpoint + Mercure topic so the UI can show a live progress bar and a "Cancel" button.
 
-See [ADR-024](../../docs/adr/0024-bulk-async-mercure.md).
+See [ADR-024](https://github.com/polysource/polysource/blob/main/docs/adr/0024-bulk-async-mercure.md).
 
 ## What it ships
 
@@ -45,8 +45,8 @@ Run the migration to create `polysource_bulk_jobs`.
 
 `BulkJobStorageInterface` is **3 methods**. To persist jobs in Redis / Mongo / your service instead of Doctrine, implement it and alias the interface to your service in DI. The handler, the `ProgressController`, the Mercure broadcaster all keep working.
 
-See [extensibility map](../../docs/user/extensibility.md#11-14-the-rest-in-one-breath).
+See [extensibility map](https://github.com/polysource/polysource/blob/main/docs/user/extensibility.md#11-14-the-rest-in-one-breath).
 
 ## Documentation
 
-- [Bulk-async walkthrough](../../docs/user/bulk-async/)
+- [Bulk-async walkthrough](https://github.com/polysource/polysource/tree/main/docs/user/bulk-async/)

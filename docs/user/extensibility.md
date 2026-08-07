@@ -1,6 +1,6 @@
 # Extend Polysource
 
-> **14+ public extension points. Zero forks. No magic.**
+> **16+ public extension points. Zero forks. No magic.**
 >
 > Every visible feature in Polysource is a thin shell over a contract you can re-implement. Replace the audit sink with Splunk. Plug Algolia into the Cmd+K palette. Add a Stripe adapter in 80 lines. Ship a custom widget that rotates through your incident KPIs. The contracts are tiny on purpose.
 
@@ -22,6 +22,8 @@ This page is the map. Each section is one extension point: what to implement, wh
 | Resolve which "team" a user belongs to (for shared saved views) | `SavedViewTeamResolverInterface` | **1** | 5 min |
 | Format a filter chip your way | `ChipFormatterInterface` | **1** | 10 min |
 | Replace the permission backend (LDAP / OPA / your custom voter) | `PermissionInterface` | **1** | 15 min |
+| Expand a row in place on a native Polysource listing | `HasRowDetailsInterface` | **3** | 30 min |
+| Expand a row in place on an EasyAdmin listing | `RowDetailProviderInterface` | **3** | 30 min |
 
 **Most extension points are 1-5 methods.** That's the design budget — if a contract grows past 5 methods we open an ADR and discuss splitting it (cf. ADR-010 on the core API surface criterion).
 
@@ -102,7 +104,7 @@ Want to ship "Stripe-charges admin + an audit hook + a custom widget" as one Com
 #[AsPlugin(name: 'acme/stripe-admin', version: '1.2.0')]
 final class StripeAdminBundle extends AbstractBundle implements AdminPluginInterface
 {
-    public function getRequirements(): array { return ['polysource/symfony-bundle' => '^0.1']; }
+    public function getRequirements(): array { return ['polysource/symfony-bundle' => '^1.0']; }
     public function getCapabilities(): array { return ['stripe.charges', 'stripe.subscriptions']; }
 }
 ```
@@ -152,7 +154,7 @@ final class IncidentRotatorWidget extends AbstractWidget
 }
 ```
 
-See [ADR-022](../adr/0022-dashboard-widgets.md). Drag-drop composition deferred to v0.2 — for now, dashboards are code-defined.
+See [ADR-022](../adr/0022-dashboard-widgets.md). There is no drag-and-drop composition UI — dashboards are code-defined.
 
 ---
 
@@ -251,7 +253,7 @@ Alias `Polysource\Core\Permission\PermissionInterface` → your service. Field-l
 
 ---
 
-## 11-14. The rest, in one breath
+## 11-16. The rest, in one breath
 
 | Interface | Use case |
 |---|---|
@@ -259,6 +261,8 @@ Alias `Polysource\Core\Permission\PermissionInterface` → your service. Field-l
 | `WorkflowAwareInterface` | Mark a resource as workflow-driven (transitions auto-discovered) |
 | `BulkJobStorageInterface` | Persist bulk-async jobs somewhere other than Doctrine |
 | `AuditActorInterface` | Customise how the "who" is captured (multi-tenant, impersonation, API tokens) |
+| `HasRowDetailsInterface` (v1.1) | Declare an expandable detail on a native Polysource resource — `hasRowDetail()` gates the chevron per row, `getRowDetail()` builds the panel lazily, `getRowDetailPermission()` names the voter attribute checked with the record as subject. Layered onto `ResourceInterface` via `instanceof`, so the frozen v1.0 contract is untouched. See [row-details.md](./row-details.md). |
+| `RowDetailProviderInterface` (v1.1) | Same feature for a Doctrine entity behind an EasyAdmin CRUD — one provider per entity class (`getSupportedEntity()`, `getRowDetail()`, `getPermission()`), registered by tag. `AbstractRowDetailProvider` reduces it to two methods. See [easyadmin-filter-bridge/row-details.md](./easyadmin-filter-bridge/row-details.md). |
 
 ---
 
@@ -289,17 +293,19 @@ Symfony service tags, every time. No magic registries, no XML files, no global s
 | Widget | `polysource.widgets.dashboard` | Autoconfigure |
 | Filter mapper / formatter / renderer | `polysource.filter.mapper`, `.formatter`, `.renderer` | Autoconfigure |
 | Filter configurator (EA bridge) | `ea.filter_configurator` | Autoconfigure (EA's own tag) |
+| Row detail provider (EA bridge) | `polysource.row_detail_provider` | Autoconfigure on `RowDetailProviderInterface` |
+| Row detail (native listing) | n/a | `instanceof HasRowDetailsInterface` on the resource |
 | Permission | n/a | Service alias on `PermissionInterface` |
 
 All tags are scanned by `tagged_iterator(...)` in services.php — discoverable by reading `packages/<plugin>/Resources/config/services.php`.
 
-> About `polysource.field_configurator`, `polysource.action`, and `polysource.permission`: these tags are part of the public naming convention. `polysource.action` is autoconfigured on every `ActionInterface` implementation today (`PolysourceExtension::registerForAutoconfiguration`), but no global registry consumes it yet — capability packages use scoped tags (e.g. `polysource.audit.action`, `polysource.bulk_async.action`). `polysource.field_configurator` and `polysource.permission` are reserved names; the corresponding extension points will land in a later v0.x.
+> About `polysource.field_configurator`, `polysource.action`, and `polysource.permission`: these tags are part of the public naming convention. `polysource.action` is autoconfigured on every `ActionInterface` implementation today (`PolysourceExtension::registerForAutoconfiguration`), but no global registry consumes it yet — capability packages use scoped tags (e.g. `polysource.audit.action`, `polysource.bulk_async.action`). `polysource.field_configurator` and `polysource.permission` are reserved names — nothing consumes them yet.
 
 ---
 
 ## Test discipline for your extensions
 
-Polysource itself ships **782 tests / 1932 assertions** in the package matrix (plus 29 Panther browser E2E and 15 adapter real-container tests). The same discipline applies to your extensions:
+Polysource itself ships **1256 unit + functional tests** and 28 integration tests in the package matrix, plus 47 Panther browser E2E tests, 24 showcase WebTestCase tests and 15 adapter real-container tests (the [root README](../../README.md#quality-bar) is the source of truth for these counts). The same discipline applies to your extensions:
 
 - **Pure adapters/providers** → unit-test with the in-memory fakes Polysource ships (`InMemoryRedisHashFake`, `InMemoryMeilisearchFake`, `InMemorySavedViewStorage`, etc.). Zero infrastructure.
 - **Plugins** → functional-test against `Symfony\Bundle\FrameworkBundle\Test\KernelTestCase`.

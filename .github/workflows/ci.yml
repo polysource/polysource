@@ -78,6 +78,15 @@ jobs:
           done
         shell: bash
 
+      - name: Docs truth-sync gate
+        # Catches doc drift against the code: version constant vs tag,
+        # branch-alias lineages, stale pre-1.0 status language, ADR /
+        # package / screenshot counts. Cf. scripts/docs-truth-check.sh.
+        run: |
+          git fetch --tags --force --quiet || true
+          ./scripts/docs-truth-check.sh
+        shell: bash
+
   cs:
     name: Code style (PHP-CS-Fixer)
     runs-on: ubuntu-24.04

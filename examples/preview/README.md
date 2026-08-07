@@ -4,8 +4,7 @@ Tiny Symfony app that boots `polysource/symfony-bundle` + `polysource/twig-theme
 with a single in-memory **Feature flags** resource. Designed for visual
 verification of the templates during development — not a feature demo.
 
-For the full Messenger-failed cas tueur, see `examples/messenger-demo/`
-(arrives in Phase 8 of the development plan).
+For the full Messenger-failed cas tueur, see `examples/messenger-demo/`.
 
 ## Usage
 
@@ -33,7 +32,7 @@ image and maps port 8080 to the host. Stop with `Ctrl+C`.
 Each `php -S` request rebuilds the in-memory transport from scratch, so
 clicking **Retry** returns a 302 + success flash but the same 3
 records appear on reload. This is intentional — full stateful demos
-ship in `examples/messenger-demo/` (Phase 8). The CSRF round-trip,
+ship in `examples/messenger-demo/`. The CSRF round-trip,
 redirect, and flash plumbing are exercised on every click.
 
 ## Files
@@ -44,7 +43,11 @@ redirect, and flash plumbing are exercised on every click.
 | `Kernel.php` | `PreviewKernel` — minimal MicroKernelTrait kernel |
 | `Resources.php` | In-memory data source + `FlagsResource` + concrete fields |
 
-The concrete `TextField`/`BooleanField`/etc. live in this preview app
-because v0.1 of `polysource/core` ships only the abstract
-`FieldInterface` + `FieldTrait`. Dedicated field types arrive in a
-later phase.
+`Resources.php` declares its own local `TextField`, `IdField`,
+`BooleanField`, `DateTimeField` and `CodeField` classes on top of
+`FieldInterface` + `FieldTrait`. It predates the concrete field
+types, which `polysource/core` has since shipped under
+`Polysource\Core\Field\` — the same five names. The preview keeps its
+local copies deliberately: they double as the smallest possible
+worked example of implementing `FieldInterface` by hand. Real apps
+should use the core classes.

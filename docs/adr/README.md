@@ -14,15 +14,15 @@
 | [ADR-004](./0004-admin-context-immutability.md) | `AdminContext` immutable (`final readonly`) | Accepté |
 | [ADR-005](./0005-configuration-mechanism.md) | Configuration via interface methods + PHP attributes | Accepté |
 | [ADR-006](./0006-envelope-mapper-serialization.md) | EnvelopeMapper : JSON-first + fallback | Accepté |
-| [ADR-007](./0007-php-symfony-versions.md) | Versions PHP/Symfony : 8.4/7.4 v0.1 → 8.0+/5.4+ v0.5 | Accepté |
+| [ADR-007](./0007-php-symfony-versions.md) | Versions PHP/Symfony : 8.4/7.4 v0.1 → 8.0+/5.4+ v0.5 (planchers relevés à PHP 8.2+ / Sf 6.4+ au v1.0 per ADR-011) | Accepté |
 | [ADR-008](./0008-development-environment.md) | Docker + Makefile + DDEV optionnel | Accepté |
 | ADR-009 | _retiré_ — concernait l'outillage local du mainteneur, pas une décision d'architecture projet ; supprimé avant publication. Le numéro reste réservé pour préserver la traçabilité historique. | — |
 | [ADR-010](./0010-core-api-surface-criterion.md) | Critère de surface d'API du core (≤ 40 types + critères qualitatifs) | Accepté — remplace seuil §14 |
-| [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (vivant) |
+| [ADR-011](./0011-pre-v1.0-freeze-checklist.md) | Checklist des items API à trancher avant le freeze v1.0 | Accepté (clos au tag v1.0.0 — les planchers PHP 8.2+ / Sf 6.4+ restent normatifs) |
 | [ADR-012](./0012-dual-product-positioning.md) | Dual-product positioning (bridge EA + admin standalone) | Accepté |
 | [ADR-013](./0013-filter-package-architecture.md) | `polysource/filter` architecture (tronc commun) | Accepté |
 | [ADR-014](./0014-datasource-lifecycle-deferred.md) | DataSource lifecycle 3 phases — différé v0.3+ | Accepté (différé) |
-| [ADR-015](./0015-multi-version-compatibility-baseline.md) | Multi-version baseline PHP 8.1+ / Symfony 5.4+ / EA 4.24+ | Accepté |
+| [ADR-015](./0015-multi-version-compatibility-baseline.md) | Multi-version baseline PHP 8.1+ / Symfony 5.4+ / EA 4.24+ (addendum v1.0 : planchers PHP 8.2+ / Sf 6.4+) | Accepté |
 | [ADR-016](./0016-bridge-contracts-shared-with-polysource-filter.md) | `ChipFormatterInterface` dans le tronc commun | Accepté |
 | [ADR-017](./0017-cherry-picking-from-filament-study.md) | Cherry-picking depuis l'étude Filament-for-Symfony | Accepté |
 | [ADR-018](./0018-admin-plugin-interface-and-public-contracts.md) | `AdminPluginInterface` + versioning des contrats publics | Accepté |
@@ -37,9 +37,10 @@
 | [ADR-027](./0027-progressive-enhancement.md) | Progressive enhancement : tout interactif a un fallback serveur | Accepté |
 | [ADR-028](./0028-scope-discipline.md) | Scope discipline : couche UX filter+listing, pas une plateforme d'admin | Accepté |
 | [ADR-029](./0029-admin-context-decomposition.md) | `AdminContext` décomposition planifiée en sous-VOs au seuil ADR-004 | Accepté (planification) |
-| [ADR-031](./0031-operator-translation-strategy.md) | Traduction des opérateurs : `InMemoryValueMatcher` partagé + traduction native par adapter (interface commune rejetée) | Accepté (rétro-documentation) |
-| [ADR-032](./0032-featureloader-di-decomposition.md) | Décomposition DI : un `<Feature>Loader` par feature optionnelle, extension = table des matières | Accepté |
-| [ADR-033](./0033-expandable-row-details.md) | Expandable row details : champ EA virtuel + provider par entité, permission par ligne, pas de fork de table | Accepté |
+| ADR-0030 | _numéro sauté_ — jamais attribué (saut lors de la création d'ADR-0031) ; réservé pour préserver la numérotation séquentielle. | — |
+| [ADR-0031](./0031-operator-translation-strategy.md) | Traduction des opérateurs : `InMemoryValueMatcher` partagé + traduction native par adapter (interface commune rejetée) | Accepté (rétro-documentation) |
+| [ADR-0032](./0032-featureloader-di-decomposition.md) | Décomposition DI : un `<Feature>Loader` par feature optionnelle, extension = table des matières | Accepté |
+| [ADR-0033](./0033-expandable-row-details.md) | Expandable row details : champ EA virtuel + provider par entité, permission par ligne, pas de fork de table | Accepté |
 
 ## Convention
 

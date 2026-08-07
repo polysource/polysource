@@ -88,8 +88,14 @@ Score = 2.0 floats the actions to the top of the merged list.
 
 ## 5. Pagination
 
-v0.1 caps at 25 rows total (5 providers × 5 results each). v0.2
-plans a "Show all N results →" link at the bottom of the palette.
+The palette does not paginate, by design — it is a jump-to, not a
+search-results page. `SearchAggregator` caps each provider at
+`DEFAULT_PER_PROVIDER_LIMIT` (5) and the whole aggregation at
+`DEFAULT_TOTAL_BUDGET_MS` (250 ms) of wall clock; providers that
+blow the deadline return what they have. Both are constructor
+arguments, so raise them in DI if your palette should show more.
+There is no "Show all N results" link and none is planned; wire the
+query into your own results page if you need one.
 
 ## 6. CDN / staging tip
 
@@ -105,5 +111,7 @@ Either:
 
 - [installation.md](./installation.md) — wiring basics.
 - [ADR-023](../../adr/0023-global-search-cmdk.md) — design
-  rationale + post-v0.1 roadmap (Meilisearch add-on, action
-  history, fuzzy match coordination).
+  rationale. The follow-ups it sketches (a Meilisearch search
+  add-on, action history, fuzzy-match coordination) have not
+  shipped; `SearchProviderInterface` is the extension point if you
+  want to build one yourself.

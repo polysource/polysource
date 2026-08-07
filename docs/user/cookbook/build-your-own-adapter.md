@@ -71,15 +71,27 @@ The data source receives `DataQuery::$filters` — a list of
 `FilterCriterion(property, operator, value)`. Translate each one
 into your source's native query language.
 
-The 4 reference adapters give you a pattern by source type:
+Polysource ships **6 reference adapters**; five of them translate
+filters, and between them they cover every pattern you are likely to
+need:
 
 | Source | Translation pattern |
 |---|---|
 | Doctrine | `match($operator)` → DQL clauses (`andWhere(...)`, `setParameter(...)`) |
 | Meilisearch | `match($operator)` → filter expression strings (`field = 'x'`, `field IN [a, b]`) |
-| HTTP REST | Query params (`?role=admin`) — `eq` only by default; richer mapping via custom strategy |
-| Redis hash | Client-side filter on the materialised page |
+| HTTP REST | Query params (`?role=admin`) — `Eq` only by default; richer mapping via custom strategy |
+| Redis | Client-side filter on the materialised page |
 | Flysystem | Client-side filter on `extension`/`mimeType` properties |
+
+The sixth, Messenger, is a fixed-shape failed-transport dashboard and
+declares its filters through `FailedMessageFilter` rather than a
+generic translation layer.
+
+`$operator` is a `FilterOperator` enum case, not a string — `match`
+on `FilterOperator::Eq`, `FilterOperator::In`, and so on. The enum is
+closed at 12 cases, so your `match` can be exhaustive; throw
+`UnsupportedOperationException` for the cases your source cannot
+honour rather than silently ignoring them.
 
 **Whitelist properties.** Two patterns work:
 

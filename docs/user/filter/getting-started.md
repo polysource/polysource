@@ -20,8 +20,9 @@ primitives directly.
 - A Twig `filter_tags(collection, definitions)` function that renders
   the active filters as removable chips above your list.
 - Two Stimulus controllers — `polysource--filter-chips` (chip removal,
-  overflow toggle) and `polysource--filter-subpanel` (modal/offcanvas
-  open/close, tabs, focus management).
+  overflow toggle) and `polysource--row-details` (lazy expandable row
+  details, since v1.1.0). Both are progressive enhancements: the
+  markup works without them.
 - A 3-tag DI pipeline (`polysource.filter.mapper`,
   `…formatter`, `…renderer`) that lets you add custom filter types
   without touching the bundle's internals.
@@ -29,9 +30,9 @@ primitives directly.
 What you do **not** get from this package: a query applier. A
 `FilterCollection` is a description of the user's intent — translating
 that to a SQL `WHERE`, a Redis scan, or a Meilisearch facet query is
-the host's job (or the bridge's, in the EasyAdmin case). See
-[ADR-014](../../adr/0014-datasource-lifecycle-deferred.md) for the
-roadmap.
+the host's job (or the bridge's, in the EasyAdmin case). That
+separation is deliberate and permanent — see
+[ADR-013](../../adr/0013-filter-package-architecture.md).
 
 ## 1. Install
 
@@ -48,13 +49,19 @@ return [
 ];
 ```
 
-The bundle ships **three** Stimulus controllers in
+The bundle ships **two** Stimulus controllers in
 `assets/controllers/`:
-`polysource--filter-modal-layout` (tab + group filter layout),
-`polysource--filter-chips` (chip × close button),
-`polysource--filter-subpanel` (right-anchored slide-in panel mode).
+`polysource--filter-chips` (chip × close button, overflow toggle) and
+`polysource--row-details` (intercepts the row chevron and fetches the
+detail panel inline instead of navigating).
 
-**Auto-discovery is already wired.** The bundle declares the three
+> Filter panel behaviour is **not** a Stimulus controller. The
+> subpanel mode is built on native `<details>`/`<summary>` since
+> v0.2.0 — `polysource-filter-subpanel` that you see in the markup is
+> a DOM id and CSS class prefix, not a controller identifier. The
+> controller of that name was deleted in v0.2.0.
+
+**Auto-discovery is already wired.** The bundle declares both
 controllers in `assets/package.json symfony.controllers` with
 explicit `name` fields preserving the short identifiers above:
 
@@ -70,9 +77,8 @@ explicit `name` fields preserving the short identifiers above:
   {
       "controllers": {
           "@polysource/filter": {
-              "polysource--filter-modal-layout": { "enabled": true },
-              "polysource--filter-chips":        { "enabled": true },
-              "polysource--filter-subpanel":     { "enabled": true }
+              "polysource--filter-chips": { "enabled": true },
+              "polysource--row-details":  { "enabled": true }
           }
       }
   }
@@ -85,9 +91,11 @@ so the templates' short `data-controller="polysource--filter-…"`
 just works without any manual identifier override on your side.
 
 **Without Stimulus** the bundle still renders filters server-side
-(SQL `WHERE`, chips bar markup, session persistence) — only the
-client-side widgets (tab layout, chip × button, subpanel mode) go
-inert. See [installation.md](../installation.md) for the full
+(SQL `WHERE`, chips bar markup, session persistence) and the subpanel
+still opens — it is a native `<details>`. Only the two enhancements
+degrade: chip removal falls back to a plain link, and the row chevron
+navigates to the standalone detail page instead of expanding in
+place. See [installation.md](../installation.md) for the full
 Stimulus prerequisite matrix.
 
 ## 2. Declare a filter collection
@@ -224,9 +232,12 @@ form *and* point your template at the matching theme:
 ```
 
 The subpanel template ships with Bootstrap 5 markup (offcanvas-style)
-and uses the `polysource--filter-subpanel` Stimulus controller for
-open/close/ESC/focus management. Override the template if you don't
-use Bootstrap.
+built on a native `<details>` element — its `<summary>` is the
+"Filters" toggle, so open/close needs no JavaScript at all. If you
+want ESC-to-close, click-outside-to-close, or a focus trap, add a
+small enhancement controller of your own; Polysource does not ship
+one because the baseline UX does not need it. Override the template
+if you don't use Bootstrap.
 
 ## 5. Multi-group filters (optional)
 
@@ -289,23 +300,34 @@ different filters (e.g. "drafts" vs "published"), suffix accordingly.
 The hash keeps session keys short (32 hex chars) regardless of how
 long your scope id grows.
 
-## What's deferred to v0.2+
+## What this package still doesn't do
 
-- A cookie-cutter "add a filter to a list" controller wrapper. Today
-  you wire `FilterCollectionType` + `FilterService` by hand.
-- A datasource-side appliers (Doctrine, Redis, Meilisearch). Today the
-  bridge owns the EasyAdmin-on-Doctrine path; other adapters will
-  arrive alongside the
-  [datasource lifecycle](../../adr/0014-datasource-lifecycle-deferred.md).
-- A `FilterCollection` URL-query serializer (so links can carry filters
-  without a session). Today the form roundtrips through the request,
-  but persistent links require a tiny custom encoder.
+The API is frozen since v1.0.0, so these are stable gaps rather than
+pending work:
+
+- **No cookie-cutter "add a filter to a list" controller wrapper.**
+  You wire `FilterCollectionType` + `FilterService` by hand, as shown
+  above. That is the intended level of abstraction.
+- **No generic query appliers.** Translating a `FilterCollection`
+  into a `WHERE` clause, a Redis scan, or a Meilisearch facet query
+  stays the host's job. `polysource/easyadmin-filter-bridge` owns the
+  EasyAdmin-on-Doctrine path; the Polysource adapters translate
+  `FilterCriterion` for their own `DataSource`s, which is a different
+  layer.
+
+URL-shareable filter state, which used to be listed here as missing,
+**shipped**: `FilterService::buildUrl($path, $collection, $extraQuery,
+$formName)` encodes a collection into a query string, and
+`polysource/filter` additionally ships short-lived filter URL tokens
+(`FilterUrlTokenService`) for links too long to inline. See
+[saved-views.md](./saved-views.md).
 
 ## See also
 
 - [ADR-013](../../adr/0013-filter-package-architecture.md) — design
   rationale for the form/datasource separation and the 3-tag pipeline.
 - [ADR-014](../../adr/0014-datasource-lifecycle-deferred.md) — the
-  Factory→Builder→Loader datasource lifecycle deferred to v0.2+.
+  Factory→Builder→Loader datasource lifecycle. Still a blueprint, not
+  shipped as of v1.1.0.
 - [Bridge what's-new](../easyadmin-filter-bridge/whats-new.md) — the
   EasyAdmin-side surface: which built-in filters are upgraded and how.

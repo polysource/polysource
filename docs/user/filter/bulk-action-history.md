@@ -90,9 +90,9 @@ the host's domain (a soft-delete archive vs. a hard-delete
 purge). Polysource preserves the audit trail; the host wires
 the rollback UI / endpoint on top.
 
-A future Polysource version may ship a `Reversible` interface
-and a generic "Undo last action" button — out of scope for
-v0.5.0.
+There is no `Reversible` interface and no generic "Undo last
+action" button, and none is on the roadmap — a generic undo would
+have to guess at domain semantics it cannot know.
 
 ## Retention
 

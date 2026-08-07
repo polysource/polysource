@@ -15,15 +15,14 @@ The vocabulary distinction matters:
 - A **Polysource plugin** is a Symfony bundle that **also** declares
   `#[AsPlugin]` so it shows up in `polysource:plugins:list`.
 
-Every `polysource/*` package shipped with v0.1.0 is itself a plugin
-(except `polysource/core`, which is a pure-PHP library, and
-`polysource/twig-theme`, which is template-only).
+Every `polysource/*` package is itself a plugin — except
+`polysource/core`, which is a pure-PHP library, and
+`polysource/twig-theme`, which is template-only.
 
 ## How tag-based extension works
 
-Capability extension stays the **primary** contract. Each capability
-introduced in a future phase ships an interface + a service tag + a
-registry, e.g.:
+Capability extension is the **primary** contract. Each capability
+ships an interface + a service tag + a registry:
 
 | Capability | Tag | Interface |
 |---|---|---|
@@ -41,6 +40,7 @@ registry, e.g.:
 | Bulk-async dispatchers | `polysource.bulk_async.action` | `BulkActionInterface` |
 | Dashboard widgets | `polysource.widgets.dashboard` | `WidgetInterface` |
 | Messenger actions | `polysource.messenger.action` | `ActionInterface` |
+| Row details (EA bridge) | `polysource.row_detail_provider` | `RowDetailProviderInterface` |
 
 A plugin is **anything that registers tagged services in any of those
 slots**. The `AdminPluginInterface` itself is just a metadata layer on
@@ -58,9 +58,9 @@ The minimal "hello, polysource" plugin is **3 files**.
     "type": "symfony-bundle",
     "description": "Trivial Polysource plugin showing the contract.",
     "require": {
-        "php": ">=8.1",
-        "polysource/core": "^0.1",
-        "symfony/http-kernel": "^5.4 || ^6.0 || ^7.0 || ^8.0"
+        "php": ">=8.2",
+        "polysource/core": "^1.0",
+        "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
     },
     "autoload": {
         "psr-4": { "Acme\\PolysourceHello\\": "src/" }
@@ -122,10 +122,10 @@ The output lists every bundle annotated with `#[AsPlugin]`:
   Name                                Version
  ----------------------------------- ----------------
   acme/polysource-hello               0.1.0
-  polysource/symfony-bundle           0.1.0-alpha.1
-  polysource/adapter-messenger        0.1.0-alpha.1
-  polysource/filter                   0.1.0-alpha.1
-  polysource/easyadmin-filter-bridge  0.1.0-alpha.1
+  polysource/symfony-bundle           1.1.0
+  polysource/adapter-messenger        1.1.0
+  polysource/filter                   1.1.0
+  polysource/easyadmin-filter-bridge  1.1.0
  ----------------------------------- ----------------
 ```
 
@@ -139,8 +139,7 @@ If your bundle doesn't appear, double-check:
 ## Contributing capabilities
 
 Once your plugin is discoverable, the actual admin functionality is
-contributed via tagged services. Examples (each capability ships in a
-later phase):
+contributed via tagged services:
 
 ```yaml
 # config/services.yaml in your plugin
@@ -162,19 +161,19 @@ versioning, support); the tags are for behaviour.
 
 Per [ADR-018 §6](../../adr/0018-admin-plugin-interface-and-public-contracts.md#6-versioning-des-contrats-publics):
 
-- The `Polysource\Core\Plugin\*` namespace is **stable from v1.0.0**
-  (semver strict). Adding a method to `AdminPluginInterface` after
-  v1.0 = breaking change → MAJOR bump.
-- Until v1.0, the contract may evolve. Plugins should pin
-  `polysource/core: ^0.1` and update on each minor.
+- The `Polysource\Core\Plugin\*` namespace has been **stable since
+  v1.0.0** (2026-08-06), under strict SemVer. Adding a method to
+  `AdminPluginInterface` is now a breaking change → MAJOR bump.
+- Plugins pin `polysource/core: ^1.0` and pick up minors without
+  touching their code.
 - Each public interface carries a `@since` PHPDoc tag indicating the
   version it was added in.
 
 ## What this concept is **not**
 
 - Not a runtime toggle. A plugin loaded by the kernel is active until
-  uninstalled via Composer / `bundles.php`. There's no "disable plugin
-  X for this request" mechanism in v0.1.
+  uninstalled via Composer / `bundles.php`. There is no "disable
+  plugin X for this request" mechanism, and none is planned.
 - Not a sandboxing boundary. Plugins share the same container, can
   read each other's services, can override each other's templates. The
   kernel does not enforce isolation.

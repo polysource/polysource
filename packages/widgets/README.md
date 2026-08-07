@@ -10,12 +10,12 @@ Part of the [Polysource](https://github.com/polysource/polysource) monorepo. MIT
 - 3 concrete widgets:
   - **`CounterWidget`** — KPI counter ("12 failed messages", "$45 678 revenue today")
   - **`ListWidget`** — top-N list ("5 most recent orders")
-  - **`ChartWidget`** — sparkline chart (textual fallback in v0.1)
+  - **`ChartWidget`** — sparkline chart (with a textual fallback)
 - **`Dashboard`** immutable VO + **`DashboardRegistry`** (tagged_iterator `polysource.widgets.dashboard`).
 - **`DashboardExtension`** Twig extension (`render_widget()`, `render_dashboard(Dashboard|string)`, `polysource_dashboards()`).
 - 4 Bootstrap 5 templates (dashboard layout + counter/list/chart partials).
 
-See [ADR-022](../../docs/adr/0022-dashboard-widgets.md). Drag-drop composition deferred to v0.2.
+See [ADR-022](https://github.com/polysource/polysource/blob/main/docs/adr/0022-dashboard-widgets.md). Dashboards are composed in code; drag-drop composition is not planned.
 
 ## Install
 
@@ -33,20 +33,25 @@ return [
 
 ## Extend it
 
-`WidgetInterface` is **5 methods**. Drop in a custom tile in 1 hour:
+`WidgetInterface` is **5 methods**, and `AbstractWidget` already answers three of them from its constructor (`id`, `title`, `columnSpan`). A custom tile is the two that vary:
 
 ```php
 #[AutoconfigureTag('polysource.widgets.dashboard')]
 final class IncidentRotatorWidget extends AbstractWidget
 {
-    public function getName(): string { return 'incident_rotator'; }
+    public function __construct(private readonly IncidentRepository $incidents)
+    {
+        parent::__construct('incident_rotator', 'On-call rotation', columnSpan: 6);
+    }
+
     public function getTemplate(): string { return '@App/widgets/incident_rotator.html.twig'; }
-    public function getData(): array { /* return what your template needs */ }
+
+    public function getViewData(): array { /* return what your template needs */ }
 }
 ```
 
-See [extensibility map](../../docs/user/extensibility.md#5-custom-dashboard-widgets).
+See [extensibility map](https://github.com/polysource/polysource/blob/main/docs/user/extensibility.md#5-custom-dashboard-widgets).
 
 ## Documentation
 
-- [Widgets walkthrough](../../docs/user/widgets/)
+- [Widgets walkthrough](https://github.com/polysource/polysource/tree/main/docs/user/widgets/)

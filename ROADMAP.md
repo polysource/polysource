@@ -1,8 +1,9 @@
 # Roadmap
 
 > What's shipped, what's next. Versions follow [SemVer](https://semver.org)
-> from v1.0; pre-1.0 minors may break the surface where the changelog
-> says so.
+> strictly since v1.0.0 (2026-08-06): breaking changes ship in major
+> versions only. (Pre-1.0, minors could break the surface where the
+> changelog said so.)
 
 ## Shipped
 
@@ -109,7 +110,21 @@ The last open audit item (M2/#67 phase 2):
   loader classes; convention ratified as
   [ADR-0032](./docs/adr/0032-featureloader-di-decomposition.md)
 
-## Next
+### v1.0 — API freeze (v1.0.0, 2026-08-06)
+
+The public surface (`Polysource\Plugin\*` + the documented
+`*Interface` types in each package) is frozen per
+[ADR-018](./docs/adr/0018-admin-plugin-interface-and-public-contracts.md).
+SemVer applies strictly since this release; breaking changes ship
+in major versions only. The
+[ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md) checklist
+closed with the tag, and its floors shipped:
+
+- PHP 8.2+ (drops 8.1)
+- Symfony 6.4 LTS+ (drops 5.4 / 6.0; `^8.0` allowed by constraints,
+  forward-compat, not yet in CI)
+- EasyAdmin 4.24+ retained
+- Doctrine ORM 2.20+ / 3.6+
 
 ### v1.1 — expandable row details (v1.1.0, 2026-08-07)
 
@@ -130,7 +145,9 @@ The last open audit item (M2/#67 phase 2):
 - Deferred explicitly: sorting and user filters *inside* the
   embedded listing (scoping via `parentFilters` only in v1.1).
 
-### Pre-1.0 polish (not committed)
+## Next
+
+### Backlog (not committed)
 
 - ORM 3.x CI matrix row (gap identified in the
   [Symfony compat audit](./docs/maintainers/symfony-compat-audit.md))
@@ -140,20 +157,6 @@ The last open audit item (M2/#67 phase 2):
 - Sonata Admin filter bridge (community-driven)
 - Wider i18n coverage (community-driven, EN+FR ship today —
   cf. [docs/user/i18n.md](./docs/user/i18n.md))
-
-## v1.0 — API freeze
-
-The public surface (`Polysource\Plugin\*` + the documented
-`*Interface` types in each package) freezes on v1.0 per
-[ADR-018](./docs/adr/0018-admin-plugin-interface-and-public-contracts.md).
-SemVer applies strictly from that point on; breaking changes ship
-in major versions only. Floor targets per
-[ADR-011](./docs/adr/0011-pre-v1.0-freeze-checklist.md):
-
-- PHP 8.2+ (drops 8.1)
-- Symfony 6.4 LTS (drops 5.4 / 6.0)
-- EasyAdmin 4.24+ retained
-- Doctrine ORM 2.16+, 3.x recommended
 
 ## Out of scope
 
@@ -172,7 +175,8 @@ The boundary stays where it always was (cf.
 
 ## Want to help?
 
-The launch will publish a set of "help wanted" issues at v1.0. In
-the meantime, draft contributions on the topics above (especially
+The launch will publish a set of "help wanted" issues (in
+preparation now that v1.0 has shipped). In the meantime, draft
+contributions on the topics above (especially
 the Sonata bridge and the ORM 3.x CI row) are welcome — comment on
 the relevant issue or open a draft PR.

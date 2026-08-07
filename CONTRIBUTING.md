@@ -4,7 +4,7 @@ Thanks for your interest in Polysource Admin. This document explains how to cont
 
 ## Project status
 
-Polysource is **pre-v0.1.0** — Phases 1 → 22 shipped on `main` (16 packages: core, filter, easyadmin-filter-bridge, symfony-bundle, twig-theme, 6 adapters, audit, bulk-async, widgets, search, workflow-bridge). The public API is frozen for v0.1.0; tag and Packagist publish are in progress (Phase 10 + Phase 23 showcase QA).
+Polysource is at **v1.1.0** — 16 packages (core, filter, easyadmin-filter-bridge, symfony-bundle, twig-theme, 6 adapters, audit, bulk-async, widgets, search, workflow-bridge) published on [Packagist](https://packagist.org/?query=polysource%2F) since 2026-05-10, mirrored automatically from this monorepo. The public API is **frozen since v1.0.0 (2026-08-06)** under strict [SemVer](https://semver.org): breaking changes ship in major versions only.
 
 The strategic and architectural analysis lives in [`docs/`](./docs/README.md), and the public roadmap is in [`ROADMAP.md`](./ROADMAP.md).
 
@@ -24,7 +24,7 @@ By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.
 When opening an issue, please provide:
 
 - A clear, descriptive title.
-- The Polysource version (or `main` if you're on the design branch).
+- The Polysource version.
 - The Symfony and PHP versions you target.
 - A minimal reproducible example if reporting a bug.
 - For architecture/design issues, the specific document section you're commenting on.
@@ -37,11 +37,13 @@ The workflow is:
 2. Create a feature branch: `git checkout -b feat/short-description`.
 3. Write tests first (the project follows TDD discipline).
 4. Make your changes — keep them focused and small.
-5. **Before pushing, reproduce the CI locally**: `make ci`. This runs the same 4 jobs GitHub Actions runs:
+5. **Before pushing, reproduce the CI locally**: `make ci`. This runs the same 5 jobs GitHub Actions runs:
    - `composer validate --strict` (root + sub-packages)
+   - `scripts/docs-truth-check.sh` — the docs truth-sync gate (versions, banners, counts vs the code)
    - `vendor/bin/php-cs-fixer fix --dry-run`
    - `vendor/bin/phpstan analyse --memory-limit=2G`
    - `vendor/bin/phpunit`
+   - the core coverage gate (≥ 90% on `polysource/core`)
    If `make ci` is green, the GitHub Actions CI will be too — there should be no surprise on push.
 6. Auto-fix code style if needed: `make cs-fix`.
 7. Commit with a Conventional Commits-style message:
@@ -66,7 +68,7 @@ The workflow is:
 
 ## Project scope discipline
 
-Polysource has a strict scope: **admin for non-Doctrine / multi-source resources in Symfony**. PRs that drift from this scope will be politely declined. Specifically, **out of scope**:
+Polysource has a strict scope: **a filter + listing UX layer for Symfony admins** — the EasyAdmin bridge and the standalone engine for non-Doctrine / multi-source resources ([ADR-012](./docs/adr/0012-dual-product-positioning.md), [ADR-028](./docs/adr/0028-scope-discipline.md); every interactive feature keeps a server-side baseline per [ADR-027](./docs/adr/0027-progressive-enhancement.md)). PRs that drift from this scope will be politely declined. Specifically, **out of scope**:
 
 - Doctrine-first CRUD generation (use EasyAdmin).
 - No-code internal-tool builders (use Retool / Appsmith).

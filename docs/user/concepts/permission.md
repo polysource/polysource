@@ -20,17 +20,38 @@ granted to this user, possibly with this subject?"*
 
 ## Where attributes are checked
 
-Polysource asks `isGranted()` in **three** places:
+Polysource asks `isGranted()` in **four** places:
 
-| When | Attribute checked | Source of attribute |
-|---|---|---|
-| Before any access to a resource (index, detail, action) | `ResourceInterface::getPermission()` | Resource declaration |
-| Before rendering a field | `FieldDto::$permission` | `FieldTrait::setPermission()` |
-| Before rendering or invoking an action | `ActionInterface::getPermission()` | Action declaration |
+| When | Attribute checked | Voter `$subject` | Fallback when `null` |
+|---|---|---|---|
+| Before any access to a resource (index, detail, action) | `ResourceInterface::getPermission()` | the `ResourceInterface` | `POLYSOURCE_RESOURCE_VIEW` |
+| Before rendering a field | `FieldDto::$permission` | none (`null`) | no check |
+| Before rendering or invoking an action | `ActionInterface::getPermission()` | the `DataRecord` for inline actions *(since v1.1)* | `POLYSOURCE_ACTION_INVOKE` |
+| Before rendering the row-detail chevron, and again on the detail-panel endpoint *(since v1.1)* | `HasRowDetailsInterface::getRowDetailPermission()` (native) / `RowDetailProviderInterface::getPermission()` (EA bridge) | the `DataRecord` (native) / the entity (bridge) | no check |
 
-If `getPermission()` returns `null`, the check is skipped (every
-authenticated user passes). If it returns a string, that string is
-passed verbatim to `PermissionInterface::isGranted()`.
+Two of those rows have a **fallback attribute**, not a skip: when a
+resource or an action returns `null` from `getPermission()`, the
+controller still asks the voter, using the canonical constant from
+`Polysource\Bundle\Security\PermissionAttributes`
+(`POLYSOURCE_RESOURCE_VIEW` / `POLYSOURCE_ACTION_INVOKE`). Wire those
+two attributes in your role hierarchy or your voter, or nothing is
+reachable. Field permissions and row-detail permissions genuinely do
+skip the check on `null`.
+
+### Per-record gating (since v1.1)
+
+Inline actions and row details pass the row's `DataRecord` to the
+voter as `$subject`, so a voter can grant an attribute on some rows
+and deny it on others ("retry only messages from your own queue",
+"expand only orders in your region"). Voters that ignore their
+subject behave exactly as they did before v1.1 — this is additive.
+
+Both row-detail checks matter for different reasons: the one during
+index rendering decides whether the chevron appears at all
+(cosmetic), and the one in `RowDetailPanelController` is the
+authoritative gate on the endpoint. The endpoint check is **not**
+skippable by guessing the URL, and it fails closed: a declared
+attribute with no voter answering it denies access.
 
 A typical Messenger setup uses these attributes:
 
@@ -51,10 +72,10 @@ convention. Use whatever string scheme fits your app.
 `PermissionInterface` to Symfony's `AuthorizationCheckerInterface`:
 
 ```php
-final readonly class SymfonyAuthorizationCheckerPermission implements PermissionInterface
+final class SymfonyAuthorizationCheckerPermission implements PermissionInterface
 {
     public function __construct(
-        private ?AuthorizationCheckerInterface $authorizationChecker = null,
+        private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
     ) {}
 
     public function isGranted(string $attribute, mixed $subject = null): bool
@@ -167,7 +188,7 @@ clicks but don't replace a proper rate limiter for shared transports.
 
 ## See also
 
-- [resource.md](./resource.md) — `getPermission()` is one of seven
+- [resource.md](./resource.md) — `getPermission()` is one of eight
   resource declarations.
 - [field.md](./field.md) — `setPermission()` per field.
 - [action.md](./action.md) — `getPermission()` per action.

@@ -198,16 +198,18 @@ services:
         tags: ['polysource.audit.action']
 ```
 
-## What's *not* extensible (yet)
+## What's *not* extensible
 
-- **Mutating the AuditEntry shape**. The 12 fields are locked;
-  hosts wanting extra columns ship a parallel side-table joined
-  on `id`. v0.2 may introduce an `AuditContextEnricherInterface`
-  contributor tag if demand is real.
-- **Async write path**. v0.1 logs synchronously. v0.2 ships an
-  `AsyncAuditLogger` decorator that dispatches a Messenger
-  message, freeing the request cycle for slow sinks (Datadog
-  HTTP). Track the issue list if you need it now.
+- **Mutating the AuditEntry shape**. The 12 fields are locked —
+  and now frozen under SemVer, so they stay locked for the whole
+  v1 line. Hosts wanting extra columns ship a parallel side-table
+  joined on `id`. There is no `AuditContextEnricherInterface`.
+- **Async write path**. Audit logging is synchronous. No
+  `AsyncAuditLogger` decorator ships — if a slow sink (Datadog
+  HTTP, Splunk) would hurt your request cycle, decorate
+  `AuditLoggerInterface` yourself with a logger that dispatches a
+  Messenger message and let a worker do the write. The fan-out
+  contract (`AggregateAuditLogger`) makes that a drop-in.
 
 ## See also
 

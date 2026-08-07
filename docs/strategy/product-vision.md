@@ -30,7 +30,7 @@ Le projet a un scope étroit et discipliné. Sont **explicitement hors scope** :
 - **Internal-tool builder no-code** (Retool / Appsmith).
 - **Dashboards de BI** (Grafana / Metabase).
 - **Multi-tenant SaaS** (Forest Admin).
-- **Real-time / live update** v1 (peut-être v2, sur demande utilisateur réel).
+- **Listings live-updating** (pas de rafraîchissement temps réel des tables, ni de collaboration multi-utilisateurs). L'exception livrée est la progression des bulk actions via Mercure dans `polysource/bulk-async` : c'est un canal de progression borné à un job, pas un mécanisme de synchronisation générale des listings.
 - **Permissions fines (RBAC granulaire en UI).** Polysource s'appuie sur les Voters Symfony existants. Pas de UI de gestion des rôles.
 - **Authentication.** Polysource utilise la firewall Symfony en place. Pas d'auth fournie.
 
@@ -107,7 +107,7 @@ Quatre principes structurants (voir [`../architecture/target-architecture.md`](.
 Inspirations directes :
 - **Sylius Grid** — `DataSourceInterface` minimal + tag service.
 - **React Admin** — 9 méthodes `dataProvider` comme vocabulaire commun.
-- **Filament** (DX uniquement) — builders fluides `Form::schema([...])`, à introduire après v0.3.
+- **Filament** (DX uniquement) — builders fluides `Form::schema([...])`.
 - **Orchid** — séparation `query() → array` et `layout(array)`.
 
 Anti-inspirations :
@@ -120,8 +120,8 @@ Anti-inspirations :
 |---|---|
 | Licence | **MIT** (compatible avec EasyAdmin pour réutilisation des templates Twig) |
 | Hébergement | GitHub `github.com/polysource/polysource`, monorepo avec composer split par package |
-| Versionning | SemVer strict. Avant v1.0, classes `@experimental` peuvent évoluer. Après v1.0, gel API. |
-| CI | GitHub Actions, matrix PHP 8.1/8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0 (cf. ADR-015) |
+| Versionning | SemVer strict. Gel d'API effectif depuis la v1.0.0 (2026-08-06) : toute rupture de contrat public exige désormais une majeure. |
+| CI | GitHub Actions, 5 lignes de matrix listées à la main — PHP 8.2/8.3/8.4 × Symfony 6.4 LTS / 7.2 / 7.4 LTS × EasyAdmin 4.24/5.0 (cf. ADR-015 + ADR-011) |
 | Coverage | `core` ≥ 90 % unit tests, intégration testcontainers par adapter |
 | Gouvernance | Solo-mainteneur première année, ouverture progressive à des co-mainteneurs par adapter |
 | Contribution | CONTRIBUTING.md formel, ADR publics pour décisions structurantes, issues étiquetées par adapter |
@@ -130,7 +130,7 @@ Anti-inspirations :
 
 Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque package a son propre `composer.json`, son propre `composer install`, et est publié indépendamment sur Packagist.
 
-### Packages v0.1 (16 packages livrés, v0.1.0 publiée 2026-05-10)
+### Les 16 packages livrés (v1.1.0 publiée 2026-08-07)
 
 **Primitives partagées** (utilisables seules, zéro Symfony dans `core`) :
 
@@ -141,7 +141,10 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 
 **Produit 1 — Polysource standalone admin** :
 
-- `polysource/symfony-bundle` — wiring (DI, routing, ArgumentResolvers, Twig)
+- `polysource/symfony-bundle` — wiring (DI, routing, ArgumentResolvers, Twig),
+  dont les row details natifs depuis la v1.1.0 : `HasRowDetailsInterface`,
+  route `GET {prefix}/{slug}/{id}/detail-panel`, listing imbriqué paginé par
+  `rd_page`, garde de permission par enregistrement, fallback sans JS
 - `polysource/twig-theme` — templates Twig par défaut (copiés et adaptés depuis EasyAdmin v5, MIT)
 - 6 adapters : `polysource/adapter-{messenger,doctrine,redis,flysystem,http,meilisearch}`
 
@@ -149,8 +152,9 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 
 - `polysource/easyadmin-filter-bridge` — `FilterConfiguratorInterface`
   auto-tagués, enhanced form types, 4 custom filters (Between/In/NotNull/FullText),
-  EventSubscribers (session, saved-view apply), override Twig. Ne touche pas
-  au code d'EasyAdmin.
+  EventSubscribers (session, saved-view apply), row details dépliables depuis
+  la v1.1.0 (`RowDetailProviderInterface` + `Polysource::rowDetail()`),
+  override Twig. Ne touche pas au code d'EasyAdmin.
 
 **Capabilités transverses (opt-in, packages séparés)** :
 
@@ -164,7 +168,7 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 - `polysource/workflow-bridge` — intégration Symfony Workflow (transition
   buttons auto, state chip)
 
-### Packages post-v0.1 (à demande utilisateur réel uniquement)
+### Packages envisagés, non construits (à demande utilisateur réel uniquement)
 
 - `polysource/adapter-config` — fichiers YAML/JSON (déjà couvert partiellement
   par `polysource/adapter-flysystem` pour les contenus, à matérialiser si
@@ -172,14 +176,19 @@ Le repo `polysource/polysource` est un **monorepo avec composer split**. Chaque 
 - Bridges futurs (`search-meilisearch`, `search-algolia`, `search-elasticsearch`)
   — extensions du package `polysource/search` via `SearchProviderInterface`
 
-**Aucun package supplémentaire ne sera ajouté avant v1.0 sans utilisateur identifié qui en a besoin.** Voir [`ROADMAP.md`](../../ROADMAP.md) pour les jalons publics et [ADR-011](../adr/0011-pre-v1.0-freeze-checklist.md) pour la checklist de gel API à trancher avant v1.0.
+**Aucun package supplémentaire ne sera ajouté sans utilisateur identifié qui en a besoin.** La règle tenait avant la v1.0 et continue de tenir après : le gel d'API rend même l'ajout plus coûteux, puisque tout nouveau contrat public s'engage sous SemVer dès sa publication. Voir [`ROADMAP.md`](../../ROADMAP.md) pour les jalons publics et [ADR-011](../adr/0011-pre-v1.0-freeze-checklist.md) pour la checklist de gel appliquée à la v1.0.
 
 ### Conventions
 
 - **Namespace racine** : `Polysource\Core\…`, `Polysource\Bundle\…`, `Polysource\Adapter\Messenger\…`, etc.
 - **Vendor Composer** : `polysource/<package-name>`
 - **Tag DI** : `polysource.<purpose>` (ex: `polysource.data_source`, `polysource.field_configurator`, `polysource.action`)
-- **Maker command** : `bin/console make:polysource:resource`, `make:polysource:adapter`
+
+**Non construit :** des commandes Maker (`make:polysource:resource`,
+`make:polysource:adapter`) ont été envisagées ici mais n'existent dans
+aucun package — l'autoconfiguration par interface a rendu le
+scaffolding largement superflu. À rouvrir sous ADR si un besoin réel
+émerge.
 
 ## 8. À relire à chaque release majeure
 

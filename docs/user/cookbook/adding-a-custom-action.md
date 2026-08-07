@@ -231,7 +231,7 @@ public function isDisplayed(array $context = []): bool
 ```
 
 `isDisplayed()` is **only** a UI hint, never a security gate — see
-[../concepts/permission.md](../concepts/permission.md#permissions-and-isdisplayed).
+[../concepts/action.md](../concepts/action.md#permissions-and-isdisplayed).
 
 ## Testing your action
 

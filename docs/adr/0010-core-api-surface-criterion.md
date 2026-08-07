@@ -145,6 +145,25 @@ avec des critères qualitatifs (ISP, single responsibility, no redundancy).
 
 À chaque release majeure (v1.0, v2.0, etc.), refaire le décompte des types publics. Si on dépasse 40, ouvrir une nouvelle ADR pour soit splitter `core` en sous-packages, soit justifier la croissance.
 
+### Décompte v1.0 / v1.1 (2026-08-07)
+
+**38 types publics** dans `packages/core/src/` — sous le plafond de 40, avec 2 de marge seulement :
+
+| Catégorie | Nombre | Delta vs v0.7.1 |
+|---|---|---|
+| Interfaces | 12 | +3 : `StyledActionInterface`, `IdentifiableInterface`, `AdminPluginInterface` |
+| Value objects | 11 | +2 : `InMemoryValueMatcher` (ADR-0031), `RowDetail` (ADR-0033, v1.1) |
+| Concrete field types | 5 | = |
+| Exceptions | 3 | = |
+| Abstract base / trait | 3 | +1 : `HasPluginMetadata` |
+| Enums | 2 | = |
+| Attribute + constants holder | 2 | +1 : `AsPlugin` |
+| **Total** | **38** | 31 → 38 |
+
+Marge restante : **2 types**. Tout ajout de type public au core en v1.x doit
+être pesé contre ce plafond ; à 40, l'alternative split/justification de cette
+ADR s'applique.
+
 Si on tombe en dessous de 26 par refactoring (regroupement de classes), parfait — c'est même mieux. Mais ne jamais regrouper artificiellement « pour rester sous un seuil ».
 
 ## Références

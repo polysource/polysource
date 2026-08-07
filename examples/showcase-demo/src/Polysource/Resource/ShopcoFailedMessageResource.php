@@ -12,9 +12,12 @@ use Polysource\Adapter\Messenger\Resource\FailedMessageResource;
  * concrete `configureFields()` so the index + detail pages render
  * actual columns instead of empty rows.
  *
- * The upstream resource intentionally returns `[]` per ADR-011
- * (concrete field types deferred to v0.2). Until v0.2 lands the host
- * wires its own fields. Service override happens in services.yaml so
+ * The upstream resource intentionally returns `[]` (it stays
+ * agnostic of the host's envelope shape; the theme falls back to
+ * synthesised fields). The host wires a curated set instead via the
+ * showcase's own `Field` factory — real apps can do the same or use
+ * the concrete field types `polysource/core` ships.
+ * Service override happens in services.yaml so
  * the bundle's tag (`polysource.resource`) stays attached to a single
  * service ID and the route loader still mounts the resource.
  *

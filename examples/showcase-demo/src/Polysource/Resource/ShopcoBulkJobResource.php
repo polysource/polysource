@@ -9,9 +9,9 @@ use Polysource\BulkAsync\Resource\BulkJobResource;
 
 /**
  * Showcase override of polysource/bulk-async's BulkJobResource —
- * adds concrete fields so the bulk-jobs index shows status / progress
- * / counts instead of empty rows. Per ADR-011 the upstream package
- * returns `[]` from `configureFields()` until v0.2.
+ * adds concrete fields so the bulk-jobs index shows a curated
+ * status / progress / counts view instead of the synthesised
+ * all-properties fallback the upstream `[]` produces.
  *
  * DataRecord properties:
  *   id, createdAt, startedAt, completedAt, resourceName, actionName,

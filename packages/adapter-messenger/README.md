@@ -1,12 +1,12 @@
 # polysource/adapter-messenger
 
 Polysource adapter exposing Symfony Messenger's **failed transport** as a
-read-only Polysource resource.
+browsable, actionable Polysource resource.
 
-This is the cas tueur for v0.1: Symfony's Messenger has no built-in admin
-UI for inspecting failed messages — only the `messenger:failed:*` CLI.
-`polysource/adapter-messenger` plugs into the same `failed` transport and
-renders it inside `/admin/failed-messages`.
+Symfony's Messenger has no built-in admin UI for inspecting failed
+messages — only the `messenger:failed:*` CLI. `polysource/adapter-messenger`
+plugs into the same `failed` transport and renders it inside
+`/admin/failed-messages`.
 
 ## Installation
 
@@ -42,16 +42,28 @@ The named transport must implement
 
 Records over 50 KB are truncated with a marker.
 
+## Actions
+
+Browsing is only half of it — the four write actions ship today, each
+behind its own permission:
+
+| Action | Kind | Permission |
+|---|---|---|
+| `retry` | inline | `POLYSOURCE_FAILED_MESSAGE_RETRY` |
+| `dismiss` | inline | `POLYSOURCE_FAILED_MESSAGE_DISMISS` |
+| `retry-all` | bulk | `POLYSOURCE_FAILED_MESSAGE_RETRY` |
+| `purge` | bulk | `POLYSOURCE_FAILED_MESSAGE_PURGE` |
+
 ## Status
 
-**Shipped — v0.5.7 (2026-05-15).** Read-only browse. Retry / dismiss / retry-all / purge actions ship in
-Phase 5 of the development plan.
+**Shipped — v1.1.0 (2026-08-07).** Public API frozen under strict SemVer
+since v1.0.0 (2026-08-06): breaking changes only in a new major.
 
 ## Architectural decisions
 
-- [ADR-001](../../docs/adr/0001-data-record-identifier.md) — identifier type
-- [ADR-002](../../docs/adr/0002-data-page-total-semantics.md) — count = null for cursor sources
-- [ADR-006](../../docs/adr/0006-envelope-mapper-serialization.md) — payload serialization
+- [ADR-001](https://github.com/polysource/polysource/blob/main/docs/adr/0001-data-record-identifier.md) — identifier type
+- [ADR-002](https://github.com/polysource/polysource/blob/main/docs/adr/0002-data-page-total-semantics.md) — count = null for cursor sources
+- [ADR-006](https://github.com/polysource/polysource/blob/main/docs/adr/0006-envelope-mapper-serialization.md) — payload serialization
 
 ## License
 

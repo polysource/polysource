@@ -6,9 +6,10 @@
 
 ## Status
 
-**v0.9.1 published (2026-08-06).** API release-candidate stable —
-committed for v0.9.x, breaking changes allowed before v1.0 (cf.
-[ADR-012](../../docs/adr/0012-dual-product-positioning.md)).
+**v1.1.0 published (2026-08-07).** The public API is frozen under
+strict SemVer since v1.0.0 (2026-08-06) — breaking changes only in a
+new major (cf.
+[ADR-012](https://github.com/polysource/polysource/blob/main/docs/adr/0012-dual-product-positioning.md)).
 Distributed on Packagist as
 [`polysource/easyadmin-filter-bridge`](https://packagist.org/packages/polysource/easyadmin-filter-bridge).
 
@@ -26,7 +27,16 @@ client integrations since v0.5.7:
   on `BeforeCrudActionEvent` — operators returning to the index page
   see their previous filters restored automatically (scoped per CRUD
   controller FQCN, no leak across resources).
-- **8 polysource routes auto-import** via `Bundle::boot()` since
+- **Expandable row details** since v1.1.0 — opt in per entity with a
+  `RowDetailProviderInterface` implementation (3 methods:
+  `getSupportedEntity` / `getPermission` / `getRowDetail`), or extend
+  `AbstractRowDetailProvider` and write only `getSupportedEntity()` +
+  `template()`. Then add the bridge's `Polysource::rowDetail()` field
+  (`Polysource\EasyAdminFilterBridge\Bridge\Polysource`) to
+  `configureFields()` and each row gains a chevron that lazily loads
+  its panel. No `table_body_row` fork — it is a virtual EA field,
+  identical on EA 4.24 and 5.x.
+- **9 polysource routes auto-import** via `Bundle::boot()` since
   v0.5.4 — no manual `routes.yaml` import needed in the host.
 - **Multi-kernel safe** since v0.5.7 — bundle is a no-op on
   EA-less kernels.
@@ -58,7 +68,20 @@ Plus, list-level capabilities layered on top:
 - **Filter-aware streaming export** (CSV / XLSX).
 - **Matching-count** JSON endpoint for bulk dry-run preview.
 - **Filter URL tokens** for short shareable filtered URLs.
+- **Expandable row details** — a per-row chevron that lazily fetches
+  `GET /admin/polysource/row-detail/{resource}/{id}`. The provider's
+  permission attribute is checked with the row's entity as voter
+  subject (fail-closed), so a panel one operator may open stays shut
+  for another. Without JavaScript the chevron is a plain link to the
+  same URL, which renders a standalone page.
 - Custom filter types: `BetweenDateFilter`, `InFilter`, `NotNullFilter`, `FullTextSearchFilter`.
+
+A provider returns a `RowDetail` (from `polysource/core`), and it has
+two shapes. `RowDetail::template()` renders your own Twig and needs
+nothing beyond this bundle. `RowDetail::listing()` embeds *another
+Polysource resource* as the panel — a nested, paged, read-only table —
+and that renderer lives in `polysource/symfony-bundle`, so install it
+alongside the bridge if you want the listing shape.
 
 ## Installation
 
@@ -86,7 +109,7 @@ right after they are created.
 
 **The filter modal tabs, group accordions, and the chips bar are
 server-rendered — zero JavaScript required** (since v0.2.0, per
-[ADR-027 progressive enhancement](../../docs/adr/0027-progressive-enhancement.md)).
+[ADR-027 progressive enhancement](https://github.com/polysource/polysource/blob/main/docs/adr/0027-progressive-enhancement.md)).
 Tabs use native `<details name="...">` exclusive accordions, pane
 switching is pure CSS, and every chip's × button is a plain link.
 
@@ -97,14 +120,18 @@ Two kinds of assets ship with the bundle:
    `assets:install` (Symfony Flex runs it automatically). The bridge's
    index template links them itself — nothing to wire. Theming is done
    through `--polysource-*` CSS variables — see
-   [the theming guide](../../docs/user/easyadmin-filter-bridge/theming.md).
-2. **One optional Stimulus controller** (`polysource--filter`, under
-   `assets/controllers/`) that progressively enhances the filter
+   [the theming guide](https://github.com/polysource/polysource/blob/main/docs/user/easyadmin-filter-bridge/theming.md).
+2. **Two optional Stimulus controllers.** `polysource--filter` ships
+   here (`assets/controllers/`) and progressively enhances the filter
    widgets: preset buttons, quick-ranges, clear buttons, validation
-   hints. Hosts using AssetMapper or Webpack Encore + StimulusBundle
-   get it auto-loaded via the `assets/package.json` advertisement;
-   hosts without any JS pipeline simply keep the server-rendered
-   behaviour.
+   hints. `polysource--row-details` drives the row-detail panel
+   (loading / error / retry states, client-side cache, ARIA) and
+   ships from `polysource/filter` — the same controller the native
+   `polysource/symfony-bundle` listing uses, so there is one
+   implementation, not two. Hosts using AssetMapper or Webpack Encore
+   + StimulusBundle get both auto-loaded via the `assets/package.json`
+   advertisements; hosts without any JS pipeline simply keep the
+   server-rendered behaviour.
 
 If you use AssetMapper, remember EasyAdmin ignores the host importmap
 by default — add it back via your Dashboard so the optional controller
@@ -132,7 +159,7 @@ EasyAdmin out of the box — they live at:
 - `POST /admin/saved-views` (`polysource_saved_view_create`)
 - `POST /admin/saved-views/{id}/delete` (`polysource_saved_view_delete`)
 
-They are auto-imported — along with the 6 other `polysource_*`
+They are auto-imported — along with the 7 other `polysource_*`
 routes — by `Bundle::boot()` since v0.5.4, so no `routes.yaml`
 change is needed. Multi-tenant hosts mounting EA under a custom
 prefix can opt out with `auto_register_routes: false` and import
@@ -212,7 +239,7 @@ the existing extension point.
 The full audit trail of seams used (and one that is *not* available —
 the `EntityRepositoryInterface` returns `Doctrine\ORM\QueryBuilder`,
 which blocks non-Doctrine sources) is in
-[ADR-012 §Vérification technique](../../docs/adr/0012-dual-product-positioning.md#vérification-technique).
+[ADR-012 §Vérification technique](https://github.com/polysource/polysource/blob/main/docs/adr/0012-dual-product-positioning.md#vérification-technique).
 
 ## Writing your own enhancer
 
@@ -266,7 +293,7 @@ Configurators never read either argument.
 
 ## Compatibility
 
-Cf. [ADR-015 — multi-version baseline](../../docs/adr/0015-multi-version-compatibility-baseline.md);
+Cf. [ADR-015 — multi-version baseline](https://github.com/polysource/polysource/blob/main/docs/adr/0015-multi-version-compatibility-baseline.md);
 CI runs the full matrix.
 
 - **PHP** `>=8.2`
@@ -276,11 +303,13 @@ CI runs the full matrix.
 
 ## Architectural decisions
 
-- [ADR-012 — Dual-product positioning](../../docs/adr/0012-dual-product-positioning.md) —
-  why this bridge exists alongside `polysource/admin` standalone.
-- [ADR-016 — Bridge contracts shared with polysource/filter](../../docs/adr/0016-bridge-contracts-shared-with-polysource-filter.md) —
+- [ADR-012 — Dual-product positioning](https://github.com/polysource/polysource/blob/main/docs/adr/0012-dual-product-positioning.md) —
+  why this bridge exists alongside the standalone product.
+- [ADR-016 — Bridge contracts shared with polysource/filter](https://github.com/polysource/polysource/blob/main/docs/adr/0016-bridge-contracts-shared-with-polysource-filter.md) —
   the `ChipFormatterInterface` boundary between the bridge and the standalone primitive.
+- [ADR-033 — Expandable row details](https://github.com/polysource/polysource/blob/main/docs/adr/0033-expandable-row-details.md) —
+  the virtual-field seam, the lazy fragment endpoint, and the no-JS page.
 
 ## License
 
-MIT — see [LICENSE](../../LICENSE).
+MIT — see [LICENSE](https://github.com/polysource/polysource/blob/main/LICENSE).

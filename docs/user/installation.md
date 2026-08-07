@@ -2,10 +2,9 @@
 
 ## Requirements
 
-Polysource ships with a **per-package compatibility baseline** (cf.
-[ADR-015](../adr/0015-multi-version-compatibility-baseline.md)). The
-floor differs between primitive packages (`filter`, `easyadmin-filter-bridge`)
-and bundle/adapter packages that use Symfony 6.2+ APIs.
+Since v1.0.0 every package shares one floor — **PHP 8.2+ and Symfony
+6.4 LTS+** (cf. [ADR-011](../adr/0011-pre-v1.0-freeze-checklist.md)
+and [ADR-015](../adr/0015-multi-version-compatibility-baseline.md)).
 
 | Package | PHP | Symfony | Notes |
 |---|---|---|---|
@@ -34,6 +33,7 @@ UI features:
 | Package | Controller(s) | What needs Stimulus |
 |---|---|---|
 | `polysource/filter` | `polysource--filter-chips` | in-place chip removal + "+N more" overflow (the chips bar itself and its × links are server-rendered) |
+| `polysource/filter` | `polysource--row-details` (lazy) | expands a row's detail panel in place; without it the chevron is a plain link to the standalone detail page |
 | `polysource/easyadmin-filter-bridge` | `polysource--filter` | value-only data attrs (`step`, `min_length`, `include_null`, …) for host-side JS layers to read — no behaviour of its own since v0.2.0 |
 | `polysource/bulk-async` | `polysource--bulk-async--progress` | live progress bar for async bulk actions |
 | `polysource/search` | `polysource--search--cmdk` | command-palette overlay |
@@ -65,7 +65,8 @@ preserves the short identifier used by templates
   {
       "controllers": {
           "@polysource/filter": {
-              "polysource--filter-chips": { "enabled": true }
+              "polysource--filter-chips": { "enabled": true },
+              "polysource--row-details": { "enabled": true }
           },
           "@polysource/easyadmin-filter-bridge": {
               "polysource--filter": { "enabled": true }
@@ -76,7 +77,7 @@ preserves the short identifier used by templates
 
   A future Symfony Flex recipe (tracked in `symfony/recipes-contrib`)
   will populate these entries automatically on `composer require` —
-  for v0.1.x, the snippet above is one-time manual work.
+  until then, the snippet above is one-time manual work.
 
 #### Hosts without any Stimulus pipeline
 
@@ -203,8 +204,8 @@ In your application's `composer.json`:
         }
     ],
     "require": {
-        "polysource/symfony-bundle": "0.1.x-dev",
-        "polysource/adapter-messenger": "0.1.x-dev"
+        "polysource/symfony-bundle": "1.2.x-dev",
+        "polysource/adapter-messenger": "1.2.x-dev"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
@@ -235,11 +236,12 @@ Polysource sees them:
 bin/console debug:router | grep polysource
 ```
 
-You should see at least four routes per resource:
+You should see five routes per resource:
 
 ```
 polysource_<slug>_index           GET     /admin/<slug>
 polysource_<slug>_detail          GET     /admin/<slug>/{id}
+polysource_<slug>_detail_panel    GET     /admin/<slug>/{id}/detail-panel
 polysource_<slug>_bulk_action     POST    /admin/<slug>/batch/{action}
 polysource_<slug>_action          POST    /admin/<slug>/{id}/{action}
 ```
@@ -267,7 +269,7 @@ Polysource Doctor
   PHP version             ✓ PASS     8.4.20 (>= 8.2)
   Polysource bundles      ✓ PASS     3 registered (PolysourceBundle, …)
   EA bridge co-load       ✓ PASS     EasyAdminBundle is loaded alongside the bridge.
-  Polysource plugins      ✓ PASS     7 discovered (polysource/core 0.6.0, …)
+  Polysource plugins      ✓ PASS     7 discovered (polysource/core 1.1.0, …)
   Doctrine schema         ✓ PASS     5 Polysource entities in sync with the database.
  ----------------------- ----------- -------------------------------------------
 

@@ -35,13 +35,16 @@ For an API that paginates in an unusual way (link headers, X-Pagination, RFC 598
 ```php
 final class LinkHeaderPaginationStrategy implements PaginationStrategyInterface
 {
-    public function buildRequest(DataQuery $query): array { /* return query + headers */ }
-    public function parseResponse(ResponseInterface $response): DataPage { /* parse Link header */ }
+    /** @return array<string, scalar|list<scalar>> query params to add to the request URI */
+    public function buildQueryParams(DataQuery $query): array { /* … */ }
+
+    /** @return array{items: list<array<string, mixed>>, total: ?int, nextCursor: ?string, prevCursor: ?string} */
+    public function parseResponse(array $body, array $headers): array { /* parse the Link header */ }
 }
 ```
 
-Inject into `HttpDataSource`. No fork needed. See [extensibility map](../../docs/user/extensibility.md#6-custom-http-pagination-strategy).
+Inject into `HttpDataSource`. No fork needed. See [extensibility map](https://github.com/polysource/polysource/blob/main/docs/user/extensibility.md#6-custom-http-pagination-strategy).
 
 ## Documentation
 
-- [Adapter HTTP guide](../../docs/user/adapters/http.md)
+- [Adapter HTTP guide](https://github.com/polysource/polysource/blob/main/docs/user/adapters/http.md)

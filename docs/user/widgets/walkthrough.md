@@ -11,7 +11,7 @@ Three built-in types cover 80% of admin needs:
 |---|---|---|
 | `CounterWidget` | KPIs ("MRR: $42.3k", "Failed messages: 47") | `value`, `unit?`, `trend?`, `palette?` |
 | `ListWidget`    | Top-N records ("Recent failures", "Top customers") | `items`, `labelFn`, `hrefFn?` |
-| `ChartWidget`   | Sparkline data points (textual fallback v0.1) | `points: [{label, value}]`, `type ∈ {line, bar}` |
+| `ChartWidget`   | Sparkline data points — renders as a small table of points, not a canvas | `points: [{label, value}]`, `type ∈ {line, bar}` |
 
 Hosts shipping custom widgets implement `WidgetInterface` and ship
 their own template.
@@ -136,5 +136,9 @@ Compose into any Dashboard the same way.
 ## See also
 
 - [installation.md](./installation.md) — wiring basics.
-- [ADR-022](../../adr/0022-dashboard-widgets.md) — design rationale,
-  what's deferred to v0.2 (Chart.js, drag-drop layouts).
+- [ADR-022](../../adr/0022-dashboard-widgets.md) — design rationale.
+  Note that no chart engine and no drag-drop layout ships: rendering
+  stays deliberately minimal so you can override
+  `widgets/chart.html.twig` with Chart.js, ECharts or Frappé Charts
+  without fighting Polysource's defaults. The `points` data shape is
+  what you feed them.

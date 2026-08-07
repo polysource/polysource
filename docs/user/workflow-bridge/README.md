@@ -21,11 +21,12 @@ pay no cost.
 |---|---|
 | [installation.md](./installation.md) | Composer require, bundle registration, palette config, voter wiring. |
 | [walkthrough.md](./walkthrough.md) | End-to-end: define a Workflow, opt a resource in, render the chip + transition buttons, audit visibility. |
-| [extending.md](./extending.md) | Custom palettes, multi-tenant workflows, before-transition forms (deferred), Mercure broadcast (v0.3 roadmap). |
+| [extending.md](./extending.md) | Custom palettes, multi-tenant workflows, host-side before-transition forms, host-side Mercure broadcast. |
 
 ## Status
 
-**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable per ADR-021:
+**Shipped — v1.1.0 (2026-08-07).** Public API frozen since v1.0.0 under
+strict SemVer, per ADR-021:
 - `WorkflowAwareInterface` + `WorkflowAwareTrait`
 - `WorkflowResolver` (Registry wrapper)
 - `TransitionDiscovery` (delegates to Symfony's `Workflow::getEnabledTransitions()`)

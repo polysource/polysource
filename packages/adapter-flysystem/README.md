@@ -30,4 +30,4 @@ return [
 
 ## Documentation
 
-- [Adapter flysystem guide](../../docs/user/adapters/flysystem.md)
+- [Adapter flysystem guide](https://github.com/polysource/polysource/blob/main/docs/user/adapters/flysystem.md)

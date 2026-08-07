@@ -11,7 +11,10 @@ By the end you'll have:
   `NotNullFilter`, `FullTextSearchFilter`) — opt-in per CRUD
   controller,
 - an "Active filters" chips bar above the table — auto-rendered,
-- session-persisted filter state across requests — auto-wired.
+- session-persisted filter state across requests — auto-wired,
+- optionally, rows that **expand in place** to show lazily-loaded
+  detail content — opt-in per entity, see
+  [`row-details.md`](./row-details.md).
 
 If you want the standalone primitive without EasyAdmin, see
 [`polysource/filter` getting started](../filter/getting-started.md)
@@ -19,7 +22,8 @@ instead.
 
 ## Status
 
-**Shipped — v0.5.7 (2026-05-15).** Public API release-candidate stable per
+**Shipped — v1.1.0 (2026-08-07).** The public API has been frozen
+since v1.0.0 (2026-08-06) and the project follows strict SemVer, per
 [ADR-012](../../adr/0012-dual-product-positioning.md) (dual-product
 positioning) and [ADR-013](../../adr/0013-filter-package-architecture.md)
 (filter package architecture). The bridge is shipped from the same monorepo as
@@ -57,6 +61,7 @@ native `<details>` elements.
 | `placeholder` on `EntityFilter` | no (HTML attribute only) |
 | Tab + group layout (multi-tab filter modal) | no (native `<details name>` accordions + CSS `:has()` pairing — zero JS) |
 | Subpanel mode (right-anchored slide-in) | no (CSS-only restyling of EA's modal) |
+| Expandable row details (v1.1) | no (the chevron is a link to a standalone detail page; `polysource--row-details` upgrades it to an in-place panel) |
 | The `polysource--filter` controller itself | value-only since v0.2.0 — it exposes typed data attrs (`step`, `min_length`, `include_null`, …) for host-side JS layers to read; on its own it changes nothing |
 
 **Auto-discovery is already wired** — the bridge declares its
@@ -78,30 +83,34 @@ this manifest:
               "polysource--filter": { "enabled": true }
           },
           "@polysource/filter": {
-              "polysource--filter-modal-layout": { "enabled": true },
-              "polysource--filter-chips":        { "enabled": true },
-              "polysource--filter-subpanel":     { "enabled": true }
+              "polysource--filter-chips":  { "enabled": true },
+              "polysource--row-details":   { "enabled": true }
           }
       }
   }
   ```
 
+  Those are the only three controllers involved:
+  `polysource--filter` from the bridge, and `polysource--filter-chips`
+  + `polysource--row-details` from `polysource/filter`. The
+  `polysource--filter-modal-layout` and `polysource--filter-subpanel`
+  controllers that earlier versions shipped were **deleted in v0.2.0**
+  — their behaviour is now native `<details>` + CSS.
+
 If your host has **no Stimulus pipeline at all** (classic Webpack
 Encore with manual `.addEntry()` declarations, plain jQuery /
-vanilla JS frontend), some interactive features render as
-visible-but-inert UI — currently the chip × close buttons and the
-tab/group filter modal layout. The recommended path is to install
-`@symfony/stimulus-bundle` or `@symfony/stimulus-bridge`. The
-server-side surface (chips bar render, session persistence, custom
-filter types, chip text formatting) works without Stimulus.
+vanilla JS frontend), every feature still works, just without the
+in-place upgrade: chip × buttons and the row-details chevron are
+plain links that navigate instead of updating the current page. The
+recommended path is to install `@symfony/stimulus-bundle` or
+`@symfony/stimulus-bridge`.
 
-Per ADR-027 v0.2.0+ progressively retrofits the remaining
-interactive features so the baseline works fully server-side — this
-section will eventually report "no Stimulus required".
-
-The bridge does NOT degrade silently — it renders the data
-attributes the controllers expect, so once Stimulus is added
-later, the existing host code starts working without changes.
+Per [ADR-027](../../adr/0027-progressive-enhancement.md), that is the
+design: every interactive feature the bridge ships has a working
+server-side baseline, and Stimulus is a progressive upgrade on top of
+it — never a requirement. The bridge renders the data attributes the
+controllers expect whether or not Stimulus is present, so adding a
+pipeline later needs no host code change.
 
 ### CI / version matrix
 
@@ -110,12 +119,6 @@ The bridge advertises **the same constraints as `easycorp/easyadmin-bundle` 4.29
 EA 4 can install the bridge. Composer's resolver picks the right combination
 automatically — a host on PHP 8.2 + Sf 6.4 will get EA 4 (EA 5 itself
 requires PHP 8.2+); a host on PHP 8.4 + Sf 7.4 will get EA 5.
-
-**Note on Sf 5.4** — only the bridge + the standalone `polysource/filter`
-primitive support Sf 5.4. `polysource/symfony-bundle` (the standalone
-admin engine, unrelated to the bridge) requires Sf 6.4+ because it
-uses `ValueResolverInterface` (Sf 6.2+). The bridge audience is unaffected:
-the bridge doesn't depend on `symfony-bundle`.
 
 The bridge is gated by CI on 5 explicit combos covering the realistic
 profiles of EA-using Symfony apps in 2026 (cf.
@@ -151,10 +154,27 @@ and splices its views into the `@EasyAdmin` namespace via DI's
 `prepend()`. Reload an EA index page where filters are configured,
 and you should already see:
 
-- presets ("Today", "Last 7 days", …) below datetime filters,
-- quick-range buttons below numeric filters,
-- a "Clear" button on datetime filters,
-- chips above the table when any filter is applied.
+- an **"Active filters" chips bar** above the table whenever a filter
+  is applied, one removable chip per filter slice plus a "Clear all"
+  link,
+- the **saved-views dropdown** and the **column-visibility dropdown**
+  in the index header (both need the schema from §2c),
+- **filter state that survives a reload** — the session subscriber
+  restores the last-applied filters.
+
+Inside the filter modal itself the widgets look exactly like upstream
+EasyAdmin. That is deliberate: the bridge's form theme delegates to
+the upstream `ea_*_filter_widget` blocks and only wraps them in a
+`<div data-controller="polysource--filter">` carrying the enhanced
+options as `data-*-value` attributes. What the enhancers change is
+*behaviour and available options* (a "Null" radio on nullable
+booleans, a whitelist of comparison operators, `step` on numeric
+inputs, …), not the look. The v0.1.x date presets, numeric
+quick-range buttons and per-filter "Clear" button were removed in
+v0.2.0 — they were inert without a Stimulus pipeline, and native
+HTML5 date pickers plus EA's own Reset cover the same ground.
+
+Tabs and groups appear in the modal only once you declare them (§5c).
 
 No CRUD code change required.
 
@@ -284,6 +304,7 @@ your existing `setFormTypeOption('label', …)` calls keep working.
 | `ArrayFilter` | `chip_display: bool` | Hook for host CSS/JS to render selected items as chips. |
 | `EntityFilter` | `placeholder: ?string` | Placeholder for the autocomplete widget. |
 | `TextFilter` | `min_length: int` | Adds `data-polysource--filter-min-length-value` for client-side validation. |
+| `DateTimeFilter` | — (no new option) | Dedicated block prefix `polysource_enhanced_datetime_filter` so a host form theme can restyle datetime filters without touching EA's built-in one. |
 
 Full per-filter matrix with caveats: see
 [`whats-new.md`](./whats-new.md).
@@ -584,17 +605,32 @@ freely.
 
 ### Rendering
 
-A Stimulus controller (`polysource--filter-modal-layout`) reads
-the tabs/groups tree (built server-side from each filter's
-customOptions) and reorganises EA's AJAX-loaded filter form into:
+Rendering is **entirely server-side, zero JS**. The bridge's
+override of `@EasyAdmin/crud/filters.html.twig` builds the
+tabs/groups tree from each filter's customOptions
+(`polysource_filter_tree()`) and emits:
 
 - **Top-level ungrouped** filters → flat at the top of the modal
-- **Top-level groups** → `<details>` accordions
-- **Tabs** → Bootstrap nav-tabs strip with nested `<details>`
-  accordions per group inside each tab pane
+- **Top-level groups** → native `<details>` accordions
+- **Tabs** → a strip of `<details name="polysource-tab">` summaries
+  (the HTML `name` attribute gives mutually-exclusive accordion
+  behaviour) paired with their panes through CSS `:has()` in
+  `polysource-filter-bridge.css`, with nested `<details>` accordions
+  per group inside each pane
 
-Zero visual change vs upstream EA when no tab/group is declared
-— the controller falls through to flat rendering.
+Each tab and group summary also carries a count of how many of its
+filters are currently applied, computed from the request's `filters`
+query slice — again without JS.
+
+Browsers that don't support `<details name>` (pre-Chrome 120 /
+Safari 17.2 / Firefox 121) simply let several tabs be open at once —
+graceful degradation, nothing breaks. When no tab or group is
+declared the output is flat, i.e. zero visual change vs upstream EA.
+
+> The `polysource--filter-modal-layout` Stimulus controller that did
+> this client-side until v0.1.x was **deleted in v0.2.0** per ADR-027.
+> If your `assets/controllers.json` still references it, remove the
+> entry.
 
 ### Storage
 
@@ -633,7 +669,8 @@ public function clearMyController(): void
 The bridge ships a form theme at
 `@PolysourceEasyAdminFilterBridge/form/polysource_filter_theme.html.twig`
 that delegates to upstream EA blocks via `{% use '@EasyAdmin/...' %}`.
-To replace it (e.g. to render quick ranges differently):
+To replace it (e.g. to render the "Null" radio of `include_null`
+booleans as a segmented control instead of a third radio):
 
 ```yaml
 # config/packages/twig.yaml
@@ -659,19 +696,14 @@ The bridge consumes the same registry, so anything you register
 there is available to your EA controllers via
 `setFormTypeOption('form_type', YourFormType::class)`.
 
-## What's deferred to v0.2+
+## Not shipped
 
-- **Tab-style multi-group rendering.** Today multi-group renders
-  as `<details>` accordions in the EA modal/subpanel. Tab
-  rendering exists in `polysource/filter`'s standalone subpanel
-  template but isn't yet wired through to EA — adding it would
-  mean re-implementing EA's filter form template completely. Open
-  for v0.2 if user feedback wants it.
+Deliberately out of the current scope — open an issue if one of
+these blocks you:
+
 - **Saved-filter UX** (a la "My drafts" / "My pending review"
-  stored presets per user).
-- **A query serializer** so links can carry filter state without
-  a session (today the form roundtrips through GET, but
-  persistent links require a tiny encoder).
+  stored presets per user) beyond what the saved-views dropdown
+  already covers.
 - **Datasource lifecycle** (`Factory → Builder → Loader`) for
   hosts wanting to compose multiple data sources in one
   Resource — see [ADR-014](../../adr/0014-datasource-lifecycle-deferred.md).
@@ -680,6 +712,9 @@ there is available to your EA controllers via
 
 - [`whats-new.md`](./whats-new.md) — honest per-filter matrix vs
   upstream EA, with caveats.
+- [`row-details.md`](./row-details.md) — expandable row details
+  (v1.1): declare a provider per entity, add the chevron field, and
+  rows expand in place to a lazily-loaded panel.
 - [ADR-012](../../adr/0012-dual-product-positioning.md) — why the
   bridge exists at all (vs forking EasyAdmin).
 - [ADR-013](../../adr/0013-filter-package-architecture.md) — the

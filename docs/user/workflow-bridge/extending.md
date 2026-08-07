@@ -38,16 +38,17 @@ Tailwind / custom CSS override the partial:
 The palette slugs are still strings — you map them to your
 design system however you like.
 
-## Before-transition forms (deferred to v0.2)
+## Before-transition forms
 
-v0.1 ships a fire-and-forget button. For now hosts ship a wrapper
-action that re-implements the transition with a form step + a
-guard that hides the auto-generated `transition-<name>`.
+The bridge ships a fire-and-forget button; there is no
+`BeforeTransitionFormInterface`, and Polysource ships no form UI at
+all (see [../concepts/resource.md](../concepts/resource.md)). To
+collect input before applying a transition, ship a wrapper action
+that renders your own form step and applies the transition itself,
+plus a guard that hides the auto-generated `transition-<name>`
+button.
 
-v0.2 plans a `BeforeTransitionFormInterface` that lets the bundle
-render a Symfony Form before applying.
-
-## Mercure broadcast (v0.3 roadmap)
+## Mercure broadcast
 
 Listen on `ActionExecutedEvent` (from `polysource/symfony-bundle`,
 ADR-020) and publish to Mercure when the action name starts with
@@ -81,15 +82,20 @@ final class WorkflowMercureBroadcaster implements EventSubscriberInterface
 }
 ```
 
-v0.3 plans a first-class `polysource/workflow-bridge-mercure`
-add-on that ships the JS client too.
+The subscriber above is the whole story: there is no
+`polysource/workflow-bridge-mercure` add-on, and no JS client ships.
+(`polysource/bulk-async` does wire Mercure for job progress, if you
+want a reference implementation to read.)
 
-## What's *not* extensible (yet)
+## What the bridge does *not* do
 
-- Workflow visualisation in the admin UI (graphviz / Mermaid
-  embedded in the detail page) — v0.4 roadmap.
-- Per-transition required forms — v0.2.
-- Mercure broadcast as a first-class feature — v0.3.
+None of these ships, and none is on the roadmap — each is a
+host-side extension you write on top of the contracts above:
+
+- Workflow visualisation in the admin UI (Graphviz / Mermaid
+  embedded in the detail page).
+- Per-transition required forms.
+- Mercure broadcast as a first-class feature.
 
 ## See also
 

@@ -116,7 +116,7 @@ from injected services) — this keeps composition declarative.
 
 ```bash
 bin/console polysource:plugins:list
-# Expect: polysource/widgets   0.1.0-alpha.1
+# Expect: polysource/widgets   1.1.0
 ```
 
 Visit `/admin/dashboard/overview`.

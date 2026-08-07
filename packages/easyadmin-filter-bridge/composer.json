@@ -31,7 +31,8 @@
         "twig/twig": "^3.0"
     },
     "suggest": {
-        "openspout/openspout": "^4.0 \u2014 needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`."
+        "openspout/openspout": "^4.0 \u2014 needed for the v0.3.0 export feature (CSV + XLSX streaming). Install only if you use the bundled `ExportController`.",
+        "polysource/symfony-bundle": "Required for RowDetail::listing() \u2014 embedding another Polysource resource as a row-detail panel"
     },
     "require-dev": {
         "doctrine/doctrine-bundle": "^2.18",
@@ -59,7 +60,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "1.2.x-dev"
         },
         "symfony": {
             "controllers": {

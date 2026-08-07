@@ -19,8 +19,9 @@ use Polysource\Core\Resource\AbstractResource;
  * with an existing route prefix can avoid collisions.
  *
  * Not `final` so host applications can subclass to override
- * `configureFields()` until `polysource/core` ships built-in concrete
- * field types (cf. ADR-011). Subclasses MUST keep the constructor
+ * `configureFields()` — e.g. to yield the concrete field types
+ * shipped by `polysource/core` (TextField, DateTimeField, …) for the
+ * columns they care about. Subclasses MUST keep the constructor
  * signature compatible with the DI extension's argument wiring.
  */
 #[AsResource]
@@ -61,13 +62,13 @@ class FailedMessageResource extends AbstractResource
 
     public function configureFields(string $page): iterable
     {
-        // v0.1 of polysource/core ships only the abstract FieldInterface
-        // + FieldTrait; concrete field types live in the host
-        // application until the core ships built-in TextField /
-        // BooleanField / DateTimeField / CodeField / IdField. Once
-        // those land, this method should yield the appropriate fields
-        // for the message_class / failed_at / exception_class /
-        // payload columns.
+        // Intentionally empty: the theme derives columns from the
+        // record when no fields are configured, which keeps this
+        // resource agnostic of the host's envelope shape. Core ships
+        // concrete field types (TextField / DateTimeField / CodeField /
+        // IdField / BooleanField) — yielding a curated set here for
+        // message_class / failed_at / exception_class / payload is an
+        // open improvement; subclass to opt in today.
         return [];
     }
 

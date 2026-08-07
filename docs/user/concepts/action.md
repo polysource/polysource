@@ -94,8 +94,12 @@ bulk sub-interfaces) is treated as a global action. These render on
 the index page header (or a "More" menu) without being tied to a row.
 Use them for "New …", "Export CSV", "Refresh cache", etc.
 
-In v0.1 there is no built-in global action; declare your own and tag
-it with the resource via `configureActions()`.
+No package ships a global action today — every bundled action is
+either inline (`RetryFailedMessageAction`, `DismissFailedMessageAction`,
+`CancelBulkJobAction`, `ApplyTransitionAction`) or bulk
+(`RetryAllFailedMessagesAction`, `PurgeFailedMessagesAction`,
+`ExportAuditCsvAction`). Declare your own and tag it with the resource
+via `configureActions()`.
 
 ## The result
 

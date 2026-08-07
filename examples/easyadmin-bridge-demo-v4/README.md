@@ -5,7 +5,7 @@ with [`polysource/easyadmin-filter-bridge`](../../packages/easyadmin-filter-brid
 installed. Pinned on the **floor** of the multi-version baseline (cf.
 [ADR-015](../../docs/adr/0015-multi-version-compatibility-baseline.md)):
 
-- **PHP 8.1**
+- **PHP 8.2**
 - **Symfony 6.4 LTS**
 - **EasyAdmin 4.29**
 - **Doctrine ORM 2.20+ \|\| 3.6+**
@@ -49,7 +49,7 @@ make up
   signature. EA 5+ added `MenuItem::linkTo(CrudControllerFqcn)`.
 - `Doctrine ORM` config — removed `enable_native_lazy_objects: true`
   which requires PHP 8.4. Doctrine falls back to its proxy-based
-  lazy loading on PHP 8.1.
+  lazy loading on PHP 8.2.
 - URL dispatch — EA 4 uses pretty per-resource routes
   (`/admin/product`, `/admin/category`) instead of EA 5's query-string
   routing. The bridge emits chip "remove" links via `ea_url()` which
@@ -115,7 +115,7 @@ identical FilterDataDto.
 | Demo | PHP | Symfony | EA | Audience |
 |---|---|---|---|---|
 | `easyadmin-bridge-demo/` (bleeding-edge) | 8.4 | 7.4 LTS | 5.0 | Modern stacks |
-| `easyadmin-bridge-demo-v4/` (this one) | 8.1 | 6.4 LTS | 4.29 | The EA v4 audience that didn't migrate yet |
+| `easyadmin-bridge-demo-v4/` (this one) | 8.2 | 6.4 LTS | 4.29 | The EA v4 audience that didn't migrate yet |
 
 Both share the same `polysource/easyadmin-filter-bridge` package
 from `../../packages/easyadmin-filter-bridge` (Composer path

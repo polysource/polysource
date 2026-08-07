@@ -155,8 +155,9 @@ final class PolysourceMatrixVoter extends Voter
 Pros: one file to read for the entire authorisation policy, easy to
 unit-test, easy to diff in code review.
 
-Cons: every new attribute requires touching this file. Acceptable trade
-in v0.1 — you'll have well under 30 attributes for years.
+Cons: every new attribute requires touching this file. That is an
+acceptable trade at realistic scale — a Polysource admin has well
+under 30 attributes.
 
 ## Verifying the voter wins
 
