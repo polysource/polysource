@@ -12,11 +12,16 @@
    variant, inject a detail <tr> under this row. Every label the
    controller needs ships as a Stimulus value so JS stays
    catalog-free. #}
+{# `entity.fqcn` (EntityDto), never `ea.crud.entityFqcn`: EA renders
+   field templates with `with_context: false`, so the `ea` variable
+   here falls back to the raw Twig global (the context PROVIDER, not
+   the context) and property access on it crashes. Surfaced by the
+   showcase E2E run on 2026-08-07. #}
 {% if entity.instance is not null
-   and polysource_row_detail_available(ea.crud.entityFqcn, entity.instance)
+   and polysource_row_detail_available(entity.fqcn, entity.instance)
    and polysource_route_exists('polysource_row_detail') %}
     {% set polysource_rd_url = path('polysource_row_detail', {
-        resource: ea.crud.entityFqcn,
+        resource: entity.fqcn,
         id: entity.primaryKeyValueAsString,
     }) %}
     <a href="{{ polysource_rd_url }}"
