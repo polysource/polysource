@@ -72,7 +72,14 @@
                         {% set row_actions = record_actions is defined
                             ? (record_actions[record.identifier] ?? [])
                             : inline_actions %}
+                        {# Named blocks (since v1.1.0) so a host can
+                         # override one row concern without copying
+                         # the whole `content` block. Blocks inside
+                         # the for-loop re-render per row with the
+                         # loop variables in scope. #}
+                        {% block table_body_row %}
                         <tr>
+                            {% block table_row_cells %}
                             {% for field in fields %}
                                 <td>
                                     {% include field.template|default('@Polysource/field/generic.html.twig')
@@ -81,8 +88,35 @@
                                     %}
                                 </td>
                             {% endfor %}
+                            {% endblock table_row_cells %}
                             <td class="text-end">
+                                {% block table_row_actions %}
                                 <div class="btn-group btn-group-sm" role="group">
+                                    {% if row_details is defined and row_details[record.identifier]|default(false) %}
+                                        {# Expandable row detail (v1.1.0). Real
+                                         # link per ADR-027: without JS it opens
+                                         # the standalone panel page; the
+                                         # Stimulus controller upgrades it to
+                                         # in-place expansion. #}
+                                        {% set polysource_rd_url = path(route_prefix ~ '_detail_panel', {resourceName: resource.name, id: record.identifier}) %}
+                                        <a href="{{ polysource_rd_url }}"
+                                           class="btn btn-outline-secondary polysource-row-detail-toggle"
+                                           role="button"
+                                           aria-expanded="false"
+                                           aria-label="{{ 'polysource.row_detail.expand'|trans({}, 'Polysource') }}"
+                                           data-controller="polysource--row-details"
+                                           data-polysource--row-details-url-value="{{ polysource_rd_url }}?fragment=1"
+                                           data-polysource--row-details-expand-label-value="{{ 'polysource.row_detail.expand'|trans({}, 'Polysource') }}"
+                                           data-polysource--row-details-collapse-label-value="{{ 'polysource.row_detail.collapse'|trans({}, 'Polysource') }}"
+                                           data-polysource--row-details-loading-label-value="{{ 'polysource.row_detail.loading'|trans({}, 'Polysource') }}"
+                                           data-polysource--row-details-error-label-value="{{ 'polysource.row_detail.error'|trans({}, 'Polysource') }}"
+                                           data-polysource--row-details-retry-label-value="{{ 'polysource.row_detail.retry'|trans({}, 'Polysource') }}"
+                                           data-action="polysource--row-details#toggle"
+                                           data-polysource-action="row-detail"
+                                           data-polysource-record="{{ record.identifier }}">
+                                            <span aria-hidden="true" data-polysource--row-details-target="icon">▸</span>
+                                        </a>
+                                    {% endif %}
                                     <a href="{{ path(route_prefix ~ '_detail', {resourceName: resource.name, id: record.identifier}) }}"
                                        class="btn btn-outline-secondary"
                                        data-polysource-action="detail">
@@ -103,8 +137,10 @@
                                         </form>
                                     {% endfor %}
                                 </div>
+                                {% endblock table_row_actions %}
                             </td>
                         </tr>
+                        {% endblock table_body_row %}
                     {% else %}
                         <tr>
                             <td colspan="{{ fields|length + 1 }}" class="text-center text-body-secondary py-4">

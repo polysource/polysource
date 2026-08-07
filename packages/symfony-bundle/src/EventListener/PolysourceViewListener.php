@@ -63,7 +63,7 @@ final class PolysourceViewListener implements EventSubscriberInterface
 
         try {
             $body = $this->twig->render($view->template, $view->variables);
-            $event->setResponse(new Response($body, $view->statusCode));
+            $event->setResponse(new Response($body, $view->statusCode, $view->headers));
         } catch (LoaderError $e) {
             // LoaderError covers two distinct causes:
             //   1) The Polysource Twig namespace (`@Polysource`) was
@@ -96,7 +96,7 @@ final class PolysourceViewListener implements EventSubscriberInterface
 
     private function jsonFallback(PolysourceView $view): JsonResponse
     {
-        return new JsonResponse(self::serialiseSafely($view), $view->statusCode);
+        return new JsonResponse(self::serialiseSafely($view), $view->statusCode, $view->headers);
     }
 
     /**

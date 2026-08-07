@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Polysource\Bundle\Controller;
 
+use Polysource\Bundle\RowDetail\HasRowDetailsInterface;
 use Polysource\Bundle\Security\PermissionAttributes;
 use Polysource\Core\Action\ActionInterface;
 use Polysource\Core\Action\BulkActionInterface;
@@ -249,6 +250,31 @@ final class ControllerSupport
         }
 
         return $views;
+    }
+
+    /**
+     * Whether the index should render the row-detail chevron for one
+     * row: the resource opts in via {@see HasRowDetailsInterface},
+     * the row-detail permission (if any) is granted with the record
+     * as voter subject, and the row actually has a detail.
+     *
+     * Render gate only — RowDetailPanelController re-checks
+     * authoritatively.
+     *
+     * @since 1.1.0
+     */
+    public function isRowDetailAvailable(ResourceInterface $resource, DataRecord $record): bool
+    {
+        if (!$resource instanceof HasRowDetailsInterface) {
+            return false;
+        }
+
+        $attribute = $resource->getRowDetailPermission();
+        if (null !== $attribute && !$this->permission->isGranted($attribute, $record)) {
+            return false;
+        }
+
+        return $resource->hasRowDetail($record);
     }
 
     /**

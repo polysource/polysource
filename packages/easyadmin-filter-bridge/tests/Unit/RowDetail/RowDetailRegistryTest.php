@@ -6,7 +6,7 @@ namespace Polysource\EasyAdminFilterBridge\Tests\Unit\RowDetail;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Polysource\EasyAdminFilterBridge\RowDetail\RowDetail;
+use Polysource\Core\RowDetail\RowDetail;
 use Polysource\EasyAdminFilterBridge\RowDetail\RowDetailProviderInterface;
 use Polysource\EasyAdminFilterBridge\RowDetail\RowDetailRegistry;
 use stdClass;

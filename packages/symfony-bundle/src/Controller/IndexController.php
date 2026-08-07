@@ -38,8 +38,10 @@ final class IndexController
         // "Retry" can vanish on succeeded rows and per-row voters
         // actually fire. Keyed by identifier for the row loop.
         $recordActions = [];
+        $rowDetails = [];
         foreach ($records as $record) {
             $recordActions[$record->identifier] = $this->support->collectRecordActionViews($context->resource, $record, 'index');
+            $rowDetails[$record->identifier] = $this->support->isRowDetailAvailable($context->resource, $record);
         }
 
         // Empty-fields fallback: when the Resource declared no fields,
@@ -60,6 +62,7 @@ final class IndexController
                 'inline_actions' => $actions['inline'],
                 'bulk_actions' => $actions['bulk'],
                 'record_actions' => $recordActions,
+                'row_details' => $rowDetails,
             ],
         );
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\RowDetail;
 
+use Polysource\Core\RowDetail\RowDetail;
+
 /**
  * Declares the expandable row detail for one Doctrine entity.
  *

@@ -10,6 +10,7 @@ use Polysource\Bundle\Controller\ActionController;
 use Polysource\Bundle\Controller\ControllerSupport;
 use Polysource\Bundle\Controller\DetailController;
 use Polysource\Bundle\Controller\IndexController;
+use Polysource\Bundle\Controller\RowDetailPanelController;
 use Polysource\Bundle\Doctor\Check\BundleCheck;
 use Polysource\Bundle\Doctor\Check\DoctrineSchemaCheck;
 use Polysource\Bundle\Doctor\Check\EasyAdminCoLoadCheck;
@@ -108,6 +109,13 @@ return static function (ContainerConfigurator $container): void {
     $services
         ->set(DetailController::class)
         ->args([service(ControllerSupport::class)])
+        ->public()
+        ->tag('controller.service_arguments')
+    ;
+
+    $services
+        ->set(RowDetailPanelController::class)
+        ->args([service(ControllerSupport::class), service(PermissionInterface::class)])
         ->public()
         ->tag('controller.service_arguments')
     ;

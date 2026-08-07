@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Polysource\EasyAdminFilterBridge\RowDetail;
+namespace Polysource\Core\RowDetail;
 
 /**
  * Value object describing what to render inside an expanded row —
- * a Twig template plus its context. Returned by
- * {@see RowDetailProviderInterface::getRowDetail()}.
+ * a Twig template plus its context. Returned by the bridge's
+ * `RowDetailProviderInterface::getRowDetail()` and the bundle's
+ * `HasRowDetailsInterface::getRowDetail()`.
+ *
+ * Lives in core (a template *name* is an opaque string here — no
+ * Twig dependency) so both downstream packages share one shape,
+ * per the ADR-018 ≥2-consumers budget rule.
  *
  * The template always receives the row's entity as `entity` on top
  * of the given context (a `entity` key in `$context` wins, for

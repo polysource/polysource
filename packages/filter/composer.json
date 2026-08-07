@@ -63,6 +63,13 @@
                     "fetch": "eager",
                     "enabled": true,
                     "autoimport": {}
+                },
+                "polysource--row-details": {
+                    "main": "./assets/controllers/row_details_controller.js",
+                    "name": "polysource--row-details",
+                    "fetch": "lazy",
+                    "enabled": true,
+                    "autoimport": {}
                 }
             }
         }

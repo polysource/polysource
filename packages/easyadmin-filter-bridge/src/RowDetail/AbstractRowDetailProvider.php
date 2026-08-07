@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Polysource\EasyAdminFilterBridge\RowDetail;
 
+use Polysource\Core\RowDetail\RowDetail;
+
 /**
  * Convenience base for the 80% case: a template rendered with the
  * entity (plus optional extra context). Subclasses implement
