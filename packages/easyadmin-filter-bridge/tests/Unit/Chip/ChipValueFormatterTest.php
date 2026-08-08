@@ -488,6 +488,100 @@ final class ChipValueFormatterTest extends TestCase
     }
 
     /**
+     * NotNullFilter tri-state resolution moved from the chips-bar
+     * template into stage 3 (2026-08 host regression: the template
+     * pre-resolved the label and shadowed stage-1/2 chipFormatters).
+     */
+    public function testNotNullFilterResolvesTriStateDefaultLabels(): void
+    {
+        $filter = $this->makeFilterStub(
+            \Polysource\EasyAdminFilterBridge\Filter\NotNullFilter::class,
+            'archivedAt',
+            \Polysource\EasyAdminFilterBridge\Form\Type\NotNullFilterType::class,
+        );
+
+        $context = $this->makeContext(filtersMap: ['archivedAt' => $filter]);
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        // The default labels are translation keys resolved in the
+        // bridge's domain — mirror the shipped en catalogue.
+        $translator = new Translator('en');
+        $translator->addLoader('array', new \Symfony\Component\Translation\Loader\ArrayLoader());
+        $translator->addResource('array', [
+            'polysource.filter.not_null.any' => 'Any',
+            'polysource.filter.not_null.has_value' => 'Has value',
+            'polysource.filter.not_null.empty' => 'Empty',
+        ], 'en', 'PolysourceEasyAdminFilterBridge');
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            $translator,
+        );
+
+        self::assertSame('Has value', $formatter->format('archivedAt', 'not_null'));
+        self::assertSame('Empty', $formatter->format('archivedAt', 'null'));
+        self::assertSame('Any', $formatter->format('archivedAt', ''));
+        self::assertSame('Any', $formatter->format('archivedAt', null));
+    }
+
+    public function testNotNullFilterHonoursCustomLabelsOption(): void
+    {
+        $filter = $this->makeFilterStub(
+            \Polysource\EasyAdminFilterBridge\Filter\NotNullFilter::class,
+            'deletedAt',
+            \Polysource\EasyAdminFilterBridge\Form\Type\NotNullFilterType::class,
+        );
+        $filter->getAsDto()->setFormTypeOption('labels', [
+            'any' => 'All',
+            'not_null' => 'Soft-deleted',
+            'null' => 'Active',
+        ]);
+
+        $context = $this->makeContext(filtersMap: ['deletedAt' => $filter]);
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        self::assertSame('Soft-deleted', $formatter->format('deletedAt', 'not_null'));
+        self::assertSame('Active', $formatter->format('deletedAt', 'null'));
+        self::assertSame('All', $formatter->format('deletedAt', ''));
+    }
+
+    public function testStage1ChipFormatterWinsOverNotNullLabels(): void
+    {
+        $filter = $this->makeFilterStub(
+            \Polysource\EasyAdminFilterBridge\Filter\NotNullFilter::class,
+            'parent',
+            \Polysource\EasyAdminFilterBridge\Form\Type\NotNullFilterType::class,
+        );
+        $filter->getAsDto()->setCustomOption(
+            \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
+            static fn (mixed $v): string => 'not_null' === $v ? 'Avec parent' : 'Sans parent',
+        );
+
+        $context = $this->makeContext(filtersMap: ['parent' => $filter]);
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        // The host formatter must shadow the stage-3 labels resolution.
+        self::assertSame('Avec parent', $formatter->format('parent', 'not_null'));
+        self::assertSame('Sans parent', $formatter->format('parent', 'null'));
+    }
+
+    /**
      * @param array<string, FilterInterface>                                $filtersMap
      * @param list<\EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto>|null       $fields  null → no FieldCollection on EntityDto
      *

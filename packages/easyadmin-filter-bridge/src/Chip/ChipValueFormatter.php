@@ -14,6 +14,7 @@ use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
 use Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedEntityFilterType;
+use Polysource\EasyAdminFilterBridge\Form\Type\NotNullFilterType;
 use Polysource\Filter\Bridge\Contract\ChipFormatterInterface;
 use Stringable;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -127,6 +128,9 @@ final class ChipValueFormatter
         if (\in_array($formType, self::ENTITY_FORM_TYPES, true)) {
             return $this->formatEntity($context, $property, $rawValue);
         }
+        if (NotNullFilterType::class === $formType) {
+            return $this->formatNotNull($filter, $rawValue);
+        }
 
         // ─── Stage 4: Auto-detect Doctrine association ───
         if ($this->isDoctrineAssociation($context, $property)) {
@@ -135,6 +139,39 @@ final class ChipValueFormatter
 
         // ─── Stage 5: Default stringify ───
         return $this->stringify($rawValue);
+    }
+
+    /**
+     * Resolves a NotNullFilter tri-state raw value ('' | 'not_null' |
+     * 'null') to the human label declared in the filter's `labels`
+     * form-type option (defaults: Any / Has value / Empty).
+     *
+     * Lives HERE, as part of the stage-3 form-type dispatch, and NOT
+     * in the chips-bar template: resolving it in Twig used to replace
+     * the raw value BEFORE `polysource_chip_value` ran, so stage-1/2
+     * chipFormatters never saw NotNull values — a violation of the
+     * "host formatter always wins" contract (2026-08 host regression).
+     */
+    private function formatNotNull(FilterInterface $filter, mixed $rawValue): string
+    {
+        /** @var array{any?: string, not_null?: string, null?: string} $labels */
+        $labels = $filter->getAsDto()->getFormTypeOptions()['labels'] ?? [];
+
+        $label = match ($rawValue) {
+            NotNullFilterType::VALUE_NOT_NULL => $labels['not_null'] ?? 'polysource.filter.not_null.has_value',
+            NotNullFilterType::VALUE_NULL => $labels['null'] ?? 'polysource.filter.not_null.empty',
+            NotNullFilterType::VALUE_ANY, null => $labels['any'] ?? 'polysource.filter.not_null.any',
+            default => null,
+        };
+
+        if (null === $label) {
+            return $this->stringify($rawValue);
+        }
+
+        // Same contract as the form widget (choice_translation_domain):
+        // default labels are translation keys resolved in the bridge's
+        // domain; host-provided plain strings are echoed verbatim.
+        return $this->translator->trans($label, [], 'PolysourceEasyAdminFilterBridge');
     }
 
     /**

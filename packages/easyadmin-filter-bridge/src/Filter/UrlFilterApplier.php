@@ -85,6 +85,60 @@ final class UrlFilterApplier
         return $applied;
     }
 
+    /**
+     * Number of filter slices in the URL that carry an actual filtering
+     * INTENT — a non-empty value, a non-empty list, or an is-null-family
+     * comparison (which needs no value). Mirrors `applyOne()`'s emptiness
+     * semantics WITHOUT touching a QueryBuilder.
+     *
+     * Callers compare this against `apply()`'s return value to detect
+     * filters that were requested but could not be translated (unknown
+     * or virtual properties, associations…). Exporting MORE rows than
+     * the URL asked for because a filter was silently dropped is a data
+     * leak — consumers such as ExportController fail closed on any
+     * mismatch (2026-08 host report).
+     *
+     * @param array<string, mixed> $query the request query (`$request->query->all()`)
+     */
+    public function requestedCount(array $query): int
+    {
+        $requested = 0;
+        foreach (FilterArrayExtractor::fromQueryArray($query) as $raw) {
+            if ($this->hasFilterIntent($raw)) {
+                ++$requested;
+            }
+        }
+
+        return $requested;
+    }
+
+    private function hasFilterIntent(mixed $raw): bool
+    {
+        if (\is_scalar($raw)) {
+            return '' !== (string) $raw;
+        }
+        if (!\is_array($raw)) {
+            return false;
+        }
+        if ($this->isList($raw)) {
+            return [] !== array_filter($raw, static fn ($v): bool => \is_scalar($v) && '' !== (string) $v);
+        }
+
+        $cmp = isset($raw['comparison']) && \is_string($raw['comparison']) ? strtolower($raw['comparison']) : '';
+        if (\in_array($cmp, ['is null', 'is_null', 'null', 'is not null', 'is_not_null', 'not_null'], true)) {
+            return true;
+        }
+
+        $value = $raw['value'] ?? null;
+        $value2 = $raw['value2'] ?? null;
+        if (\is_array($value)) {
+            return [] !== array_filter($value, static fn ($v): bool => \is_scalar($v) && '' !== (string) $v);
+        }
+
+        return (\is_scalar($value) && '' !== (string) $value)
+            || (\is_scalar($value2) && '' !== (string) $value2);
+    }
+
     private function applyOne(
         QueryBuilder $qb,
         string $rootAlias,

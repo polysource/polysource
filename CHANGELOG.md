@@ -4,6 +4,51 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+All `easyadmin-filter-bridge`; surfaced by a real host integration
+recette on EasyAdmin 5.5 + Webpack Encore without Turbo.
+
+### Fixed
+
+- **EA 5.5 fatal on modal submission** — `FullTextSearchFilterType`
+  and `NotNullFilterType` submitted their hidden `comparison` field
+  with `empty_data: ''`, which Symfony Forms treats as "empty", so
+  the field resolved to `null` and EA 5.5's non-nullable
+  `FilterDataDto::$comparison` fataled on every filter-modal
+  submission. Both types now carry a fixed `=` sentinel their
+  `apply()` never reads.
+- **Filter shim racing EasyAdmin's init** — on non-Turbo stacks the
+  shim could win the race against EA's `DOMContentLoaded` init,
+  consume the button's `data-href` and abort EA's `#createFilters()`
+  — leaving the modal's Apply button unbound with no console error.
+  The shim now decides strictly after `load` (detection signal:
+  `data-href` consumed by EA), and when it does take over it binds
+  the whole contract (open/fetch, auto-tick, Apply, Clear).
+- **NotNull chips bypassing host chipFormatters** — the chips-bar
+  template pre-resolved tri-state labels before
+  `polysource_chip_value` ran, so stage-1/2 host formatters never
+  saw NotNull values despite the documented "host formatter always
+  wins" contract. The raw value now flows; tri-state label
+  resolution moved into `ChipValueFormatter`'s stage-3 form-type
+  dispatch.
+- **Export fail-closed on untranslatable filters** — the generic
+  export endpoint silently dropped URL filters it could not
+  translate (virtual/full-text properties, associations, unknown
+  fields) and exported a broader dataset than the user's filtered
+  view. It now rejects with `422` before streaming starts
+  (`UrlFilterApplier::requestedCount()` vs applied count). Docs:
+  [filter-aware-export.md](./docs/user/easyadmin-filter-bridge/filter-aware-export.md).
+
+### Changed
+
+- **i18n of shipped defaults** — the NotNull tri-state labels, the
+  full-text search placeholder and the 8 saved-view flash messages
+  are now translated (en/fr) through the bridge's domain; host-
+  provided plain strings still pass through verbatim. The stale
+  EA 5.5 example in filter-aware-export.md (`getFieldsForPageName`)
+  was replaced with the EA 4.24 → 5.x construction.
+
 ## [1.1.1] — 2026-08-07
 
 Documentation truth-sync release — no behaviour change.

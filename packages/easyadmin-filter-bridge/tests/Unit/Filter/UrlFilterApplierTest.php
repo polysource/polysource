@@ -396,6 +396,68 @@ final class UrlFilterApplierTest extends TestCase
         self::assertSame(2, $count);
     }
 
+    // ── requestedCount() — the fail-closed counterpart of apply() ──
+    // (2026-08 host report: filters silently dropped on export = data
+    // leak; consumers compare requestedCount vs apply's return.)
+
+    #[Test]
+    public function requestedCountIsZeroWithoutFilters(): void
+    {
+        self::assertSame(0, (new UrlFilterApplier())->requestedCount([]));
+        self::assertSame(0, (new UrlFilterApplier())->requestedCount(['filters' => []]));
+    }
+
+    #[Test]
+    public function requestedCountCountsSlicesWithIntentIncludingUnmappedProperties(): void
+    {
+        $applier = new UrlFilterApplier();
+
+        // The EA modal submits EVERY configured slice — empty ones
+        // (no value) carry no intent and must not count, otherwise
+        // every export with an open modal 422s.
+        $query = ['filters' => [
+            'q' => ['comparison' => '=', 'value' => 'commerc'],   // virtual fulltext → intent
+            'parent' => ['comparison' => '=', 'value' => ''],     // untouched tri-state → no intent
+            'createdAt' => ['comparison' => 'between', 'value' => '', 'value2' => ''], // untouched → no intent
+        ]];
+
+        self::assertSame(1, $applier->requestedCount($query));
+    }
+
+    #[Test]
+    public function requestedCountHonoursIsNullFamilyWithoutValue(): void
+    {
+        // IS NULL needs no value — the predicate IS the data.
+        $query = ['filters' => ['archivedAt' => ['comparison' => 'is null', 'value' => '']]];
+
+        self::assertSame(1, (new UrlFilterApplier())->requestedCount($query));
+    }
+
+    #[Test]
+    public function requestedMinusAppliedExposesDroppedFilters(): void
+    {
+        // The export fail-closed contract: a virtual property (q)
+        // carries intent but cannot be applied → requested exceeds
+        // applied and the consumer must refuse to export.
+        $applier = new UrlFilterApplier();
+        $query = ['filters' => [
+            'q' => ['comparison' => '=', 'value' => 'commerc'],
+            'status' => ['comparison' => '=', 'value' => 'active'],
+        ]];
+
+        $qb = $this->mockQb(
+            expectedAndWheres: ['e.status = :polysource_f_0'],
+            expectedParams: [['polysource_f_0', 'active']],
+        );
+
+        $requested = $applier->requestedCount($query);
+        $applied = $applier->apply($qb, $query, $this->stubMetadata(['status']), 'e');
+
+        self::assertSame(2, $requested);
+        self::assertSame(1, $applied);
+        self::assertGreaterThan(0, $requested - $applied, 'dropped filters must be detectable');
+    }
+
     /**
      * Build a QueryBuilder mock asserting the expected `andWhere` /
      * `setParameter` calls happen in order and no extras leak through.

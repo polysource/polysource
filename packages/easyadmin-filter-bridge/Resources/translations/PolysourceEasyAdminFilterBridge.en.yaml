@@ -5,6 +5,12 @@ polysource:
             remove: 'Remove this filter'
             clear_all: 'Clear all'
         applied_count: '{1} %count% filter applied|]1,Inf[ %count% filters applied'
+        not_null:
+            any: 'Any'
+            has_value: 'Has value'
+            empty: 'Empty'
+        full_text:
+            placeholder: 'Search…'
     columns:
         toggle: 'Columns'
         apply: 'Apply'
@@ -61,3 +67,13 @@ polysource:
             actions: 'Actions'
             help: 'Help'
             global: 'Global'
+    saved_views:
+        flash:
+            saved: 'View "%name%" saved.'
+            duplicate: 'A view named "%name%" already exists.'
+            invalid: 'Saved view requires a non-empty name and resource.'
+            no_filters: 'Apply at least one filter before saving a view.'
+            team_unavailable: 'Team scope unavailable (no team resolver wired or user has no team) — saved as private instead.'
+            deleted: 'View deleted.'
+            default_set: 'View marked as default.'
+            default_unset: 'View unmarked as default.'

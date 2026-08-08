@@ -46,8 +46,12 @@ Doctrine `WHERE` clauses on the QueryBuilder. Supported shapes:
 
 Supported comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`,
 `between`, `like`, `not like`, `in`, `not in`, `is null`,
-`is not null` (all case-insensitive). Anything else is silently
-dropped (defensive — no DQL injection).
+`is not null` (all case-insensitive). Anything else **fails the
+export with `422 Unprocessable Entity`**: since the URL carried a
+filtering intent the endpoint cannot honour, exporting anyway would
+silently return a broader dataset than the user's filtered view — a
+data leak. (No DQL injection either way: nothing unsupported ever
+reaches the QueryBuilder.)
 
 The string values `"true"` / `"false"` are coerced to PHP booleans
 so boolean columns behave as expected; numeric strings stay as
@@ -87,9 +91,15 @@ does **NOT** support:
   bridge's own `polysource/easyadmin-filter-bridge` filter set —
   these need EA's QueryBuilder.
 
-Properties that aren't on the entity's Doctrine field map are
-silently dropped — the applier validates against
-`ClassMetadata::hasField()` before emitting any DQL.
+Properties that aren't on the entity's Doctrine field map cannot be
+translated by the lean applier (it validates against
+`ClassMetadata::hasField()` before emitting any DQL). On the generic
+export endpoint this is **fail-closed**: any URL filter that carries
+a real intent but cannot be applied — including the bridge's own
+`FullTextSearch`/`NotNull` on virtual properties and association
+fields — rejects the request with `422` *before* streaming starts,
+instead of exporting a broader dataset than the on-screen selection.
+Use the custom EA Action below when you need those filters honoured.
 
 ## Going beyond the lean applier — wire a custom EA Action
 
@@ -99,10 +109,13 @@ filters, security voters that depend on the filtered slice),
 `Exporter` service directly with EA's filter-aware QueryBuilder:
 
 ```php
+use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Factory\FilterFactory;
 use Polysource\EasyAdminFilterBridge\Export\Exporter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -127,12 +140,21 @@ final class OrderCrudController extends AbstractCrudController
     public function exportFiltered(AdminContext $context): StreamedResponse
     {
         // EA hands us the QueryBuilder with EVERY filter applied —
-        // including relation joins, FullTextSearch, etc.
+        // including relation joins, FullTextSearch, etc. Fields and
+        // filters are built the same way EA's own index() does
+        // (EA 4.24 → 5.x — the old CrudDto::getFieldsForPageName()
+        // helper no longer exists in EA 5.5):
+        $fields = new FieldCollection($this->configureFields(Crud::PAGE_INDEX));
+        $filters = $this->container->get(FilterFactory::class)->create(
+            $context->getCrud()->getFiltersConfig(),
+            $fields,
+            $context->getEntity(),
+        );
         $qb = $this->createIndexQueryBuilder(
             $context->getSearch(),
             $context->getEntity(),
-            $context->getCrud()->getFieldsForPageName(Crud::PAGE_INDEX),
-            $context->getCrud()->getFiltersForPageName(Crud::PAGE_INDEX),
+            $fields,
+            $filters,
         );
 
         $query = $qb->getQuery();

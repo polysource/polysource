@@ -134,30 +134,18 @@
                         |trim|capitalize %}
                 {% endif %}
 
-                {# Resolve a NotNullFilter human label so the chip shows
-                   "Any" / "Has value" / "Empty" instead of an empty
-                   value placeholder. The labels come from the filter's
-                   `labels` form-type option (defaults: any/not_null/null). #}
-                {% set _not_null_label = null %}
-                {% if entry.isNotNull|default(false) %}
-                    {% set _declared = ea.crud.filtersConfig.getFilter(property) %}
-                    {% set _opts = _declared.getAsDto().getFormTypeOptions %}
-                    {% set _labels = (_opts['labels']|default({any: 'Any', not_null: 'Has value', null: 'Empty'})) %}
-                    {% if value == '' or value is null %}
-                        {% set _not_null_label = _labels['any']|default('Any') %}
-                    {% elseif value == 'not_null' %}
-                        {% set _not_null_label = _labels['not_null']|default('Has value') %}
-                    {% elseif value == 'null' %}
-                        {% set _not_null_label = _labels['null']|default('Empty') %}
-                    {% endif %}
-                {% endif %}
-
+                {# NotNullFilter tri-state labels (Any / Has value / Empty)
+                   are resolved by ChipValueFormatter::formatNotNull() as part
+                   of the stage-3 form-type dispatch — the RAW value must flow
+                   into `polysource_chip_value` so stage-1/2 host chipFormatters
+                   keep their documented priority. Resolving the label here
+                   used to shadow them (2026-08 host regression). #}
                 {{ include('@EasyAdmin/crud/_chip.html.twig', {
                     property: property,
                     slice: slice,
                     label: label,
                     comparison: comparison,
-                    value: _not_null_label is not null ? _not_null_label : value,
+                    value: value,
                     value2: value2,
                 }) }}
             {% endfor %}

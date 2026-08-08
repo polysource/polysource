@@ -165,7 +165,14 @@ final class EnhancedFilterTypesTest extends TestCase
         (new NotNullFilterType())->configureOptions($resolver);
 
         $options = $resolver->resolve();
-        self::assertSame(['any' => 'Any', 'not_null' => 'Has value', 'null' => 'Empty'], $options['labels']);
+        // Since the 2026-08 i18n fix the defaults are TRANSLATION KEYS
+        // resolved in the bridge's domain (fr + en catalogues shipped),
+        // no longer hardcoded English strings.
+        self::assertSame([
+            'any' => 'polysource.filter.not_null.any',
+            'not_null' => 'polysource.filter.not_null.has_value',
+            'null' => 'polysource.filter.not_null.empty',
+        ], $options['labels']);
         self::assertTrue($options['expanded']);
     }
 

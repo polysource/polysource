@@ -5,6 +5,12 @@ polysource:
             remove: 'Retirer ce filtre'
             clear_all: 'Tout effacer'
         applied_count: '{1} %count% filtre appliqué|]1,Inf[ %count% filtres appliqués'
+        not_null:
+            any: 'Tous'
+            has_value: 'Avec valeur'
+            empty: 'Vide'
+        full_text:
+            placeholder: 'Rechercher…'
     columns:
         toggle: 'Colonnes'
         apply: 'Appliquer'
@@ -61,3 +67,13 @@ polysource:
             actions: 'Actions'
             help: 'Aide'
             global: 'Global'
+    saved_views:
+        flash:
+            saved: 'Vue « %name% » enregistrée.'
+            duplicate: 'Une vue nommée « %name% » existe déjà.'
+            invalid: 'La vue nécessite un nom et une ressource.'
+            no_filters: 'Appliquez au moins un filtre avant d''enregistrer une vue.'
+            team_unavailable: 'Portée équipe indisponible (aucun résolveur d''équipe câblé ou utilisateur sans équipe) — enregistrée en privé.'
+            deleted: 'Vue supprimée.'
+            default_set: 'Vue définie par défaut.'
+            default_unset: 'Vue retirée des défauts.'

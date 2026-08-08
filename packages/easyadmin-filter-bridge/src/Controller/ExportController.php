@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -28,6 +29,13 @@ use Symfony\Component\Routing\Attribute\Route;
  * NotNull) wire a custom EA Action on their CrudController and call
  * the {@see Exporter} service directly with EA's filter-aware
  * QueryBuilder — see `docs/user/easyadmin-filter-bridge/filter-aware-export.md`.
+ *
+ * FAIL CLOSED (2026-08 host report): when the URL carries a filter
+ * the applier cannot translate (virtual full-text property,
+ * association, unknown field…), the request is REJECTED with 422
+ * instead of silently exporting a broader dataset than the user
+ * believes they filtered — an export that ignores filters is a data
+ * leak, not a convenience.
  *
  * Security: hosts MUST gate the route behind their EA firewall /
  * voters — the controller does NOT do its own access checks (it
@@ -69,10 +77,35 @@ final class ExportController
         $fieldNames = array_values($metadata->getFieldNames());
         $headers = $fieldNames;
 
+        // Select each scalar field individually rather than the entity
+        // alias (`select('e')`). Doctrine ORM 2.x has a known
+        // limitation: `toIterable()` + `HYDRATE_ARRAY` + full-entity
+        // select silently yields ZERO rows — the iterator exits
+        // immediately because the array hydrator can't stream
+        // entity objects, only flat scalar rows. ORM 3.x relaxed
+        // this, but we support 2.x. Surfaced 2026-05-14 dogfooding
+        // round 3 (friction C7).
+        $select = implode(', ', array_map(static fn (string $f): string => 'e.' . $f, $fieldNames));
+        $qb = $this->em->createQueryBuilder()
+            ->select($select)
+            ->from($entityClass, 'e')
+        ;
+
+        // Apply the `?filters[...]` URL slice (since v0.5.0), and FAIL
+        // CLOSED when any requested filter could not be translated:
+        // the guard MUST run here, before the response starts
+        // streaming — throwing from inside the streamed callback
+        // would corrupt an already-started download.
+        $requested = $this->filterApplier->requestedCount($request->query->all());
+        $applied = $this->filterApplier->apply($qb, $request->query->all(), $metadata, 'e');
+        if ($applied < $requested) {
+            throw new UnprocessableEntityHttpException(\sprintf('%d of %d URL filters cannot be applied to this export (virtual, association or unknown properties are not supported by the generic endpoint) — refusing to export a broader dataset than requested. Wire a custom EA Action for full filter support, see filter-aware-export.md.', $requested - $applied, $requested));
+        }
+
         // Stream rows lazily via Doctrine's iterate-style API. Keeps
         // memory bounded even on 100k-row tables; the writer flushes
         // on every row.
-        $rows = $this->iterateEntities($entityClass, $fieldNames, $request);
+        $rows = $this->iterateRows($qb->getQuery(), $fieldNames);
 
         $filename = \sprintf(
             '%s-%s.%s',
@@ -95,45 +128,16 @@ final class ExportController
     }
 
     /**
-     * @param class-string $entityClass
      * @param list<string> $fieldNames
      *
      * @return iterable<array<string, mixed>>
      */
-    private function iterateEntities(string $entityClass, array $fieldNames, Request $request): iterable
+    private function iterateRows(\Doctrine\ORM\Query $query, array $fieldNames): iterable
     {
-        // Select each scalar field individually rather than the entity
-        // alias (`select('e')`). Doctrine ORM 2.x has a known
-        // limitation: `toIterable()` + `HYDRATE_ARRAY` + full-entity
-        // select silently yields ZERO rows — the iterator exits
-        // immediately because the array hydrator can't stream
-        // entity objects, only flat scalar rows. ORM 3.x relaxed
-        // this, but we support 2.x. Surfaced 2026-05-14 dogfooding
-        // round 3 (friction C7): export endpoint produced a CSV
-        // with only the header row regardless of how many entities
-        // matched.
-        $select = implode(', ', array_map(static fn (string $f): string => 'e.' . $f, $fieldNames));
-        $qb = $this->em->createQueryBuilder()
-            ->select($select)
-            ->from($entityClass, 'e')
-        ;
-
-        // Apply the `?filters[...]` URL slice (since v0.5.0). Only
-        // properties mapped by Doctrine are honoured; unknown ones
-        // are silently dropped by UrlFilterApplier — no DQL injection
-        // risk.
-        $this->filterApplier->apply(
-            $qb,
-            $request->query->all(),
-            $this->em->getClassMetadata($entityClass),
-            'e',
-        );
-
         // With scalar field selects, ARRAY hydration yields a flat
         // associative row per record where keys = field names —
         // exactly what the CSV writer expects. Streaming-safe under
         // ORM 2.x AND 3.x.
-        $query = $qb->getQuery();
         $query->setHydrationMode(\Doctrine\ORM\Query::HYDRATE_ARRAY);
 
         foreach ($query->toIterable() as $row) {

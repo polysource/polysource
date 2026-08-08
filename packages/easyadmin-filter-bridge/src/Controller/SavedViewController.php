@@ -23,6 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Default controller for saved-view create/delete shipped by the
@@ -72,6 +73,11 @@ final class SavedViewController
         private readonly ?Security $security = null,
         private readonly ?CsrfTokenManagerInterface $csrfTokenManager = null,
         private readonly ?SavedViewTeamResolverInterface $teamResolver = null,
+        // Nullable like the other collaborators: on kernels without the
+        // Translation component the flashes fall back to their English
+        // template (2026-08 host report: hardcoded English flashes in a
+        // French UI).
+        private readonly ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -94,7 +100,11 @@ final class SavedViewController
         $filterQs = (string) $request->request->get('filter_querystring', '');
 
         if ($resource === '' || $name === '') {
-            $this->flash($request, 'warning', 'Saved view requires a non-empty name and resource.');
+            $this->flash($request, 'warning', $this->msg(
+                'polysource.saved_views.flash.invalid',
+                [],
+                'Saved view requires a non-empty name and resource.',
+            ));
 
             return $this->redirectToReferrer($request);
         }
@@ -107,7 +117,11 @@ final class SavedViewController
         // thin shim so existing test/host call-sites stay valid.
 
         if ($criteria === []) {
-            $this->flash($request, 'warning', 'Apply at least one filter before saving a view.');
+            $this->flash($request, 'warning', $this->msg(
+                'polysource.saved_views.flash.no_filters',
+                [],
+                'Apply at least one filter before saving a view.',
+            ));
 
             return $this->redirectToReferrer($request);
         }
@@ -126,11 +140,11 @@ final class SavedViewController
                 : null;
             if (null === $teamId || '' === $teamId) {
                 $scope = SavedViewScope::PRIVATE;
-                $this->flash(
-                    $request,
-                    'warning',
+                $this->flash($request, 'warning', $this->msg(
+                    'polysource.saved_views.flash.team_unavailable',
+                    [],
                     'Team scope unavailable (no team resolver wired or user has no team) — saved as private instead.',
-                );
+                ));
             }
         }
 
@@ -146,9 +160,17 @@ final class SavedViewController
 
         try {
             $this->service->save($view);
-            $this->flash($request, 'success', \sprintf('View "%s" saved.', $name));
+            $this->flash($request, 'success', $this->msg(
+                'polysource.saved_views.flash.saved',
+                ['%name%' => $name],
+                \sprintf('View "%s" saved.', $name),
+            ));
         } catch (SavedViewDuplicateNameException $e) {
-            $this->flash($request, 'warning', \sprintf('A view named "%s" already exists.', $e->name));
+            $this->flash($request, 'warning', $this->msg(
+                'polysource.saved_views.flash.duplicate',
+                ['%name%' => $e->name],
+                \sprintf('A view named "%s" already exists.', $e->name),
+            ));
         } catch (SavedViewAccessDeniedException) {
             // The voter denied EDIT or SHARE on the existing view. Translate
             // to 403 instead of leaking the framework exception — the user
@@ -169,7 +191,11 @@ final class SavedViewController
         } catch (SavedViewAccessDeniedException) {
             throw new AccessDeniedHttpException('You are not authorized to delete this view.');
         }
-        $this->flash($request, 'success', 'View deleted.');
+        $this->flash($request, 'success', $this->msg(
+            'polysource.saved_views.flash.deleted',
+            [],
+            'View deleted.',
+        ));
 
         return $this->redirectToReferrer($request);
     }
@@ -218,10 +244,18 @@ final class SavedViewController
         try {
             if ($view->isDefault && null === $view->roleAsDefault) {
                 $this->service->unmarkAsDefault($id);
-                $this->flash($request, 'success', 'View unmarked as default.');
+                $this->flash($request, 'success', $this->msg(
+                    'polysource.saved_views.flash.default_unset',
+                    [],
+                    'View unmarked as default.',
+                ));
             } else {
                 $this->service->markAsDefault($id);
-                $this->flash($request, 'success', 'View marked as default.');
+                $this->flash($request, 'success', $this->msg(
+                    'polysource.saved_views.flash.default_set',
+                    [],
+                    'View marked as default.',
+                ));
             }
         } catch (SavedViewAccessDeniedException) {
             throw new AccessDeniedHttpException('You are not authorized to mark this view as default.');
@@ -264,6 +298,25 @@ final class SavedViewController
         // SafeReferer rejects external hosts so a crafted Referer
         // header cannot turn this POST into an open redirect.
         return new RedirectResponse(SafeReferer::resolve($request, '/'));
+    }
+
+    /**
+     * Translates a flash message through the bridge's domain, falling
+     * back to the English template when no translator is wired OR when
+     * the locale has no catalogue for the key (the translator then
+     * echoes the key itself — never show that to a user).
+     *
+     * @param array<string, string> $parameters
+     */
+    private function msg(string $key, array $parameters, string $fallback): string
+    {
+        if (null === $this->translator) {
+            return $fallback;
+        }
+
+        $translated = $this->translator->trans($key, $parameters, 'PolysourceEasyAdminFilterBridge');
+
+        return $translated === $key ? $fallback : $translated;
     }
 
     private function flash(Request $request, string $type, string $message): void
