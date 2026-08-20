@@ -78,11 +78,70 @@ final class ChipValueFormatter
         EnhancedEntityFilterType::class,
     ];
 
+    /**
+     * Raw URL comparison operator → EA translation key. EA already
+     * ships these labels in 20+ locales AND they are the exact
+     * wording of the comparison <select> in the filter modal — so
+     * chips and modal stay consistent for free. The generic (numeric)
+     * variants are used for the symbol operators: the raw comparison
+     * alone doesn't carry the property type ('=' is "exactly" for
+     * text, "is same" for dates), and the generic wording reads
+     * correctly for every type.
+     */
+    private const EA_OPERATOR_LABEL_KEYS = [
+        '=' => 'filter.label.is_equal_to',
+        '!=' => 'filter.label.is_not_equal_to',
+        '>' => 'filter.label.is_greater_than',
+        '>=' => 'filter.label.is_greater_than_or_equal_to',
+        '<' => 'filter.label.is_less_than',
+        '<=' => 'filter.label.is_less_than_or_equal_to',
+        'between' => 'filter.label.is_between',
+        'like' => 'filter.label.contains',
+        'like_all' => 'filter.label.contains_all',
+        'not like' => 'filter.label.not_contains',
+        'like*' => 'filter.label.starts_with',
+        '*like' => 'filter.label.ends_with',
+    ];
+
+    /**
+     * Operators EA has no label for (the bridge's InFilter and the
+     * null family) → bridge translation keys.
+     */
+    private const BRIDGE_OPERATOR_LABEL_KEYS = [
+        'in' => 'polysource.filter.operator.in',
+        'not in' => 'polysource.filter.operator.not_in',
+        'is null' => 'polysource.filter.operator.is_null',
+        'is not null' => 'polysource.filter.operator.is_not_null',
+    ];
+
     public function __construct(
         private readonly AdminContextProviderInterface $contextProvider,
         private readonly EntityManagerInterface $entityManager,
         private readonly TranslatorInterface $translator,
     ) {
+    }
+
+    /**
+     * Resolves a raw comparison operator from the URL ('like',
+     * 'NOT LIKE', '>='…) to a human label for the chips bar. The
+     * chips-bar template upper-cases the slice comparison before
+     * passing it around, so matching is case-insensitive. Unknown
+     * operators fall back to the previous behaviour (lower-cased
+     * verbatim) rather than guessing.
+     */
+    public function formatOperator(string $comparison): string
+    {
+        $normalized = mb_strtolower(trim($comparison));
+
+        if (isset(self::EA_OPERATOR_LABEL_KEYS[$normalized])) {
+            return $this->translator->trans(self::EA_OPERATOR_LABEL_KEYS[$normalized], [], 'EasyAdminBundle');
+        }
+
+        if (isset(self::BRIDGE_OPERATOR_LABEL_KEYS[$normalized])) {
+            return $this->translator->trans(self::BRIDGE_OPERATOR_LABEL_KEYS[$normalized], [], 'PolysourceEasyAdminFilterBridge');
+        }
+
+        return $normalized;
     }
 
     public function format(string $property, mixed $rawValue): string

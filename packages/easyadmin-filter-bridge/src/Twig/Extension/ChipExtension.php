@@ -40,6 +40,7 @@ final class ChipExtension extends AbstractExtension
     {
         return [
             new TwigFunction('polysource_chip_value', $this->formatter->format(...)),
+            new TwigFunction('polysource_chip_operator', $this->formatter->formatOperator(...)),
         ];
     }
 }

@@ -88,6 +88,52 @@ final class ChipValueFormatterTest extends TestCase
         self::assertSame('foo', $formatter->format('unknown', 'foo'));
     }
 
+    /**
+     * Known operators route through the EA catalog (same wording as
+     * the modal's comparison <select>, all EA locales for free) or
+     * the bridge catalog (operators EA has no label for). Matching is
+     * case-insensitive: the chips-bar template upper-cases slices.
+     */
+    public function testFormatOperatorTranslatesKnownOperators(): void
+    {
+        $translator = new Translator('en');
+        $translator->addLoader('array', new \Symfony\Component\Translation\Loader\ArrayLoader());
+        $translator->addResource('array', [
+            'filter.label.contains' => 'contains',
+            'filter.label.not_contains' => 'does not contain',
+            'filter.label.is_between' => 'is between',
+        ], 'en', 'EasyAdminBundle');
+        $translator->addResource('array', [
+            'polysource.filter.operator.in' => 'in list',
+            'polysource.filter.operator.is_null' => 'is empty',
+        ], 'en', 'PolysourceEasyAdminFilterBridge');
+
+        $formatter = new ChipValueFormatter(
+            $this->createMock(AdminContextProviderInterface::class),
+            $this->createMock(EntityManagerInterface::class),
+            $translator,
+        );
+
+        self::assertSame('contains', $formatter->formatOperator('like'));
+        self::assertSame('contains', $formatter->formatOperator('LIKE'));
+        self::assertSame('does not contain', $formatter->formatOperator('NOT LIKE'));
+        self::assertSame('is between', $formatter->formatOperator('BETWEEN'));
+        self::assertSame('in list', $formatter->formatOperator('IN'));
+        self::assertSame('is empty', $formatter->formatOperator('IS NULL'));
+    }
+
+    public function testFormatOperatorFallsBackToLowercasedRawForUnknown(): void
+    {
+        $formatter = new ChipValueFormatter(
+            $this->createMock(AdminContextProviderInterface::class),
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        self::assertSame('regexp', $formatter->formatOperator('REGEXP'));
+        self::assertSame('sounds like', $formatter->formatOperator(' SOUNDS LIKE '));
+    }
+
     public function testBooleanFilterYesNoEmpty(): void
     {
         $translator = new Translator('en');

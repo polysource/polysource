@@ -52,6 +52,19 @@ recette on EasyAdmin 5.5 + Webpack Encore without Turbo.
   Requested by a host that wants the toolbar off by default while
   rolling the features out gradually.
 
+### Fixed (second recette round)
+
+- **Raw SQL operators leaking into chips** — the chips bar printed
+  the URL comparison verbatim ("like", "not like", ">=") next to the
+  value. Operators are now resolved through
+  `ChipValueFormatter::formatOperator()` (new
+  `polysource_chip_operator` Twig function): known EA comparisons
+  reuse EA's own `filter.label.*` catalog — the exact wording of the
+  modal's comparison select, in every EA locale — and the operators
+  EA has no label for (IN / NOT IN / IS NULL / IS NOT NULL) get new
+  bridge keys (en/fr). Unknown operators keep the previous
+  lower-cased fallback.
+
 ### Changed
 
 - **i18n of shipped defaults** — the NotNull tri-state labels, the

@@ -9,6 +9,11 @@ polysource:
             any: 'Any'
             has_value: 'Has value'
             empty: 'Empty'
+        operator:
+            in: 'in'
+            not_in: 'not in'
+            is_null: 'is empty'
+            is_not_null: 'is filled'
         full_text:
             placeholder: 'Search…'
     columns:

@@ -9,6 +9,11 @@ polysource:
             any: 'Tous'
             has_value: 'Avec valeur'
             empty: 'Vide'
+        operator:
+            in: 'parmi'
+            not_in: 'hors de'
+            is_null: 'est vide'
+            is_not_null: 'est renseigné(e)'
         full_text:
             placeholder: 'Rechercher…'
     columns:

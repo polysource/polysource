@@ -56,14 +56,16 @@
             <span class="ea-filter-chip__arrow">→</span>
             {{ polysource_chip_value(property, value2) }}
         {%- elseif comparison in ['IN', 'NOT IN'] and value is iterable -%}
-            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+            <span class="ea-filter-chip__operator">{{ polysource_chip_operator(comparison) }}</span>
             {{ polysource_chip_value(property, value) }}
         {%- elseif comparison in ['IS NULL', 'IS NOT NULL'] -%}
-            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+            <span class="ea-filter-chip__operator">{{ polysource_chip_operator(comparison) }}</span>
         {%- elseif value is iterable -%}
             {{ polysource_chip_value(property, value) }}
         {%- elseif comparison and comparison != '=' -%}
-            <span class="ea-filter-chip__operator">{{ comparison|lower }}</span>
+            {# Human wording via polysource_chip_operator (v1.1.2):
+               raw operators ("like", "not like") leaked to the UI. #}
+            <span class="ea-filter-chip__operator">{{ polysource_chip_operator(comparison) }}</span>
             {{ polysource_chip_value(property, value) }}
         {%- else -%}
             {{ polysource_chip_value(property, value) }}
