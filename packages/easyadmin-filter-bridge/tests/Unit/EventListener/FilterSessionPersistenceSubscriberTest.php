@@ -109,6 +109,62 @@ final class FilterSessionPersistenceSubscriberTest extends TestCase
         self::assertNull($this->filterService->load(self::PRODUCT_FQCN));
     }
 
+    /**
+     * The reset redirect must not drop non-filter query parameters:
+     * hosts scope CRUDs with context params (`?deploymentGroup=2`) and
+     * the previous bare-path canonicalisation 404'd them (2026-08 host
+     * regression). When the URL already IS canonical (context params
+     * only, no `filters`), no redirect at all — the page just renders.
+     */
+    public function testExplicitResetKeepsNonFilterQueryParamsWithoutRedirect(): void
+    {
+        $this->filterService->save(new \Polysource\Filter\Model\FilterCollection(self::PRODUCT_FQCN, [
+            new \Polysource\Filter\Model\FilterCriterion('name', 'like', ['hat']),
+        ]));
+
+        $request = Request::create('/admin/product?deploymentGroup=2');
+        $request->headers->set('Referer', 'http://localhost/admin/product?deploymentGroup=2&filters%5Bname%5D%5Bvalue%5D=hat');
+        $event = $this->makeEvent($request);
+
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
+
+        self::assertNull($this->filterService->load(self::PRODUCT_FQCN), 'session must still be cleared');
+        self::assertFalse($event->isPropagationStopped(), 'canonical URL with context params must render, not redirect');
+    }
+
+    public function testExplicitResetRedirectPreservesNonFilterQueryParams(): void
+    {
+        $this->filterService->save(new \Polysource\Filter\Model\FilterCollection(self::PRODUCT_FQCN, [
+            new \Polysource\Filter\Model\FilterCriterion('name', 'like', ['hat']),
+        ]));
+
+        // Non-canonical URI (trailing '&' artefact) → redirect, but to a
+        // URL that keeps the host's context param.
+        $request = Request::create('/admin/product?deploymentGroup=2&');
+        $request->headers->set('Referer', 'http://localhost/admin/product?filters%5Bname%5D%5Bvalue%5D=hat');
+        $event = $this->makeEvent($request);
+
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
+
+        $response = $event->getResponse();
+        self::assertInstanceOf(RedirectResponse::class, $response);
+        self::assertSame('/admin/product?deploymentGroup=2', $response->getTargetUrl());
+    }
+
+    public function testExplicitResetTrailingQuestionMarkRedirectsToBarePath(): void
+    {
+        $request = Request::create('/admin/product');
+        $request->server->set('REQUEST_URI', '/admin/product?');
+        $request->headers->set('Referer', 'http://localhost/admin/product?filters%5Bname%5D%5Bvalue%5D=hat');
+        $event = $this->makeEvent($request);
+
+        (new FilterSessionPersistenceSubscriber($this->filterService))->onBeforeCrudAction($event);
+
+        $response = $event->getResponse();
+        self::assertInstanceOf(RedirectResponse::class, $response);
+        self::assertSame('/admin/product', $response->getTargetUrl());
+    }
+
     public function testNoOpForNonIndexAction(): void
     {
         $request = Request::create('/admin/product/1/edit?filters%5Bname%5D%5Bvalue%5D=hat');

@@ -54,6 +54,16 @@ recette on EasyAdmin 5.5 + Webpack Encore without Turbo.
 
 ### Fixed (second recette round)
 
+- **Filter reset dropping host context query params** — the modal's
+  Clear button submits a filterless URL, which
+  `FilterSessionPersistenceSubscriber` detected as an explicit reset
+  and "canonicalised" by redirecting to the **bare path** — silently
+  discarding every non-filter query parameter. Hosts that scope a CRUD
+  with context params (`?deploymentGroup=2`) landed on a 404 after
+  clearing filters. The reset now redirects to path + remaining
+  non-filter params (and only when the URL actually needs
+  normalising); the trailing-`?` cleanup behaviour is preserved.
+
 - **Raw SQL operators leaking into chips** — the chips bar printed
   the URL comparison verbatim ("like", "not like", ">=") next to the
   value. Operators are now resolved through

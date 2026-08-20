@@ -120,9 +120,21 @@ final class FilterSessionPersistenceSubscriber implements EventSubscriberInterfa
         if ($this->isExplicitReset($request)) {
             $this->filterService->clear($controllerFqcn);
 
+            // Canonicalise the post-reset URL: drop the `filters` slice
+            // and the trailing '?' the modal Clear leaves behind, but
+            // PRESERVE every other query parameter — hosts scope their
+            // CRUDs with context params (e.g. `?parentId=42`) and a
+            // redirect to the bare path silently drops that context
+            // (surfaced 2026-08 by a host whose member listing 404s
+            // without its group id).
+            $remaining = $request->query->all();
+            unset($remaining[self::FILTERS_QUERY_PARAM]);
+            $canonicalUri = $request->getPathInfo()
+                . ([] === $remaining ? '' : '?' . http_build_query($remaining));
+
             $requestUri = $request->server->get('REQUEST_URI', '');
-            if ($requestUri !== $request->getPathInfo()) {
-                $event->setResponse(new RedirectResponse($request->getPathInfo()));
+            if ($requestUri !== $canonicalUri) {
+                $event->setResponse(new RedirectResponse($canonicalUri));
             }
 
             return;
