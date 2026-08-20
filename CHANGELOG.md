@@ -40,6 +40,18 @@ recette on EasyAdmin 5.5 + Webpack Encore without Turbo.
   (`UrlFilterApplier::requestedCount()` vs applied count). Docs:
   [filter-aware-export.md](./docs/user/easyadmin-filter-bridge/filter-aware-export.md).
 
+### Added
+
+- **Datagrid extension blocks** — the bridge's `crud/index.html.twig`
+  now wraps its two injected regions in named Twig blocks:
+  `polysource_datagrid_toolbar` (saved-views dropdown +
+  column-visibility toggle) and `polysource_chips_bar` (active-filters
+  chips). Hosts extending the template can override either block —
+  empty body to opt out on a given CRUD, or custom markup to
+  reposition — without re-implementing the rest of the index.
+  Requested by a host that wants the toolbar off by default while
+  rolling the features out gradually.
+
 ### Changed
 
 - **i18n of shipped defaults** — the NotNull tri-state labels, the

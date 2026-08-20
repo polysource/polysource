@@ -58,6 +58,12 @@
 {% endblock %}
 
 {% block main %}
+    {# Extension point (v1.1.2): the saved-views + column-visibility
+       toolbar. Hosts extending this template can override the block —
+       e.g. with an empty body to opt out of both widgets on a given
+       CRUD, or to reposition/augment the toolbar — without
+       re-implementing the rest of the index. #}
+    {% block polysource_datagrid_toolbar %}
     {# Saved-views dropdown — uses the EA entity FQCN as the
        resourceName so saved views are automatically scoped per
        CrudController without host-side config.
@@ -173,11 +179,18 @@
             {% endif %}
         </div>
     {% endif %}
+    {% endblock polysource_datagrid_toolbar %}
 
+    {# Extension point (v1.1.2): the active-filters chips bar. For
+       cosmetic changes prefer overriding `_chips_bar.html.twig` /
+       `_chip.html.twig` (see header comment); this block is for
+       removing or relocating the bar on a specific CRUD. #}
+    {% block polysource_chips_bar %}
     {% set applied_filters = ea.request.query.all['filters']|default([]) %}
     {{ include('@EasyAdmin/crud/_chips_bar.html.twig', {
         applied_filters: applied_filters,
     }) }}
+    {% endblock polysource_chips_bar %}
 
     {{ parent() }}
 {% endblock main %}
