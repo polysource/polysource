@@ -278,6 +278,40 @@ final class ChipValueFormatterTest extends TestCase
     }
 
     /**
+     * Nested filter properties (EntityFilter::new('speech.training'))
+     * reach the chips bar with EasyAdmin's embedded-property separator
+     * (`filters[speech:training]` in the URL) while the host registered
+     * the filter under its dotted name. format() must normalize the
+     * separator so the whole routing chain — host chipFormatters
+     * included — resolves the filter (2026-08 host regression: the chip
+     * showed "Speech:training : 1" instead of the training name).
+     */
+    public function testNestedPropertySeparatorIsNormalizedForFilterLookup(): void
+    {
+        $filter = $this->makeFilterStub(EntityFilter::class, 'speech.training');
+        $filter->getAsDto()->setCustomOption(
+            \Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions::CHIP_FORMATTER,
+            static fn (mixed $v): string => 'TRAINING-' . (\is_scalar($v) ? (string) $v : 'null'),
+        );
+
+        // Registered under the dotted name, exactly as configureFilters() does.
+        $context = $this->makeContext(filtersMap: ['speech.training' => $filter]);
+        $provider = $this->createMock(AdminContextProviderInterface::class);
+        $provider->method('getContext')->willReturn($context);
+
+        $formatter = new ChipValueFormatter(
+            $provider,
+            $this->createMock(EntityManagerInterface::class),
+            new Translator('en'),
+        );
+
+        // Queried with the URL's embedded separator.
+        self::assertSame('TRAINING-4', $formatter->format('speech:training', '4'));
+        // The dotted form keeps working too.
+        self::assertSame('TRAINING-4', $formatter->format('speech.training', '4'));
+    }
+
+    /**
      * Stage 2 — Field customOption(CHIP_FORMATTER) wins over
      * stages 3-5. Demonstrates table↔chip coherence: the host
      * declares ONE callable on the field and both layers consume it.

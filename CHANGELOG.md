@@ -11,6 +11,17 @@ recette on EasyAdmin 5.5 + Webpack Encore without Turbo.
 
 ### Fixed
 
+- **Chips bar blind to nested filter properties** — filters declared
+  on nested paths (`EntityFilter::new('speech.training')`, resolved
+  natively by EA 5 with automatic joins) reach the URL with EA's
+  embedded-property separator (`filters[speech:training]`). The chips
+  bar and `ChipValueFormatter` looked the filter up under that raw
+  key, never found it, and rendered the humanised property name plus
+  the raw PK ("Speech:training : 1") — bypassing host chipFormatters.
+  Lookups now normalize `:` back to `.` (the raw key still drives the
+  remove-chip URL), and the default entity resolution walks nested
+  association paths through Doctrine metadata to the target entity's
+  `__toString`.
 - **EA 5.5 fatal on modal submission** — `FullTextSearchFilterType`
   and `NotNullFilterType` submitted their hidden `comparison` field
   with `empty_data: ''`, which Symfony Forms treats as "empty", so

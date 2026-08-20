@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Filter\FilterInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Provider\AdminContextProviderInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\BooleanFilterType;
 use EasyCorp\Bundle\EasyAdminBundle\Form\Filter\Type\EntityFilterType;
+use EasyCorp\Bundle\EasyAdminBundle\Form\Type\FiltersFormType;
 use Polysource\EasyAdminFilterBridge\Bridge\BridgeOptions;
 use Polysource\EasyAdminFilterBridge\Doctrine\DoctrineMetadataHelper;
 use Polysource\EasyAdminFilterBridge\Form\Type\EnhancedBooleanFilterType;
@@ -146,6 +147,14 @@ final class ChipValueFormatter
 
     public function format(string $property, mixed $rawValue): string
     {
+        // Nested filter properties (EntityFilter::new('speech.training'))
+        // reach the URL — and therefore the chips bar — with EasyAdmin's
+        // embedded-property separator (`filters[speech:training]`), while
+        // the host registered the filter under its dotted name. Normalize
+        // so the whole routing chain (host chipFormatters included) keeps
+        // working for nested filters.
+        $property = str_replace(FiltersFormType::EMBEDDED_PROPERTY_SEPARATOR, '.', $property);
+
         $context = $this->contextProvider->getContext();
         if (null === $context) {
             return $this->stringify($rawValue);
@@ -317,30 +326,7 @@ final class ChipValueFormatter
             return implode(', ', array_filter($resolved, static fn (string $s): bool => '' !== $s));
         }
 
-        $entityFqcn = $context->getEntity()->getFqcn();
-        if (!class_exists($entityFqcn)) {
-            return $this->stringify($rawValue);
-        }
-
-        try {
-            $metadata = $this->entityManager->getClassMetadata($entityFqcn);
-        } catch (Throwable) {
-            return $this->stringify($rawValue);
-        }
-
-        if (!$metadata->hasAssociation($property)) {
-            return $this->stringify($rawValue);
-        }
-
-        // Doctrine ORM 2.x exposes the mapping as an array, 3.x as
-        // an AssociationMapping object. DoctrineMetadataHelper hides
-        // the shape detection — extracted in v0.9.0 so the cross-
-        // version trivia lives in one well-named class instead of
-        // being inlined here.
-        $targetClass = DoctrineMetadataHelper::extractTargetEntity(
-            $metadata->getAssociationMapping($property),
-        );
-
+        $targetClass = $this->resolveAssociationTargetClass($context, $property);
         if (null === $targetClass) {
             return $this->stringify($rawValue);
         }
@@ -363,18 +349,54 @@ final class ChipValueFormatter
      */
     private function isDoctrineAssociation(AdminContextInterface $context, string $property): bool
     {
+        return null !== $this->resolveAssociationTargetClass($context, $property);
+    }
+
+    /**
+     * Resolves the target entity class of an association property —
+     * including NESTED paths ('speech.training', EasyAdmin resolves
+     * their joins natively since EA 5) by walking each segment through
+     * the Doctrine metadata. Returns null when any segment isn't a
+     * mapped association (callers fall back to stringify).
+     *
+     * Doctrine ORM 2.x exposes mappings as arrays, 3.x as
+     * AssociationMapping objects. DoctrineMetadataHelper hides the
+     * shape detection — extracted in v0.9.0 so the cross-version
+     * trivia lives in one well-named class instead of being inlined.
+     *
+     * @param AdminContextInterface<object> $context
+     *
+     * @return class-string|null
+     */
+    private function resolveAssociationTargetClass(AdminContextInterface $context, string $property): ?string
+    {
         $entityFqcn = $context->getEntity()->getFqcn();
         if (!class_exists($entityFqcn)) {
-            return false;
+            return null;
         }
 
-        try {
-            $metadata = $this->entityManager->getClassMetadata($entityFqcn);
-        } catch (Throwable) {
-            return false;
+        $currentClass = $entityFqcn;
+        foreach (explode('.', $property) as $segment) {
+            try {
+                $metadata = $this->entityManager->getClassMetadata($currentClass);
+            } catch (Throwable) {
+                return null;
+            }
+
+            if (!$metadata->hasAssociation($segment)) {
+                return null;
+            }
+
+            $currentClass = DoctrineMetadataHelper::extractTargetEntity(
+                $metadata->getAssociationMapping($segment),
+            );
+
+            if (null === $currentClass) {
+                return null;
+            }
         }
 
-        return $metadata->hasAssociation($property);
+        return $currentClass;
     }
 
     private function stringify(mixed $value): string

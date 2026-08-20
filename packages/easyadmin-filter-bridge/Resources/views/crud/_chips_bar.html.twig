@@ -67,7 +67,11 @@
     {% set _is_applied = helpers.is_slice_applied(slice)|trim == '1' %}
     {% set _is_not_null_filter = false %}
     {% if ea is defined and ea.crud is not null %}
-        {% set _declared = ea.crud.filtersConfig.getFilter(property) %}
+        {# Nested filter properties reach the URL with EA's embedded
+           separator (`filters[speech:training]`) while filters are
+           registered under their dotted name — normalize for LOOKUPS
+           only (the raw key keeps driving the remove-chip URL). #}
+        {% set _declared = ea.crud.filtersConfig.getFilter(property|replace({':': '.'})) %}
         {% if _declared is not null and _declared.getAsDto is defined
               and _declared.getAsDto().getFormType() == 'Polysource\\EasyAdminFilterBridge\\Form\\Type\\NotNullFilterType' %}
             {% set _is_not_null_filter = true %}
@@ -114,7 +118,8 @@
                       (e.g. URL-injected legacy filter). #}
                 {% set label = null %}
                 {% if ea is defined and ea.crud is not null %}
-                    {% set declared = ea.crud.filtersConfig.getFilter(property) %}
+                    {# Same `:` → `.` lookup normalization as above. #}
+                    {% set declared = ea.crud.filtersConfig.getFilter(property|replace({':': '.'})) %}
                     {% if declared is not null %}
                         {# Fluent EA Filter — getAsDto() returns the
                            FilterDto with the resolved label. #}
