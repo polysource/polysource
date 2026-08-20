@@ -4,7 +4,7 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.2] — 2026-08-20
 
 All `easyadmin-filter-bridge`; surfaced by a real host integration
 recette on EasyAdmin 5.5 + Webpack Encore without Turbo.

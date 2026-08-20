@@ -144,6 +144,34 @@ template, which itself falls through to upstream EA:
 
 Resolution chain: your override → bridge template → upstream EA.
 
+### Removing or relocating the toolbar and the chips bar
+
+The bridge index wraps its two injected regions in named blocks, so
+an app-level override can drop or move either one without touching
+the rest of the page:
+
+| Block | Contains |
+|---|---|
+| `polysource_datagrid_toolbar` | saved-views dropdown + column-visibility dropdown |
+| `polysource_chips_bar` | the active-filters chips bar |
+
+Override a block with an empty body to opt out on a given CRUD (for
+example while rolling saved views out gradually), or with custom
+markup to reposition it:
+
+```twig
+{# templates/bundles/EasyAdminBundle/crud/index.html.twig #}
+{% extends '@PolysourceEasyAdminFilterBridge/crud/index.html.twig' %}
+
+{# no saved-views / column toolbar on this app, chips bar untouched #}
+{% block polysource_datagrid_toolbar %}{% endblock %}
+```
+
+Per-CRUD opt-out works the same way with a controller-specific
+template (`setCrudTemplate`/`overrideTemplate('crud/index', …)`)
+that extends the bridge index. For cosmetic changes to the chips
+themselves, prefer the partial overrides below.
+
 ### Chip and chips-bar markup
 
 The chips bar is split into two templates precisely so the common
@@ -156,7 +184,12 @@ overrides stay small:
 
 `_chip.html.twig` receives `property`, `label`, `comparison`,
 `value`, `value2`, and `slice` — see the input contract documented
-in the template's header. A minimal recolored chip:
+in the template's header. Two Twig functions do the rendering work:
+`polysource_chip_value(property, value)` resolves the value through
+the chip-formatter chain, and `polysource_chip_operator(comparison)`
+turns the raw URL comparison (`like`, `>=`, `IN`…) into the same
+wording EasyAdmin uses in the filter modal's comparison select.
+A minimal recolored chip:
 
 ```twig
 {# templates/bundles/EasyAdminBundle/crud/_chip.html.twig #}
