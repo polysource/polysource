@@ -5,7 +5,7 @@
 > 1. **`polysource/easyadmin-filter-bridge`** — enrichit les filtres d'une app EasyAdmin existante (4.24+ ou 5.0+) — ranges, multi-select, custom filter types, saved views, chips bar — sans forker EA.
 > 2. **Polysource standalone admin** (à installer via `polysource/symfony-bundle` + les adapters utiles) — admin pour ressources non-Doctrine : Messenger, Redis, S3, REST, Meilisearch, configs.
 
-Statut : **v1.1.2 publiée le 2026-08-20** — 16 packages distribués sur Packagist comme `polysource/<pkg>`, mirrorés depuis ce monorepo via le pipeline subtree-split documenté dans [ADR-026](./adr/0026-monorepo-split-and-packagist-mirrors.md). **API publique gelée depuis v1.0.0 (2026-08-06)** per [ADR-018](./adr/0018-admin-plugin-interface-and-public-contracts.md) — SemVer strict, breaking changes en versions majeures uniquement. Pour l'historique versionné voir [`CHANGELOG.md`](../CHANGELOG.md), pour ce qui vient ensuite voir [`ROADMAP.md`](../ROADMAP.md).
+Statut : **v1.2.0 publiée le 2026-08-24** — 16 packages distribués sur Packagist comme `polysource/<pkg>`, mirrorés depuis ce monorepo via le pipeline subtree-split documenté dans [ADR-026](./adr/0026-monorepo-split-and-packagist-mirrors.md). **API publique gelée depuis v1.0.0 (2026-08-06)** per [ADR-018](./adr/0018-admin-plugin-interface-and-public-contracts.md) — SemVer strict, breaking changes en versions majeures uniquement. Pour l'historique versionné voir [`CHANGELOG.md`](../CHANGELOG.md), pour ce qui vient ensuite voir [`ROADMAP.md`](../ROADMAP.md).
 
 ## Pour les utilisateurs
 
@@ -36,11 +36,11 @@ La documentation utilisateur (installation, getting-started, guides par package,
 - [**Guide release & split**](./maintainers/release-and-split.md) — comment releaser, ajouter un package, debugger un échec de split, rotater la clé de l'App
 - [**Symfony Flex recipes (prepared)**](./maintainers/flex-recipes/README.md) — 14 manifests prêts pour soumission à `symfony/recipes-contrib` + workflow de submission
 - [**TestKernel patterns**](./maintainers/test-kernel-patterns.md) — conventions pour les TestKernels intra-monorepo (PHPUnit 11 risky, cache-dirs uniques, SchemaTool reset, ORM 2.x quirks)
-- [**Symfony compatibility audit**](./maintainers/symfony-compat-audit.md) — ce qu'on advertise vs ce qu'on teste (Sf 5.4 → 8.0, PHP 8.1 → 8.5, EA 4.24 / 5.0, Doctrine ORM 2.x / 3.x), gaps et action items v0.7+ / v1.0
+- [**Symfony compatibility audit**](./maintainers/symfony-compat-audit.md) — ce qu'on advertise vs ce qu'on teste (Sf 6.4 → 8.1, PHP 8.2 → 8.5, EA 4.24 / 5.0, Doctrine ORM 2.x / 3.x), ce que Symfony 8 a réellement cassé, et les gaps restants
 
 ### Roadmap & historique
 - [**ROADMAP.md**](../ROADMAP.md) — ce qui est livré (v0.1 → v1.1), ce qui est en backlog
-- [**CHANGELOG.md**](../CHANGELOG.md) — historique versionné des releases (v0.1.0 → v1.1.2)
+- [**CHANGELOG.md**](../CHANGELOG.md) — historique versionné des releases (v0.1.0 → v1.2.0)
 - [**Pre-v1.0 freeze checklist (ADR-011)**](./adr/0011-pre-v1.0-freeze-checklist.md) — la checklist API du freeze v1.0 (close au tag v1.0.0 ; conserve les planchers PHP 8.2+ / Sf 6.4+)
 
 > Le plan de développement détaillé (par phase, par item, par jour) reste un document de travail interne du mainteneur — non publié.

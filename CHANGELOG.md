@@ -4,6 +4,68 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-08-24
+
+Symfony 8 and PHP 8.5 go from "allowed by our constraints" to "gated by
+our CI". Every package has advertised `symfony/*: ^6.4 || ^7.0 || ^8.0`
+and `php: >=8.2` since v0.6, but nothing had ever run against the top of
+that range. It does now, and the product code needed no changes: the
+full suite passed on PHP 8.5.9 × Symfony 8.1.5 × EasyAdmin 5.5.1 ×
+Doctrine ORM 3.6.7 on the first run.
+
+**No floor moved.** PHP 8.2 and Symfony 6.4 LTS remain the minimum, so
+upgrading on an older stack is a no-op.
+
+### Added
+
+- **PHP 8.5 × Symfony 8.1 × EA 5 row** in the PHPUnit matrix, bringing
+  it to 6 hand-listed combinations.
+- **`sf81-ceiling` CI job** — the mirror image of `sf54-floor`: installs
+  `polysource/easyadmin-filter-bridge` from real Packagist onto a
+  vanilla Symfony 8.1 skeleton on PHP 8.5, then asserts Symfony 8
+  actually resolved (a stale constraint quietly falling back to 7.4
+  would make the job worthless), `cache:clear`, the route count and
+  `lint:twig`.
+
+### Fixed
+
+- **`symfony/mercure` constraint excluded every Symfony 8 compatible
+  release.** `^0.6 || ^1.0` covers neither 0.7 nor 0.8, and 0.8 is the
+  only line declaring `symfony/http-client: ^6.4|^7.3|^8.0`. A host on
+  Symfony 8 therefore could not resolve `polysource/bulk-async` with
+  live progress broadcasting at all. Widened to
+  `^0.6 || ^0.7 || ^0.8 || ^1.0`. This is the only change in the release
+  with consumer-visible effect.
+- **`polysource:doctor` reported the wrong PHP floor.**
+  `PhpVersionCheck` still required 8.1.0, left over from before the
+  v1.0 freeze raised the baseline to 8.2.
+- **`sf54-floor` smoke job was testing a retired lineage.** Its own
+  comment says it gates the v1.0 floor, but the constraint had been
+  left at `^0.6` — a line that is known broken against recent
+  EasyAdmin, so the job could not have caught a real floor regression.
+  Pinned to `^1.1`.
+- **Test doubles are no longer version-coupled.** `symfony/mercure` 0.8
+  added `getProtocolVersion()` and `getCookieName()` to `HubInterface`,
+  which fataled two hand-written stubs at class-load time; they are now
+  PHPUnit mocks, verified against both 0.6 and 0.8. A row-detail
+  integration fixture also missed the cross-version
+  `mixed $vote = null` override that Symfony 8's `Voter` requires (the
+  production `SavedViewVoter` already had it).
+
+### Changed
+
+- The CI test job now unsets `config.platform.php` before installing.
+  The root manifest pins it to `8.2.99` so maintainers on a newer PHP
+  still resolve against the v1.0 floor; in CI that pin is redundant and
+  makes the Symfony 8 row unresolvable.
+- [Symfony compatibility audit](./docs/maintainers/symfony-compat-audit.md)
+  re-audited end to end, including a record of what Symfony 8 broke and
+  two documented non-findings (PHPStan's `class.notFound` noise against
+  a Symfony 8 vendor is an ADR-015 parser-baseline artifact, not a
+  missing symbol; the only PHP 8.5 deprecations are
+  `ReflectionProperty::setAccessible()` calls in three test files, none
+  in any `src/`).
+
 ## [1.1.2] — 2026-08-20
 
 All `easyadmin-filter-bridge`; surfaced by a real host integration
