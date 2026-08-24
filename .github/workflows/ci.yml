@@ -198,12 +198,13 @@ jobs:
         # with the v1.0 freeze, cf. ADR-011 floor targets.
         #
         # Each row is listed by hand; cartesian-product matrices generate
-        # impossible combos (e.g. PHP 8.2 × Sf 8.0 — Sf 8 needs 8.4+).
+        # impossible combos (e.g. PHP 8.2 × Sf 8.1 — Sf 8 needs 8.4+).
         #   1. Floor:          PHP 8.2 + Sf 6.4 LTS   + EA 4.x
         #   2. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
         #   3. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
         #   4. Modern:         PHP 8.3 + Sf 7.4 LTS   + EA 5.x
         #   5. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
+        #   6. Ceiling:        PHP 8.5 + Sf 8.1       + EA 5.x
         include:
           - php: '8.2'
             symfony: '6.4.*'
@@ -220,6 +221,9 @@ jobs:
           - php: '8.4'
             symfony: '7.4.*'
             easyadmin: '^5.0'
+          - php: '8.5'
+            symfony: '8.1.*'
+            easyadmin: '^5.0'
     steps:
       - uses: actions/checkout@v6
 
@@ -228,6 +232,16 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: composer:v2, flex
           coverage: pcov
+
+      - name: Drop the local platform pin
+        # The root composer.json pins `config.platform.php` to 8.2.99 so a
+        # maintainer developing on a newer PHP still resolves against the
+        # v1.0 floor. In CI that pin is not just redundant (setup-php
+        # already provides the exact PHP each row wants) — it is actively
+        # wrong for the Sf 8 row, because Symfony 8 requires PHP 8.4+ and
+        # composer would refuse to resolve it against a pinned 8.2.99.
+        # Each row resolves against its real PHP instead.
+        run: composer config --unset platform.php
 
       - name: Constrain Symfony version
         run: |
@@ -301,9 +315,13 @@ jobs:
           mkdir -p /tmp/sf54-smoke
           cd /tmp/sf54-smoke
           composer create-project symfony/skeleton:^6.4 . --no-interaction --no-progress 2>&1 | tail -3
+          # ^1.1, not ^0.6: this job's own comment says it gates the v1.0
+          # floor, but the constraint had been left on the pre-1.0 lineage
+          # — so it was smoke-testing a line we no longer ship (and which
+          # is known broken against recent EasyAdmin).
           composer require --no-interaction --no-progress \
             easycorp/easyadmin-bundle:^4.24 \
-            polysource/easyadmin-filter-bridge:^0.6 \
+            polysource/easyadmin-filter-bridge:^1.1 \
             doctrine/orm doctrine/doctrine-bundle \
             symfony/security-bundle 2>&1 | tail -8
 
@@ -325,6 +343,57 @@ jobs:
         run: |
           cd /tmp/sf54-smoke
           php bin/console cache:clear --env=dev 2>&1 | tail -3
+
+  sf81-ceiling:
+    name: Sf 8.1 ceiling smoke (filter + bridge alone, PHP 8.5)
+    runs-on: ubuntu-24.04
+    # Mirror image of `sf54-floor`: that job proves the OLDEST stack we
+    # advertise still installs, this one proves the NEWEST does. Both
+    # exercise the bridge-alone path against real Packagist, so a host
+    # app's `composer require` is what gets tested, not our monorepo's
+    # path repos.
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          # PHP 8.5 + Sf 8.1 + EA 5 — the newest combination that exists
+          # at the time of writing, and the stack modern host apps are on.
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Bootstrap vanilla Symfony 8.1 skeleton + EA 5
+        run: |
+          mkdir -p /tmp/sf81-smoke
+          cd /tmp/sf81-smoke
+          composer create-project symfony/skeleton:^8.1 . --no-interaction --no-progress 2>&1 | tail -3
+          composer require --no-interaction --no-progress \
+            easycorp/easyadmin-bundle:^5.0 \
+            polysource/easyadmin-filter-bridge:^1.1 \
+            doctrine/orm doctrine/doctrine-bundle \
+            symfony/security-bundle 2>&1 | tail -8
+
+      - name: Assert the modern stack actually resolved
+        run: |
+          cd /tmp/sf81-smoke
+          # Guard against composer silently backing off to an older
+          # Symfony to satisfy a stale constraint: this job is worthless
+          # if it quietly tests Sf 7.4 again.
+          composer show symfony/framework-bundle | grep -qE 'versions.*v8\.' \
+            || { echo 'FAIL: Symfony 8 did not resolve.'; composer show symfony/framework-bundle; exit 1; }
+          for pkg in core filter easyadmin-filter-bridge; do
+              [ -d "vendor/polysource/$pkg" ] || { echo "FAIL: polysource/$pkg missing"; exit 1; }
+          done
+          echo 'OK: polysource/{core,filter,easyadmin-filter-bridge} on Symfony 8'
+
+      - name: Cache clear + routes + Twig lint
+        run: |
+          cd /tmp/sf81-smoke
+          php bin/console cache:clear --env=dev 2>&1 | tail -3
+          count=$(php bin/console debug:router 2>&1 | grep -c '^ *polysource_')
+          [ "$count" -ge 8 ] || { echo "FAIL: only $count polysource routes on Sf 8"; exit 1; }
+          echo "OK: $count polysource routes"
+          php bin/console lint:twig vendor/polysource/easyadmin-filter-bridge/Resources/views/ 2>&1 | tail -3
 
   integration:
     name: Bridge integration (TestKernel + SQLite)

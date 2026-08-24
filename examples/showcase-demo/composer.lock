@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "15d49dddb635c630c6368cd3529eec28",
+    "content-hash": "e95a77b096aca3cac3d17abbaa8e622c",
     "packages": [
         {
             "name": "async-aws/core",
@@ -2235,11 +2235,11 @@
         },
         {
             "name": "polysource/adapter-doctrine",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-doctrine",
-                "reference": "41e45b12f0061585905a8b1ee8780af6639ffb30"
+                "reference": "593b17cd9926e44ad394e67cc5cafe37053f88fc"
             },
             "require": {
                 "doctrine/orm": "^2.20 || ^3.0",
@@ -2259,7 +2259,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2294,11 +2294,11 @@
         },
         {
             "name": "polysource/adapter-flysystem",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-flysystem",
-                "reference": "562ba0954995ca7e5642c448a5c272b4a88c193b"
+                "reference": "b3eb8b55fd164d9a10e03abac19526fabba798ea"
             },
             "require": {
                 "league/flysystem": "^3.0",
@@ -2318,7 +2318,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2354,11 +2354,11 @@
         },
         {
             "name": "polysource/adapter-http",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-http",
-                "reference": "ad95ca995ae47102584c6af9669d0b98d61b01c8"
+                "reference": "52fc77fcc801afa9c0e889b6d91609ca53ae649e"
             },
             "require": {
                 "php": ">=8.2",
@@ -2375,7 +2375,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2411,11 +2411,11 @@
         },
         {
             "name": "polysource/adapter-meilisearch",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-meilisearch",
-                "reference": "74ccd23e6ebdb583a7baceb91564457439e86da6"
+                "reference": "eab074c066fa290f865ccede88eadb8898a8ac6f"
             },
             "require": {
                 "php": ">=8.2",
@@ -2436,7 +2436,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2471,11 +2471,11 @@
         },
         {
             "name": "polysource/adapter-messenger",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-messenger",
-                "reference": "6a22428a6a9d70fb075e5cf05c3c39c7b26ad6cd"
+                "reference": "e742e027fca879eb9af40d38a038cc94604ac4a3"
             },
             "require": {
                 "php": ">=8.2",
@@ -2493,7 +2493,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2527,11 +2527,11 @@
         },
         {
             "name": "polysource/adapter-redis",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/adapter-redis",
-                "reference": "013e6bc55581a5a3c11a163766417acc1cedc713"
+                "reference": "b2877cd710f87675ab37ac19184f968ea5828428"
             },
             "require": {
                 "php": ">=8.2",
@@ -2552,7 +2552,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2587,11 +2587,11 @@
         },
         {
             "name": "polysource/audit",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/audit",
-                "reference": "c67b3916bb3c922ff6daefaa06b2da554827e639"
+                "reference": "0aee5ddcaa33500f46fdb198f5c3d38e36abf08c"
             },
             "require": {
                 "doctrine/dbal": "^3.6 || ^4.0",
@@ -2618,7 +2618,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2654,11 +2654,11 @@
         },
         {
             "name": "polysource/bulk-async",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/bulk-async",
-                "reference": "805708b35cea5c13c845f4b6df9515b59d5eeb3b"
+                "reference": "1d37f658c74e83b51870867c5898eda9442cd578"
             },
             "require": {
                 "php": ">=8.2",
@@ -2678,7 +2678,7 @@
                 "doctrine/dbal": "^3.6 || ^4.0",
                 "doctrine/orm": "^2.20 || ^3.0",
                 "phpunit/phpunit": "^10.5 || ^11.5",
-                "symfony/mercure": "^0.6 || ^1.0"
+                "symfony/mercure": "^0.6 || ^0.7 || ^0.8 || ^1.0"
             },
             "suggest": {
                 "doctrine/orm": "Enables the Doctrine-backed bulk-job storage, data source and browsable resource (DoctrineBulkJobStorage). Gated on the ORM being installed; without it the host app must register its own BulkJobStorageInterface implementation.",
@@ -2687,7 +2687,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2734,11 +2734,11 @@
         },
         {
             "name": "polysource/core",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/core",
-                "reference": "cb489ee8eaa005c7e9a6ac24c69fddccb7ee33b9"
+                "reference": "5215a2393fdd3a7154f881c430dd9f10bd24a9b1"
             },
             "require": {
                 "composer-runtime-api": "^2.0",
@@ -2750,7 +2750,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -2785,11 +2785,11 @@
         },
         {
             "name": "polysource/easyadmin-filter-bridge",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/easyadmin-filter-bridge",
-                "reference": "341c929accb341ea5a0ce58948eecc96863cd9ea"
+                "reference": "1251aae3b5eda2e95931d7e79a5c1e1f8f7df972"
             },
             "require": {
                 "doctrine/orm": "^2.20 || ^3.0",
@@ -2824,7 +2824,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2870,11 +2870,11 @@
         },
         {
             "name": "polysource/filter",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/filter",
-                "reference": "505ec45a7a1126a176762b6d8eb305aa94739b74"
+                "reference": "da4be16622ef4170a53e8528f60b08c60f2e5404"
             },
             "require": {
                 "php": ">=8.2",
@@ -2903,7 +2903,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -2955,11 +2955,11 @@
         },
         {
             "name": "polysource/search",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/search",
-                "reference": "9630b1e3b50d787fca20fef64303a3ef89e7ca9d"
+                "reference": "2d53a374e55cbcd217dbc7a5d1fda030bbf00872"
             },
             "require": {
                 "php": ">=8.2",
@@ -2979,7 +2979,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 },
                 "symfony": {
                     "controllers": {
@@ -3025,11 +3025,11 @@
         },
         {
             "name": "polysource/symfony-bundle",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/symfony-bundle",
-                "reference": "59f0e41bd9d892fc7060acaeac09dc9ce93cee8b"
+                "reference": "5816739575d88d5d41c213e0c477f88c427c05c5"
             },
             "require": {
                 "php": ">=8.2",
@@ -3061,7 +3061,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -3095,11 +3095,11 @@
         },
         {
             "name": "polysource/twig-theme",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/twig-theme",
-                "reference": "c3fcbee31598f34d37ae8f42d9a7a859e09e6868"
+                "reference": "dd081a8d1f2c6ac8111aba82b8291d80a4528b66"
             },
             "require": {
                 "php": ">=8.2",
@@ -3108,7 +3108,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "license": [
@@ -3132,11 +3132,11 @@
         },
         {
             "name": "polysource/widgets",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/widgets",
-                "reference": "7dfb73e4054d3f7cc01a81274c914defa592ef3e"
+                "reference": "21dffd09d0433acc6653d809fd5b3344cafeca10"
             },
             "require": {
                 "php": ">=8.2",
@@ -3154,7 +3154,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {
@@ -3189,11 +3189,11 @@
         },
         {
             "name": "polysource/workflow-bridge",
-            "version": "1.2.x-dev",
+            "version": "1.3.x-dev",
             "dist": {
                 "type": "path",
                 "url": "../../packages/workflow-bridge",
-                "reference": "328266ec8d3edcb5e778f3bb4298b37766cdf11b"
+                "reference": "7bc64d1e0db247740e93fd736be741b149c638a5"
             },
             "require": {
                 "php": ">=8.2",
@@ -3213,7 +3213,7 @@
             "type": "symfony-bundle",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.2.x-dev"
+                    "dev-main": "1.3.x-dev"
                 }
             },
             "autoload": {

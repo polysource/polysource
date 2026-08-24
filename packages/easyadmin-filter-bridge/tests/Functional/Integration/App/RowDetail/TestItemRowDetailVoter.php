@@ -23,7 +23,13 @@ final class TestItemRowDetailVoter extends Voter
         return 'POLYSOURCE_TEST_ROW_DETAIL' === $attribute && $subject instanceof TestItem;
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    /**
+     * 4th parameter (`$vote`) is the optional `Vote` object Symfony 8
+     * passes for richer messaging. Typed `mixed` so the override is
+     * compatible across Sf 6.4 / 7.x (3-param parent signature) AND
+     * Sf 8 (4-param parent with `?Vote`). We don't consume it.
+     */
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, mixed $vote = null): bool
     {
         \assert($subject instanceof TestItem);
 

@@ -6,6 +6,14 @@ Since v1.0.0 every package shares one floor — **PHP 8.2+ and Symfony
 6.4 LTS+** (cf. [ADR-011](../adr/0011-pre-v1.0-freeze-checklist.md)
 and [ADR-015](../adr/0015-multi-version-compatibility-baseline.md)).
 
+Since v1.2.0 the ceiling is tested too: **PHP 8.5 and Symfony 8.1**
+(with EasyAdmin 5) run the full suite in CI, and a dedicated smoke job
+installs the bridge from Packagist onto a vanilla Symfony 8.1 skeleton
+on every push. Nothing about the floor moved, so upgrading to v1.2.0
+on an older stack is a no-op. The full picture of what is advertised
+versus what is gated lives in the
+[Symfony compatibility audit](../maintainers/symfony-compat-audit.md).
+
 | Package | PHP | Symfony | Notes |
 |---|---|---|---|
 | `polysource/core` | `>=8.2` | none | Pure PHP, zero Symfony dependency. |
@@ -204,8 +212,8 @@ In your application's `composer.json`:
         }
     ],
     "require": {
-        "polysource/symfony-bundle": "1.2.x-dev",
-        "polysource/adapter-messenger": "1.2.x-dev"
+        "polysource/symfony-bundle": "1.3.x-dev",
+        "polysource/adapter-messenger": "1.3.x-dev"
     },
     "minimum-stability": "dev",
     "prefer-stable": true

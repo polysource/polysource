@@ -26,7 +26,7 @@ lot validé.
   dans le temps :
 
   ```bash
-  composer require 'polysource/easyadmin-filter-bridge:^1.2@dev' ...
+  composer require 'polysource/easyadmin-filter-bridge:^1.3@dev' ...
   ```
 
   Toute édition dans `packages/*` est vivante immédiatement
@@ -36,7 +36,7 @@ lot validé.
 - **Retour en stable** (après tag) :
 
   ```bash
-  composer require 'polysource/easyadmin-filter-bridge:^1.1' ...
+  composer require 'polysource/easyadmin-filter-bridge:^1.2' ...
   ```
 
   Le path repo peut rester déclaré : `prefer-stable` + contrainte

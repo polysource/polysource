@@ -4,7 +4,7 @@
 > "does this work on Sf X?" issues. Not a user-facing doc — for
 > hosts, see [installation.md](../user/installation.md).
 >
-> **Last audited:** 2026-08-07 (post v1.1.0)
+> **Last audited:** 2026-08-24 (v1.2.0, Sf 8 / PHP 8.5 gating)
 
 ## TL;DR
 
@@ -21,7 +21,8 @@ while the meta-bundle required `^6.4`) is gone.
 | **7.2** | all 16 | ✓ | ✗ | ✓ (PHP 8.3) | **First-class** (non-LTS proof) |
 | **7.3** | all 16 | ✓ | ✗ | ✗ | **Best-effort** |
 | **7.4 LTS** | all 16 | ✓ | ✓ | ✓ (PHP 8.3 + 8.4) | **First-class** |
-| **8.0** | all 16 | ✓ | ✗ | ✗ | **Forward-compat aspiration** (Sf 8.0 not released yet) |
+| **8.0** | all 16 | ✓ | ✗ | ✗ | **Best-effort** (covered by the `^8.0` constraint, gated through 8.1) |
+| **8.1** | all 16 | ✓ | ✓ (`sf81-ceiling` job) | ✓ (PHP 8.5 × EA 5.x) | **First-class** |
 
 Symfony **5.4** and **6.0–6.3** are no longer advertised anywhere in
 the monorepo: the v1.0 floor dropped them (ADR-011). Hosts still on
@@ -39,7 +40,8 @@ Symfony's release calendar runs 2 minors per year. Polysource targets:
 
 1. **All maintained LTS lines** (6.4, 7.4) — first-class
 2. **The latest non-LTS** (currently 7.2) — first-class proof that non-LTS combos work
-3. **Forward-compat to the next major** (8.0) — composer constraint allowed, no test infrastructure yet
+3. **The current top of the tree** (8.1 on PHP 8.5) — first-class since
+   v1.2.0, gated by both a matrix row and a Packagist smoke job
 
 The floor decision is documented in
 [ADR-015 — Baseline multi-version support](../adr/0015-multi-version-compatibility-baseline.md)
@@ -75,7 +77,7 @@ that installs below Sf 6.4.
 
 ## CI matrix breakdown
 
-From `.github/workflows/ci.yml::test` — 5 hand-listed rows:
+From `.github/workflows/ci.yml::test` — 6 hand-listed rows:
 
 ```
 Row 1: PHP 8.2 × Sf 6.4 LTS × EA ^4.24  (floor)
@@ -83,13 +85,24 @@ Row 2: PHP 8.2 × Sf 6.4 LTS × EA ^5.0   (bridge crossover)
 Row 3: PHP 8.3 × Sf 7.2     × EA ^5.0   (non-LTS proof, Sf 7.2 EOL'd)
 Row 4: PHP 8.3 × Sf 7.4 LTS × EA ^5.0   (modern)
 Row 5: PHP 8.4 × Sf 7.4 LTS × EA ^5.0   (bleeding)
+Row 6: PHP 8.5 × Sf 8.1     × EA ^5.0   (ceiling)
 ```
+
+The test job unsets `config.platform.php` before installing. The root
+manifest pins it to `8.2.99` so a maintainer on a newer PHP still
+resolves against the v1.0 floor, but in CI that pin is redundant
+(setup-php already provides each row's exact PHP) and it makes the Sf 8
+row unresolvable, since Symfony 8 requires PHP 8.4+.
 
 Plus, in the same workflow:
 - `sf54-floor` job — "Sf 6.4 floor smoke (filter + bridge alone)":
   bootstraps a vanilla Sf 6.4 skeleton with EA 4, asserts the bridge
   and filter resolve without pulling `symfony-bundle`, and checks
   `cache:clear` succeeds. Locally: `make smoke-sf54`.
+- `sf81-ceiling` job — the mirror image: vanilla Sf 8.1 skeleton on PHP
+  8.5 with EA 5, asserts Symfony 8 actually resolved (a stale constraint
+  silently falling back to 7.4 would make the job worthless), then
+  `cache:clear`, the route count, and `lint:twig`.
 - `integration` job — bridge integration suite (TestKernel + SQLite)
 - `coverage` job — 90% coverage gate on `packages/core`
 - `e2e` job — boots the showcase compose stack and runs
@@ -103,35 +116,45 @@ impossible combos (PHP 8.2 × Sf 8.0 is impossible — Sf 8 needs PHP
 8.4+). Listing each row by hand keeps the matrix fast and prevents
 "random" failures from impossible combinations.
 
-## Forward-compat: Sf 8.0
+## What Symfony 8 and PHP 8.5 actually broke (v1.2.0 audit)
 
-Composer constraints include `|| ^8.0` on every Polysource package
-that pins Symfony (14 of 16 — `core` and `twig-theme` have no Symfony
-dependency at all). Reasoning:
+Every package that pins Symfony carries `|| ^8.0` (14 of 16 — `core`
+and `twig-theme` have no Symfony dependency at all), and every package
+advertises `php: ">=8.2"` with no upper bound. Those constraints were
+written speculatively before Symfony 8 shipped. The v1.2.0 audit ran
+the real thing: PHP 8.5.9 × Sf 8.1.5 × EA 5.5.1 × ORM 3.6.7.
 
-- Sf 8.0 isn't released yet. Allowing it in constraints today means
-  installs against alpha/beta Sf 8 won't artificially break on
-  resolver constraints.
-- No Sf 8.0 CI matrix row or smoke job exists yet.
-- Deprecation removals in Sf 8.0 may break Polysource. Track via the
-  Symfony deprecation report (`symfony/phpunit-bridge` already emits
-  these — failures will surface in CI once we add the row).
+**Product code needed zero changes.** The full 1278-test suite passed
+on the first run against that stack. What broke was peripheral, and
+all of it is now fixed:
 
-**Open items for Sf 8.0 readiness** (tracked in the ROADMAP Backlog):
+| What | Where | Consumer-visible? |
+|---|---|---|
+| `symfony/mercure` constrained to `^0.6 \|\| ^1.0`, which excludes 0.7/0.8 — and 0.8 is the only line supporting Sf 8 | root + `bulk-async` require-dev/suggest | **Yes.** A host on Sf 8 wanting live bulk-job progress could not resolve. Widened to `^0.6 \|\| ^0.7 \|\| ^0.8 \|\| ^1.0`. |
+| Mercure 0.8 added `getProtocolVersion()` / `getCookieName()` to `HubInterface`; two hand-written stubs fataled at class-load | `bulk-async` unit tests | No. Replaced by PHPUnit mocks so the interface's shape stops being our problem. |
+| Sf 8 added a 4th `?Vote $vote` parameter to `Voter::voteOnAttribute()` | one integration fixture | No. The production voter (`SavedViewVoter`) already carried the cross-version `mixed $vote = null` override; the fixture had been missed. |
+| `PhpVersionCheck::REQUIRED` still read `8.1.0` | `polysource:doctor` | Cosmetic. The v1.0 freeze moved the floor to 8.2; the check now says so. |
 
-- [ ] Once Sf 8.0 alpha ships: add an `sf80-alpha` smoke job to CI,
-      mirroring the `sf54-floor` job's shape
-- [ ] Audit Sf 7.x deprecations using `symfony/phpunit-bridge` baseline
-- [ ] Replace any usage flagged as removed-in-8.0
+Two non-findings worth recording, so nobody re-investigates them:
 
-## Forward-compat: PHP 8.5
+- **PHPStan reports ~12 `class.notFound` errors against a Sf 8 vendor**
+  (including `ViewEvent`, which exists perfectly well in 8.1). This is
+  the ADR-015 `phpVersion: 80100` parser baseline choking on the PHP
+  8.4-only syntax Symfony 8.1 ships (property hooks, asymmetric
+  visibility), not a missing symbol. The `phpstan` job pins the vendor
+  to Sf 7.4 for exactly this reason; leave it pinned.
+- **The only deprecations the suite emits on PHP 8.5** are
+  `ReflectionProperty::setAccessible()` calls in three test files.
+  Zero occurrences in any `src/`.
 
-Same shape as Sf 8.0:
+## Forward-compat: what to do at the next Symfony minor
 
-- All packages advertise `php: ">=8.2"` (no upper bound)
-- CI tests PHP 8.2 / 8.3 / 8.4
-- PHP 8.5 not yet in CI
-- When we adopt it, add a row to the matrix
+The pattern is now established, so the next bump is mechanical:
+
+- [ ] Add a matrix row and bump `sf81-ceiling` to the new minor
+- [ ] Re-run the audit stack and update the table above
+- [ ] Check whether any `symfony/*` optional dependency (Mercure is the
+      one that bit us) narrowed itself out of the new lineage
 
 ## Doctrine ORM 2.x vs 3.x compat
 
@@ -183,8 +206,13 @@ CI catches drift in 4 places:
 
 What CI does NOT catch:
 
-- ORM 3.x specific bugs (no matrix variation)
-- Sf 8.0 anything (no row, not released)
+- ORM 3.x specific bugs (no matrix variation). Note the Sf 8.1 row
+  resolves ORM 3.x incidentally, so the combination is exercised, but
+  nothing pins it: an ORM-2-only regression on an older row would still
+  slip through.
+- Mercure lineage drift. The suite mocks `HubInterface`, which is what
+  makes it version-proof, but that also means no row proves the real
+  0.8 hub still behaves as `MercureBulkJobBroadcaster` expects.
 
 ## v1.0 freeze — shipped
 
@@ -199,9 +227,12 @@ packages:
 - **ORM 2.20+ maintained, ORM 3.x allowed and recommended**
 
 These floors are now SemVer-locked: raising any of them requires a
-major release. The two remaining verification gaps — an ORM 3.x
-matrix row and an Sf 8.0 smoke gate — are tracked in the ROADMAP
-Backlog, not blockers on the freeze itself.
+major release. Of the two verification gaps left open at the freeze,
+the Sf 8 smoke gate shipped in v1.2.0 (`sf81-ceiling`); a dedicated ORM
+3.x matrix row is still open in the ROADMAP Backlog.
+
+Nothing in v1.2.0 touched a floor: it added a ceiling. Hosts on PHP 8.2
+and Sf 6.4 upgrade to it with no action.
 
 ## Related
 

@@ -120,15 +120,20 @@ EA 4 can install the bridge. Composer's resolver picks the right combination
 automatically — a host on PHP 8.2 + Sf 6.4 will get EA 4 (EA 5 itself
 requires PHP 8.2+); a host on PHP 8.4 + Sf 7.4 will get EA 5.
 
-The bridge is gated by CI on 5 explicit combos covering the realistic
+The bridge is gated by CI on 6 explicit combos covering the realistic
 profiles of EA-using Symfony apps in 2026 (cf.
 [ADR-015](../../adr/0015-multi-version-compatibility-baseline.md)):
 
 - PHP 8.2 + Symfony 6.4 LTS + EA 4.x (legacy stack)
-- PHP 8.2 + Symfony 6.4 + EA 4.x (mainstream 2024-2025)
 - PHP 8.2 + Symfony 6.4 + EA 5.x (bridge transfer audience)
+- PHP 8.3 + Symfony 7.2 + EA 5.x (non-LTS proof)
 - PHP 8.3 + Symfony 7.4 + EA 5.x (modern)
 - PHP 8.4 + Symfony 7.4 + EA 5.x (bleeding-edge / our dev local)
+- PHP 8.5 + Symfony 8.1 + EA 5.x (ceiling, since v1.2.0)
+
+On top of the matrix, two install-path smoke jobs bootstrap a vanilla
+skeleton and `composer require` the bridge from real Packagist, one at
+each end of the range: Symfony 6.4 with EA 4, and Symfony 8.1 with EA 5.
 
 EA 6 support will arrive once a beta drops.
 

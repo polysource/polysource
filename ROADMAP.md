@@ -122,7 +122,7 @@ closed with the tag, and its floors shipped:
 
 - PHP 8.2+ (drops 8.1)
 - Symfony 6.4 LTS+ (drops 5.4 / 6.0; `^8.0` allowed by constraints,
-  forward-compat, not yet in CI)
+  gated in CI since v1.2.0)
 - EasyAdmin 4.24+ retained
 - Doctrine ORM 2.20+ / 3.6+
 
@@ -144,6 +144,26 @@ closed with the tag, and its floors shipped:
   was dissolved by the lazy-fetch renderer design, cf. ADR-0033).
 - Deferred explicitly: sorting and user filters *inside* the
   embedded listing (scoping via `parentFilters` only in v1.1).
+- **v1.1.1** (2026-08-07) docs truth-sync + the `make docs-check` gate;
+  **v1.1.2** (2026-08-20) EasyAdmin 5.5 host-recette patch.
+
+### v1.2 — Symfony 8 / PHP 8.5 (v1.2.0, 2026-08-24)
+
+The `^8.0` constraint every package had carried since v0.6 was an
+aspiration nobody had run. This release makes it a tested claim:
+
+- **PHP 8.5 × Symfony 8.1 × EA 5 matrix row** plus an `sf81-ceiling`
+  Packagist smoke job, the mirror image of the existing `sf54-floor`.
+- **`symfony/mercure` widened** to `^0.6 || ^0.7 || ^0.8 || ^1.0`. The
+  old constraint excluded 0.8, the only line supporting Symfony 8, so a
+  host on Sf 8 could not use live bulk-job progress at all. This is the
+  one item in the release that unblocks an actual host.
+- Test doubles made version-proof, the `polysource:doctor` PHP floor
+  corrected to 8.2, and the `sf54-floor` job un-stuck from the retired
+  0.x lineage it had silently kept testing.
+- **No floor moved**, so this is additive: hosts on PHP 8.2 / Sf 6.4
+  upgrade with no action. Details and the audit table:
+  [Symfony compatibility audit](./docs/maintainers/symfony-compat-audit.md).
 
 ## Next
 
@@ -151,7 +171,6 @@ closed with the tag, and its floors shipped:
 
 - ORM 3.x CI matrix row (gap identified in the
   [Symfony compat audit](./docs/maintainers/symfony-compat-audit.md))
-- Sf 8.0 alpha smoke gate when upstream ships
 - Showcase rewrite to demo v0.6+ capabilities
   (`polysource:doctor`, purge commands, ListWidget closure, CSP nonce)
 - Sonata Admin filter bridge (community-driven)
