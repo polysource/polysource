@@ -71,6 +71,23 @@
    git commit -m "release: v$VERSION"
    ```
 
+   > **Sur un minor uniquement — la lignée dev change, et trois choses
+   > la suivent.** Un patch ne touche pas au `branch-alias`, donc le
+   > piège ne se voit qu'une fois tous les X.Y.0 :
+   >
+   > 1. les `examples/*/composer.json` épinglent les packages en
+   >    `X.Y.x-dev` exact et doivent suivre l'alias, sinon les démos ne
+   >    résolvent plus ;
+   > 2. `examples/showcase-demo/composer.lock` est **versionné** (le
+   >    lock racine, lui, est gitignoré). Le job E2E fait un
+   >    `composer install` dessus et échoue en `exit 4` si le lock
+   >    porte encore l'ancienne lignée. À rafraîchir avec
+   >    `composer update "polysource/*" --no-install` dans
+   >    `examples/showcase-demo` ;
+   > 3. le lock racine local devient périmé et fait échouer
+   >    `make validate` en local (pas en CI, qui installe à neuf) :
+   >    même commande à la racine.
+
 2. **Gate pré-tag : docs truth-sync + smoke d'installation**
    (obligatoires, jamais sautées — le drift docs de v0.5.7 → v1.1.0
    a coûté une journée d'audit complet ; un bug de chemin d'install
