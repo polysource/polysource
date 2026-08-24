@@ -13,22 +13,20 @@ use Polysource\BulkAsync\Job\BulkJobStatus;
 use Polysource\BulkAsync\Mercure\MercureBulkJobBroadcaster;
 use RuntimeException;
 use Symfony\Component\Mercure\HubInterface;
-use Symfony\Component\Mercure\Jwt\TokenFactoryInterface;
-use Symfony\Component\Mercure\Jwt\TokenProviderInterface;
 use Symfony\Component\Mercure\Update;
 
 final class MercureBulkJobBroadcasterTest extends TestCase
 {
     public function testPublishesProgressJsonOnCanonicalTopic(): void
     {
-        $hub = new RecordingHub();
-        $broadcaster = new MercureBulkJobBroadcaster($hub);
+        $recorder = new UpdateRecorder();
+        $broadcaster = new MercureBulkJobBroadcaster($this->hubRecordingInto($recorder));
         $job = $this->makeJob()->withProgress(2, 1);
 
         $broadcaster->onProgress(new BulkJobProgressEvent($job));
 
-        self::assertCount(1, $hub->updates);
-        $update = $hub->updates[0];
+        self::assertCount(1, $recorder->updates);
+        $update = $recorder->updates[0];
         self::assertSame(
             ['polysource/bulk-jobs/' . rawurlencode($job->actorId) . '/' . $job->id],
             $update->getTopics(),
@@ -60,7 +58,10 @@ final class MercureBulkJobBroadcasterTest extends TestCase
 
     public function testHubFailureIsSwallowed(): void
     {
-        $broadcaster = new MercureBulkJobBroadcaster(new ThrowingHub());
+        $hub = $this->createMock(HubInterface::class);
+        $hub->method('publish')->willThrowException(new RuntimeException('synthetic Mercure outage'));
+
+        $broadcaster = new MercureBulkJobBroadcaster($hub);
         $job = $this->makeJob();
 
         // No exception bubbles up — worker loop must not be poisoned.
@@ -77,6 +78,28 @@ final class MercureBulkJobBroadcasterTest extends TestCase
         );
     }
 
+    /**
+     * `HubInterface` is not a frozen contract: symfony/mercure 0.8 added
+     * `getProtocolVersion()` and `getCookieName()` to it, and a
+     * hand-written stub had to be edited in lockstep or the whole test
+     * file fataled at class-load time. Mocking delegates that to PHPUnit,
+     * so this test stays green across every Mercure line the package
+     * advertises (0.6 through 0.8+).
+     */
+    private function hubRecordingInto(UpdateRecorder $recorder): HubInterface
+    {
+        $hub = $this->createMock(HubInterface::class);
+        $hub->method('publish')->willReturnCallback(
+            static function (Update $update) use ($recorder): string {
+                $recorder->updates[] = $update;
+
+                return 'urn:uuid:' . bin2hex(random_bytes(16));
+            },
+        );
+
+        return $hub;
+    }
+
     private function makeJob(): BulkJob
     {
         return new BulkJob(
@@ -91,75 +114,13 @@ final class MercureBulkJobBroadcasterTest extends TestCase
     }
 }
 
-final class RecordingHub implements HubInterface
+/**
+ * Plain collector the mocked hub appends to. Deliberately NOT a
+ * `HubInterface` implementation, so it never has to track the
+ * interface's shape.
+ */
+final class UpdateRecorder
 {
     /** @var list<Update> */
     public array $updates = [];
-
-    public function getUrl(): string
-    {
-        return 'http://localhost/.well-known/mercure';
-    }
-
-    public function getPublicUrl(): string
-    {
-        return 'http://localhost/.well-known/mercure';
-    }
-
-    public function getProvider(): TokenProviderInterface
-    {
-        return new class implements TokenProviderInterface {
-            public function getJwt(): string
-            {
-                return 'stub';
-            }
-        };
-    }
-
-    public function getFactory(): ?TokenFactoryInterface
-    {
-        return null;
-    }
-
-    public function publish(Update $update): string
-    {
-        $this->updates[] = $update;
-
-        return 'urn:uuid:' . bin2hex(random_bytes(16));
-    }
-}
-
-final class ThrowingHub implements HubInterface
-{
-    public function getUrl(): string
-    {
-        return 'http://localhost/.well-known/mercure';
-    }
-
-    public function getPublicUrl(): string
-    {
-        return 'http://localhost/.well-known/mercure';
-    }
-
-    public function getProvider(): TokenProviderInterface
-    {
-        return new class implements TokenProviderInterface {
-            public function getJwt(): string
-            {
-                return 'stub';
-            }
-        };
-    }
-
-    public function getFactory(): ?TokenFactoryInterface
-    {
-        return null;
-    }
-
-    public function publish(Update $update): string
-    {
-        unset($update);
-
-        throw new RuntimeException('synthetic Mercure outage');
-    }
 }
