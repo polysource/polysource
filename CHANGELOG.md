@@ -23,6 +23,15 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   host upgrades into.
 - `BulkJobHandler` drops a redundant integer cast flagged by PHPStan 2.3
   (`cast.useless`). No behaviour change.
+- **Dependency hygiene across the demos.** The committed showcase lock
+  cleared five security advisories (symfony/yaml, http-foundation, mime,
+  expression-language, league/flysystem). The lock-less demos now carry
+  union constraints (`symfony/monolog-bundle ^3.10 || ^4.0`,
+  `doctrine/dbal ^3.7 || ^4.4`) instead of letting Dependabot replace a
+  range and drop the floor the demo was written for; the Dependabot config
+  runs `versioning-strategy: widen` there and pins the EasyAdmin 4 floor
+  demo to EasyAdmin 4. Front-end test tooling moves to vitest 4.1.11
+  (GHSA-82fw-gwwq-j7x9).
 
 ## [1.2.1] — 2026-10-29
 
