@@ -244,7 +244,7 @@ final class BulkJobHandler
         $request = new Request();
         $auditAction = new BulkActionView($action);
         $duration = null !== $job->startedAt && null !== $job->completedAt
-            ? max(0, (int) (($job->completedAt->getTimestamp() - $job->startedAt->getTimestamp()) * 1000))
+            ? max(0, ($job->completedAt->getTimestamp() - $job->startedAt->getTimestamp()) * 1000)
             : 0;
 
         $result = match ($job->status) {
