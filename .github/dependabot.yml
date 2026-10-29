@@ -31,6 +31,10 @@ updates:
   - package-ecosystem: composer
     directory: /examples/easyadmin-bridge-demo
     schedule: { interval: monthly }
+    # No lock is committed here: a requirement bump replaces the range
+    # and silently drops the floor. Widen keeps the union pattern used by
+    # every package (`^3.10 || ^4.0`).
+    versioning-strategy: widen
     open-pull-requests-limit: 2
     labels: [dependencies, composer, examples]
     ignore:
@@ -40,15 +44,26 @@ updates:
   - package-ecosystem: composer
     directory: /examples/easyadmin-bridge-demo-v4
     schedule: { interval: monthly }
+    # No lock is committed here: a requirement bump replaces the range
+    # and silently drops the floor. Widen keeps the union pattern used by
+    # every package (`^3.10 || ^4.0`).
+    versioning-strategy: widen
     open-pull-requests-limit: 2
     labels: [dependencies, composer, examples]
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # This demo exists to exercise the EasyAdmin 4 / Symfony 6.4 floor.
+      # Any EasyAdmin bump defeats its purpose.
+      - dependency-name: "easycorp/easyadmin-bundle"
 
   - package-ecosystem: composer
     directory: /examples/messenger-demo
     schedule: { interval: monthly }
+    # No lock is committed here: a requirement bump replaces the range
+    # and silently drops the floor. Widen keeps the union pattern used by
+    # every package (`^3.10 || ^4.0`).
+    versioning-strategy: widen
     open-pull-requests-limit: 2
     labels: [dependencies, composer, examples]
     ignore:
@@ -58,6 +73,10 @@ updates:
   - package-ecosystem: composer
     directory: /examples/filter-standalone-demo
     schedule: { interval: monthly }
+    # No lock is committed here: a requirement bump replaces the range
+    # and silently drops the floor. Widen keeps the union pattern used by
+    # every package (`^3.10 || ^4.0`).
+    versioning-strategy: widen
     open-pull-requests-limit: 2
     labels: [dependencies, composer, examples]
     ignore:
