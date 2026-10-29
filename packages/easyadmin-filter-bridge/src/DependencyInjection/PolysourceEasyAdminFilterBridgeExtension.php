@@ -17,7 +17,7 @@ use Polysource\Filter\DependencyInjection\FeatureGate;
 use Polysource\Filter\DependencyInjection\FeatureLoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 
 /**
  * DI extension for `polysource/easyadmin-filter-bridge` — a table of

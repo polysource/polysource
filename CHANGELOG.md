@@ -4,6 +4,16 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`PolysourceFilterExtension` and `PolysourceEasyAdminFilterBridgeExtension`** now extend
+  `Symfony\Component\DependencyInjection\Extension\Extension` instead of the HttpKernel one, which
+  Symfony 8.1 deprecates (`Since symfony/http-kernel 8.1: The "...\HttpKernel\DependencyInjection\Extension"
+  class is deprecated`). The DI base class exists since Symfony 6.4, so the floor does not move and no
+  behaviour changes: the HttpKernel subclass only added annotated-classes helpers the two extensions never used.
+
 ## [1.2.0] — 2026-08-24
 
 Symfony 8 and PHP 8.5 go from "allowed by our constraints" to "gated by
