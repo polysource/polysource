@@ -12,8 +12,8 @@ use Polysource\Filter\DependencyInjection\Loader\PipelineLoader;
 use Polysource\Filter\DependencyInjection\Loader\RecentRecordsLoader;
 use Polysource\Filter\DependencyInjection\Loader\SavedViewLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 
 /**
  * DI extension for `polysource/filter` — a table of contents over

@@ -16,8 +16,8 @@ use Polysource\EasyAdminFilterBridge\DependencyInjection\Loader\SavedViewControl
 use Polysource\Filter\DependencyInjection\FeatureGate;
 use Polysource\Filter\DependencyInjection\FeatureLoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 
 /**
  * DI extension for `polysource/easyadmin-filter-bridge` — a table of
