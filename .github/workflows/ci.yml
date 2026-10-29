@@ -201,7 +201,7 @@ jobs:
         # impossible combos (e.g. PHP 8.2 × Sf 8.1 — Sf 8 needs 8.4+).
         #   1. Floor:          PHP 8.2 + Sf 6.4 LTS   + EA 4.x
         #   2. Bridge xfer:    PHP 8.2 + Sf 6.4 LTS   + EA 5.x
-        #   3. Non-LTS proof:  PHP 8.3 + Sf 7.2 (EOL) + EA 5.x
+        #   3. Non-LTS proof:  PHP 8.4 + Sf 8.0        + EA 5.x
         #   4. Modern:         PHP 8.3 + Sf 7.4 LTS   + EA 5.x
         #   5. Bleeding:       PHP 8.4 + Sf 7.4 LTS   + EA 5.x (dev local)
         #   6. Ceiling:        PHP 8.5 + Sf 8.1       + EA 5.x
@@ -212,8 +212,13 @@ jobs:
           - php: '8.2'
             symfony: '6.4.*'
             easyadmin: '^5.0'
-          - php: '8.3'
-            symfony: '7.2.*'
+          # Composer >= 2.10 refuses to install packages affected by a
+          # security advisory. Only maintained Symfony lines receive the
+          # fixes, so a row pinned to an EOL line (7.2 until 2026-10) can
+          # never resolve again. Keep this row on the newest non-LTS line
+          # that is still maintained and move it when that line goes EOL.
+          - php: '8.4'
+            symfony: '8.0.*'
             easyadmin: '^5.0'
           - php: '8.3'
             symfony: '7.4.*'
@@ -494,7 +499,7 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Boot showcase compose stack (postgres + redis + mercure + meilisearch + minio + wiremock + chrome)
+      - name: Boot showcase compose stack (postgres + redis + mercure + meilisearch + s3 + wiremock + chrome)
         working-directory: examples/showcase-demo
         run: |
           # The PHP image's Dockerfile builds a non-root `app` user with
