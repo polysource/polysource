@@ -12,7 +12,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
  * resources the showcase exposes alongside EA's Doctrine CRUD.
  *
  * Each resource is backed by a different infrastructure (Redis,
- * MinIO/S3, WireMock/HTTP, Meilisearch). The tests assert the
+ * S3, WireMock/HTTP, Meilisearch). The tests assert the
  * rendered admin works for each:
  *
  *   - Index renders + has rows

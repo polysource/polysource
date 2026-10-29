@@ -35,7 +35,7 @@ db: ## Reset and migrate the database (dev)
 	$(PHP_EXEC) php bin/console messenger:setup-transports --no-interaction
 
 .PHONY: fixtures
-fixtures: ## Load Foundry fixtures + seed messenger/redis/minio/meilisearch + freshen orders
+fixtures: ## Load Foundry fixtures + seed messenger/redis/s3/meilisearch + freshen orders
 	$(PHP_EXEC) php -d memory_limit=2G bin/console doctrine:fixtures:load --no-interaction
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
@@ -66,7 +66,7 @@ up: install ## Boot the showcase: up the stack, install deps, migrate DB, load f
 	@echo "▶ Polysource Showcase ready: http://localhost:8084/"
 	@echo "  Login: admin@shop.co / shopco  (or ops@shop.co / viewer@shop.co)"
 	@echo "  Mailpit:     http://localhost:8025/"
-	@echo "  MinIO UI:    http://localhost:9101/  (shopcoadmin / shopcoadmin-secret)"
+	@echo "  S3 console:  http://localhost:9101/  (RustFS, shopcoadmin / shopcoadmin-secret)"
 	@echo "  Meilisearch: http://localhost:7702/  (key: showcase-meili-master-key)"
 	@echo "  WireMock:    http://localhost:8089/__admin/"
 	@echo ""
@@ -112,11 +112,11 @@ cs-fix: ## Apply PSR-12 + Symfony rules
 .PHONY: screenshots
 screenshots: ## Regenerate Panther screenshots into docs/user/screenshots/ (re-runs seeds first to avoid empty captures)
 	@# Always re-run the non-Doctrine seeds before capturing — Postgres
-	@# fixtures persist between runs, but Redis/MinIO/Meilisearch can drift
+	@# fixtures persist between runs, but Redis/S3/Meilisearch can drift
 	@# (volume reset, restarted container, partial seed failure). Capturing
 	@# screenshots of an empty showcase is worse than no screenshots — they
 	@# end up in the public docs and make the project look broken.
-	@echo "▶ Refreshing non-Doctrine seeds (Redis cache + MinIO files + Meilisearch docs)..."
+	@echo "▶ Refreshing non-Doctrine seeds (Redis cache + S3 files + Meilisearch docs)..."
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-stores
 	$(PHP_EXEC) php -d memory_limit=2G bin/console app:seed-failed-messages || true
 	@echo "▶ Re-dating recent orders so dashboard widgets have today/24h data..."

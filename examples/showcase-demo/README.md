@@ -33,7 +33,7 @@ Then open http://localhost:8084/.
 | Postgres 17 | `localhost:5435` | doctrine, audit, bulk-async, saved views |
 | Redis 7 | `localhost:6382` | symfony cache + sessions + `adapter-redis` |
 | Meilisearch 1.x | http://localhost:7702/ | `adapter-meilisearch` |
-| MinIO (S3) | http://localhost:9101/ | `adapter-flysystem` |
+| S3 console (RustFS) | http://localhost:9101/ | `adapter-flysystem` |
 | Mercure | proxied via nginx | `bulk-async` live progress |
 | Mailpit | http://localhost:8025/ | SMTP capture |
 | WireMock | http://localhost:8089/__admin/ | `adapter-http` microservices simulation |
@@ -64,7 +64,7 @@ Then open http://localhost:8084/.
 | Asset pipeline | AssetMapper (Symfony native) |
 | Frontend | Symfony UX (Stimulus + Turbo + Twig Components) |
 | DB | PostgreSQL 17 |
-| Cache / search / files / live / mail / mocks | Redis 7 / Meilisearch 1.x / MinIO / Mercure / Mailpit / WireMock |
+| Cache / search / files / live / mail / mocks | Redis 7 / Meilisearch 1.x / RustFS (S3) / Mercure / Mailpit / WireMock |
 | Sessions | Redis-backed (`RedisSessionHandler`) |
 | E2E + screenshots | Symfony Panther + Selenium Chromium |
 
@@ -78,7 +78,7 @@ make build         Build the PHP container image
 make install       Install Composer deps
 make up            Boot the stack + serve on :8084
 make db            Reset + migrate the database
-make fixtures      Load Foundry fixtures + seed messenger/redis/minio/meilisearch
+make fixtures      Load Foundry fixtures + seed messenger/redis/s3/meilisearch
 make assets        Compile AssetMapper public/ files
 make down          Stop the stack (preserves volumes)
 make reset         Stop and wipe ALL volumes (data loss)

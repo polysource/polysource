@@ -67,7 +67,7 @@ final class ShowcaseScreenshotsCommand extends Command
         ['slug' => '08-polysource-login-attempts', 'path' => '/admin/polysource/login-attempts', 'wait' => 'tbody tr', 'assertMinRows' => 5],
         ['slug' => '09-polysource-audit-log', 'path' => '/admin/polysource/audit-log', 'wait' => 'tbody tr', 'assertMinRows' => 5],
         ['slug' => '10-polysource-bulk-jobs', 'path' => '/admin/polysource/bulk-jobs', 'wait' => 'tbody tr', 'assertMinRows' => 1],
-        // Phase E adapter-backed resources — Redis / MinIO / WireMock / Meilisearch.
+        // Phase E adapter-backed resources — Redis / S3 / WireMock / Meilisearch.
         ['slug' => '11-polysource-cache-keys', 'path' => '/admin/polysource/cache-keys', 'wait' => 'tbody tr', 'assertMinRows' => 5],
         ['slug' => '12-polysource-s3-files', 'path' => '/admin/polysource/s3-files', 'wait' => 'tbody tr', 'assertMinRows' => 5],
         ['slug' => '13-polysource-microservices', 'path' => '/admin/polysource/microservices', 'wait' => 'tbody tr', 'assertMinRows' => 1],

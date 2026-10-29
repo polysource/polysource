@@ -12,7 +12,7 @@ use Polysource\Adapter\Flysystem\Resource\FlysystemResource;
 use Polysource\Bundle\Attribute\AsResource;
 
 /**
- * Browse the ShopCo S3 bucket on MinIO. Holds invoice PDFs and
+ * Browse the ShopCo S3 bucket (RustFS in the compose stack). Holds invoice PDFs and
  * product photos. Recursive listing with offset-emulated pagination
  * (Flysystem listings don't support cursor-based paging natively).
  */

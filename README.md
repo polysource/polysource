@@ -77,7 +77,7 @@ git clone https://github.com/polysource/polysource && cd polysource
 make showcase       # http://localhost:8084 — every capability live (login on the page)
 ```
 
-Full stack: PHP 8.4 + Symfony 7.4 LTS + EasyAdmin 5 + Postgres + Redis + Mercure + Meilisearch + MinIO. Smaller focused demos: `make demo-bridge` (EA 5 host), `make demo-bridge-v4` (EA 4 / Sf 6.4 floor), `make demo-filter` (no EasyAdmin at all), `make demo` (Messenger dashboard). Guided tour with screenshots: [showcase-tour.md](./docs/user/showcase-tour.md).
+Full stack: PHP 8.4 + Symfony 7.4 LTS + EasyAdmin 5 + Postgres + Redis + Mercure + Meilisearch + RustFS (S3). Smaller focused demos: `make demo-bridge` (EA 5 host), `make demo-bridge-v4` (EA 4 / Sf 6.4 floor), `make demo-filter` (no EasyAdmin at all), `make demo` (Messenger dashboard). Guided tour with screenshots: [showcase-tour.md](./docs/user/showcase-tour.md).
 
 ## Why Polysource
 
@@ -112,7 +112,7 @@ Symfony's admin landscape is mature for one shape of resource: a Doctrine ORM en
 ## Quality bar
 
 - **1256 unit + functional tests** and **28 integration tests** (real kernel + SQLite) in the package matrix
-- **47 browser E2E tests** (Symfony Panther) + **24 showcase WebTestCase tests** + **15 adapter real-container tests** (Redis / Meilisearch / MinIO / WireMock) on every push
+- **47 browser E2E tests** (Symfony Panther) + **24 showcase WebTestCase tests** + **15 adapter real-container tests** (Redis / Meilisearch / S3 / WireMock) on every push
 - **PHPStan level max** across all packages · **PHP-CS-Fixer** PSR-12 + Symfony rules
 - **Core coverage gate ≥ 90%** (`polysource/core` sits at 99%+)
 - **CI matrix**: PHP 8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0, plus a bridge-alone floor smoke (Sf 6.4 + EA 4)

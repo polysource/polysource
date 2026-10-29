@@ -4,6 +4,25 @@ All notable changes to Polysource are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Showcase S3 service runs RustFS instead of MinIO.** MinIO withdrew its
+  public container images (Docker Hub in September 2026, Quay gated shortly
+  after), which broke the showcase compose stack and the E2E job. The
+  `minio` service now runs `rustfs/rustfs:1.0.4` and the bucket bootstrap
+  uses the official `amazon/aws-cli` image instead of `mc`. Hostname, ports
+  and credentials are unchanged, so `.env` and the real-container test group
+  need no edit.
+- **CI matrix: the non-LTS row moves from Symfony 7.2 to Symfony 8.0.**
+  Composer 2.10 refuses to install packages affected by a security advisory
+  and Symfony 7.2 is EOL, so that row could never resolve again. The row now
+  runs PHP 8.4 × Symfony 8.0 × EasyAdmin 5 and keeps its role of proving the
+  newest maintained non-LTS line.
+- `BulkJobHandler` drops a redundant integer cast flagged by PHPStan 2.3
+  (`cast.useless`). No behaviour change.
+
 ## [1.2.1] — 2026-10-29
 
 ### Fixed

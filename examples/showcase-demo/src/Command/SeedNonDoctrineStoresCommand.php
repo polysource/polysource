@@ -22,7 +22,7 @@ use Throwable;
  * resources have data to render on first page load:
  *
  *  - Redis     → 30 cache entries under shopco:cache:*
- *  - MinIO/S3  → 10 invoice PDFs + 5 product photos
+ *  - S3        → 10 invoice PDFs + 5 product photos
  *  - Meilisearch → push every Foundry-seeded product into shopco-products
  *
  * Idempotent: safe to re-run. Drops existing entries before re-seeding
@@ -30,7 +30,7 @@ use Throwable;
  */
 #[AsCommand(
     name: 'app:seed-stores',
-    description: 'Seed Redis cache + MinIO bucket + Meilisearch index with realistic ShopCo data.',
+    description: 'Seed Redis cache + S3 bucket + Meilisearch index with realistic ShopCo data.',
 )]
 final class SeedNonDoctrineStoresCommand extends Command
 {
@@ -51,8 +51,8 @@ final class SeedNonDoctrineStoresCommand extends Command
         $io->section('1/3 — Redis cache');
         $this->seedRedis($io);
 
-        $io->section('2/3 — MinIO bucket');
-        $this->seedMinio($io);
+        $io->section('2/3 — S3 bucket');
+        $this->seedS3($io);
 
         $io->section('3/3 — Meilisearch index');
         $this->seedMeilisearch($io);
@@ -102,7 +102,7 @@ final class SeedNonDoctrineStoresCommand extends Command
         $io->writeln(\sprintf('  → %d keys written under shopco:cache:*', $count));
     }
 
-    private function seedMinio(SymfonyStyle $io): void
+    private function seedS3(SymfonyStyle $io): void
     {
         // Drop pre-existing showcase files (best-effort).
         try {
