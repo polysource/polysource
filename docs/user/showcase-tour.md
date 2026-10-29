@@ -145,7 +145,7 @@ without `redis-cli del`.
 
 ![Polysource s3-files index](./screenshots/12-polysource-s3-files.png)
 
-10 invoice PDFs + 5 product photos seeded into MinIO via the
+10 invoice PDFs + 5 product photos seeded into the S3 bucket via the
 AsyncAws S3 client (state-of-the-art async S3 client 2026).
 
 ## 13 · Microservices probe — `polysource/adapter-http`

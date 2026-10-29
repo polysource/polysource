@@ -141,7 +141,7 @@ a future major and every release is detailed in the
 single source of truth for the test counts. At v1.1.0 that is 1256 unit
 + functional tests and 28 integration tests in the package matrix, 47
 Symfony Panther browser E2E tests plus 24 showcase WebTestCase tests,
-and 15 adapter integration tests on real containers (Redis, S3 MinIO,
+and 15 adapter integration tests on real containers (Redis, S3 RustFS,
 Meilisearch, HTTP API). PHPStan max + cs-fixer clean. CI runs PHP
 8.2/8.3/8.4 × Symfony 6.4/7.2/7.4 × EasyAdmin 4.24/5.0.
 
