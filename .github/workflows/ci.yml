@@ -197,6 +197,12 @@ jobs:
         # per-package split (filter+bridge advertising ^5.4) ended
         # with the v1.0 freeze, cf. ADR-011 floor targets.
         #
+        # The job names below are also the required status checks of the
+        # `main` branch protection. Renaming or replacing a row therefore
+        # needs the same change on GitHub, otherwise every PR waits for a
+        # check that will never report again:
+        #   gh api -X PATCH repos/polysource/polysource/branches/main/protection/required_status_checks --input <json>
+        #
         # Each row is listed by hand; cartesian-product matrices generate
         # impossible combos (e.g. PHP 8.2 × Sf 8.1 — Sf 8 needs 8.4+).
         #   1. Floor:          PHP 8.2 + Sf 6.4 LTS   + EA 4.x
